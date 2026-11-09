@@ -1,0 +1,935 @@
+                                                                                                                                                                                                                            1
+
+      Application of Stochastic Dual Dynamic
+Programming to the Real-Time Dispatch of Storage
+
+         under Renewable Supply Uncertainty
+
+            Anthony Papavasiliou, Member, IEEE, Yuting Mou, Le´opold Cambier, and Damien Scieur
+
+   Abstract--This paper presents a multi-stage stochastic pro-            stochastic optimization which can be used for the management
+gramming formulation of transmission-constrained economic                 of storage resources.
+dispatch subject to multi-area renewable production uncertainty,
+with a focus on optimizing the dispatch of storage in real-time              The beneficial role of storage in mitigating renewable supply
+operations. This problem is resolved using stochastic dual dy-            variability and uncertainty in short-term (day-ahead and real-
+namic programming. The applicability of the proposed approach             time) operations has been studied extensively in the literature.
+is demonstrated on a realistic case study of the German power             Early work on the economic implications of optimizing storage
+system calibrated against the solar and wind power integration            in short-term operations includes Swider et al. [2] and Tuohy
+levels of 2013-2014, with a 24-hour horizon and 15-minute time            et al. [3]. The coexistence of renewable supply uncertainty
+step. The value of the stochastic solution relative to the cost of a      and storage in short-term operations leads naturally to the
+deterministic policy amounts to 1.1%, while the value of perfect          consideration of stochastic programming models, which are
+foresight relative to the cost of the stochastic programming policy       well suited for optimizing under uncertainty in problems over
+amounts to 0.8%. The relative performance of various alternative          multiple time periods with significant coupling of operational
+real-time dispatch policies is analyzed, and the sensitivity of the       decisions over time. This is in direct analogy to the long
+results is explored.                                                      tradition of stochastic programming in resolving medium-term
+                                                                          planning models of hydroelectric storage under precipitation
+   Index Terms--storage, renewable energy, stochastic program-            uncertainty, which was pioneered by the early work of Pereira
+ming, dynamic programming, economic dispatch                              and Pinto [4].
+
+                          I. INTRODUCTION                                    The majority of the literature on the optimal deployment of
+                                                                          storage in short-term operations relies on two-stage stochastic
+   Day-ahead and real-time power system operations have                   unit commitment formulations. Khodayar et al. [5] consider
+become increasingly intricate in recent years due to the                  a two-stage scheduling problem where the first stage corre-
+large-scale integration of renewable energy resources. Flexible           sponds to day-ahead unit commitment and the second stage
+resources can be used in order to mitigate the operational                involves optimal deployment of storage against realizations of
+challenges of renewable energy supply. This paper focuses on              load forecast errors, wind forecast errors and line and generator
+the role of storage, specifically pumped hydro resources, in              outages. Ponzo et al. [6] also consider a two-stage stochastic
+real-time operations.                                                     unit commitment model that determines day-ahead commit-
+                                                                          ment and reserve decisions, where the system is deployed in
+   Current industry practice for conducting real-time opera-              real time against realized load and wind forecast errors. Deane
+tions relies on economic dispatch with a relatively limited               et al. [7] use stochastic programming in order to derive weekly
+look-ahead horizon and a deterministic forecast of renewable              and daily reservoir targets for pumped hydro resources, where
+energy supply, which is fairly accurate given the limited look-           reservoir levels are considered as non-anticipative decisions.
+ahead of existing dispatch models. In systems with significant            Li et al. [8] consider a stochastic unit commitment model
+amounts of storage and renewable resources, this practice may             where conventional units are dispatched in the first stage, and
+lead to inefficiencies [1]. The deployment of a wide variety              scenario-dependent unit commitment decisions are determined
+of storage resources, including pumped hydro storage, utility-            in the second stage. Nu¨rnberg and Ro¨misch [9] consider two-
+scale batteries, flywheels, deferrable demand including electric          stage stochastic unit commitment with wind uncertainty and
+vehicle storage, and distributed residential storage, requires a          fuel cost uncertainty, and focus on the hourly dispatch of
+real-time dispatch procedure which is capable of long-range               pumped hydro resources over the duration of a week.
+look-ahead and potent uncertainty management. Stochastic
+programming is suitable for this task. This paper proposes                   Alternative approaches to managing uncertainty through the
+a real-time economic dispatch procedure based on multi-stage              optimal short-term dispatch of storage are also considered in
+                                                                          the literature. Jiang et al. [10] use a two-stage robust optimiza-
+   Anthony Papavasiliou is with Center for Operations Research            tion model for the optimal management of storage in order to
+and Econometrics, Universite´ catholique de Louvain; Email:               address wind power uncertainty. Wen et al. [11] consider a unit
+anthony.papavasiliou@uclouvain.be; Phone: +32 10 474325.                  commitment model for using utility-scale storage in order to
+                                                                          determine post-contingency corrective actions.
+   Yuting Mou is with Center for Operations Research and Econometrics,
+Universite´ catholique de Louvain.                                           In contrast to the previous literature that has been dedicated
+
+   Le´opold Cambier is with Institute for Computational and Mathematical
+Engineering, Stanford University.
+
+   Damien Scieur is with the E´ cole Normale Supe´rieure - Paris.
+                                                                                                                        2
+
+to day-ahead unit commitment models for optimizing the            economic dispatch has not been explored in the literature.
+operation of storage under renewable supply uncertainty, the      (ii) The potential value of scheduling storage in real-time
+literature on multi-stage economic dispatch under uncertainty     operations using value functions obtained from multi-stage
+in real-time operations is relatively less developed. Lorca and   stochastic programming is analyzed. The majority of the
+Sun [12] analyze two-stage robust optimization models for         existing literature focuses on analyzing the value of storage
+economic dispatch, and extend this work further in Lorca et       using two-stage day-ahead unit commitment models which are
+al. [13]. As in the case of the present paper, this work is       overly optimistic, or economic dispatch models of small scale
+motivated by the growing importance of multi-stage real-time      or limited look-ahead, whereas storage creates temporal cou-
+economic dispatch under uncertainty due to the variability        pling over the entire day. The sensitivity of these findings with
+and uncertainty of wind power output. Wang and Hobbs              respect to transmission constraints, ramp constraints, and opti-
+[14], [15] have also investigated this problem recently, with     mization look-ahead is analyzed. (iii) Practical implementation
+a focus on analyzing flexible ramping products and the extent     challenges such that multi-stage stochastic economic dispatch
+to which they can approach the ideal outcome of real-time         can be embedded in existing power system and power market
+stochastic optimization. Safta et al. [16] also consider multi-   operations are highlighted, and solutions towards overcoming
+period stochastic economic dispatch from the point of view        these challenges are investigated.
+of developing efficient sampling methods of the underlying
+uncertainty. Phan and Ghosh [17] develop decomposition               The remainder of the paper is organized as follows. Section
+algorithms for a two-stage stochastic optimal power flow          II provides an introduction to multi-stage stochastic program-
+model, where non-linear power flow constraints are considered     ming and the SDDP algorithm. Section III casts the real-time
+explicitly in the model.                                          pumped hydro scheduling problem as a multi-stage stochastic
+                                                                  programming problem which can be tackled by SDDP. Section
+   An alternative approach to the management of real-time         IV presents a case study focused on the German power
+uncertainty which has been analyzed in the literature is the      system, while section V discusses aspects related to practical
+optimization of participation factors of flexible resources in    implementation. Conclusions are drawn and future lines of
+automatic generation control (AGC) in order to alleviate load     research are delineated in section VI.
+and renewable supply uncertainty, while satisfying probabilis-
+tic constraints on the operation of the network. Jabr [18]        II. MULTI-STAGE STOCHASTIC LINEAR PROGRAMMING
+introduces adjustable robust optimal power flow, and presents                                 AND SDDP
+a model in both a static as well as a dynamic setting.
+Bienstock et al. [19] analyze real-time optimal power flow        A. Multi-Stage Stochastic Linear Programming
+under probabilistic constraints. Lubin et al. [20] extend these
+models by developing a solution procedure that accounts for          This paper considers multi-stage stochastic linear program-
+distributionally robust optimization. Convex formulations of
+chance constraints for the case of affine control of AGC are      ming problems with discrete time steps t  T = {1, . . . , H},
+provided by Summers et al. [21]. Jabr et al. [22] optimize the
+utilization of storage-type resources using affinely adjustable   where H is the horizon of the problem. Consider a discrete
+AGC control.
+                                                                  set of realizations of uncertainty at each time step. Denote t
+   In the backdrop of the aforementioned literature, the present  as the discrete set of outcomes in stage t, and [t] as the set of
+paper proposes a multi-stage stochastic programming formula-      possible histories up to stage t. Each [t]  [t] has a unique
+tion of economic dispatch, with a specific focus on optimizing    ancestor A([t])  [t-1]. The notation is explained further
+the management of storage resources in real-time operations.      in section A of the appendix.
+A major drawback of the previously cited day-ahead models is
+the assumption that uncertainty about the intra-day evolution        In what follows, the standard assumption of serial indepen-
+of renewable supply uncertainty is revealed at once in the
+beginning of the second stage. The alternative of consider-       dence in SDDP [23] is adopted. It is assumed that at each stage
+ing a multi-stage stochastic programming model results in
+computational challenges that are overcome in the present         the objective function coefficients ct and constraint coefficients
+paper through the use of stochastic dual dynamic programming      Wt are deterministic parameters, whereas the right-hand side
+(SDDP).                                                           parameters ht,t and the constraint coefficients Tt,t are
+                                                                  random. Define decision variables that depend on the history
+   The contributions of this paper can be summarized as
+follows: (i) The SDDP algorithm has been most successfully        of realizations up to stage t, xt,[t] , where [t]  [t]. Serial in-
+applied in the context of medium-term multi-stage hydrother-      dependence implies that it is possible to define, for each stage
+mal scheduling under rainfall uncertainty for handling water
+levels of hydro reservoirs [4]. This paper demonstrates its       t, a probability measure pt,t for each outcome t  t, from
+computational viability for an application of increasing sig-     which one can recursively compute pt,[t] = pt-1,A([t]) · pt,t
+nificance: short-term multi-stage economic dispatch under re-     with p1,1 = p1,[1] = 1. The following multi-stage stochastic
+newable supply uncertainty for dispatching storage resources.     linear program in extended form can then be defined:
+The analogies of the two problems are striking, however the
+applicability of SDDP in the context of multi-stage stochastic         H
+
+                                                                  min              pt,[t] ctT xt,[t]
+
+                                                                    x  t=1 [t][t]
+
+                                                                  Tt,t xt-1,A([t]) + Wtxt,[t] = ht,t , t  T , [t]  [t]
+
+                                                                  xt,[t]  0, t  T , [t]  [t]
+
+                                                                  B. Nested L-Shaped Decomposition Subproblem
+
+                                                                     The SDDP algorithm decomposes the above problem, which
+                                                                  is intractable in extended form, to a collection of subproblems,
+                                                                                                                                         3
+
+one for each time stage t  T and for each outcome k                              D. FAST Toolbox
+t. Each of these subproblems is referred to as a nested L-
+shaped decomposition subproblem (NLDS) [23]. Exploiting the                         FAST is a MATLAB open-source toolbox developed by the
+fact that the value functions of multi-stage stochastic linear                   authors which can be used for solving multi-stage stochas-
+programs are piecewise affine functions, the NLDS for stage                      tic linear programming problems with SDDP. The toolbox
+t and outcome k can be expressed as                                              can also be used for simulating perfect foresight policies,
+                                                                                 as well as heuristic policies that can be expressed through
+N LDSt,k :  min  ctT  x  +  V~t  (x)  (1)                                        linear programming. The toolbox is described in detail in the
+                                                                                 following link: https://web.stanford.edu/lcambier/fast/. This
+              x                                                                  section briefly covers the features that are relevant to the model
+                                                                                 implemented in the paper.
+            Wtx = ht,k - Tt,kx^t-1    (2)
+
+            x0                        (3)
+
+where V~t(x) is a piecewise affine convex function of x which                       The definition of a stochastic program in FAST requires
+approximates the expected cost-to-go as a function of the                        (i) the description of the N LDS (which can be done as
+decisions x made in stage t and for outcome k. Since V~t(x)                      in a high-level mathematical programming language, as op-
+is a piecewise affine convex function, N LDSt,k is a linear                      posed to manually entering the constraint matrix, objective
+program that can be solved efficiently. Note that x^t-1 is a                     function coefficients, and right-hand side parameters of the
+trial decision made in stage t - 1, which is an input, not a                     linear program), (ii) the description of the lattice, and (iii) the
+decision variable, for N LDSt,k. Feasibility cuts are ignored,                   description of user-defined settings related to the behavior and
+since the economic dispatch problem that is presented in the                     convergence of the algorithm. The N LDS and the lattice are
+                                                                                 described in sections II-B and II-C respectively, this section
+next section includes load shedding decision variables which                     describes the settings that control convergence.
+imply that NLDS is always feasible for any x.
+
+C. Lattice                                                                          The SDDP algorithm proceeds by iterating between forward
+                                                                                 and backward passes. The role of forward passes is to generate
+   Uncertainty is represented in the present implementation of                   bounds and trial decisions, while backward passes generate
+the SDDP algorithm by a lattice, which is a graphical descrip-                   optimality cuts that approximate the value function at each
+tion of a discrete Markov process1. Each stage t consists of a                   stage. The algorithm is described in detail by Pereira and Pinto
+set of nodes t. Each node k  t corresponds to a realization                      [4]. The toolbox is compatible with a variety of commercial
+ht,k of the random vector ht,t and a realization Tt,k of the                     solvers, including CPLEX and Gurobi.
+random matrix Tt,t . Since serial independence is assumed,
+the specification of the uncertainty model can be completed by                   The forward pass proceeds by generating a user-defined
+associating with each node (t, k) a probability of occurrence
+pt,k, which is independent of the history of realizations up to                  number of Monte Carlo samples, M . Each Monte Carlo
+stage t - 1.
+                                                                                 sample generates a realization of the random parameters ht,t
+   The linear program N LDSt,k defined in Eqs. (1) - (3) is
+stored at each node (t, k) of the lattice. Serial independence                   and Tt,t over the entire horizon of the problem. This results
+implies that each node k  t stores an identical copy of the                      in a trajectory of trial decisions, x^(i) = (x^1(i), . . . , x^H(i)) (which
+value function V~ (x) of equation (1). In general, the MATLAB                    are obtained by solving the N LDS of each stage t and the
+toolbox that is presented in the following section can also
+handle random objective function coefficients ct and random                      realization of the Monte Carlo sample) as well as an associated
+constraint matrices Wt. The lattice can generally represent
+Markov processes whereby the user defines the realization of                     sample cost over the entire horizon, zi (since the sequence of
+the random parameter2 tT = (cTt , htT , vec(Tt), vec(Wt)), and                   decisions x^(i) is a feasible, not necessarily optimal, reaction to
+the transition probability from any node in stage t - 1 to any
+node in stage t.                                                                 the realized sample of uncertainty). A statistical upper bound
+
+   The lattice is the core of the FAST toolbox presented in                      can then be obtained by the sample average z¯ =  . Mzi
+the next section. It stores the description of the uncertainty
+model, and can be used for simulating, not only the SDDP                                                                          i=1
+policy described by N LDSt,k, but any heuristic policy that                                                                       M
+can be described by a linear program.
+                                                                                 Within FAST, the user can periodically run a large number of
+   1This assumption, although restrictive, can accommodate a large class of
+practically useful discrete time stochastic processes, including autoregressive  forward passes in order to obtain an accurate estimate of the
+moving average models [24]. On the upside, this assumption yields compu-
+tational gains by allowing the sharing of dual multipliers for the generation    upper bound.
+of optimality cuts. This is illustrated in Fig. 7 in the appendix.
+                                                                                    The backward pass generates optimality cuts that approx-
+   2The operator vec(·) applied to a matrix expands the columns of the matrix    imate the value function V~t(x) around the trial points x^(ti)
+to a vector, i.e. vec(A) = (AT·,1, . . . , A·T,n) where n is the number of       generated by the forward pass. These approximations (which
+columns of A and A·,j is the j-th column of the matrix.
+                                                                                 can be shown to be global under-estimators of the true value
+                                                                                 function) are generated by solving each N LDS and exploiting
+
+                                                                                 the dual optimal multipliers, similarly to the standard L-
+                                                                                 shaped method [25]. Since the approximations V~t(·) are under-
+                                                                                 approximations of the true value functions, the solution of
+                                                                                 N LDS1 furnishes a lower bound z. The optimality cuts
+                                                                                 generated after the algorithm has converged can be used
+
+                                                                                 for simulating the resulting policy. FAST can also prune
+                                                                                 optimality cuts in order to keep the size of each N LDS
+
+                                                                                 tractable.
+
+                                                                                    Various convergence criteria can be selected within FAST,
+                                                                                 including a minimum and maximum number of iterations, the
+                                                                                                                         4
+
+                     1.5 ×104                                                   is modeled as an AR(1) process, pt is the renewable energy
+                                                                                production in stage t, and RFt is the forecast production in
+                     1                                                          stage t. The idea is to include the forecast error re in the
+                                                                                state vector x of equation (2), and to model the AR noise t
+Forecast Error (MW)  0.5                                                        as the serially independent stochastic input ht,t of equation
+                                                                                (2). Whereas it might seem more natural to model forecast
+                     0                                                          error directly as the random parameter, instead of representing
+                                                                                it as a state variable, in this way it is possible to represent
+                     -0.5                                                       autoregressive processes while respecting serial independence.
+
+                     -1                                                            There are two drawbacks with this approach, which motivate
+                                                                                the alternative modeling approach adopted in this paper. The
+                     -1.5                                                       first drawback is that renewable production becomes negative4.
+                          0 0.5 1 1.5 2 2.5 3 3.5 4                             The second drawback is that the forecast error under an AR(1)
+                                                                                model would have constant variance, whereas experimental
+                               Renewable Forecast (MW)  ×104                    evidence suggests that the variance of forecast errors increases
+                                                                                as the renewable forecasts increase, as shown in Fig. 1.
+Fig. 1: The scatter plot of wind and solar production day-ahead
+forecasts versus historical forecast error in Germany for 2013                     Cabral [29] recently proposed a multiplicative autoregres-
+and 2014.                                                                       sive model for representing inflow uncertainty in hydrothermal
+                                                                                planning models, which accounts for temporal correlations in
+classical convergence criterion3 of Pereira and Pinto [4], as                   the inflow process, while maintaining the non-negativity of
+well as a small standard deviation criterion according to which                 the process. This overcomes the first drawback mentioned in
+the algorithm terminates only when the standard deviation of                    the previous paragraph. In order to overcome the second draw-
+the mean cost z¯ is sufficiently low, relative to the lower bound               back, this paper proposes that the multiplicative autoregressive
+z. The convergence criteria of SDDP are discussed in detail                     model of Cabral be used in order to model the ratio of forecast
+by De-Mello et al. [27].                                                        error to renewable supply forecast, instead of the renewable
+                                                                                supply process.
+                     III. MODEL DESCRIPTION
+                                                                                   Denote the ratio of renewable production realizations and
+   Since the focus of the present paper is on real-time dispatch,               day-ahead forecasts as yt = pt/RFt. Then the autoregressive
+unit commitment decisions are assumed to be fixed. The                          multiplicative model of Cabral can be used for modeling the
+economic dispatch model presented in this section specifi-                      ratio yt as follows:
+cally focuses on the management of pumped hydro resources
+throughout the day.                                                                     yt+1 = (c +  · yt) · t           (4)
+
+                                                                                        pt = RFt · yt                    (5)
+
+A. Renewable Supply Model                                                       where t are independent, identically distributed.
+                                                                                   In order to generate a lattice for SDDP, the random param-
+   Despite the assumption of serial independence, the multi-
+stage stochastic linear programming problem described in                        eter t is discretized at every time stage. In this paper, the
+section II-A can be used to describe a rich family of stochastic                discretization is based on discretizing the normal distribution
+processes [24], [28]. In order to motivate the approach adopted                 into ten evenly spaced quantiles:
+in this paper, consider first how a first-order autoregressive
+process AR(1) would be modeled according to constraints                         t,k  =  µt  +  t  ·  -1( k     -  0.05)
+(2). This paper focuses in modeling renewable supply in the                                                10
+presence of forecast errors, which can be expressed as follows:
+                                                                                where µt and t are the mean and standard deviation of the
+                                                                                estimated noise in stage t respectively,  is the cumulative
+
+                                                                                distribution function of the standard normal distribution, and
+
+                                                                                t,k is the value of the noise in node k of stage t. Fig.
+                                                                                2 compares the probability density function obtained from
+
+                               ret = c +  · ret-1 + t,                          historical data with the probability density function produced
+                                pt = RFt + ret
+                                                                                by the proposed stochastic model. The quality of the model
+                                                                                is further validated by comparing the energy score5 of the
+
+where c is the constant term of the AR(1) model,  is                            multiplicative first-order autoregressive model to the energy
+the autoregressive coefficient, t are independent identically
+distributed normal variables, ret is the forecast error which                   score of an additive first-order autoregressive model over 100
+
+                                                                                days of data. The multiplicative model employed in this paper
+
+3The convergence criterion of Pereira and Pinto [4] stipulates that the            4Alternatively, one could impose non-negativity on pt, however then one
+                                                                                would have to include slack variables with high penalties in order to ensure
+algorithm should terminate when the lower bound z lies within the interval      that the error re remains in a range such that pt  0, which would interfere
+                                                                                with the optimality cuts generated by the SDDP algorithm.
+[z¯ - 2, z¯ + 2], where  =     M    (zi  -z¯)2  is an estimate of the standard
+                               i=1                                                 5The energy score is a proper (i.e., a perfect forecast will result in the best
+                               M2                                               score), negatively-oriented (i.e., lower is better) score that quantifies both the
+                                                                                skill (accuracy) and sharpness (spread) of a scenario set [30].
+deviation of the sample average cost. Effectively, the termination criterion
+
+requires that the lower bound lie within the 95% confidence interval of the
+
+upper bound, however this may lead to premature convergence [26].
+                                                                                                                                 5
+
+                                                                    set of lines whose destination is n, Dl is the load of consumer
+                                                                    l, pdg is the pumping demand of pumped hydro unit g, ppg
+                                                                    is the pumping supply of pumped hydro unit g, fk is the flow
+                                                                    on line k, psn is amount of production shedding in node n,
+                                                                    RFg is the renewable energy forecast of renewable generator
+                                                                    g, and yg is the ratio of renewable production to renewable
+                                                                    forecast error for renewable generator g.
+
+                                                                       Power flow equations6 are expressed using a linearized
+
+                                                                    lossless model of the transmission network:
+
+Fig. 2: Histogram of historical renewable supply observations           hub = 0
+(left panel) and modeled renewable supply (right panel).                fk = Bk · (m - n), k = (m, n)  K
+
+achieves an average energy score of 0.26, and outperforms the       where n is the angle of bus n (with the hub node assumed
+additive model, the average energy score of which amounts to        to be the bus angle reference node) and Bk is the susceptance
+0.46.                                                               of line k.
+
+                                                                       Power flows are limited as follows:
+
+B. Stochastic Multi-Period Economic Dispatch                               -T Ck  fk  T Ck, k  K
+
+   This section formulates the multi-stage stochastic economic      where T Ck is the flow limit of line k.
+dispatch problem, by describing the N LDS, i.e. the objective          The dynamics of pumped hydro units are expressed as
+function (1) and constraints (2) for a given stage t  T and
+history [t]  [t]. The t and [t] indices are dropped in order        follows:
+to keep the notation concise. The notation is described in detail
+in section B of the appendix.                                       sg  =  sg,t-1  +  0.25  ·  (dg  ·  pdg  -  ppg  ),  g    PH
+                                                                                                               gp
+
+   The objective is to minimize the expected cost of power          where sg is the stored energy of pumped hydro unit g, gd
+production and load shedding:                                       is the pumping efficiency of unit g, and gp is the production
+                                                                    efficiency of unit g.
+           1      V OLL · lsn +
+            (                        cg )                              The capacity constraints of conventional and pumped hydro
+           4                                                        units are expressed as follows:
+              nN                 gG
+
+where G is the set of generators, N is the set of buses, lsn            pdg  DM axg, g  P H
+is the load shedding in bus n, and cg is the cost of generator          ppg  P M axg, g  P H
+g. The 0.25 coefficient in the objective function is due to the         P M in · Ug  pg  P M axg · Ug, g  G
+assumed time resolution of 15 minutes for each time step.
+
+   Production cost is defined as a piecewise affine function:
+
+cg  F Cg · (Ag,m · Ug + Bg,m · pg), g  G, m = 1, . . . , 3          where DM axg is the pumping capacity of pumped hydro
+                                                                    unit g, P M axg is the production capacity of pumped hydro
+
+where pg is the power production of a generator, F Cg is the or conventional generator g, and P M ing is the technical
+fuel cost of a generator, Ag,m and Bg,m are the intercept and minimum of conventional generator g.
+
+slope that describe segment m of the heat rate curve of a The ramp rate constraints of conventional units are ex-
+
+generator, and Ug is a binary variable indicating whether a         pressed as follows:
+generator has been committed or not. Note that Ug is deter-
+mined in the day-ahead time frame, and is a fixed parameter               pg - pg,t-1  RUg · Ug + M T Lg · (1 - Ug,t-1), g  G
+in the real-time dispatch.                                                pg,t-1 - pg  RDg · Ug + M T Lg · (1 - Ug), g  G
+
+   The transmission network is represented as a directed graph      where RUg is the 15-minute ramp-up rate of generator g, RDg
+(N, K), where K is the set of transmission lines. At each           is the 15-minute ramp-down rate, and M T Lg is the maximum
+node of the network, the following power balance constraint         transition limit of generator g. The maximum transition limit
+is imposed:
+                                                                    is the power output of a generator after being turned on, or
+
+     Dl +         pdg +          fk + psn =        pg + before being turned off.
+
+lLn        gP Hn         k(n,·)  nN           gGn
+
+       ppg +        RFg · yg + lsn +          fk, n  N                 6Although mathematically equivalent to a formulation which uses power
+                                                                    transfer distribution factors (PTDFs), the bus angle formulation employed in
+gP Hn         gGRn                    k(·,n)                        this paper appears to achieve faster convergence for the case study described
+                                                                    in section IV. In particular, whereas the SDDP algorithm with a bus angle
+where Ln is the set of loads in location n, P Hn is the set of      formulation converges in 4.3 hours, the same algorithm requires 16.4 hours
+pumped hydro units in location n, Gn is the set of generators       to converge with a PTDF formulation. This may be due to the fact that the
+in location n, GRn is the set of renewable resources in location    PTDF formulation involves a dense constraint matrix, which can impact the
+n, (n, ·) is the set of lines whose origin is n, and (·, n) is the  speed of matrix inversion when the N LDS are being resolved in the course
+                                                                    of the SDDP algorithm.
+                                                                                                         6
+
+   The following constraints impose bounds on load and pro-       Nodes Samples Iter. Run time Gap Cost
+duction shedding:
+                                                                  K    M   I   (hrs) (%) (103 e)
+
+                                                                  4    50  10  2.3  1.8 18583
+
+                                                                  10   50  10  4.3  2.8 18545
+
+lsn  Dl, n  N                                                     20   50  10 10.5 3.1 18565
+
+           lLn                                                    100  5   10  4.6  3.2 18733
+
+psn        pg +        RFg · yg, n  N                             TABLE I: Performance comparison among different configu-
+                                                                  rations of SDDP settings. The performances is evaluated using
+      gGn        gGRn                                             100 samples on a 100-node lattice.
+
+   The dynamics of forecast errors can be described by equa-      conducts a weekly reserve capacity auction. The unit commit-
+tion (4). Finally, the following non-negativity constraints are   ment model is implemented with an hourly time step, and is
+required:                                                         populated with data for the German system from September
+                                                                  22, 2014 until September 28, 2014. The model accounts for
+lsn, psn, sg, pdg, ppg  0, n  N, g  P S                           primary, secondary and tertiary reserve requirements given a
+                                                                  deterministic forecast of renewable energy production. This
+                          IV. CASE STUDY                          centralized unit commitment model approximates the sequen-
+                                                                  tial clearing of reserve capacity followed by the day-ahead
+   This section presents a case study of the German system.       exchange of power in the Central Western European day-
+Germany is chosen as the most relevant example within             ahead power exchange [31]. Interactions of Germany with
+Europe, due to its leading position in the integration of wind    neighboring zones [32] are not accounted for in this paper,
+and solar power. The rapid growth of renewable energy supply      in order to focus on the management of real-time renewable
+in Germany is evidenced by the evolution of installed capacity    supply uncertainty. (ii) Once unit commitment decisions are
+in recent years. The installed capacity of solar power evolved    fixed, the economic dispatch model is solved for the middle
+from 36.3 GW in 2013 to 39.8 GW in 2015, while the installed      of the week (Thursday) with a horizon of 24 hours and a time
+capacity of wind power evolved from 34.0 GW in 2013 to            step of 15 minutes.
+44.5 GW in 2015 [source: German Federal Ministry of Eco-
+nomic Affairs and Energy]. The ratio of historically observed        The lattice of the renewable supply stochastic process is dis-
+renewable energy production to total energy production for        cretized in 10 levels. Thus, the multi-stage stochastic economic
+the interval of the data which was used in the study (January     dispatch lattice consists of 96 stages and 10 nodes per stage.
+2013 - December 2014) is 18.7%. The installed capacity            The renewable production model is calibrated using renewable
+of conventional generators, which totals 103.5 GW, can be         supply data sourced from the ENTSO-E transparency platform
+broken down as follows: nuclear (11.966 GW), lignite (20.694      for 2013 and 2014. Renewable production is distributed in
+GW), coal (25.488 GW), gas (35.751 GW), oil (2.204 GW),           each region according to its average historical profile. The
+biomass (7.179 GW), and waste (0.188 GW) [source: Euro-           sensitivity of the solution to spatial correlations of renewable
+pean Network of Transmission System Operators (ENTSO-E)           supply is discussed in section IV-D.
+transparency platform]. The peak load of the system in 2014
+was 73.218 GW [source: European Network of Transmission              The choice of using 10 nodes per stage strikes an acceptable
+System Operators (ENTSO-E) transparency platform]. The            balance between run time, convergence of the solution, and
+pumped hydro storage and pumping capacity amounts to 5.867        accuracy of the stochastic model. Table I presents the run time
+GW, while the energy storage capacity of pumped hydro units       and performance of various configurations of SDDP in terms
+in Germany amounts to 38 GWh [source: European Energy             of lattice size and the number of samples used in the forward
+Exchange (EEX) transparency platform].                            pass, for a fixed number of forward-backward iterations of
+                                                                  the algorithm. The performance of each solution is evaluated
+   The technical specifications of 292 conventional units are     using 100 samples on a 100-node lattice. One observes that
+available from a commercial database. Reserve requirements        the 4-node instance performs well in terms of optimality gap,
+for German primary, secondary and tertiary reserve are ob-        however the representation of uncertainty is coarse-grained,
+tained from regelleistung.net. Load and import data are fixed to  and results in inferior cost performance. The 20-node and
+their historical values, which are obtained from the ENTSO-E      100-node instances better represent uncertainty, however they
+transparency platform. Pumped hydro resources have a round-       do not achieve as good an optimality gap as the 10-node
+trip efficiency of 76.5%. It is assumed that fast response units  instance. Moreover, the run time of the 20-node instance with
+are available at every bus. The marginal cost of these units      50 forward samples is increased significantly. It is worth noting
+is assumed to be piecewise constant, and ranges from 100          that one encounters a wide range of SDDP settings in the
+e/MWh up to 500 e/MWh. The model consists of 228 buses            literature [4], [28], [33], [27] (node counts K ranging from 2
+and 312 lines.                                                    to 100, iterations I ranging from 5 to 3000, forward samples
+                                                                  M ranging from 1 to 50, horizon steps H ranging from 5 to
+A. System Settings                                                120), and that the choice of these setting interacts with the
+                                                                  convergence of the algorithm.
+   The case study is conducted in two steps: (i) A unit com-
+mitment problem is solved with a weekly horizon. The weekly          Three policies are compared: (i) a wait-and-see policy which
+horizon prevents boundary effects in the unit commitment          manages pumped hydro resources by perfectly anticipating the
+decision, and is justified by the fact that the German system
+                                                                                                                                                                                                                7
+
+         Perfect Foresight        Slow unit cost                            Fast-start cost  Total cost                                                 total cost  Fast-start energy  Excess energy
+    Stochastic Programming            (103 e)                                  (103 e)        (103 e)                                                    (103 e)
+                                       17380                                      850          18231                                                       291           (MWh)             (MWh)
+           Deterministic               17423                                      955          18378                                                       305             7204             1809
+                                       17373                                     1221          18594                                                       350             7511             1855
+    Perfect Foresight (3000)                                                                                                                                               8688             1879
+Stochastic Programming (3000)          17914                                     9637          27551                                                       2626            3212             3823
+                                       18201                                    10489          28690                                                       2674            3496             5406
+      Deterministic (3000)             17924                                    13652          31575                                                       3048            4551             4498
+
+TABLE II: Performance of perfect foresight, stochastic programming, and the deterministic policy. All values are per day. The
+cases indicated by `(3000)' correspond to setting the marginal cost of fast-start units to 3000 e/MWh.
+
+2.5 ×107                                                                                                                                    6000
+
+                                                                                                                                            4000
+
+2
+
+Value                                                                                                                                       2000
+
+1.5                                                                                                                              Power(MW)
+
+1                                                                                                                                                 0                                    Deterministic
+                                                               Lower bound                                                                                                             Stochastic program,
+                                                                                                                                            -2000                                      10th percentile
+                                  Mean Costs                                                                                                                                           Stochastic program,
+                                                                                                                                            -4000                                      50th percentile
+0.5                               67% confidence interval                                                                                                                              Stochastic program,
+                                                                                                                                            -6000                                      90th percentile
+                                  95% confidence interval                                                                                           0
+
+0                                                                                                                                                      10  20  30   40        50  60   70  80               90
+
+     1    2  3  4  5           6  7  8                                      9 10                                                                                        Time
+
+                   Iteration                                                                 Fig. 4: The percentile of the reservoir level for the stochastic
+                                                                                             programming policy, and the reservoir schedule of the deter-
+Fig. 3: The evolution of lower and upper bounds of the SDDP                                  ministic policy.
+algorithm.
+
+evolution of renewable supply over the day; (ii) the stochastic                              benefits that amount to 0.8% of the stochastic programming
+programming policy obtained by SDDP; and (iii) a determinis-                                 cost. The perfect foresight policy utilizes fast-start units,
+tic equivalent dispatch, whereby the pumped hydro schedule is                                and, although for a higher penalty the utilization of these
+fixed to the output of the day-ahead unit commitment model,                                  units is decreased, it cannot be eliminated completely due
+and conventional thermal units are dispatched at minimum cost                                to re-dispatch in real time which is necessary for relieving
+in real time while respecting transmission constraints.                                      transmission constraints.
+
+   Fig. 3 presents the evolution of the bounds generated by the                                 Fig. 4 presents the 10th, 50th and 90th percentiles of the
+SDDP algorithm when solving for the stochastic programming                                   reservoir levels for the stochastic programming policy, as well
+policy. The lower bound is indicated by the dotted line. The                                 as the fixed reservoir schedule of the deterministic policy. The
+solid line indicates the estimate of the upper bound, and it                                 wide spread of the 10th and 90th percentile implies that the
+is enveloped by its 67% and 95% confidence intervals. Each                                   pumped hydro schedule can vary significantly in the stochastic
+N LDS of the problem consists of 1371 variables and 3560                                     programming policy. The deterministic schedule closely tracks
+constraints. The reported results are based on the settings                                  the 50th percentile of the stochastic programming policy. The
+indicated in the second row of table I.                                                      deterministic policy will pump mostly in the night hours and
+                                                                                             to a lesser extent during the peak of solar production around
+B. Performance Comparison                                                                    noon, and will produce in the morning and evening load peaks.
+                                                                                             Fig. 5 presents the dispatch of pumped hydro resources under
+   The average cost results are shown in table II over 100                                   the stochastic programming policy for the case of over- and
+samples. The standard deviation of the average cost estimator7                               under-forecasting renewable power supply. In the case where
+is also reported, in order to verify that the reported cost                                  realized production exceeds the forecast during the morning
+differences are statistically significant. The table also reports                            load peak, the stochastic policy produces more aggressively,
+the results of a model whereby the marginal cost of the fast-                                in order to create space in the reservoir for the peak solar
+start units is set at 3000 e/MWh, so that these units are only                               production, which exceeds the day-ahead forecast. By contrast,
+used as a solution of last resort. These cases are indicated in                              in the case where the forecast exceeds the realized production,
+the last three rows of the table.                                                            the stochastic programming policy serves less of the morning
+                                                                                             peak load than the deterministic policy through pumped hydro
+   For the model with all constraints, the stochastic program-                               resources, and pumps more aggressively during the night. This
+ming policy results in benefits that amount to 1.2% of the                                   is explained by the anticipation of an unfavorable renewable
+deterministic dispatch cost, and perfect foresight results in                                production outcome in the afternoon, which implies that the
+                                                                                             water in the reservoir is better used for serving the evening
+   7The standard deviation is indicated by  in table II, and is defined in                   load peak.
+footnote 3. The superior performance of the stochastic programming policy
+with respect to deterministic dispatch is verified with a confidence level of
+94.5%.
+                                                                                                                                                8
+
+           Power(MW)  3 ×104                                    Forecast                  Foresight (No Transmission)     Total cost  St. dev.
+                      2                                         Production                Stochastic (No Transmission)     (103 e)    (103 e)
+                                                                                        Deterministic (No Transmission)     14797
+                      1                                                              Lookahead 1-step (No Transmission)     14828        97
+                                                                                     Stochastic Hydro (No Transmission)     14867       100
+                0             10  20  30  40        50  60  70  80          90                                              14865       105
+                  0                                                                   Foresight (No Ramp/Transmission)      14830       105
+                                                                                      Stochastic (No Ramp/Transmission)                 101
+           5000                                                                     Deterministic (No Ramp/Transmission)    14796
+                                                                                                                            14828        97
+                                                                                                                            14856       100
+                                                                                                                                        105
+
+Power(MW)        0                                              Deterministic       TABLE III: Daily cost performance for the case where trans-
+                                                                Stochastic program  mission and ramping constraints are dropped.
+           -5000                                                Perfect foresight
+                   0
+                              10  20  30  40        50  60  70  80          90
+
+                                              Time                                  reservoirs up to the level where its marginal value equals the
+                                                                                    expected future cost of production. This will tend to align
+           Power(MW)  3 ×104                                    Forecast            marginal prices over all hours of the day, all outcomes and
+                      2                                         Production          all locations. This is demonstrated in the box plots of Fig. 6,
+                                                                                    which present the distribution of LMPs for both the stochastic
+                      1                                                             policy as well as the deterministic dispatch.
+
+                0             10  20  30  40        50  60  70  80          90      C. Effect of Transmission and Ramping
+                  0
+                                                                                       This section analyzes the importance of transmission con-
+           5000                                                                     straints and ramps in the performance of each policy. In order
+                                                                                    to isolate the effect of transmission and ramping, the models
+Power(MW)        0                                          Deterministic           without transmission constraints are re-run first (in order to
+                                                            Stochastic program      capture the effect of transmission constraints) and then the
+           -5000                                            Perfect foresight       models without transmission constraints and without ramp
+                   0                                                                constraints are re-run (in order to isolate the incremental effect
+                              10  20  30  40        50  60  70  80          90      of ramp constraints). The results are presented in table III.
+
+                                              Time                                     By comparing the results of tables II and III, it can be
+                                                                                    observed that transmission constraints have a major impact
+Fig. 5: The dispatch of pumped hydro under the stochastic                           on the results. In the case without transmission constraints, the
+programming policy in the case where (i) realized production                        benefits of stochastic programming over deterministic dispatch
+exceeds the forecast (top 2 panels) and (ii) the forecast exceeds                   amount to 0.3% of the cost of deterministic dispatch, while
+realized production (lower 2 panels).                                               the benefits of perfect foresight over stochastic programming
+                                                                                    amount to 0.2% of the cost of stochastic programming.
+                                      Stochastic program
+                                                                                       The motivation for analyzing the effect of ramping sepa-
+    200                                                                             rately is the recent introduction of flexible ramp products8
+                                                                                    in various US markets, including the Midwest ISO [34] and
+       0                                                                            the California ISO [35]. The results of table III suggest that
+           12 24 36 48 60 72 84 96 108120132144156168180192204216228                the incremental cost impact of ramp constraints is negligible.
+                                           Bus Number                               In addition, a one-step deterministic lookahead dispatch is
+                                                                                    analyzed, which is inspired by multi-period look-ahead in US
+                                          Deterministic                             real-time markets that are intended to better accommodate
+                                                                                    ramp capacity scarcity [34]. This policy is referred to as
+    200                                                                             `Lookahead 1-step' in table III. Compared to the deterministic
+                                                                                    dispatch, this policy exhibits a minor benefit. In fact, what is
+       0                                                                            more crucial than dispatching conventional thermal units with
+           12 24 36 48 60 72 84 96 108120132144156168180192204216228                a one-step lookahead is to dispatch pumped hydro resources
+                                           Bus Number                               by anticipating the multi-period (beyond one step) evolution
+                                                                                    of uncertainty over the day. This is shown in table III by
+Fig. 6: The locational marginal prices of the stochastic and                        calculating the cost of `Stochastic Hydro': a policy that uses
+deterministic dispatch policies. The boxes include the ob-                          the pumped hydro schedule of the stochastic programming
+servations within the 25% and 75% quantiles, the crosses                            solution, and dispatches conventional resources without a one-
+correspond to outliers.                                                             step look ahead. As shown in the table, this policy achieves
+
+   By comparing the base case results of table II to the case                          8The goal of flexible ramp products is to ensure that the system is optimally
+where the marginal cost of emergency resources is set at a                          pre-positioned in anticipation of multi-period and potentially uncertain ramps,
+very high value (3000 e/MWh), one notes that the results are                        without undermining the provision of other ancillary service products, and
+sensitive to the cost of activation of fast-start resources for all                 while ensuring that flexible capacity is priced properly.
+policies. It is interesting to note that all policies are forced to
+resort to fast-start resources in real time to some extent, due
+to binding transmission constraints.
+
+   An optimal dispatch policy will tend to carry water in the
+                                                                                                                             9
+
+almost the same cost as the stochastic programming solution.                     Full      N LDS       N LDS       Run time
+This implies that dispatching pumped hydro resources while               No Transmission   variables  constraints     (hr)
+being mindful of the multi-period evolution of the system is         No Ramp/Transmission                             4.3
+more crucial than dispatching conventional resources with a                                  1371        3560         3.3
+short look-ahead in order to prevent shortage in ramp capacity.                               832        2272         2.8
+This observation was not obvious at the outset of the study.                                  832        1880
+
+                                                                     TABLE IV: The size of the N LDS and the run time of the
+                                                                     SDDP algorithm for the models reported in section IV.
+
+D. Spatial Correlations                                              modeling spatial correlations would require rolling planning
+                                                                     conditional on day-ahead forecasts, and is out of the scope of
+   Renewable energy production in Germany exhibits strong            the present study.
+spatial correlations [36]. Statistical analysis reveals strong pos-
+itive correlation with a certain lag between all pairs of the four      In conclusion, approaches towards capturing spatial cor-
+regions operated by German TSOs. The lagged correlations             relation which have been proposed in the literature can be
+indicate weather fronts that are moving from one part of             implemented in the framework of the model proposed in
+the country to the other, and resulting in similar renewable         this paper, and may result in non-negligible impacts on the
+production patterns with a difference of a few hours.                obtained value functions. However, these methods involve
+                                                                     inevitable modeling compromises in order to overcome the
+   Two common approaches for accounting for spatial corre-           curse of dimensionality.
+lation in the SDDP hydrothermal planning literature are (i) to
+assume serial independence, and use observations of historical                       V. PRACTICAL IMPLEMENTATION
+realizations of inflows for populating nodes of equal likelihood
+in the SDDP lattice [37], [38], and (ii) to fit an autoregressive    A. Off-line Computation of Value Functions
+model for each region based on historical data, estimate
+the pairwise correlation of the residual noise of each region           The run time of the SDDP algorithm on a laptop with a 4-
+through historical data, and estimate the Cholesky factorization     core i7-4720HQ processor and 8 GB of RAM using the FAST
+of the resulting correlation matrix [33]. The resulting Cholesky     toolbox and Gurobi is shown in table IV. The result of the
+factor is then applied to a random sample of multi-dimensional       SDDP algorithm is a dispatch policy that is contingent on the
+white noise, where each sample of the error corresponds to a         realization of uncertainty for the following day. Therefore, one
+node of equal likelihood in the SDDP lattice.                        can argue that the run time is acceptable since the stochastic
+                                                                     programming policy can be solved for in the day-ahead time
+   Each of these methods has evident shortcomings. The first         frame by the operator of the pumped hydro resources, and
+approach tends to over-fit based on historical data. The second      stored in memory for the following day.
+method attempts to estimate a very large number of correlation
+parameters based on very few data points, and is then using             The dependence of the SDDP run time on model and
+an extremely sparse support to estimate a high-dimensional           solver settings can be deduced as follows. Denote M as the
+process. Therefore, in attempting to model spatial correlations      number of Monte Carlo samples employed in the forward
+the modeler needs to `pick his/her poison'. In order to test for     pass of the algorithm, H as the number of stages, K as the
+the sensitivity of the solution to the modeling of spatial cor-      number of nodes per stage (assumed constant over stages),
+relations, the first alternative method for modeling uncertainty     and I as the number of forward-backward iterations of the
+mentioned in the previous paragraph has been implemented in          algorithm (assuming a fixed number of iterations), V as the
+this paper. In particular, historical data from January 2013 until   number of variables in an N LDS, and C as the number
+December 2014 has been used in order to identify the 10 days         of constraints. The execution of the algorithm for a single
+in the data set which were closest to the day-ahead forecast of      iteration requires solving H·M problems of the size of N LDS
+the date of the case study (September 25, 2014). The data has        in a forward pass, and K · (H - 1) · M such problems in
+then been used in order to draw samples of the forecast error        a backward pass. Over I iterations, one solves a total of
+for each of the four regions operated by the different German        (K · (H - 1) · M + H · M ) · I N LDS problems. Assuming that
+TSOs (data for solar and wind forecast errors are only available     the running time of the backward passes dominates that of the
+by TSO operating region), and the forecast error has been            forward passes, which is reasonable for large M , the overall
+spread evenly among the buses of each region. The 10 samples         run time of the algorithm is approximately proportional to the
+of forecast error data have been used as the 10 nodes of the         number of nodes per stage K, the number of iterations I, the
+SDDP lattice, with each node assumed to be occurring with            number of Monte Carlo samples M , and the number of stages
+equal probability. Presumably, this data manipulation captures       H.
+spatial correlation, although, as argued earlier, it tends to over-
+fit the lattice to historical observations. The resulting SDDP          In case pumped hydro resources are scheduled on a weekly
+model is in fact computationally easier to solve, because the        or even monthly basis, the approach presented in this paper
+state space no longer includes past realizations of forecast         remains useful. A pumped hydro scheduling problem with a
+errors. The L1-norm of the change in the value functions over        horizon of a few weeks or months and coarse-grained time
+time stages averages at 7.5%, and is therefore non-negligible,       steps can be used for deriving pumped hydro storage value
+but remains below 10% for all time stages. The comparison            functions. These derived value functions can then be used as
+of the long-run cost performance of different approaches for         input for the real-time multi-stage dispatch problem presented
+                                                                     in this paper.
+                                                                               10
+
+B. On-line Decision Making                                                     study which, according to data from European markets [31],
+                                                                               is not too far from reality for certain systems) would be
+   Real-time operations are governed by tight run time re-                     to simply fix pumped hydro resources to their day-ahead
+quirements. Economic dispatch decisions may be updated as                      schedule. At the same time, the present study demonstrates that
+frequently as every five minutes, therefore economic dispatch                  substantial benefits can be achieved from dispatching pumped
+software should be capable of providing real-time decision                     hydro resources adaptively. On another extreme, therefore,
+support within a matter of a few seconds. SDDP can be run off-                 one could envision the system operator dispatching pumped
+line to compute value functions, and these value functions can                 hydro resources centrally, since the operator would be natu-
+be used in real-time economic dispatch software for optimally                  rally positioned to collect all the information necessary for
+deploying storage. The average run time required for solving                   dispatching pumped hydro resources optimally. The results of
+N LDS and obtaining on-line dispatch decisions for the ex-                     the `Stochastic Hydro' policy in table III suggest that this
+periments presented in section IV amounts to 0.027 seconds,                    solution would already deliver the majority of the potential
+which is clearly acceptable from an operational perspective.                   benefits of multi-period stochastic economic dispatch.
+
+   The value functions obtained from the SDDP algorithm can                       A less centralized approach whereby market agents bid
+be used for real-time decision making even though the realized                 their opportunity cost for pumped hydro resources in real-time
+uncertainty does not correspond to any realization of the                      markets can still benefit from the SDDP approach proposed
+stochastic process in the stochastic programming formulation.                  in this paper. The value functions obtained from the optimal
+For example, the deployment of pumped hydro for the realized                   solution of the centralized welfare maximization can be used
+rainfall on the day of the case study (September 25, 2014)                     for constructing real-time bidding functions for pumped hydro
+was computed in 3.4 seconds (i.e. 0.035 seconds per stage).                    resources. This is a topic that will be explored in more detail
+This should be contrasted to typical scenario tree formulations,               in future research.
+where the solution of the multi-stage stochastic program is a
+not a value function, but instead a decision which is contingent                           VI. CONCLUSIONS AND PERSPECTIVES
+on the state of the world. In such cases, it is unclear how the
+decision maker should proceed if the realized state of the world                  Whereas the mitigation of uncertainty in day-ahead unit
+does not correspond to any of the paths of the scenario tree.                  commitment has received a significant amount of attention
+                                                                               in the literature, the management of uncertainty in real-
+C. Integration with Market Operations                                          time operations remains a challenging application that has
+                                                                               recently drawn the attention of the research community and
+   The value of the stochastic solution relative to the deter-                 practitioners. This paper proposes a stochastic programming
+ministic alternative considered in this study suggests that the                approach for managing pumped hydro resources, and gains of
+adaptive management of pumped-hydro resources in intra-day                     up to 1.1% are demonstrated from stochastic dispatch relative
+and real-time markets can deliver substantial benefits. This                   to a deterministic policy that fixes the schedule of pumped
+raises an interesting issue related to incentives: who should                  hydro units against a deterministic forecast.
+decide about the real-time dispatch of storage resources?
+                                                                                  The SDDP algorithm was originally proposed for tackling
+   In a risk-neutral setting, a multi-stage stochastic compet-                 multi-stage stochastic linear programs. The authors have fur-
+itive equilibrium coincides with the optimal solution of a                     ther attempted to add the commitment of fast-start units to
+coordinated multi-stage stochastic scheduling problem [39].                    the model, however the results obtained so far indicate that
+In theory, therefore, risk-neutral agents who correctly antici-                the linear relaxation of the problem achieves only marginal
+pate the evolution of uncertainty can adjust the valuation of                  benefits, and further research is required in this direction. Re-
+stored energy so as to reproduce the dispatch of a benevolent                  cent advances have extended the scope of the SDDP algorithm
+centralized planner. In practice, this notion stumbles upon the                to multi-stage stochastic integer programs [43]. This creates
+exercise of market power, the fact that agents are typically not               the possibility for the consideration of unit commitment in
+risk neutral, and the fact that agents may not share identical                 the multi-stage stochastic optimization of real-time operations,
+views about the future.                                                        which will be explored in future work.
+
+   From a market power mitigation point of view, the major                                                    APPENDIX
+challenge of managing pumped storage resources in real time
+is the fact that these resources are not characterized by an                   A. SDDP Lattice Notation
+intrinsic marginal cost, but instead by an opportunity cost of
+stored energy which depends on beliefs about the future evolu-                    This section illustrates the notation introduced in section II
+tion of real-time prices. Therefore, a decentralized operation of              by example. Consider the lattice shown in Fig. 7. The lattice
+storage would create challenges in terms of market monitoring                  consists of H = 3 stages. Each node of the lattice is indexed
+since it would not be possible for the regulator to distinguish                by k  t, which is a possible realization of the random
+between true scarcity and the exercise of market power9.                       vector tT = (cTt , hTt , vec(Tt), vec(Wt)). The set of possible
+This concern is especially relevant in systems with ramping                    paths over the lattice up to stage t is denoted as [t], and the
+scarcity caused by the integration of renewable resources                      ancestor of a certain [t]  [t] is denoted as A([t])  [t-1].
+[41], [42]. One extreme (the one investigated in the present                   Referring to the two first stages of the lattice of Fig. 7, 1 =
+                                                                               {1}, and 2 = {1, 2}, since stage 1 corresponds to a single
+   9The impact of storage ownership structure on the exercise of market power  outcome and stage 2 corresponds to two possible outcomes.
+has been analyzed by Sioshansi [40].
+                                                                   11
+
+Fig. 7: An illustration of the lattice used in the SDDP               Dl: load of consumer l
+algorithm.                                                            RFg: renewable energy forecast of renewable generator g
+                                                                      Bk: susceptance of line k
+                                                                      T Ck: flow limit of line k
+                                                                      gd: pumping efficiency of unit g
+                                                                      dg: production efficiency of unit g
+                                                                      DM axg: pumping capacity of pumped hydro unit g
+                                                                      P M axg: production capacity of pumped hydro unit g
+                                                                      P M ing: technical minimum of conventional generator g
+                                                                      RUg/RDg: 15-minute ramp-up / ramp-down rate of gener-
+                                                                   ator g
+
+                                                                      M T Lg: maximum transition limit of generator g
+                                                                      RFg: renewable forecast of renewable generator g
+
+The set [2] = {(1, 1), (1, 2)} corresponds to the two possible                             ACKNOWLEDGMENT
+paths from stage 1 to stage 2. Each path [2]  [2] originates
+from the same ancestor, with A((1, 1)) = A((1, 2)) = 1.               This research has been supported by the ENGIE Chair in
+
+   Forward passes are illustrated in the left part of the figure,  Energy Economics and Energy Risk Management and by the
+with x^(ti) corresponding to the realization of a trial decision
+for stage t and Monte Carlo sample i. The sample path              ENGIE-Electrabel ColorPower grant.
+is indicated in bold, and corresponds to (1, 2, 3). Backward
+passes are illustrated in the right part of the figure, with                                    REFERENCES
+t(,ik) corresponding to the dual multipliers that are used for
+generating optimality cuts. The dashed box represents the set       [1] Y. Gu and L. Xie, "Stochastic look-ahead economic dispatch with
+of nodes in the lattice which share a common value function              variable generation resources," IEEE Transactions on Power Systems,
+approximation, V~t. Note that due to the assumption of serial            vol. 32, no. 1, pp. 17­29, 2017.
+independence, all nodes k  t share the same value function
+approximation.                                                      [2] D. Swider, "Compressed air energy storage in an electricity system
+                                                                         with significant wind power generation," IEEE Transactions on Energy
+B. Pumped Hydro Model Notation                                           Conversion, vol. 22, no. 1, pp. 95­102, March 2007.
+
+Sets                                                                [3] A. Tuohy and M. O'Malley, "Impact of pumped storage on power
+   T : set of time stages                                                systems with increasing wind penetration," in IEEE Power and Energy
+   t: set of SDDP lattice nodes in stage t                               Society General Meeting, 2009.
+   [t]: set of paths on SDDP lattice from stage 1 to stage t
+   G: set of generators                                             [4] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+   N : set of buses                                                      optimization applied to energy planning," Mathematical Programming,
+   K: set of transmission lines                                          vol. 52, pp. 359­375, 1991.
+   L: set of loads
+   P H: set of pumped hydro resources                               [5] M. Khodayar, M. Shahidehpour, and L. Wu, "Enhancing the dispatcha-
+   GR: set of renewable resources                                        bility of variable wind generation by coordination with pumped-storage
+                                                                         hydro units in stochastic power systems," IEEE Transactions on Power
+Decision variables                                                       Systems, vol. 28, no. 3, pp. 2808­2818, August 2013.
+   cg: cost of generator g
+   pg: power production of generator g                              [6] D. Pozo, J. Contreras, and E. Sauma, "Unit commitment with ideal and
+   lsn: load shedding at bus n                                           generic energy storage units," IEEE Transactions on Power Systems,
+   pdg: pumping demand of pumped hydro unit g                            vol. 29, no. 6, pp. 2974­2984, November 2014.
+   ppg: pumping supply of pumped hydro unit g
+   sg: stored energy of pumped hydro unit g                         [7] J. P. Deane, E. J. McKeogh, and B. P. O. Gallachoir, "Derivation
+   fk: power flow on line k                                              of intertemporal targets for large pumped hydro energy storage with
+   psn: production shedding in node n                                    stochastic optimization," IEEE Transactions on Power Systems, vol. 28,
+   n: angle of bus n                                                     no. 3, pp. 2147­2155, August 2013.
+   yg: renewable supply / renewable forecast ratio for renew-
+                                                                    [8] N. Li and K. W. Hedman, "Economic assessment of energy storage in
+able generator g                                                         systems with high levels of renewable resources," IEEE Transactions on
+Parameters                                                               Sustainable Energy, vol. 6, no. 3, pp. 1103­1111, July 2015.
+
+   F Cg: fuel cost of generator g                                   [9] R. Nu¨rnberg and W. Ro¨misch, "A two-stage planning model for power
+   Ag,m, Bg,m: intercept and slope of segment m describing               scheduling in a hydro-thermal system under uncertainty," Optimization
+fuel cost function of generator g                                        and Engineering, vol. 3, no. 4, pp. 355­378, 2002.
+   Ug: on/off status of generator g
+                                                                   [10] R. Jiang, J. Wang, and Y. Guan, "Robust unit commitment with
+                                                                         wind power and pumped storage hydro," IEEE Transactions on Power
+                                                                         Systems, vol. 27, no. 2, pp. 800­810, May 2012.
+
+                                                                   [11] Y. Wen, C. Guo, H. Pandzic, and D. S. Kirschen, "Enhanced security-
+                                                                         constrained unit commitment with emerging utility-scale energy stor-
+                                                                         age," IEEE Transactions on Power Systems, vol. 31, no. 1, pp. 652­662,
+                                                                         January 2016.
+
+                                                                   [12] A. Lorca and X. A. Sun, "Adaptive robust optimization with dynamic
+                                                                         uncertainty sets for multi-period economic dispatch under significant
+                                                                         wind," IEEE Transactions on Power Systems, vol. 30, no. 4, pp. 1702­
+                                                                         1713, 2015.
+
+                                                                   [13] A. Lorca, X. A. Sun, E. Litvinov, and T. Zheng, "Multistage adaptive
+                                                                         robust optimization for the unit commitment problem," Operations
+                                                                         Research, vol. 64, no. 1, pp. 32­51, 2016.
+
+                                                                   [14] B. Wang and B. F. Hobbs, "A flexible ramping product: Can it help real-
+                                                                         time dispatch markets approach the stochastic dispatch ideal?" Electric
+                                                                         Power Systems Research, vol. 109, pp. 128­140, 2014.
+
+                                                                   [15] ----, "Real-time markets for flexiramp: A stochastic unit commitment-
+                                                                         based analysis," IEEE Transactions on Power Systems, vol. 31, no. 2,
+                                                                         pp. 846­860, 2016.
+                                                                                 12
+
+[16] C. Safta, R. L.-Y. Chen, H. N. Najm, A. Pinar, and J.-P. Watson,            [41] E. Moiseeva, S. Wogrin, and M. R. Hesamzadeh, "Generation flexibility
+      "Efficient uncertainty quantification in stochastic economic dispatch,"          in ramp rates: Strategic behavior and lessons for electricity market
+      IEEE Transactions on Power Systems, 2016.                                        design," European Journal of Operational Research, vol. 261, no. 2,
+                                                                                       pp. 755­771, 2017.
+[17] D. Phan and S. Ghosh, "Two-stage stochastic optimization for optimal
+      power flow under renewable generation uncertainty," ACM Transactions       [42] E. Moiseeva and M. R. Hesamzadeh, "Strategic bidding of a hydropower
+      on Modeling and Computer Simulation (TOMACS), vol. 24, no. 1, 2014.              producer under uncertainty: Modified benders approach," forthcoming in
+                                                                                       IEEE Transactions on Power Systems, 2017.
+[18] R. A. Jabr, "Adjustable robust OPF with renewable energy sources,"
+      IEEE Transactions on Power Systems, vol. 28, no. 4, pp. 4742­4751,         [43] J. Zou, S. Ahmed, and X. A. Sun, "Nested decomposition of multistage
+      2013.                                                                            stochastic integer programs with binary state variables," Georgia Institute
+                                                                                       of Technology, Tech. Rep., 2016.
+[19] D. Bienstock, M. Chertkov, and S. Harnett, "Chance-constrained optimal
+      power flow: Risk-aware network control under uncertainty," SIAM                                           Anthony Papavasiliou (M'06) received the B.S.
+      Review, vol. 56, no. 3, pp. 461­495, 2014.                                                                degree in electrical and computer engineering from
+                                                                                                                the National Technical University of Athens, Greece,
+[20] M. Lubin, Y. Dvorkin, and S. Backhaus, "A robust approach to chance                                        and the Ph.D. degree from the Department of Indus-
+      constrained optimal power flow with renewable generation," IEEE                                           trial Engineering and Operations Research (IEOR)
+      Transactions on Power Systems, vol. 31, no. 5, pp. 3840­3849, 2015.                                       at the University of California at Berkeley, Berkeley,
+                                                                                                                CA, USA. He holds the ENGIE Chair at the Uni-
+[21] T. Summers, J. Warrington, M. Morari, and J. Lygeros, "Stochastic                                          versite´ catholique de Louvain, Louvain-la-Neuve,
+      optimal power flow based on conditional value at risk and distributional                                  Belgium, and is also a faculty member of the Center
+      robustness," Electric Power and Energy Systems, vol. 75, pp. 116­125,                                     for Operations Research and Econometrics. He has
+      2015.                                                                                                     served as a consultant and intern at N-SIDE, Pacific
+                                                                                 Gas and Electric, Quantil, Sun Run, the United States Federal Energy
+[22] R. A. Jabr, S. Karaki, and J. A. Korbane, "Robust multi-period OPF with     Regulatory Commission, the Palo Alto Research Center and the Energy,
+      storage and renewables," IEEE Transactions on Power Systems, vol. 30,      Economics and Environment Modeling Laboratory at the National Technical
+      no. 5, pp. 2790­2799, 2015.                                                University of Athens.
+
+[23] J. R. Birge and F. Louveaux, Introduction to Stochastic Programming,                                       Yuting Mou (S16) received the Bachelors and
+      ser. Springer Series in Operations Research and Financial Engineering.                                    Masters degrees in electrical engineering from Jilin
+      Springer, 2010.                                                                                           University, China, and Zhejiang University, China,
+                                                                                                                in 2012 and 2015, respectively. He is currently a
+[24] G. Infanger and D. P. Morton, "Cut sharing for multistage stochastic lin-                                  PhD student at the Center for Operations Research
+      ear programs with interstage dependency," Mathematical Programming,                                       and Econometrics, Universite´ catolique de Louvain,
+      vol. 75, pp. 241­256, 1996.                                                                               Belgium.
+
+[25] R. M. V. Slyke and R. Wets, "L-shaped linear programs with applications                                    Le´opolod Cambier received a B.S. degree in En-
+      to optimal control and stochastic programming," SIAM Journal on                                           gineering and a M.S. degree in Mathematical En-
+      Applied Mathematics, vol. 17, no. 4, pp. 638­663, July 1969.                                              gineering from the Universite´ catholique de Lou-
+                                                                                                                vain, Belgium. He is currently a Ph.D. student in
+[26] A. Shapiro, "Analysis of stochastic dual dynamic programming method,"                                      Computational and Mathematical Engineering in the
+      European Journal of Operational Research, vol. 209, pp. 63­72, 2011.                                      Institute for Computational and Mathematical Engi-
+                                                                                                                neering at Stanford University, CA, USA. His focus
+[27] T. H. De-Mello, V. L. D. Matos, and E. C. Finardi, "Sampling strategies                                    is on fast algorithms for linear systems, including
+      and stopping criteria for stochastic dual dynamic programming: a case                                     sparse and low-rank based direct methods, incom-
+      study in long-term hydrothermal scheduling," Energy Systems, vol. 2,                                      plete factorizations and iterative algorithms.
+      no. 1, pp. 1­31, 2011.
+                                                                                                                Damien Scieur received his diploma in Mathe-
+[28] A. Shapiro, W. Tekaya, J. P. da Costa, and M. P. Soares, "Risk                                             matical Engineering in 2015 from the Universite´
+      neutral and risk averse stochastic dual dynamic programming method,"                                      catholique de Louvain. He is currently a Ph.D.
+      European Journal of Operational Research, vol. 224, pp. 375­391, 2013.                                    student at the E´ cole normale Supe´rieure d'Ulm. He
+                                                                                                                works at Inria Paris, and is the recipient of a Marie
+[29] F. G. Cabral, "A proposal for a multiplicative autoregressive multivariate                                 Curie fellowship.
+      periodic model for the generation of inflow scenarios applicable to the
+      planning model of the brazilian electricity sector," Ph.D. dissertation,
+      Federal University of Rio de Janeiro, 2016.
+
+[30] P. Pinson, H. Nielsen, J. K. Moller, H. Madsen, and G. N. Karinio-
+      takis, "Non-parametric probabilistic forecasts of wind power: Required
+      properties and evaluation," Wind Energy, vol. 10, pp. 497­516, 2007.
+
+[31] A. Papavasiliou and Y. Smeers, "Remuneration of flexibility using
+      operating reserve demand curves: A case study of Belgium," The Energy
+      Journal, 2017.
+
+[32] I. Aravena and A. Papavasiliou, "Renewable energy integration in zonal
+      markets," IEEE Transactions on Power Systems, vol. 32, no. 2, pp. 1334­
+      1349, 2017.
+
+[33] M. V. F. Pereira, "Recent applications of multistage stochastic op-
+      timization to power system planning and operations," in CORE@50
+      conference. Louvain la Neuve, Belgium: Universite´ catholique de
+      Louvain, 2016.
+
+[34] N. Navid and G. Rosenwald, "Market solutions for managing ramp flex-
+      ibility with high penetration of renewable resource," IEEE Transactions
+      on Sustainable Energy, vol. 3, no. 4, pp. 784­790, 2012.
+
+[35] "Flexible ramping product, revised draft final proposal," California ISO,
+      Tech. Rep., 2015.
+
+[36] A. Papavasiliou, S. Oren, and I. Aravena, "Stochastic modeling of multi-
+      area wind power production," in 48th Hawaii International Conference
+      on System Sciences (HICSS), 2015.
+
+[37] A. Brigatto, A. Street, and D. M. Valladao, "Assessing the cost of
+      time-inconsistent operation policies in hydrothermal power systems,"
+      Forthcoming in IEEE Transactions on Power Systems, 2017.
+
+[38] A. Street, A. Brigatto, and D. M. Valladao, "Co-optimization of energy
+      and ancillary services for hydrothermal operation planning under a
+      general security criterion," Forthcoming in IEEE Transactions on Power
+      Systems, 2017.
+
+[39] A. Philpott, M. Ferris, and R. Wets, "Equilibrium, uncertainty, and risk
+      in hydrothermal electricity systems," Mathematical Programming, 2013.
+
+[40] R. Sioshansi, "Welfare impacts of electricity storage and the implications
+      of ownership structure," Energy Journal, pp. 173­198, 2010.
+

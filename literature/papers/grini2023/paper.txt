@@ -1,0 +1,1323 @@
+Energy Systems
+https://doi.org/10.1007/s12667-023-00609-9
+
+ ORIGINAL PAPER
+
+A stochastic policy algorithm for seasonal hydropower
+planning
+
+Håkon S. Grini1 · Anders S. Danielsen1 · SteinErik Fleten1 · Andreas Kleiven1
+
+Received: 2 December 2022 / Accepted: 12 July 2023
+© The Author(s) 2023
+
+Abstract
+Hydropower producers need to plan several months or years ahead to estimate the
+opportunity value of water stored in their reservoirs. The resulting large-scale opti-
+mization problem is computationally intensive, and model simplifications are often
+needed to allow for efficient solving. Alternatively, one can look for near-optimal
+policies using heuristics that can tackle non-convexities in the production function
+and a wide range of modelling approaches for the price- and inflow dynamics. We
+undertake an extensive numerical comparison between the state-of-the-art algorithm
+stochastic dual dynamic programming (SDDP) and rolling forecast-based algo-
+rithms, including a novel algorithm that we develop in this paper. We name it Sce-
+nario-based Two-stage ReOptimization abbreviated as STRO. The numerical experi-
+ments are based on convex stochastic dynamic programs with discretized exogenous
+state space, which makes the SDDP algorithm applicable for comparisons. We dem-
+onstrate that our algorithm can handle inflow risk better than traditional forecast-
+based algorithms, by reducing the optimality gap from 2.5 to 1.3% compared to the
+SDDP bound.
+
+Keywords Stochastic programming · Stochastic policy · Hydropower reservoir
+management
+
+1Introduction
+
+Sequential decision-making in the presence of uncertainty is of relevance in many
+diverse applications, including inventory control problems, production scheduling,
+and system modelling [3]. Typically, the goal is to minimize cost or maximize prof-
+its by dynamically adapting decisions to exogenous information. These problems are
+often computationally intractable because of exponential growth in the number of
+scenarios needed to evaluate future expected costs or profits. Therefore, approximate
+
+* Håkon S. Grini
+     hkonsg@gmail.com
+
+1 Norwegian University of Science and Technology, 7491 Trondheim, Norway
+
+                                                       1 3 Vol.:(0123456789)
+                                                                                                              H. S. Grini et al.
+
+dynamic programming (ADP) algorithms are often used to obtain near-optimal poli-
+cies [26].
+
+   In some applications, one can utilize the problem structure in developing com-
+putationally tractable algorithms, such as decomposition-based algorithms [18, 33].
+The stochastic dual dynamic programming algorithm (SDDP), is an example [23].
+This algorithm is state of the art for solving the seasonal hydropower production
+planning problem [12, 31]. The algorithm requires the problem formulation to be
+convex and uncertainty to be stage-wise independent [24]. Therefore, certain aspects
+of the real problem need to be approximated, to adhere to the convexity requirement.
+To handle non-convexities, some recent papers have proposed to extend the algo-
+rithm [11, 17], or to approximate the problem using McCormick envelopes [6]. To
+adhere to the requirement of stage-wise independence, serial correlation is typically
+accounted for by either imposing a linear dependence structure and increasing the
+state vector, or discretizing the state space before applying the algorithm [20]. The
+first approach greatly restricts the dynamics of exogenous factors, while the latter
+approach induces a discretization error.
+
+   An alternative class of algorithms that often provide good policies is forecast-
+based reoptimization heuristics, e.g. the rolling intrinsic (RI) heuristic [5]. The heu-
+ristic repeatedly solve deterministic problems based on the expectation of exogenous
+factors. When averaging revenues from sufficiently many sample paths, it provides
+a feasible policy and an estimated lower bound on maximization problems. Reop-
+timization heuristics are widely used by practitioners in various fields. In gas stor-
+age management, numerical experiments indicate that the rolling intrinsic algorithm
+provides near-optimal policies for price- and storage-dependent injections and with-
+drawals [19, 35]. Despite the ability to handle complex relationships, few works
+have assessed the performance of reoptimization-based heuristics in hydropower
+scheduling. An exception, albeit for short-term operations, is [21].
+
+   In this work, our main contributions are to provide an extensive comparison of
+the rolling intrinsic algorithm, the state-of-the-art algorithm SDDP, and a novel,
+heuristic-based, algorithm that does not impose any restrictions on the modelling of
+exogenous factors. We call this algorithm Scenario-based Two-stage ReOptimiza-
+ton (STRO). The main innovative aspect is that there is inherent stochasticity in the
+algorithm, and that there is no requirement that the policy yielded by the algorithm
+is deterministic. Still, the algorithm provides an estimate of the lower bound on the
+optimal value, from which marginal water values can be derived.
+
+   STRO samples possible future outcomes and solves two-stage programs repeat-
+edly to make decisions. The idea is that this will better capture the range of possible
+realizations of exogenous factors, compared to the rolling intrinsic heuristic which
+uses a deterministic forecast based on expectations. Capturing the range of possible
+realizations is crucial in applications where all risk factors cannot be hedged, e.g. a
+hydropower producer which may risk spillage. In the setting of hydropower schedul-
+ing using SDDP, our algorithm allows for a more realistic representation of inflow
+dynamics, e.g. by using dynamic artificial neural networks [32], as no restrictions
+are imposed on the modelling of the exogenous factors.
+
+   Decision-making under uncertainty is also highly relevant in power system analyses
+[27, 34]. Our method is similar to the approach in [15, 16], where two-stage problems
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+are sequentially reoptimized along historical values of uncertain variables. We extend
+this method in several ways. First, we suggest to estimate the value function without
+requiring a deterministic policy. By doing so, we can sample a small subset of sce-
+narios from which the two-stage problem is based on, and as such, control the degree
+of computational complexity. This makes our method capable of solving non-convex
+problems as well, as opposed to [15, 16], which is limited to the linear problems. Sec-
+ond, contrary to [15, 16], we evaluate the performance against the state-of-the-art algo-
+rithm SDDP, which is known to be optimal under certain restrictions. This gives us an
+upper bound on the profit maximization problem, which allows us to analyse different
+configurations of our suggested approach and provide useful insights about the repre-
+sentation of uncertainty in hydropower scheduling.
+
+   Another benefit of STRO is the opportunity for highly scalable parallel processing.
+Because scenarios are generated independently, their respective policies can be com-
+puted individually. The use of parallelization allows for a drastic reduction in the pro-
+cessing time required. As seen in previous works, traditional parallelization schemes
+do not scale to the same extent for SDDP [1, 14]. We provide an extensive numerical
+comparison of optimality gaps and computation time of the proposed algorithm, the
+state-of-the-art algorithm SDDP, and the rolling intrinsic algorithm.
+
+   The most important findings are that both the RI and STRO methods achieve rev-
+enues that are less than 3% from the estimate of the upper bound on optimal revenue
+based on several trial runs of the SDDP algorithm. Furthermore, by increasing the
+number of samples per decision for the STRO method, the performance of the algo-
+rithm increases substantially. When using 2 or more samples per decision, STRO out-
+performs RI by a decent margin and achieves revenues less than 2% from the estimated
+upper bound. The benefit of increasing the number of samples for the STRO heuristic
+is largest when moving from 1 to 2 samples, and the benefit from increasing the num-
+ber of samples further was found to diminish quickly.
+
+   The paper is structured as follows. First, a detailed mathematical formulation of
+the problem is given, along with an in-depth problem description, in Sect. 2. Then the
+novel heuristic is presented in Sect. 3. We then give an illustrative example of how this
+heuristic works in Sect. 4. In Sect. 5 we give an overview of the specific case the algo-
+rithms were tested on, as well as the software and hardware used. Finally, the results of
+our experiments are outlined in Sect. 6 before we give our final remarks in Sect. 7.
+
+2Mathematical formulation
+
+In this section, we provide a problem description and describe the stochastic processes
+and a mathematical model for the seasonal hydropower planning problem.
+
+2.1Problem description
+
+We consider the medium-term reservoir management problem, where the objec-
+tive is to value-maximize production over 1­2 years. The production decisions
+for medium-term reservoir management are typically of a weekly granularity.
+
+                                                           13
+                                                                                                              H. S. Grini et al.
+
+Modern hydropower plants commonly consist of multiple interconnected reser-
+voirs, that allow for coordinated water release that maximizes profit for the sys-
+tem as a whole. The state of the system at a given time is given by the amount of
+water that is stored in the different reservoirs. Furthermore, as regulations can put
+constraints on the water stored on a seasonal basis, these constraints can vary for
+different times t.
+
+   Several simplifications and assumptions are often made when modelling the res-
+ervoir management problem. This includes ignoring operating costs, as these vari-
+able costs are usually negligible compared to the revenue. This makes the problem
+a revenue-maximizing one. Another common simplification is to make the energy
+coefficient constant, to keep the problem convex. This coefficient is the factor that
+gives how much energy a production facility can get from a single unit of water.
+In reality, this factor is dependent on the head (the height difference between the
+turbine and the variable water level), as well as the intensity of the flow through the
+turbine. The head can vary substantially with the amount of water in the reservoir. In
+the sample system, the variations represented between 4.0% and 6.5% of the overall
+head for the different reservoirs, but these variations can be substantially higher or
+lower depending on the system. Since potential energy increases linearly with the
+head, this incentivizes producers to keep their reservoir levels high, thereby generat-
+ing more electricity per unit of water. This poses an interesting dynamic, as the risk
+of spillage increases with higher water levels. To capture this dynamic, head varia-
+tions are implemented in the model with a variable energy coefficient. This leads to
+bi-linearity which is accounted for using McCormick envelopes, similarly to [6].
+
+2.2Marginal water values
+
+The main goal of the medium-term reservoir management problem is to estimate
+marginal water values. These values naturally depend on the amount of water in
+the system. To illustrate this, one can compare the additional value of an extra
+unit of water in a full reservoir and an empty reservoir. In the case of a full res-
+ervoir, one would have to discharge the unit immediately, independently of price,
+to avoid spillage. If the full reservoir is already producing at full capacity, the
+additional unit would naturally be spilled, and the marginal value would be 0. For
+the other extreme case where the reservoir is empty, the marginal value would be
+much higher as the producer could wait until the prices are high to discharge the
+unit, without having to worry about spillage. In practice, that means that the mar-
+ginal value of water decreases, as the water level in the reservoir increases.
+
+   The marginal water value represents the current alternative cost of discharging
+a unit and is therefore used to make short-term production decisions. The way
+the medium-term reservoir management problem relates to this is that one can
+calculate the expected discounted revenue over a 1­2 year horizon starting with
+different water levels. If one plots the expected revenue against the starting water
+level, the slope of the curve would represent the current marginal water value for
+different water levels.
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+2.3Nomenclature
+
+Before formally defining the optimization model, we provide the notation used
+in the following section. Some of the notation is only used for the additional
+constraints seen in the appendix.
+
+   Sets and indices
+
+R                     Reservoirs, indexed by i and j
+
+RP                    Reservoirs with electricity production
+
+RDi is                Upstream reservoirs releasing water into reservoir i
+
+RSi pill              Upstream reservoirs spilling water into reservoir i
+
+Mi                    Set of points on the piecewise linear curve representing the relation between
+
+                         head and water level for reservoir with electricity production i, indexed by k
+
+                      Set of feasible policies
+
+S                     Set of level 1 scenarios, indexed by s
+
+N                     Set of level 2 scenarios, indexed by n
+
+Tt                    Set of stages from stage t to and including the end of the horizon, indexed by
+
+          Decision variables
+
+xi,t                  Discharge from reservoir i in period t                                            (m3)
+
+ri,t                  Slack variable for water spillage from reservoir i in period t                    (m3)
+
+li,t                  Water level in reservoir i at the beginning of time period t                      (m3)
+
+lia,vt g              Average water level in reservoir i through time period t                          (m3)
+
+hi,t                  Water head of reservoir i in period t                                             (m)
+
+wi,t                  Substitution variable for the bi-linear term hi,txi,t                             (m)
+
+i,t,k                 Weight of point k on the piece-wise linear graph describing the relation
+
+                      between water level and head in reservoir i at time t
+
+          Parameters
+
+T                     Stages (time periods) in planning horizon
+
+S                     Number of level 1 (outer) scenarios
+
+N                     Number of level 2 (inner) scenarios
+
+                      Discount factor
+
+i                     Constant factor describing the efficiency of the turbine of reservoir (MWh/m3)
+
+                      i
+
+g                     Gravitational acceleration constant                                       (m/s2)
+
+                      Density of water                                                          (Kg/m3)
+
+Pt                    Power price in stage t                                                    (/MWh)
+
+Ii,t                  Water inflow intensity for reservoir i in period t                        (m3)
+
+                                                                                      13
+                                              H. S. Grini et al.
+
+2.4Stochastic processes
+
+Restructured energy markets have uncertain prices, denoted Pt, which means that
+operators have to optimize over stochastic prices. Furthermore, as weather cannot
+be forecasted perfectly, the inflow to reservoirs is also uncertain. The set of all res-
+ervoirs is denoted by R = {1, 2, ... , |R|}. We denote inflow to reservoir i  R at time
+t by Ii,t.
+
+   For prices, we apply the Schwartz-Smith two-factor approach [28]. This assumes
+that the logarithm of the price can be cast as the sum of a short-term factor, a long-
+term factor, and finally a seasonal factor, as the energy price typically follows a sea-
+sonal pattern. The parameters are estimated using Kalman filtering and maximum
+likelihood estimation [13]. Data points are obtained from synthetic futures curves
+[9] using the approach in [2]; see also [9].
+
+   The inflow specification is primarily based on the one seen in [12], where the
+inflow is modelled according to AR-1 processes. To reduce dimensionality and cap-
+ture the covariance of inflow to different reservoirs, a PCA transformation of the
+inflow data is performed to project it to a lower dimensionality, as seen in [8]. The
+original inflow data is normalized to follow a standard normal distribution, before
+being transformed using PCA. After fitting AR-1 models to the lower dimension
+data, one can produce scenarios using the model for every dimension k in the pro-
+jected space. After generating the low-dimensional scenarios, we can transform the
+generated scenario back to the original dimensionality, using the PCA matrix. We
+then denormalize this data, to ensure that the generated scenarios follow the distri-
+bution of the historical observations. To circumvent the issue of negative inflows
+generated by the AR model, negative values are converted to 0 according to Eq. (1).
+
+                         Ii,t = max(Ii,t, 0)  (1)
+
+2.5Actions and transition function
+
+We present here stage-t actions and transition functions. As only a subset of these
+reservoirs have connected turbines allowing for energy production, we denote this
+by subset RP = {1, 2, ... , |RP|}. These sets are both indexed by i and j, for the mod-
+elling of interconnections between reservoirs. Every reservoir i, has two sets of res-
+ervoirs, RDi is and RiSpill, that represent the reservoirs whose discharged and spilled
+water flows directly into reservoir i, respectively.
+
+   The vector of decisions in stage t includes discharge xi,t and spillage ri,t for
+each station and reservoir, where t(lt, It) is the feasible stage-t action set and
+(xi,t, ri,t, i  R)  t(lt, It). The discharge variable has both upper and lower bounds
+depending on physical limitations and regulations that can be seasonal. The spillage
+and the discharge can naturally not be negative.
+
+   The transition function consists of three components (lt, Pt, It). The exogenous
+components, includes price Pt and the vector of inflows, It = (Ii,t, i  R). These
+factors get updated according to the stochastic processes discussed in the previous
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+section, independently of the stage-t action. The endogenous component is the vec-
+
+tor of reservoir volumes in the watercourse, lt = (li,t, i  R). Executing an action
+
+(xt, rt) at stage t and state (lt, Pt, It) leads to the following update of the endogenous
+
+state,
+
+               li,t+1 = li,t + Ii,t - ri,t - xi,t +             rj,t +              xj,t ,
+
+                                                     jRSi pill             jRDi is                        (2)
+
+               i  R t = 0, ... , T - 1
+
+This function ensures water balance in time and the topology of the watercourse.
+It gives the relationship between the inflow, production decisions, spillage, and
+the water level of a given reservoir i. It ensures that spillage happens when the net
+inflow is higher than the reservoir capacity. Due to the longer time steps taken with
+medium-term reservoir management, water delay is not taken into account, and it is
+assumed that water can flow through the entire system within a single time step.
+
+2.6Immediate reward and policy
+
+At each stage, the immediate reward is given by electricity production and electric-
+
+ity price (3)
+
+                                  
+                       Pt g(li,t, xi,t),
+                                                                                                          (3)
+                                  iRP
+
+where g(li,t, xi,t) is the energy output from discharge xi,t at reservoir level li,t. We
+denote the set of feasible policies by . A policy is a collection of stage-dependent
+actions, mapping states at time t to feasible actions. We let li,t and xi,t respectively
+denote the endogenous state reached at, and action made in, stage t for reservoir i,
+
+when following policy . We aim to find a policy that maximizes the expected accu-
+
+mulated discounted reward,
+
+V0(l0, I0, P0) = max              t Pt          g(li,t ,        xi,t )  +  T                i(li,T  )I0,     
+                        T -1                                                                              P0 ,
+                                           iRP                                   iR
+                             t=0
+
+                                                                                                          (4)
+
+where is the discount factor and (li,T ) is the end of horizon value for each reser-
+voir, given by how much water is remaining.
+
+2.7Relaxation and approximations
+
+The reward function contains the term g(li,t, xi,t). This function is typically con-
+cave in li,t and xi,t. The higher the reservoir, the higher the generation output.
+Similarly, as a function of discharge, the efficiency of a turbine is first increasing
+and then possibly decreasing. Piece-wise linear approximations of the discharge
+function can handle the latter feature. In our model, we assume it to be a con-
+stant factor for each reservoir i denoted i  [0, 1], i.e. g(li,t, xi,t) = g(li,t)xi,t i. The
+dependency of reservoir volume, i.e. head variations, is complicated since it leads
+
+                                                           13
+                                                           H. S. Grini et al.
+
+to a bi-linear objective and thereby non-convexity. This makes it challenging to
+
+optimize with conventional methods such as SDDP, which we use as a baseline.
+
+To deal with this issue, we relax the problem using McCormick envelopes. We
+
+start by modifying the reward in (3) to
+
+                
+                Pt hi(li,t)xi,tg i
+                                                                            (5)
+                iRP
+
+The functions hi() represent the head in reservoir i, while g is the gravitational
+
+acceleration constant and is the density of water. The hi() functions depend on
+
+li,t and are calculated using piece-wise linear approximations for the individual res-
+
+ervoirs. These piece-wise linear graphs are represented as sets of points, where the
+
+x-coordinate represents the water level and the y-coordinate represents the head.
+
+These sets are denoted Mi, for every reservoir i. To find the head hi,t given any fea-
+
+sible water level li,t, we introduce the variables i,t,k representing the weight of every
+
+point k  Mi at time t. By ensuring that all these weights are non-negative and sum
+
+to 1, and that at most two points adjacent to each other can be non-zero, we can find
+
+the exact point on the y-axis on the piece-wise linear graph, given the value on the
+
+x-axis.
+
+The restriction requiring that at most two weights can be non-zero, and that
+
+these must represent points adjacent to each other, is called a special ordered set
+
+of type 2 (SOS2) restriction. This restriction can be ignored in cases where the
+
+piece-wise linear function is concave, as the head hi,t would be the same with or
+
+without the SOS2 constraint. The approximated graphs for the energy-producing
+
+reservoirs in the Matre Haugsdal system can be seen in Fig. 1. It can be seen that
+
+these are all concave, ensuring that the SOS2 constraints are unnecessary.
+
+The piece-wise linear approximation of the head function hi(li,t) is explained in
+
+further detail in Appendix A. This approximation leads to bi-linear terms in (5).
+
+To approximate these terms, we introduce the substitution variable wi,t = hi(li,t)xi,t
+
+and use McCormick envelope constraints. This gives us the modified linear
+
+reward
+
+                
+                Pt wi,tg i,
+                                                                            (6)
+                iRP
+
+which leads to a convex and linear multistage optimization problem, satisfying the
+requirements of SDDP. For additional constraints associated with the McCormick
+relaxation, see Appendix B.
+
+(a) Svartevatn  (b) Storevatn                              (c) Gobotvatn
+
+Fig.1Volume-head relations for reservoirs with production
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+3Scenariobased twostage reoptimization heuristic
+
+One of the main ideas behind rolling horizon methods, such as RI, is that a finite
+
+number of sampled scenarios can be used to approximate the sample space of a con-
+
+tinuous-state problem. The RI heuristic has shown promising performance in vari-
+
+ous applications and is simple and intuitive. We utilize a similar concept as the RI
+
+heuristic in developing a novel Scenario-based Two-stage Re-Optimization heuristic
+
+(STRO). Instead of using expectations of exogenous variables as forecasts from any
+
+given state, we propose to generate possible scenarios from the stochastic model and
+
+repeatedly solve two-stage problems based on these scenarios.
+
+To distinguish between the outer scenarios that are the realizations of the envi-
+
+ronment that are unknown to the heuristic, and the inner scenarios that are generated
+
+to build the two-stage stochastic programs that the heuristic solves to find the first-
+
+stage decision. We refer to the outer scenarios as level 1 scenarios and the inner ones
+
+as level 2 scenarios.
+
+We introduce the following notation for formulating the two-stage problem used
+by the STRO scheme. Let (Its, Pst ) denote the realization of stochastic variables in
+stage t of level 1 scenario s. Let lts denote the endogenous state reached at time t by
+following the STRO scheme along level 1 scenario s. We denote the decision vari-
+
+ables for discharge and        Tsphielnla,gleetf(rIotnm, Prtne)s=erv{o(iIrtn        i in stage t and level 1              scenario s as
+xis,t and rin,t respectively.                                                       , P tn), (Itn+1, P tn+1), ... , (ITn  , P Tn )} denote
+
+a realization of level 2 scenario n generated according to the stochastic processes,
+
+from time t + 1 to end of horizon T, conditional on the level 1 realization at time t.
+Further, let the variables lin,t, xin,t, rin,t represent the decision variables for the endog-
+enous state, water discharge and spill for reservoir i at time t in level 2 scenario n.
+Let Tt = {t, t + 1, ... , T} be the set of remaining periods from time t to time T. For
+
+each stage t and each level 1 scenario s, the two-stage problem that is being solved
+
+can be formulated as
+
+max{(ln ,xn ,rn ),nN,Tt}  1                                                 P n          g(lin, ,      xin, )  +   T                 
+                          N                                                                                                  i(lin,T ) ,
+                                  nN         Tt {T }                                iRP                                  iR
+
+lin,+1  =  s.t.  (lis,t, Pts   ,rIint,s)-=x(in,lin,t+, Ptn,jItnR)Si ,pill  rjn,  +             xjn, ,  n  N, i  R            nN
+           lin,  + Iin, -                                                                                Tt {T}, i  R,
+                                                                                       jRiDis
+                                      xis,t = xin,t,                       n  N, i  R
+
+                                      ris,t = rin,t,                       n  N, i  R
+
+                                                                                                                                 (7)
+
+The objective of the two-stage problem is to maximize expected future profits in
+the discrete set of (level 2) scenarios N . In this formulation, every scenario in N is
+considered equally likely, but it is also possible to introduce a separate weighting for
+each scenario if they have different likelihoods. The first constraint ensures that the
+initial condition is set to the realized time t level 1 scenario s and the endogenous
+state reached in that scenario by following the STRO scheme. The next constraint
+is the reservoir balance in level 2 scenario n, which is equivalent to (2). The last 2
+constraints ensure that the first-stage decisions are the same in all level 2 scenarios
+n  N and that the production decisions that will be used in level 1 scenario s are
+the same as the first-stage decisions in the LP.
+
+                                                                                                                             13
+                                                             H. S. Grini et al.
+
+   Each time this problem is being solved, the time t decisions, i.e. first-stage
+decisions, (xis,t, ris,t) are used to update lis,t along the level 1 scenario s according
+to Eq. (2). This updated state then serves as an initial condition for the next two-
+stage problem.
+
+   By generating S level 1 scenarios, the total expected profits from the STRO
+scheme can be computed as the sample average
+
+1      T -1  t Pts       g(lis,t, xis,t) + T      i(lis,T )
+S sS
+                                                             (8)
+
+      t=0           iRP                       iR
+
+A visualization of how a two-stage stochastic program is built from generated level
+2 scenarios to explore the underlying sample space can be seen in Fig. 2. Starting in
+a state in stage , one can generate N possible realizations of the future, starting in
+the current state. Then, these scenarios can be combined into a two-stage stochastic
+program, which can be solved to find the first-stage decision.
+
+   Given that stochastic programs are built for every state in every level 1 sce-
+nario, the idea is to approximate the continuous sample space of the exogenous
+variable from each state. The higher number of level 2 scenarios N the more
+accurate this approximation will be. This approximation is illustrated in Fig. 3.
+The main difference compared to RI is that STRO makes multiple explorations
+(level 2 scenarios) from every state in every underlying level 1 scenario and uses
+these to approximate the sample space from that point. The red nodes in the fig-
+ure represent the level 2 scenarios. New information about the underlying level 1
+scenario is revealed with each step of the horizon. Thus, new two-stage stochastic
+programs must be built for every state by generating new level 2 scenarios.
+
+   None of the decisions made by STRO's heuristic are based on any knowl-
+edge of the future in the underlying price-inflow scenario. Following this, the
+decisions made using the heuristic are implementable and the value of the fea-
+sible policies found for every individual level 1 scenario yields lower bounds
+for the optimal revenue for that given scenario. Same as for RI, this means that
+
+Fig.2Two-stage stochastic program built from N level 2 scenarios. These are solved to find an imple-
+mentable decision for stage t in a level 1 scenario
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+Fig.3Sample space approximation for STRO with N level 2 scenarios per state
+
+with enough sampled scenarios, one will get an estimated lower bound of the
+expected revenue, subject to sampling error.
+
+   As every generated level 2 scenario represents possible realizations of the
+sample space, one would gradually get a better approximation of all possible
+realizations of the future in all possible states by generating more scenarios per
+state.
+
+   As mentioned, the STRO heuristic finds the first-stage decision by consider-
+ing these realizations as a two-stage program. Using two stages is an approxi-
+mation, and a more accurate method would be to solve a multistage problem
+instead. However, building and solving multistage stochastic programs is more
+computationally costly, and approximation through two stages has been shown
+to be a good solution for hydropower problems in the literature [29].
+
+   Due to the growth in complexity when increasing the number of level 2 sce-
+narios per state, one can in practice only build programs based on a small num-
+ber of scenarios. Therefore, the performance of STRO hinges on the assumption
+that most of the value from the approach can be achieved using a small number
+N of level 2 scenarios, e.g. N = 2 or N = 3, which from early experiments seems
+to be the case.
+
+4Complexity
+
+Considering that the STRO heuristic is based on solving a two-stage stochastic
+program for every production decision, the amount of programs solved is quite
+large. Given S level 1 scenarios and T stages per level 1 scenario, one will have
+to solve a total of ST LPs to get an estimate of the marginal water value.
+
+   Note that the number of LPs solved is not dependent on the amount of level
+2 scenarios N. However, this instead affects the complexity of each LP, meaning
+that an increase in level 2 scenarios makes each individual LP harder to solve.
+
+                                                           13
+                                                                                                              H. S. Grini et al.
+
+5Main innovations and benefits
+
+As mentioned in Sect. 2.1, medium-term hydropower planning is mainly con-
+cerned with calculating the expected discounted revenue, given different initial
+water levels, to calculate the marginal value of the water in the reservoir. Conse-
+quently, there is no requirement to generate a policy that deterministically yields
+the same production decision when faced with the same state, such as RI and
+SDDP. Instead, we forego this requirement and allow the STRO heuristic to yield
+stochastic production decisions based on the level 2 scenarios drawn from the
+sample space. We refer to this as it being a stochastic policy. The benefit is that
+by not having to aggregate the possible outcomes, for instance, by taking the
+expectation such as RI, we can explore more of the sample space and consider
+more varied outcomes. As shown in the illustrative example in Sect. 4, this can
+lead to more accurate revenue estimations.
+
+   Another significant benefit of STRO and other rolling horizon methods is
+that they pose few constraints on the problem class. Unlike SDDP, which either
+requires inflow and price to be modelled linearly or with a Markov decision pro-
+cess over discretized states, this allows price and inflow to be modelled using
+non-linear methods such as deep learning-based methods. There is also no strict
+constraint that requires the problem to be modelled convexly, meaning that one
+for instance, could model head variations more accurately without having to relax
+the problem with McCormick envelopes. However, a non-convex model would
+require a longer processing time.
+
+   Other significant benefits of rolling horizon methods such as STRO and RI is
+that they are significantly more straightforward to implement than SDDP and are
+more suited for parallelization since the level 1 scenarios are all solved indepen-
+dently. Although SDDP is also parallelizable, it is harder to implement and does
+not lead to as linear of a speedup, as seen in previous works. One example is [1]
+which reports speedup factors of 7­11 for 10 CPUs, and 9­14 for 20 CPUs, for
+a case study of the Brazilian hydrothermal system. For this case, the speedup is
+measured using 10 forward pass scenarios for 10 CPUs vs a single forward sce-
+nario for one CPU. Using a more detailed representation of the Brazilian power
+system, [22] report speedup factors of 5­6.5 for 10 CPUs and 8­11 for 20 CPUs.
+Here the speedup factor is measured using the same number of scenarios for the
+parallel and serial runs.
+
+   We leave to further work to explore the practical merits of these benefits and
+concentrate our experiments on a case where SDDP can be used as a benchmark.
+
+6Illustrative example
+
+This section illustrates the proposed heuristic using a simple three-stage exam-
+ple. Consider a plant operator with a current reservoir volume of 8, maximum
+reservoir capacity of 10, and maximum generation capacity of 10. In this setting,
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+Fig.4Illustrative example                                       3
+inflow tree
+
+                                                            2                       Scen 1 1      2        3
+
+                                                                                    Scen 2 1      2        1
+
+                                              1                 1                   Scen 3 1      0        1
+
+                                                            0                       Scen 4 1      0        0
+
+                                                                0
+
+                                              01 2
+
+Table1Solutions and objective values          STRO(1)           STRO(2)             STRO(3) STRO(4)
+                   Optimal Rolling intrinsic
+
+x0           1             0                  {0, 0, 1, 1}      {0, 1, 1, 1, 1, 1}  {1, 1, 1, 1}  1
+x1,1         3             2                                                                      3
+x1,3         0             0                  ­                 ­                   3             0
+x2,1         10            10                 ­                 ­                   3             10
+x2,2         8             9                  ­                 -                   10            8
+x2,3         9             10                 ­                 ­                   8             9
+x2,4         8             9                  ­                 ­                   9             8
+Mean spill   0                                ­                 ­                   8             0
+Mean profit                3                                                        0
+             131.5         4                  1                  1                                131.5
+                                              2                 12                  131.5
+                           125.0
+                                              127.0             130.83
+
+Note that STRO does not yield a deterministic policy since there are several decisions at the first stage
+
+the chronology is as follows: First, inflow realizes, then the reservoir volume
+gets updated. Spillage happens if the current reservoir level plus inflowing water
+exceeds the reservoir capacity. Then the generation decision is taken before the
+new inflow arrives.
+
+   The price is deterministic and given by P0 = 10, P1 = 11, P2 = 12, which
+incentivizes later production. Inflow, on the other hand, is stochastic and the dif-
+ferent inflow scenarios can be seen in Fig. 4. From every state in this figure, there
+is an equal chance that the subsequent inflow is high or low compared to the pre-
+vious inflow. This results in a binary tree and 4 different scenarios since inflow is
+deterministic in the first stage.
+
+   As an example: Since the current reservoir volume is 8 and 1 unit of inflow
+arrives deterministically in the first stage, no spillage happens at this point, as the
+reservoir can hold 10 units of water. Suppose then that the producer decides to
+generate nothing at t = 0, and that the high inflow is realized at t = 1 (scenario 1
+or 2), meaning that 2 units arrive in addition to the 9 already in the reservoir. This
+would result in 1 unit of spillage.
+
+   To see how RI and STRO with different numbers of level 2 scenarios perform
+for this example, we compare their different decisions and revenues in Table 1.
+
+                                                                                                  13
+                                                                                               H. S. Grini et al.
+
+We also compare them to the optimal strategy. Here we use xi,j to denote the pro-
+
+duction decision at time i and state j, numbered according to the scenarios in
+
+Fig. 4. The scenario index for stage 0 is omitted, as all these decisions need to
+
+be identical. Similarly, in stage 1, we only use scenario indices {1, 3} since there
+
+only are 2 possible inflow realizations at t = 1. Index 3 is used to stay consistent
+
+with the indices in stage 2.
+
+    We observe that it is optimal to produce 1 unit in stage 0 to avoid spillage in
+
+the future. Rolling intrinsic, which bases decisions on expectations of the stochastic
+
+variables, ignores that there is a 50% chance of 2 units of inflow getting realized
+                                                                                          0+2
+in  the  next   stage  and  only  considers   the    expected    inflow,   which      is   2   =  1,  thereby
+
+deciding to produce 0 at t = 0.
+
+    The notation STRO(N) is used in the table to indicate that N level 2 scenarios
+
+are used per state for the STRO heuristic. Since there are only 4 possible realiza-
+
+tions of the future, we use a maximum N of 4. For STRO(1), STRO(2) and STRO(3)
+
+the production decision naturally depends on which of the 4 scenarios are sampled.
+
+Since we sample the scenarios without replacement, the number of combinations of
+                        4
+level 2 scenarios is    N     ,  which  results  in  4,  6,  4   and  1  combinations     for     N   =  1, 2, 3
+
+and 4 respectively. The production decisions in the first stage are given in the table
+
+for all different combinations of level 2 scenarios in curly brackets. To deal with
+
+uncertain production decisions, we list the production decisions in the first stage for
+
+each combination of level 2 scenarios for every STRO(N) in curly brackets. Since
+
+the production decision at t = 0 is uncertain for N = 1 and N = 2, the next state is
+
+also uncertain (STRO(3) yields the same production decision at t = 0 independent
+
+of the combination of level 2 scenarios). For this reason, the production decisions
+
+at t = 1 and t = 2 are not listed for these, as these decisions naturally will depend on
+
+the previous decision, which is not deterministic. This relates to the discussed idea
+
+of the policy being stochastic.
+
+    The table shows that STRO(4) and STRO(3) both find the optimal strategy. This
+
+is unsurprising for STRO(4) as it considers all 4 possible scenarios when making
+
+decisions. STRO(3) does not have this privilege, but since it only omits a single
+
+possible level 2 scenario at t = 0, it will always sample at least one of the 2 scenar-
+
+ios with high inflow at t = 1. This allows it to see that there is a chance of spillage
+
+occurring and thereby plan its production accordingly.
+
+    It can further be seen that STRO(1) and STRO(2) both outperform RI, despite
+
+not necessarily seeing that there is a chance of high inflow at t = 1. As STRO(2) will
+
+sample 2 level 2 scenarios per state it will not consider the chance of high inflow
+
+only in the case that the 2 level 2 scenarios are both low inflow scenarios. There
+             1
+is  only  a  6  chance  that  this  happens,  making         it  unlikely  that  the  wrong    production
+
+decision is made. When making a decision at t = 1 there are only 2 possible future
+
+inflow realizations, depending on the previously observed inflow. As a consequence
+
+of this, STRO(2) will make the optimal decisions at t = 1 since it can consider both
+
+possible future realizations from that point. STRO(1) only samples a single level
+
+2 scenario per state. At t = 0 it is only a 50% chance that it samples a high inflow
+
+scenario and adjusts production to avoid risking spillage. However, it still outper-
+
+forms RI, because RI will only consider the expected inflow of 1, meaning that it
+
+will always make the wrong production decision at t = 0. The same effect would
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+be seen if a high inflow scenario was realized at t = 1. Then RI would not take the
+fact that a high inflow of 3 could occur at t = 2 into account and only consider the
+expected inflow of 2. This results in a higher chance of spillage.
+
+   Although STRO(1) outperforms RI in this illustrative example, it must be stressed
+that this is not the case in general, and under different circumstances RI has been
+found to outperform the simplest version of STRO, as we will demonstrate in the
+next section.
+
+7Hydropower case and implementation
+
+7.1Implementation environments
+
+7.1.1Software
+
+All code is implemented and run in Python 3.8, except the parameter estimation of
+the price model, which is done in MATLAB2020b [13]. In Python, the gurobipy
+package is used for the optimization models. A previous Python implementation of
+SDDP was also used [10].
+
+7.1.2Hardware
+
+The computational tests are conducted on a system that allows for running up to 40
+processes in parallel per node. In Table 2, the relevant technical aspects of the hard-
+ware are given.
+
+7.2Matre Haugsdal and Vemundsbotn
+
+This paper is written in cooperation with a major Norwegian hydropower producer.
+They have provided data for one of their hydropower systems. Matre Haugsdal and
+Vemundsbotn are power plants in western Norway. The plants are parts of the more
+extensive system of interconnected reservoirs built around the Matre watercourse.
+Together they produce enough electricity to cover the needs of more than 50k
+households. An overview of the system's layout as modelled can be seen in Fig. 5,
+and the publicly available technical specifications for the two production plants are
+given in Table 3.
+
+Table2Hardware specifications Specification                 Details
+                                            Node system
+                                            Node CPU     Dell PowerEdge R640
+                                                         2x 2.4 GHz Intel Xeon
+                                            Node RAM
+                                                           Gold 5115 CPU - 10
+                                                           core
+                                                         96Gb
+
+                                                         13
+                                                                                       H. S. Grini et al.
+
+Fig.5Matre Haugsdal and Vemundsbotn, with connected reservoirs
+
+Table3Specifications for plants                                 Matre Haugsdal Vemundsbotn
+in the considered system
+
+                                 Build year                     2016                   1976
+                                 Turbines                       2
+                                 Production capacity (MW)       180                    1
+                                 Elevation (m)                  537
+                                 Head difference (m)            20.5                   45
+                                                                                       (164/242)a
+                                                                                       (32/48)a
+
+                                 aTwo connected reservoirs (Storevatnet/Svartevatnet)
+
+   Table 4 shows the average annual inflows for each reservoir, along with their
+respective volumes and discharge capacities. A glance at the data shows that the res-
+ervoirs are of a "fast" nature, meaning that the inflow to the reservoirs is relatively
+high compared to the storage capacity. We were not given any specified minimum
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+Table4Reservoir specifications Reservoir  Volume (Mm3)          Inflow (Mm3/  Max.
+                                                                year)         discharge
+                                                                              (m3/s)
+
+Gobotvatn                                 22.0                  134.6         37.6
+
+Storevatn                                 23.3                  57.6          18.0
+
+Svartevatn                                60.8                  66.8          23.6
+
+Skjerjevatn                               70.5                  61.3          22.0
+
+Hjortevatn                                10.7                  60.9          10.0
+
+Smalevatn                                 13.1                  96.5          19.8
+
+discharge for the reservoirs in question, and thus, no lower bound is set for the
+model. Furthermore, the water level regulations for the reservoirs do not vary with
+season, but are constant throughout the year.
+
+7.3Price and inflow data
+
+Our price model uses futures data, and to generate the smoothed future curves, we
+use futures price data for the trading period 2006­2018, retrieved from Montel. The
+price simulations start 1 January 2019. The data is given per trading day, with clos-
+ing prices for monthly, quarterly, and annual delivery for up to 3 years ahead. To fit
+the inflow model, we use time series inflow data for the reservoirs. The inflow data
+series provided are of hourly resolution in the period 2009­2019.
+
+8Computational study
+
+To see how the STRO method with different number of level 2 scenarios per deci-
+sion performs, the results are benchmarked to the SDDP method, as well as the most
+well-known rolling horizon method RI. To avoid disclosing any non-public infor-
+mation about the Matre Haugsdal hydropower system, the results of the models are
+represented as percentages relative to the baseline given by SDDP.
+
+   For these studies, revenue has been used as the primary metric for performance
+comparisons between different algorithms. Seeded level 1 scenarios were used for
+the rolling horizon methods, to make the revenues as comparable as possible. This
+means that all rolling horizon methods receive the same realizations of inflow and
+price. This ensures that the objective values of the rolling horizon methods are com-
+parable, as they solve the exact same scenarios. However, this was not achievable
+for SDDP due to its discretization. We address this potential source of bias by using
+a relatively large number of samples for both methods over 10 runs. The planning
+horizon for each method is 2 years with weekly stages resulting in 104 stages in
+total.
+
+   The results presented are average values from all these runs, along with relative
+standard deviations of the objective values achieved over different trials using the
+
+                                                           13
+                                                                                                              H. S. Grini et al.
+
+different methods. This approach should give a reasonable estimate of the difference
+in performance.
+
+   Note that since SDDP yields upper bounds while RI and STRO yield estimated
+lower bounds, there will always be some discrepancy between their results.
+
+   The discretizations are done on a sample base of 200k samples of each exoge-
+nous variable, which were discretized to a Markov chain with 125 discrete states per
+stage. Each of these stages contains a combination of price and inflow. No further
+scenario reductions were applied for the SDDP method.
+
+   The results from the trial runs are presented in Table 5. It presents the expected
+revenue for the different methods, and the standard deviation over the different runs
+for each method. Every run of the Rolling Horizon methods was made using 1000
+level 1 scenarios, and reported revenue is the average over these runs.
+
+   From these results there are multiple takeaways. First, it is apparent that increas-
+ing the number of samples per decision in the heuristic leads to a substantial
+improvement in the results achieved. When comparing the results of STRO for
+N = 1 to N = 7 it can be seen that the gap to the SDDP algorithm is approximately
+halved. Furthermore, it can be seen that the improvement in the results is diminish-
+ing, and the most significant improvement can be seen when increasing N from 1 to
+2. However, when comparing the results for N = 6 to N = 7, the gain has tapered
+out.
+
+   Another takeaway is that the STRO algorithm clearly outperforms the traditional
+RI algorithm for N  2. The results of the RI algorithm were found to be within
+2.5% of the estimated optimum from SDDP, in line with previous findings from [4].
+However, the results from the STRO(7) algorithm, is within 1.4% of the results of
+SDDP. Given that the estimated revenues from the rolling horizon methods, STRO
+and RI, are lower bounds, whereas SDDP gives an upper bound, this gap is quite
+close, and it is apparent that the STRO method is well suited for the hydropower
+planning problem.
+
+   As seen in the table, the standard deviations of the results achieved using differ-
+ent methods are quite high compared to the differences in the results achieved with
+
+Table5Average objective         Solution method  Revenue
+values of the compared methods                   Relative value (%)
+
+                                SDDP             100.000             Standard
+                                RI               97.546              deviation
+                                STRO(1)          97.249              (%)
+                                STRO(2)          98.115
+                                STRO(3)          98.411              0.487
+                                STRO(4)          98.548              0.489
+                                STRO(5)          98.611              0.484
+                                STRO(6)          98.654              0.487
+                                STRO(7)          98.674              0.489
+                                                                     0.486
+                                                                     0.485
+                                                                     0.482
+                                                                     0.483
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+the different algorithms. This implies that the true differences in revenues between
+SDDP and the other methods can be slightly higher or lower than these experiments
+indicate. Since seeded scenarios were used for RI and STRO we can be more con-
+fident that the comparisons between these methods are more accurate. In future
+experiments, we will make efforts to reduce the standard deviations by using more
+level 1 scenarios to ensure more stable revenue estimates over the different trials.
+
+8.1Runtime analysis
+
+Rolling Horizon methods are well suited for parallelization and multiprocessing, as
+each level 1 scenario is processed independently. To minimize the processing time,
+our implementation runs 40 processes in parallel, which was the maximum allowed
+by our hardware. With improved hardware, a further speedup is naturally achievable.
+There exist parallel implementations of SDDP [1, 7, 25]. However, as [1] points out,
+parallel implementation of SDDP is far from straightforward. Therefore, we opt for
+a non-parallel version for benchmarking. With such parallel methods implemented,
+we would naturally have a substantially lower processing time with SDDP.
+
+   In Table 6, the run times of SDDP and the STRO methods are presented. RI
+solves a problem of the same size as STRO(1), the computational times for these
+methods are, therefore, approximately the same. The total run time is given in hours
+(h), and the average time used to solve each level 1 scenario is given in seconds (s).
+Note that the run time of SDDP is given without the additional time required for
+sampling and discretization.
+
+   The table shows that the most significant increase in run-time comes with the
+increase from 2 to 3 level 2 scenarios per decision in STRO, followed by a nearly
+linear increase in computational time. Once the scenarios are sampled and given to
+the two-stage stochastic program, the program becomes deterministic [30]. By dou-
+bling the number of scenarios for the two-stage program, the program size approxi-
+mately doubles.
+
+   We stress that 2000 iterations were significantly more than what the algorithm
+needed to converge. In most cases, the upper bound only decreased by 0.2% after the
+
+Table6Run time for 1000 level  Solution method  Time
+1 scenarios of STRO(N), and
+2000 iterations of SDDP                         Total (h)  Per sampled
+                                                           scenario (s)
+                               SDDP             11.38
+                               STRO(1) / RI     0.26       0.94
+                               STRO(2)          0.73       2.63
+                               STRO(3)          3.47       12.48
+                               STRO(4)          5.94       21.38
+                               STRO(5)          8.19       29.49
+                               STRO(6)          10.58      38.10
+                               STRO(7)          11.88      42.77
+
+                                                           13
+                                                                                                              H. S. Grini et al.
+
+initial 200 iterations and by 0.1% after the first 500 iterations. Admittedly, it would
+have been reasonable to terminate the algorithm after 1000 iterations as the final
+1000 iterations only yielded a  0.03% decrease of the upper bound. Our reasoning
+behind using so many iterations was that we wanted the upper bound of SDDP to get
+as low as possible to make the results as comparable to the lower bound provided by
+the rolling horizon methods as possible. However, this makes the provided runtime
+for SDDP higher than what it could have been.
+
+   It should also be noted that 125 discrete states per stage for the SDDP method is
+a relatively small amount, and with an increase in states there would have been an
+increase in processing time.
+
+9Concluding remarks
+
+We propose a new approach to solving the medium-term reservoir management
+problem. The aim is to approximate the value function as it depends on current price
+levels and current reservoir levels. When medium-term hydropower planning is used
+to support the decision-making for short-term planning, only the value function is
+passed to the short-term planning problem, not necessarily a deterministic policy.
+Thus, we do not require the algorithm to generate deterministic policies, and rather
+allow them to be stochastic while taking care not to relax information constraints.
+This ensures that the algorithm yields estimated lower bounds on the objective func-
+tion value, as our method relies on possible scenarios for the future development of
+prices and inflow. The new approach, called STRO, is compared to SDDP and RI.
+
+   Although STRO can be applied to broader classes of problems compared to those
+solved by SDDP, we designed the experiments to suit SDDP well. We leave for
+future work to explore the performance on non-convex problems.
+
+   Sources of bias potentially impacting the comparisons of the implemented mod-
+els include both discretization and sampling error subjected to the different methods.
+Efforts were made to mitigate this by performing multiple trial runs, averaging the
+results, and performing experiments that, for instance, aimed to bypass the discre-
+tization error of SDDP. We have also used seeding to ensure that the exact sampling
+error is imposed on the rolling horizon methods.
+
+   Another factor to consider is that the methods discussed and compared were
+only tested on a single hydropower system, using only one type of inflow and price
+model. Specific properties of the case system can make the method more suitable,
+which can mean that similar results will not be achievable for other systems. These
+concerns were not explored in the interest of scope, but they should be further exam-
+ined in the future.
+
+   With these points made, we emphasize that the RI algorithm has been shown to
+produce promising results when applied to the reservoir management problem by
+other authors with different stochastic models for the exogenous processes. This
+strengthens our confidence in the results.
+
+   The idea of using a sampling-based heuristic for rolling horizon methods can also
+be explored further. The STRO method only considers building two-stage stochastic
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+convex programs, but in principle, multi-stage non-convex stochastic programs could
+be built and solved instead.
+
+A. Piecewise linear approximations
+
+As the head hi,t is a function of the amount of water in a reservoir li,t this function needs
+to be approximated in a piece-wise manner. To do this, the relation between head and
+water level for a specific reservoir i can be represented by a set Mi which contains sam-
+ple points ((li,1, hi,1), ... , (li,K, hi,K)), representing the mapping between water level and
+head. Increasing the number of points naturally leads to a better approximation, but
+comes at the consequence of increased complexity.
+
+   To find the head from the water level using the piece-wise linear graph, a set of
+variables representing the weight of point k for reservoir i at time t denoted i,t,k. By
+ensuring that no weights can be negative (9), the weights sum to 1 (10), and that only
+two adjacent points are non-zero using a special ordered set of type 2 constraint (SOS2)
+(11), one can find the head hi,t based on the water level li,t. This is done using Eqs.
+(12)­(13). Equation (12) forces the weights to correspond with the water level, and
+Eq. (13) finds the head given the weights. If the function describing the mapping from
+water level to head is concave, the SOS2 constraint (11) is redundant.
+
+i,t,k  0, k  Mi i  RP t = 0, ... , T - 1                  (9)
+
+
+      i,t,k = 1, i  RP t = 0, ... , T - 1
+                                                          (10)
+kMi
+
+i,t,k  SOS2, k  Mi i  RP t = 0, ... , T - 1               (11)
+
+ i,t,kli,k = lia,vtg,          i  RP  t = 0, ... , T - 1  (12)
+
+kMi
+
+
+      i,t,khi,k = hi,t, i  RP t = 0, ... , T - 1
+                                                          (13)
+kMi
+
+As the incoming and outgoing water levels can be quite different, the average water
+level lia,vtg is used as the basis for the head for the period. This variable is given
+according to constraint (14).
+
+lia,vt g  =  li,t  + li,t+1 ,  i  RP  t = 0, ... , T - 1  (14)
+                    2
+
+                                                          13
+                                   H. S. Grini et al.
+
+B. McCormick envelope constraints
+
+In the following the constraints comprising the McCormick envelopes are shown.
+These are used to ensure that the substitution variable wi,t closely approximates the
+bi-linear term hi,txi,t. These constraints depend on the variables hi,t and xi,t, as well
+as the maximum and minimum values that these can take on. These maximum and
+minimum values are denoted Him,tax,Him,tin, Xim,tax and Xim,tin.
+
+wi,t  Xim,tinhi,t + xi,tHim,tin - Xim,tinHim,tin, i  RP t = 0, ... , T - 1  (15)
+
+wi,t  Xim,taxhi,t + xi,tHim,tax - Xim,taxHim,tax, i  RP t = 0, ... , T - 1  (16)
+
+wi,t  Xim,taxhi,t + xi,tHim,tin - Xim,taxHim,tin, i  RP t = 0, ... , T - 1  (17)
+wi,t  Xim,tinhi,t + xi,tHim,tax - Xim,tinHim,tax, i  RP t = 0, ... , T - 1  (18)
+                                                                            (19)
+         0  wi,t  Xim,taxHim,tax, i  RP t = 0, ... , T - 1
+
+Acknowledgements We gratefully acknowledge support from the research center HydroCen, RCN No.
+257588. We are thankful to Montel for supplying price data, and to Eviny for supplying data regarding
+their hydropower plants.
+
+FundingOpen access funding provided by NTNU Norwegian University of Science and Technology
+(incl St. Olavs Hospital - Trondheim University Hospital).
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as
+you give appropriate credit to the original author(s) and the source, provide a link to the Creative Com-
+mons licence, and indicate if changes were made. The images or other third party material in this article
+are included in the article's Creative Commons licence, unless indicated otherwise in a credit line to the
+material. If material is not included in the article's Creative Commons licence and your intended use is
+not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit http://creati vecommons.o rg/l icen
+ses/b y/4.0/.
+
+References
+
+ 1. Ávila, D., Papavasiliou, A., Löhndorf, N.: Parallel and distributed computing for stochastic dual
+      dynamic programming. Comput. Manage. Sci. 19, 199­226 (2022). https://doi.org/1 0.1007/
+      s10287-0 21-00411-x
+
+ 2. Benth, F.E., Koekkebakker, S., Ollmar, F.: Extracting and applying smooth forward curves from
+      average-based commodity contracts with seasonal variation. J. Deriv. 15(1), 52­66 (2007)
+
+ 3. Bertsekas, D.: Dynamic Programming and Optimal Control, vol. I. Athena Scientific, Belmont
+      (2005)
+
+ 4. Braaten, S.V., Gjønnes, O., Hjertvik, K.J., Fleten, S.E.: Linear decision rules for seasonal hydro-
+      power planning: modelling considerations. Energy Procedia 87, 28­35 (2016)
+
+13
+A stochastic policy algorithm for seasonal hydropower planning
+
+ 5. Breslin, J., Clewlow, L., Elbert, T., Kwok, C., Strickland, C., van der Zee, D.: Gas storage: rolling
+      instrinsic valuation. Energy Risk January, 61­65 (2009)
+
+ 6. Cerisola, S., Latorre, J.M., Ramos, A.: Stochastic dual dynamic programming applied to nonconvex
+      hydrothermal models. Eur. J. Oper. Res. 218(3), 687­697 (2012)
+
+ 7. da Silva, E., Finardi, E.: Parallel processing applied to the planning of hydrothermal systems. IEEE
+      Trans. Parallel Distrib. Syst. 14(8), 721­729 (2003). https://doi.o rg/1 0.1109/TPDS.2 003.1225052
+
+ 8. da Costa, J.P., de Oliveira, G.C., Legey, L.V.L.: Reduced scenario tree generation for mid-term
+      hydrothermal operation planning. In: 2006 International Conference on Probabilistic Methods
+      Applied to Power Systems (2006)
+
+ 9. Dietze, M., Chávarry, I., Freire, A.C., Valladão, D., Street, A., Fleten, S.E.: A novel semiparametric
+      structural model for electricity forward curves. IEEE Trans. Power Syst. 38(4), 3268­3278 (2023).
+      https://doi.o rg/1 0.1109/T PWRS.2 022.3 19798 2
+
+10. Ding, L., Ahmed, S., Shapiro, A.: A Python package for multi-stage stochastic programming. Opti-
+      miz. Online (2019)
+
+11. Downward, A., Dowson, O., Baucke, R.: Stochastic dual dynamic programming with stagewise-
+      dependent objective uncertainty. Oper. Res. Lett. 48(1), 33­39 (2020)
+
+12. Gjelsvik, A., Mo, B., Haugstad, A.: Long-and medium-term operations planning and stochastic
+      modelling in hydro-dominated power systems based on stochastic dual dynamic programming. In:
+      Handbook of Power Systems I, pp. 33­55. Springer, Berlin (2010)
+
+13. Goodwin, D.: Schwartz-Smith 2-factor model: parameter estimation (2020). https://www.m athw
+      orks.com/matlabcentral/fileexchange/43352-schwartz-smith-2-factor-model-parameter-estimation.
+      Accessed 9 Nov 2021
+
+14. Helseth, A., Braaten, H.: Efficient parallelization of the stochastic dual dynamic programming algo-
+      rithm applied to hydropower scheduling. Energies 8, 14287­14297 (2015). https://d oi.o rg/1 0.3390/
+      en8121 2431
+
+15. Helseth, A., Mo, B., Warland, G.: Long-term scheduling of hydro-thermal power systems using sce-
+      nario fans. Energy Syst. 1(4), 377­391 (2010)
+
+16. Helseth, A., Mo, B., Lote Henden, A., Warland, G.: Detailed long-term hydro-thermal scheduling
+      for expansion planning in the Nordic power system. IET Gen. Transmiss. Distrib. 12(2), 441­447
+      (2018)
+
+17. Hjelmeland, M.N., Zou, J., Helseth, A., Ahmed, S.: Nonconvex medium-term hydropower schedul-
+      ing by stochastic dual dynamic integer programming. IEEE Trans. Sustain. Energy 10(1), 481­490
+      (2018)
+
+18. Infanger, G., Morton, D.P.: Cut sharing for multistage stochastic linear programs with interstage
+      dependency. Math. Program. 75(2), 241­256 (1996)
+
+19. Lai, G., Margot, F., Secomandi, N.: An approximate dynamic programming approach to benchmark
+      practice-based heuristics for natural gas storage valuation. Oper. Res. 58(3), 564­582 (2010)
+
+20. Löhndorf, N., Shapiro, A.: Modeling time-dependent randomness in stochastic dual dynamic pro-
+      gramming. Eur. J. Oper. Res. 273, 650­661 (2019)
+
+21. Löhndorf, N., Wozabal, D.: The value of coordination in multimarket bidding of grid energy stor-
+      age. Oper. Res. (2022). https://doi.o rg/1 0.1287/o pre.2 021.2247
+
+22. Machado, F.D., Diniz, A.L., Borges, C.L., Brandão, L.C.: Asynchronous parallel stochastic dual
+      dynamic programming applied to hydrothermal generation planning. Electric Power Syst. Res. 191,
+      106907 (2021)
+
+23. Pereira, M., Pinto, L.: Multi-stage stochastic optimization applied to energy planning. Math. Pro-
+      gram. 52(1­3), 359­375 (1991)
+
+24. Philpott, A., Guan, Z.: On the convergence of stochastic dual dynamic programming and related
+      methods. Oper. Res. Lett. 36(4), 450­455 (2008)
+
+25. Pinto, R.J., Borges, C.T., Maceira, M.E.P.: An efficient parallel algorithm for large scale hydrother-
+      mal system operation planning. IEEE Trans. Power Syst. 28(4), 4888­4896 (2013). https://doi.o rg/
+      10.1109/TPWRS.2 012.223665 4
+
+26. Powell, W.: Approximate Dynamic Programming: Solving the Curses of Dimensionality. Wiley,
+      Oxford (2007)
+
+27. Roald, L.A., Pozo, D., Papavasiliou, A., Molzahn, D.K., Kazempour, J., Conejo, A.: Power systems
+      optimization under uncertainty: a review of methods and applications. Electr. Power Syst. Res. 214,
+      108725 (2023)
+
+28. Schwartz, E., Smith, J.E.: Short-term variations and long-term dynamics in commodity prices. Man-
+      age. Sci. 46(7), 893­911 (2000)
+
+                                                           13
+                                                                                                              H. S. Grini et al.
+29. Séguin, S., Audet, C., Côté, P.: Scenario-tree modeling for stochastic short-term hydropower opera-
+
+      tions planning. J. Water Resour. Plan. Manag. 143(12), 04017073 (2017)
+30. Shapiro, A., Nemirovski, A.: On complexity of stochastic programming problems. In: Jeyakumar,
+
+      V., Rubinov, A. (eds.) Continuous Optimization. Applied Optimization, vol. 99, pp. 111­146.
+      Springer, Boston (2005)
+31. Shapiro, A., Tekaya, W., da Costa, J.P., Soares, M.P.: Risk neutral and risk averse stochastic dual
+      dynamic programming method. Eur. J. Oper. Res. 13, 375­391 (2013)
+32. Valipour, M., Banihabib, M.E., da Costa, J.P., Behbahani, S.M.R.: Comparison of the ARMA,
+      ARIMA, and the autoregressive artificial neural network models in forecasting the monthly inflow
+      of Dez dam reservoir. J. Hydrol. 13, 433­441 (2012)
+33. Van Slyke, R.M., Wets, R.: L-shaped linear programs with applications to optimal control and sto-
+      chastic programming. SIAM J. Appl. Math. 17(4), 638­663 (1969)
+34. Wallace, S.W., Fleten, S.E.: Stochastic programming models in energy. Handb. Oper. Res. Manag.
+      Sci. 10, 637­677 (2003)
+35. Wu, O., Wang, D., Qin, Z.: Seasonal energy storage operations with limited flexibility: the price-
+      adjusted rolling intrinsic policy. Manuf. Serv. Oper. Manag. 14(3), 455­471 (2012)
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+13
+

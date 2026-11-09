@@ -1,0 +1,814 @@
+                                                                               European Journal of Operational Research 273 (2019) 650­661
+
+                                                                       Contents lists available at ScienceDirect
+
+                           European Journal of Operational Research
+
+                                                                journal homepage: www.elsevier.com/locate/ejor
+
+Innovative Applications of O.R.
+
+Modeling time-dependent randomness in stochastic dual dynamic
+programming R
+
+Nils Löhndorf a,, Alexander Shapiro b
+
+a Luxembourg Centre for Logistics and Supply Chain Management, University of Luxembourg, L-1511, Luxembourg
+b School of Industrial and Systems Engineering, Georgia Institute of Technology Atlanta, GA 30332-0205, USA
+
+article info                                         abstract
+
+Article history:                                     We consider the multistage stochastic programming problem where uncertainty enters the right-hand
+Received 13 September 2017                           sides of the problem. Stochastic Dual Dynamic Programming (SDDP) is a popular method to solve such
+Accepted 1 August 2018                               problems under the assumption that the random data process is stagewise independent. There exist two
+Available online 8 August 2018                       approaches to incorporate dependence into SDDP. One approach is to model the data process as an au-
+                                                     toregressive time series and to reformulate the problem in stagewise independent terms by adding state
+Keywords:                                            variables to the model (TS-SDDP). The other approach is to use Markov Chain discretization of the random
+Stochastic programming                               data process (MC-SDDP). While MC-SDDP can handle any Markovian data process, some advantages of
+Dynamic programming                                  statistical analysis of the policy under the true process are lost. In this work, we compare both approaches
+Markov decision process                              based on a computational study using the long-term operational planning problem of the Brazilian inter-
+Coherent risk measures                               connected power systems. We found that for the considered problem the optimality bounds computed by
+                                                     the MC-SDDP method close faster than its TS-SDDP counterpart, and the MC-SDDP policy dominates the
+                                                     TS-SDDP policy. When implementing the optimized policies on real data, we observe that not only the
+                                                     method but also the quality of the stochastic model has an impact on policy performance and that using
+                                                     an AV@R formulation is effective in making the policy robust against a misspecified stochastic model.
+
+                                                                                                                                                  © 2018 Elsevier B.V. All rights reserved.
+
+1. Introduction                                                                       (Pereira, 1989; Shapiro, Tekaya, da Costa, & Soares, 2013). This al-
+                                                                                      lows to reformulate the problem in terms of the stagewise inde-
+    A scalable way of solving multistage stochastic decision prob-                    pendent errors of the considered time series, at the price of in-
+lems is based on approximate solutions of dynamic programming                         creasing the number of state variables. We refer to this approach
+equations. In particular, the Stochastic Dual Dynamic Programming                     as the TS-SDDP method.
+(SDDP) method, based on Pereira and Pinto's seminal work (Pereira
+& Pinto, 1991), became popular in many applications. In SDDP it is                        An alternative approach is based on Markov Chain discretiza-
+crucial to assume randomness of the data process to be stagewise                      tion of the Markovian data process using optimal quantization
+independent, because in this case the respective cost-to-go (value)                   (Bonnans, Cen, & Christel, 2012; Löhndorf, Wozabal, & Minner,
+functions of the dynamic programming equations are independent                        2013; Philpott & de Matos, 2012). We refer to this approach as
+of the data process. However, in many applications the data pro-                      the MC-SDDP method (this approach is referred to as Approximate
+cess has a Markovian type dependence structure. To deal with this                     Dual Dynamic Programming (ADDP) in Löhndorf & Wozabal, 2017;
+problem two approaches have been suggested in the literature.                         Löhndorf et al., 2013).
+
+    One approach is to model the data process as an autoregres-                           Both approaches have advantages and disadvantages. While TS-
+sive process and to add the time series transition equations as                       SDDP is restricted to the linear case and right-hand side uncer-
+additional equality constraints into the optimization problem, so                     tainty, MC-SDDP allows modeling any parameter as Markovian data
+that realizations of the data process are treated as state variables                  process. MC-SDDP therefore allows usage of a much broader range
+                                                                                      of stochastic models which may better represent the true process.
+ R Research of this author was partly supported by NSF grant 1633196 and DARPA        Yet MC-SDDP makes no convergence guarantees with respect to
+EQUiPS program, grant SNL 014150709.                                                  the true process, whereas the properties of the TS-SDDP bounds
+                                                                                      are well-established.
+   Corresponding author.
+     E-mail addresses: nils.loehndorf@uni.lu (N. Löhndorf), ashapiro@isye.gatech.edu      Whichever approach provides the better policy in practice has
+                                                                                      not yet been studied. We intend to close this gap and com-
+(A. Shapiro).                                                                         pare both approaches theoretically as well as numerically. In
+
+https://doi.org/10.1016/j.ejor.2018.08.001
+0377-2217/© 2018 Elsevier B.V. All rights reserved.
+                                                    N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661                                   651
+
+Section 2 we introduce the two approaches and discuss con-                                        respect to random vector  whose probability distribution (prob-
+structions of lower bounds for the optimal objective value. In
+Section 3 we discuss how a continuous data process can be dis-                                    ability measure) P is supported on set  Rd. The set equipped
+cretized to a lattice using optimal quantization to provide a time-
+nonhomogeneous Markov chain. Starting from Section 4.1, we test                                   with its Borel sigma algebra F and measure P becomes a proba-
+the performance of both approaches based on the long-term op-
+erational planning problem of the Brazilian interconnected power                                  bility space. We also use notation Fx( ) := F(x,  ) when considering
+system. That problem is widely used in the literature on SDDP                                     F(x,  ) as a function of  for fixed x  X . It is assumed that the
+due to its practical importance for providing generation targets                                  expectation E[Fx] = Fx( )dP( ) is well defined and finite valued
+of power plants in the Brazilian power system (Maceira, Duarte,
+Penna, Moraes, & Melo, 2008).                                                                     for every x  X . In particular, this means that for every x  X the
+
+    In the previous work on performance of SDDP (Shapiro et al.,                                  second stage problem is feasible w.p.1., i.e., we assume relatively
+2013), it was found that the TS-SDDP approach cannot close the
+gap between lower and upper bounds when time-dependent ran-                                       complete recourse.
+domness is represented by an appropriate autoregressive model. In                                     Let = Ki=1 i be a disjoint partition of the set into mea-
+Section 5, we demonstrate that the MC-SDDP method computes
+tighter lower bounds for this problem than its TS-SDDP counter-                                   surable subsets i , i = 1, . . . , K. Assuming that probabilities
+part, and provides slightly better policies. Moreover, MC-SDDP en-
+ables the use of inflow models that show better performance when                                   i := P(  i), i = 1, . . . , K, are positive, conditional expectations
+implementing the decision policy on real data.
+                                                                                                  are given by
+
+                                                                                                  i := E[ |                    1    dP( ).                                  (2.2)
+
+                                                                                                                         i] = i   i
+
+                                                                                                  Note that        K     i  i  = E[ ].  Suppose  that  for  every  xX  the  func-
+                                                                                                                   i =1
+                                                                                                  tion F(x, · ) is convex.2 Then by Jensen's inequality we have for ev-
+
+                                                                                                  ery x  X ,
+
+                                                                                                             K                             K
+
+2. Modeling time-dependent randomness                                                             E[Fx] = iE[Fx( )|  i]  iFx(i ).                                           (2.3)
+
+                                                                                                             i =1                          i =1
+
+    Consider the following risk averse multistage linear stochastic                               Hence, the optimal value of the following problem gives a lower
+programming problem                                                                               bound for the optimal value of problem (2.1)
+
+ min       c1T x1                                                                                      K
+
+A1 x1 =b1                                                                                         min        iF (x, i).                                                     (2.4)
+ x1 0
+                                                                                                  x X  i =1
+
+     + 2|1                                                                                        This lower bound is well known in stochastic programming (e.g.,
+               min           c2T x2  +  ·  ·  ·  +  T |[T-1]         min           cTT xT  .      Birge & Louveaux, 1997, Section 4.3 and references therein).
+
+           B2 x1 +A2 x2 =b2                                     BT xT-1+AT xT =bT
+                   x2 0
+                                                                xT 0
+
+                                                                                           (2.1)  Remark 2.1. A natural question is how well problem (2.4) approx-
+
+Components of vectors ct, bt and matrices At, Bt are modeled                                      imates the original problem (2.1), i.e., how fine should the parti-
+
+as random variables forming the stochastic data process1t =                                       tion be in order for the difference between the optimal values of
+(ct , At , Bt , bt ), t = 2, . . . , T, with 1 = (c1, A1, b1 ) being determin-
+istic (not random), [t] = (1, . . . , t ) denotes history of the data                             these problems to be sufficiently small. Let gi  Fx(i) be a sub-
+process up to time t, and t|[t-1] are conditional risk measures                                   gradient of Fx( · ) at i, i = 1, . . . , K. Then we have that Fx(i ) =
+                                                                                                  E Fx(i ) + gTi ( - i )   i , and hence
+(see, e.g., Shapiro, Dentcheva, & Ruszczyn´ ski, 2014). In particu-
+                                                                                                                         K                                                  (2.5)
+lar if risk measures t|[t-1] are given as conditional expectations
+                                                                                                  E[Fx( )] - iF (x, i)
+E|[t-1] , problem (2.1) becomes a risk neutral multistage stochas-
+                                                                                                                        i =1
+tic programming problem. It is said that data process  t as stage-
+wise independent if random vector t+1 is independent of  [t], t =                                          K
+
+1, . . . , T - 1.                                                                                  = iE Fx( ) - Fx(i ) - gTi ( - i )   i .
+
+                                                                                                          i =1
+
+2.1. Static case                                                                                  It follows that if for every i = 1, . . . , K and all   i the differ-
+                                                                                                  ence between Fx( ) and the cutting plane Fx(i ) + gTi ( - i ) is
+    In this section we consider two stage problems. We discuss                                    smaller than an accuracy constant  > 0, then the left-hand side
+construction of lower bounds for the optimal value of the respec-                                 of (2.5) is also less than . This shows that, for sufficiently fine
+tive stochastic problem.
+                                                                                                  partition of the set , the difference between optimal values of
+2.1.1. Risk-neutral case
+    We start with the risk neutral problem of the form                                            problems (2.1) and (2.4) can be made arbitrary small. However,
+
+                                                                                                  for a general convex function of d variables the number of cut-
+
+                                                                                                  ting planes needed to uniformly approximate this function grows
+
+                                                                                                  exponentially with dimension d.
+
+min E[F (x,  )],                                                                           (2.1)  2.1.2. Risk-averse case
+
+xX                                                                                                    Jensen's inequality lower bound has a natural extension to risk
+
+where X  Rn is a nonempty set and F : X × Rd  R. In the two                                       averse problems. That is, consider the linear space Z := Lp( , F, P)
+
+stage setting the function F(x,  ) can be viewed as the cost of the                               of random variables (measurable functions) Z :  R having fi-
+
+first stage plus the cost of the second stage problem, X as a fea-                                nite pth order moments, p  [1, ), i.e., EP|Z|p = |Z( )|pdP( ) is
+                                                                                                  finite. The dual of space Z is the space Z = Lq( , F , P), where
+sible set of the first stage and  is composed from random ele-                                    q  (1, ] is such that 1/p + 1/q = 1. A functional  : Z  R is
+
+ments of (c2, A2, B2, b2). The expectation in (2.1) is taken with
+
+  1 Of course, not all elements of the data vectors  t should be random. For ex-                    2 In the two stage setting, if the recourse is fixed, i.e., the matrix A2 is fixed (not
+                                                                                                  random), then the optimal value of the second stage is convex in (B2, b2) and con-
+ample, we can model only the right-hand side vectors bt as random while all other                 cave in c2.
+
+elements of  t being fixed (known). We use the same notation  t for random vector
+
+and its particular realization; meaning of that will be clear from the context.
+652                                N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661
+
+called coherent risk measure if it satisfies the axioms of convex-       as
+ity, monotonicity, translation equivariance and positive homogene-
+ity (cf. Artzner, Delbaen, Eber, & Heath, 1999). Consider the follow-     Min       c1T x1
+ing risk averse problem
+                                                                         A1 x1 =b1
+                                                                          x1 0
+                                                                                                                                                                    
+
+min [Fx],                                   (2.6)                            +E|1
+                                                                                         min           c2T x2  +  ·  ·  ·  +  E|T -1]         min           cTT xT  .
+x X
+                                                                                     B2 x1 +A2 x2 =b2                                    BT xT-1+AT xT =bT
+here Fx = Fx( ) is assumed to belong to the space Z for all x  X .                          x2 0
+                                                                                                                                         xT 0
+    Every real valued coherent risk measure has the following dual
+representation                                                                                                                                                      (2.14)
+
+(Z) = sup EQ [Z],                           (2.7)                        Suppose further that the data process is stagewise independent.
+                                                                         Then the dynamic programming equations for problem (2.14) can
+               Q M                                                       be written as
+
+where M is a set of probability measures Q absolutely continuous         Qt  (xt-1,  t  )   =  min     ctTxt + Qt+1(xt ) : Bt xt-1 + At xt = bt , xt  0 ,
+
+with respect to the reference probability measure P and such that                                xt
+
+the corresponding density  = dQ/dP belongs to the space Z (cf.                                                                                                      (2.15)
+
+Ruszczyn´ ski & Shapiro, 2006). For every Q  M and convex Fx( · ),       Qt+1(xt ) := E[Qt+1(xt , t+1 )],                                                           (2.16)
+we can write
+
+                                   K                                     t = 2, . . . , T, with term QT+1 omitted (cf., Shapiro et al., 2014, Sec-
+
+[Fx]  EQ [Fx]  iQ F (x, iQ ),                                            tion 3.1.1). Functions Qt( · , · ) are referred to as cost-to-go functions
+
+                                 i =1                                    and Qt (·) as expected cost-to-go functions.
+                                                                            Note that if only bt and Bt are random, i.e., t = (Bt , bt ), then
+where the first inequality follows by (2.7) and the second by
+Jensen's inequality, with                                                the cost-to-go functions Qt (xt-1, t ) are convex in  t. This can be
+
+iQ := Q (  i ) and iQ := EQ [ |  i], i = 1, . . . , K.                   shown by induction in t going backwards in time, noting that (as-
+
+Therefore, for the risk averse problem (2.6), a lower bound is given     suming that function Qt+1(·) is convex) it follows that the opti-
+by the optimal value of the following minimax problem
+                                                                         mal value of the right hand side in (2.15) is a convex function of
+            K
+                                                                          = bt - Bt xt-1. Moreover, if only bt is random, i.e., t = bt , then
+min max           iQ F (x, iQ ).            (2.8)                        Qt (xt-1, t ) is a convex function of (xt-1, t ).
+
+xX QM       i =1                                                            Suppose that the cost-to-go functions Qt (xt-1, t ) are convex in
+                                                                          t. Let support t of random vector  t be partitioned,
+
+    Formula (2.8), although general, could be difficult to use in nu-    t = iK=t 1 ti, t = 2, . . . , T.                                                           (2.17)
+merical implementations. In some cases, it is possible to construct
+lower bounds in a more direct way. For example consider the fol-         Consider probabilities  ti := P( t  ti) and conditional expecta-
+lowing coherent risk measure                                             tions ti := E[t |t  ti]. Then by Jensen's inequality we have
+
+(Z) := (1 - )E[Z] + AV@R (Z),               (2.9)                                                Kt                                                                 (2.18)
+
+                                                                         Qt+1(xt )  tiQt+1(xt , t+1,i ).
+
+                                                                                                i =1
+
+where AV@R is the so-called Average Value-at-Risk (also called           Hence, similar to the static case by discretizing the distribution
+Conditional Value-at-Risk, Expected Shortfall and Expected Tail
+                                                                         of  t, t = 2, . . . , T, using points ti and assigned probabilities  ti,
+Loss)
+                                                                         i = 1, . . . , Kt , we obtain a multistage problem whose optimal value
+AV@R (Z) := inf u + -1E[Z - u]+             (2.10)                       gives a lower bound for the optimal value of the original problem
+                           uR
+                                                                         (2.14) (cf. Birge & Louveaux, 1997, Section 11.1).
+and the expectation is taken with respect to the reference proba-
+bility measure P. In that case we can write problem (2.6) in the             Without the stagewise independence condition, the situation is
+following equivalent form
+                                                                         considerably more involved. Then the expected value cost-to-go
+min E[Gy( )],                               (2.11)
+                                                                         functions Qt (·) also depend on realizations of the data process.
+ y Y
+                                                                         In order to deal with this in a reasonable way, we assume that
+where y := (x, u), Y := X × R and
+                                                                         the data process is Markovian, i.e., conditional distribution of t+1
+Gy( ) := (1 - )Fx( ) + u + -1[Fx( ) - u]+.  (2.12)                       given  [t] is the same as conditional distribution of t+1 given  t
+
+                                                                         , t = 1, . . . , T - 1. Then the corresponding dynamic programming
+
+                                                                         equations become (cf., Shapiro et al., 2014, Section 3.1.1)
+
+                                                                         Qt (xt-1, t )      =  min     ctTxt + Qt+1(xt , t ) : Bt xt-1
+
+Note that if Fx( · ) is convex, then Gx( · ) is also convex. Hence, the                          xt
+optimal value of the following problem gives a lower bound for the
+optimal value of problem (2.6)                                                                 +At xt = bt , xt  0},                                                (2.19)
+
+      K                                                                  Qt+1(xt , t ) := E Qt+1(xt , t+1 ) t .                                                     (2.20)
+
+min         iGy(i ).                        (2.13)                       That is the cost-to-go functions Qt (xt-1, t ) and the expected value
+                                                                         cost-to-go functions Qt+1(xt , t ) depend only on  t rather than the
+ y Y  i =1
+                                                                         whole history of the data process.
+2.2. Multistage dynamic case
+                                                                             One way of dealing with a Markovian data process is to model
+    Consider the multistage stochastic program (2.1). Let us start
+                                                                         the state transition function by including additional equality con-
+with the risk neutral case, that is suppose that t|[t-1] := E|[t-1] ,
+                                                                         straints into the optimization problem (cf. Pereira, 1989). Suppose
+and hence the corresponding multistage problem can be written
+                                                                         that only the right-hand sides bt are random, i.e. t = bt , and the
+
+                                                                         process bt is modelled as a first order autoregressive process. That
+                                            N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661      653
+
+is3 bt =  + bt-1 + t with the error process t being stagewise                     Assuming that the data process is stagewise independent the
+                                                                                  corresponding dynamic programming equations are similar to
+independent. Then                                                                 (2.15) and (2.16) with (2.16) replaced by
+
+Qt (xt , t ) = E[Qt+1(xt , t+1 )|t ]                                              Qt+1(xt ) := t [Qt+1(xt , t+1 )].                    (2.26)
+           = E[Qt+1(xt ,  + t + t+1 )|t ]
+           = E[Qt+1(xt ,  + t + t+1 )],                                  (2.21)   Similar to (2.11) and (2.12) it is possible to reformulate this dy-
+                                                                                  namic equations in a form of expectations by adding state variables
+where the last equality holds since  t is modeled as an autore-                   ut corresponding to the variational representation (2.10) of AV@R
+gressive process and hence is a function of t , t-1, . . . , and thus             (cf., Shapiro, 2011). Consequently for the TS approach it is possible
+is independent of t+1. The last expectation in (2.21) is taken with               to construct lower bound similar to (2.18).
+respect to t+1. Let us refer to the above approach as the Time
+                                                                                  3. Markov chain stochastic dual dynamic programming
+Series (TS) approach. Note that in the considered case, as it was
+                                                                                      When the TS approach is used, computation of the lower bound
+discussed above, Qt+1(xt ,  + t + t+1 ) is convex in (xt,  t), and                proceeds in the usual way (cf., Shapiro et al., 2013). For a descrip-
+hence Qt+1(xt , t ) is also convex in (xt,  t).                                   tion of the MC-SDDP method we can refer, e.g., to (Shapiro et al.,
+                                                                                  2014, pp. 258­259). Note that by solving the problem for the con-
+    Again consider partitions (2.17) of the supports of random vec-               structed Markov Chain we generate a policy only for the set of
+                                                                                  scenarios generated by the considered Markov Chain. In order to
+tors  t. This leads to an approximation of the data process by a                  extend such policy to all possible scenarios (sample paths), the
+                                                                                  usual approach is to find a scenario from the set of MC scenar-
+Markov chain with transition probabilities                                        ios in some sense closest to a considered sample path of the con-
+                                                                                  tinuous process and to use the respective approximations of the
+ti j := P(t+1  t+1, j|t  ti )                                            (2.22)   cost-to-go functions for evaluating policy decisions for the con-
+                                                                                  sidered sample path (cf., Bonnans et al., 2012). Note also that
+of moving from t = ti to t+1 = t+1, j. This approximation can                     the lower bound computed by the MC approach is valid for the
+                                                                                  MC discretized problem rather than the original continuous data
+be viewed as a recombined scenario tree or lattice with Kt parti-                 problem.
+
+tions at each stage. That is, at the first stage, the lattice has got             3.1. Discretization via lattice quantization
+
+one (root) node. There are K2 partitions at the second stage and
+
+thus K2 scenarios, corresponding to points 2j, j = 1, . . . , K2, with
+
+probability of moving from the root node to node 2j given by
+
+ 12j. There are K3 partitions at the third stage, with the condi-
+
+tional probability of moving from node 2i to the respective node
+
+at stage 3 given by  2ij. The number of scenarios now increases
+
+to K2K3, and so on for later stages. While the total number of par-
+                   T
+titions remains    t =2  Kt  ,  the  total  number  of  scenarios  in  the  tree
+
+becomes  T     Kt  and   grows       exponentially  in  the  number  of  stages.
+         t =2
+                                                                                      Let us describe a method that constructs a discretization of the
+Inspite of this, the corresponding dynamic programming equations                  continuous data process by separating the continuous data pro-
+                                                                                  cess into a finite number of disjoint partitions. Since partitions are
+can still be solved in certain situations by approximate dynamic                  found using optimal quantization and the set of quantizers forms a
+                                                                                  discrete probability lattice, we refer to this method as lattice quan-
+programming techniques. Let us refer to this as the Markov Chain                  tization.
+
+(MC) approach.                                                                        We are interested in creating a lattice with minimal discretiza-
+                                                                                  tion error. We can infer from Bally and Pagès (2003) that this error
+Both approaches have advantages and disadvantages. One of the                     depends on the stagewise Wasserstein distance between the data
+
+advantages of the TS approach is that the corresponding multistage                process  t and its discretization. More specifically, at each stage
+                                                                                  t = 2, . . . , T, we find partition means (quantizers) ti, i = 1, . . . , Kt ,
+problem can be formulated in terms of the stagewise independent
+                                                                                  which are solutions of the following problem
+error process t while treating bt as state variables. Consequently,
+
+the lower bound of the form (2.18) can be constructed by dis-
+
+cretizing the error process t. The price of such reformulation is
+
+an increase of the number of state variables and hence computa-
+
+tional complexity of the problem. Also the TS approach is appro-
+
+priate only when uncertainty in the data process is in the right-                   min           min t - ti ppdP(t ),                 (3.1)
+
+hand side, bt. Otherwise, adding the corresponding state variables                t 1 ,...,t Kt  i=1,...,Kt
+destroys convexity of the cost-to-go functions.
+                                                                                  where · p denotes the p-norm with p  1. Given a solution
+The MC approach neither requires errors to be stagewise inde-
+                                                                                  t1, . . . , tKt of (3.1), the space is partitioned into subsets ti con-
+pendent nor linearity of the state transition, but merely needs the               sisting of points which are closest to ti. The corresponding sets
+
+data process to be Markovian. Nevertheless, for the MC approach
+
+it is not clear how to construct a lower bound similar to (2.18).
+
+Indeed, by Jensen's inequality we have                                            ti := t : t - ti p  t - t j p, j = 1, . . . , Kt , j = i ,
+
+Qt+1(xt , t |t               Kt+1                                                                                                                                  (3.2)
+
+                   ti )  ti jQt+1(xt , t+1, j (t )),                     (2.23)   represent the Voronoi partition associated with respective means
+
+                             j=1                                                  ti, i = 1, . . . , Kt , which serve as the nodes of the lattice in t.
+
+where                                                                                 For p = 2 (i.e., the Euclidean norm), note the following relation
+
+t+1, j (t ) := E t+1|t+1   t+1, j; t .                                   (2.24)   between optimal partition and the center points ti:
+
+The problem is that here the points t+1, j (t ) also depend on  t.                ti =           t dP(t )
+                                                                                                 ti        .
+    Consider now the risk averse problem (2.1). Suppose that risk
+                                                                                                 P( ti)
+measure t|[t-1] , t = 2, . . . , T, is the conditional analogue of the
+                                                                                  That is, ti = E[t |t  ti].
+risk measure (compare with (2.9))
+                                                                                      Unfortunately, finding the optimal center points is an N P -hard
+
+t (Z) := (1 - t )E[Z] + t AV@Rt (Z).                                     (2.25)   problem (Aloise, Deshpande, Hansen, & Popat, 2009). In Bally and
+
+                                                                                  Pagès (2003), faced with a similar problem, the authors propose a
+
+                                                                                  method based on stochastic approximation which we will adopt
+
+  3 Note that vector  and matrix here are parameters of the first order autore-   here. The stochastic approximation method draws S random se-
+
+gressive process, estimated from the data.                                        quences (^ts )tT=1, s = 1, . . . , S, from the continuous data process.
+654                                                    N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661
+
+With (s )sS=1 a sequence of stepsizes with 0  s  1, s = 1, . . . , S,                        After the forward pass, SDDP performs a backward pass in the
+                                                                                         usual way by recursively solving
+means are updated recursively using
+
+tsi :=    s -1   +  k       ^ t s  -  s -1         if i = argmin ||^ts - tsk-1||22, k = 1, . . . , Kt ,              (3.3)
+             ti                          ti
+                                                   otherwise,
+          s -1
+             ti
+
+with 0s-i 1  0, for i = 1, . . . , Kt , t = 2, . . . , T, s = 1, . . . , S. In Bally     Q^tTnS (x^tn-1 ,  ^ti )           ctT xt + Q^ tTnS(xt )|Bt x^tn-1 + At xt = bt , xt  0
+                                                          that if the sequence (s )Ss=1
+and Pagès  (2003) the authors show                                                                                =  min
+satisfies                                                 , then the resulting means
+                   s  =        and                 s2  <                                                               xt
+           s =1                        s =1
+                                                                                                                                                                         (3.9)
+are local minimizers of (3.1).
+
+     To estimate the transition probabilities between partitions at                      for random realizations ^ti, for i = 1, . . . , m, t = T, . . . , 2, n =
+                                                                                         1, . . . , N to obtain new cutting planes. Note that for MC-SDDP ^ti :=
+subsequent stages, define the nodes of the lattice as ti := tSi and                      ti ,
+denote t , t = 1, . . . , T - 1, as the |Kt | × |Kt+1| transition matrix
+between layers t and t + 1 with elements  tij, where each  tij                           Q^tMnC (x^tn-1, ti )
+defines the (conditional) probability of a state transition from ti
+to t+1, j. The transition probabilities (2.22) can be estimated by                       = min             ctT xt + Q^ tMnC (xt , ti )|Bt x^tn-1 + At xt = bt , xt  0 ,  (3.10)
+
+counting the sample transition between successive partitions,                                   xt
+
+          S        ti (^ts )1      t j (^ts+1 ) ,                                        for i = 1, . . . , Kt , t = T, . . . , 2, n = 1, . . . , N.
+          s =1
+^ ti j =        1                                  i = 1, . . . , Kt ,
+
+                   S     1  ti (^ts )                                                    4. Case study: the Brazilian interconnected power system
+                   s =1
+
+      j = 1, . . . , Kt+1, t = 1, . . . , T - 1,                           (3.4)             Our numerical analysis is based on a multistage stochastic pro-
+                                                                                         gram that is widely used in the literature, the long term planning
+with 1A denoting the indicator function of the set A.                                    problem of the Brazilian interconnected power system, which, due
+                                                                                         to its impact on the Brazilian spot price, presents an important
+3.2. Stochastic dual dynamic programming                                                 problem in energy resource management.
+
+    The SDDP method finds an outer approximation of the cost-                                In 2010, the Brazilian interconnected power system contained
+                                                                                         more than 200 power plants with a total installed generation ca-
+to-go functions based on cutting planes which provides a lower                           pacity of 109.6 gigawatt of which 79.1% were hydropower. Long-
+                                                                                         term operational planning of this system is important to make ef-
+bound of the optimal objective value of the multistage stochastic                        ficient use of hydropower and take advantage of the hydrological
+                                                                                         diversity between different geographical regions.
+programming problem.
+                                                                                         4.1. The long-term operational planning problem
+    When the TS approach is used, computation of the lower
+                                                                                             The objective of the long-term operational planning problem
+bound proceeds in the usual way (cf., Shapiro et al., 2013). Denote                      is to define an operational policy which provides generation tar-
+                                                                                         gets for each plant to supply the load at minimal system cost con-
+Q^tT+S1,n(xt , t+1 ) as the approximate cost-to-go function and Q^tTnS(xt )              strained by generation capacity limits as well as transmission con-
+                                                                                         straints. The existence of multiple multi-season reservoirs and the
+as its expectation with Q^tT,S0  0. At each iteration, n = 1, . . . , N,                 variability of natural inflows makes the problem a multistage opti-
+SDDP performs a forward pass, during which one scenario is drawn                         mization problem under uncertainty.
+
+from the data process, (^tn )tT=-11, to generate a sequence of sample                        The typical planning horizon of the long-term operational plan-
+                                                                                         ning problem is 60 months due to some large reservoirs exhibit-
+decisions,                                                                               ing multi-season regulation capacity. Since an individual represen-
+                                                                                         tation of all 141 hydropower plants as well as multivariate random-
+x^tn = argminxt ctT xt + Q^ tT,Sn-1(xt )|Bt x^tn-1 + At xt = bt , xt  0 ,                ness of all of their natural inflows results in a high-dimensional dy-
+                                                                                         namic program, the problem is typically separated into long-term,
+     t = 1, . . . , T - 1,                                                 (3.5)         medium-term, and short-term models. For the long-term model,
+                                                                                         hydropower plants that belong to a homogenous hydrological re-
+with Q^tT,Sn-1(xt ) = E[Q^tT+S1,n-1(xt , t+1 )]. Autoregressive processes in             gion are typically aggregated into four equivalent energy reser-
+                                                                                         voirs (Arvaniditis & Rosing, 1970). The aggregate cost-to-go func-
+the right-hand sides can be expressed by modeling state variables                        tions then enter a disaggregate medium-term model with a much
+as additional decision variables and the state transition equation as                    shorter planning horizon which then again provides boundary con-
+additional equality constraints.                                                         ditions for a short-term model.
+
+    When the MC approach is used, the expected cost-to-go func-                              Fig. 1 shows a graph with five nodes, where four nodes are
+                                                                                         associated with an energy equivalent reservoir, Southeast (SE),
+tion, Q^tMnC (xt , t ), depends on t+1, so that                                          South(S), Northeast (NE), North (N), as well as one transshipment
+                                                                                         node (T). The load at each node must be supplied by hydropower
+x^tn = argminxt ctT xt + Q^ tM,nC-1(xt , ^tn )|Bt x^tn-1 + At xt = bt , xt  0 ,          or thermal power plants at that node or by power flow from an-
+                                                                                         other node. Available power flow capacity is limited and repre-
+     t = 1, . . . , T - 1,                                                 (3.6)         sented by an arc in the graph. Load shortage at one node results
+                                                                                         in load curtailment which is penalized by a convex cost function.
+The function closest to ^tn is given by                                    (3.7)
+                                                                                             A more detailed description of the long-term operational plan-
+Q^ tMnC (xt , t ) := Q^ tMnC (xt , ti )                                                  ning problem as well as system parameters is given in Shapiro
+where i := argmin{||t - tk||, k = 1, . . . , Kt },                                       et al. (2013, Section 5).
+
+with
+
+                             Kt+1                                          (3.8)
+
+Q^ tM,nC (xt , ti ) = ^ ti jQ^tM+C1,n(xt , t j ).
+
+                              j=1
+
+Any Markovian data process can now be used, but a solution of the
+
+MC discretization only provides a policy for the set of scenarios
+
+given by the constructed lattice with nodes ti, i = 1, . . . , Kt , t =
+
+1, . . . , T - 1, so that the respective lower bound is only valid for
+the discretized MC problem but not for the true problem.
+                               N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661                                        655
+
+Fig. 1. Interconnected power system with energy equivalent reservoirs.         GPAR: 78.2%),4 let us compare them based on the inflow scenarios
+                                                                               they generate.
+4.2. Stochastic inflow models
+                                                                                   Fig. 3 shows multiple fan charts to visualize the percentiles of
+                                                                               the unconditional distribution for each month based on 1000 sim-
+                                                                               ulated sample paths. Fan charts of the historical data with 78 sam-
+                                                                               ple paths are shown on the left. The differences between simulated
+                                                                               data and original data are subtle. The STCS model seems to ex-
+                                                                               hibit slightly heavier tails than the data, e.g., inflows above 30,000
+                                                                               megawatt months into the South EER between May and November
+                                                                               occur more often than in the data. The GPAR model does not ex-
+                                                                               hibit any apparent deviations. Nevertheless, both models produce
+                                                                               inflow scenarios with approximately the same characteristics as
+                                                                               the historical data.
+
+                                                                                   Fig. 4 shows Q­Q plots comparing the distribution of historical
+                                                                               annual mean inflows against simulated annual mean inflows for
+                                                                               both inflow models. The STCS model exhibits the largest deviation
+                                                                               from the diagonal. Most notably, the means of the Southeast and
+                                                                               the South EER are greater than their historical means, which im-
+                                                                               plies that the STCS model overestimates the longterm inflow into
+                                                                               these reservoirs. The GPAR model deviates less, although the upper
+                                                                               quantiles of the distribution of annual means of the Northeast EER
+                                                                               appear to be a little lower than in the data.
+
+                                                                               5. Computational experiments
+
+    Historical inflow data has been provided by the Brazilian sys-                 Our computational experiments study the difference of the two
+tem operator ONS (Operador Nacional do Sistema Elétrico) for the               approaches as well as the performance of the resulting policies
+years 1931­2008. In Shapiro et al. (2013), the authors find that,              when implemented on historical data.
+even after removal of the seasonal component, partial autocorre-
+lation is still significant and high (see Fig. 2). The authors argue           5.1. Implementation
+that consideration of this dependence must be taken into account
+and propose a first-order periodic autoregressive model of the log-                For our implementation, we used the same parameters as in
+inflows that provides a good description of the data.                          Shapiro et al. (2013) as well as the same computational setup. All
+                                                                               models were formulated and solved in Python using the QUASAR
+    The geometric periodic autoregressive (GPAR) model is defined              stochastic optimization software (Löhndorf, 2017).
+as the first order autoregressive (periodical) process after making
+the transformation ln bt (the logarithm of vector bt is taken com-                 Unless stated otherwise, we used 100 different random realiza-
+ponentwise). That is                                                           tions (Kt = K = 100, t = 1, . . . , T, center points) per stage, whereby
+                                                                               MC lattices were trained with 100k stochastic inflow scenarios.
+ln bt = t + t ln bt-1 + t , t  N (0, t ), t = 2, . . . , T, (4.1)              Convergence of TS-SDDP and MC-SDDP was tracked over 1000 it-
+                                                                               erations, with a single forward pass per iteration to obtain condi-
+with vectors t and matrices t, t having periodical behavior of                 date states for the backward pass. To allow for pairwise compari-
+12 months, i.e., t+12 = t for all t, and similarly for t and t. The            son, both methods received the same sequence of inflow scenarios
+parameters t, t, t, for every one of 12 months, were estimated                 during these forward passes. As in Shapiro et al. (2013), the opti-
+from the historical data. Here, the error terms (random vectors), t,           mization problem is solved with a planning horizon of 120 months.
+
+are assumed to form a stagewise independent process. The GPAR                  5.2. Simulation analysis
+
+model not only deals with negative inflows but also reduces sym-                   In our first analysis, we study the gap between lower and up-
+                                                                               per bound using TS-SDDP and MC-SDDP, respectively. Although
+metry of the error distribution.                                               MC-SDDP does not provide a lower bound for the STCS inflow
+                                                                               model, we can study the policy performance. The convergence of
+    Unfortunately, the GPAR model destroys convexity of the cost-              the lower and upper bounds of MC-SDDP and TS-SDDP for five in-
+                                                                               dependent optimization runs is shown in Fig. 5. For better visual
+to-go functions with respect to t = bt and hence cannot be                     comparison, the estimates of the upper bound were smoothed us-
+                                                                               ing a moving average with a right-centered window of size 100.
+used with TS-SDDP method. On the other hand for the MC-SDDP                    Additionally, we aggregated the bounds for all five runs in the bot-
+                                                                               tom right subfigure. Here, to smooth the upper bounds, we fitted
+method convexity with respect to  t is not essential, and the                  a convex, monotone decreasing function by solving the following
+                                                                               quadratic program,
+model can be used.
+
+    To linearize, the log-linear autoregressive model, the authors in
+
+Shapiro et al. (2013) propose a first-order approximation, which
+
+leads to
+
+bt = et  (at + t bt-1 ), t  N (0, t ), t = 2, . . . , T,                (4.2)
+
+with vector at and matrices t and t having periodical behavior                    min            N
+of 12 months. The exponents et are taken componentwise and ab
+denotes the componentwise (Hadamard) product of vectors a and                  y^i R,i=1,...,N     (yi - y^i )2 : y^i - y^i-1  y^i-1 - y^i-2, y^i  y^i-1 ,
+b. Let us refer to this inflow model as the Shapiro­Tekaya­Costa­
+Soares (STCS) model.                                                                            i =1
+
+    Both models were fitted and tested on 78 years of data of his-             with yi as random realization of the upper bound at iteration i.
+torical inflows into the four energy equivalent reservoirs of the
+Brazilian interconnected power system. As both models exhibit                    4 To obtain a joint R2, residual sum of squares (RSS) and total sum of squares
+approximately the same model fit measured by R2 (STCS: 78.5%,                  (TSS) are taken jointly over all four inflow dimensions, whereby TSS is computed
+                                                                               using a separate mean for each inflow dimension.
+656  N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661
+
+     Fig. 2. Partial autocorrelation function (PACF) of the residuals of the log-inflows after removal of the seasonal component.
+
+     Fig. 3. Monthly inflow percentiles with different stochastic inflow models.
+
+    It can be seen that, in the considered case, MC-SDDP consis-       the state space with the highest prospect of a cost decrease. In-
+tently provides a policy that is slightly better than TS-SDDP, and     flow states however cannot be explored but are sampled at ran-
+that its lower bound converges faster to the upper bound. Al-          dom. Random sampling of inflow states might therefore not lead
+though the Markov chain lower bound is not theoretically valid         into inflow states with the largest information gain. Although the
+for the "true" problem, it is closer to the upper bound than the       MC-SDDP does not resolve this problem, generating an MC lattice
+Monte Carlo lower bound. Using TS-SDDP with Kmeans to parti-           of inflow states in advance at least ensures that a diverse set of
+tion the error distribution is only marginally different from using a  inflow states is selected beforehand. The numerical results indicate
+Monte Carlo sample, although we can see from the bottom right          that this strategy leads to faster convergence and a slightly better
+subfigure that the Monte Carlo lower bound exhibits significant        policy in a shorter amount of time.
+variability.
+                                                                           In addition to the sample average, let us study the cost distri-
+    We conjecture that the reason for the better performance of the    bution obtained with each approach. Table 1 shows the cumula-
+MC-SDDP over TS-SDDP lies in the way in which the state space is       tive cost distribution of the optimal policy after 1000 iterations for
+being explored by either algorithm. TS-SDDP introduces additional      the same random realizations that were used during the forward
+equality constraints into the model to ensure stagewise indepen-       passes across all five repetitions.
+dence, which adds dimensions to the cost-to-go functions that are
+not under the control of the optimal policy, but are selected ran-         The results show that the Markov chain policy dominates the
+domly during forward simulation of the decision process. Since         Monte Carlo policy stochastically, as costs are lower for all quan-
+the approximate cost-to-go functions always underestimates the         tiles. Kmeans by contrast has a higher probability for high cost
+true cost-to-go functions, sample decisions during forward passes      scenarios, which can be seen from the higher cost figures above
+are always explorative. Reservoir states can thus be explored ef-      the median (0.5-quantile). This result indicates that the lower aver-
+ficiently by adding information about the cost-to-go in regions of     age cost of the Markov chain policy are not offset by a higher cost
+                                                                       variability.
+N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661  657
+
+Fig. 4. Q­Q-plots of annual mean inflows with different stochastic inflow models.
+
+Fig. 5. TS-SDDP and MC-SDDP bounds for STCS inflow model.
+658               N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661
+
+           Fig. 6. MC-SDDP convergence for the GPAR inflow model with varying number of nodes in the Markov chain.
+
+     Table 1                                                              The convergence of the lower bounds of MC-SDDP and TS-SDDP
+     Cumulative cost distribution of the optimal policy after
+     1000 iterations (in bn $).                                       using AV@R with  = 0.1 and weight  = 0.25 is shown in Fig. 7.
+
+     Quantile Markov chain Monte Carlo Kmeans                         Interestingly, TS-SDDP (Monte Carlo, red) now provides a higher
+                                                                      lower bound than MC-SDDP (Markov chain, blue) for the same
+     0.01  122.2  124.1  120.1                                        number of random outcomes per stage. Only after increasing the
+     0.05  144.8  145.8  143.3                                        number of partitions by a factor of 10 to K = 1000 nodes per stage,
+     0.10  158.4  160.0  157.6                                        the Markov chain lower bound is again higher than the Monte
+     0.25  189.2  190.4  188.4                                        Carlo lower bound.
+     0.50  238.2  239.5  241.8
+     0.75  319.8  322.8  331.1                                            Also, the relative increase in the lower bound when increasing
+     0.90  439.2  447.5  462.7                                        the number of lattice nodes per stage is much greater with AV@R
+     0.95  544.7  557.0  577.2                                        than without, so is the variability of the lower bound. In lack of
+     0.99  758.7  766.9  786.5                                        a valid upper bound, effect on the quality of the simulated policy
+                                                                      however is unknown and subject to future research.
+    For our next analysis, we were interested at the convergence
+behavior of MC-SDDP under the GPAR model, when varying the            5.3. Analysis with historical data
+number of nodes at each stage from 10 to 1000. The convergence
+of the lower and upper bounds is shown in Fig. 6. The graphs illus-       In addition to numerical benchmarks based on Monte Carlo
+trate that a larger number of nodes leads to a better policy as well  simulation, we were also interested in the quality of the policies
+as a lower bound that is closer to the true upper bound, because      when implemented on the historical inflow data that was used to
+it leads to a fine partitioning of the outcome space, which is sup-   fit the stochastic inflow models.
+ported by Remark 2.1. Nevertheless, as in Fig. 5, the gap between
+lower and upper bound does not close within 1000 iterations.              For this we separated the 78 years of inflow data into 68 over-
+                                                                      lapping 120-month horizons and implemented the approximate
+                                                                      optimal policy after 1000 iterations on the resulting 68 sample
+                                                                      paths. To avoid bias, we only report the cost of the intermediate
+N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661  659
+
+Fig. 7. TS-SDDP and MC-SDDP lower bounds using AV@R in the objective.
+
+Fig. 8. Empirical distribution of steady-state cost for different solution methods and inflow models (left), for TS-SDDP with STCS inflows for different AV@R (center), for
+MC-SDDP with GPAR inflows (right).
+
+Fig. 9. Average empirical cost over five repetitions for different solution methods and inflow models (left), for TS-SDDP with STCS inflows for different AV@R (center), for
+MC-SDDP with GPAR inflows (right).
+
+12 months, since we can expect initialization bias as well as end-       · MC-SDDP leads to significantly lower cost than TS-SDDP with
+of-horizon bias. The total cost accrued during the respective year
+then serves an estimate of the steady-state cost. We will refer to         STCS inflows (p < 0.001, t(n = 68) = 4.15).
+the corresponding distribution as the empirical cost distribution.
+                                                                         · MC-SDDP with GPAR inflows leads to significantly lower cost
+    Figs. 8 and 9 show the empirical cost distribution for different
+solution approaches and inflow models. While Fig. 8 shows empir-           than TS-SDDP with STCS inflows (p < 0.01, t(n = 68) = 3.34).
+ical cost for 68 historical time series averaged over five repetitions,  · The decrease in cost for using an AV@R with  = 0.1 and
+Fig. 9 shows empirical cost for five repetitions but averaged over
+68 historical time series (green triangles indicate the sample aver-        = 0.05 is already significant for TS-SDDP with STCS inflows
+ages). We can make the following observations.                             (p < 0.05, t(n = 68) = 2.56).
+                                                                         · The decrease in cost for using an AV@R with  = 0.1 and  =
+
+                                                                            0.15 is not significant for MC-SDDP with GPAR inflows (p =
+
+                                                                           0.52, t(n = 68) = 0.64).
+660  N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661
+
+     Fig. 10. Southeast reservoir contents over 68 years from TS-SDDP (STCS) and MC-SDDP (GPAR) with and without AV@R.
+
+ · The difference in cost between MC-SDDP with GPAR inflows but       voir content, but this time TS-SDDP used an AV@R formulation
+    without AV@R and TS-SDDP with STCS inflows with AV@R with
+                                                                      with  = 0.1 and  = 0.05. To better visualize the difference be-
+    = 0.1 and  = 0.15 are not significant (p = 0.93, t(n = 68) =
+                                                                      tween the two policies, the middle two panels additionally show
+    -0 . 09 ).                                                        the monthly average reservoir content before and after introducing
+                                                                      an AV@R.
+    We interpret these results as follows. The optimal policy with
+the GPAR model results in better decisions than the optimal policy        Clearly, usage of AV@R has increased the amount of energy held
+with the STCS model. In contrast to the GPAR policy, the STCS pol-    in the reservoir. Both policies now produce nearly the same reser-
+icy can be significantly improved by using an AV@R formulation.       voir content curves, which demonstrates that introducing an AV@R
+As already shown in Figs. 3 and 4, the STCS model overestimates       not only minimizes risk, but can result in a cost decrease if the
+the probability of high inflow outcomes, which may be the reason      stochastic model does not correctly describe the true process that
+for the worse quality of the resulting optimal policy when imple-     underlies the variability of the data process.
+mented on real data. Using an AV@R has robustified the STCS pol-
+icy against the misspecified inflow model and, given the right pa-    6. Conclusion
+rameters, leads to a policy that is not significantly different from
+the optimal GPAR policy.                                                  In this paper, we compare two different approaches to model
+                                                                      time-dependent randomness in stochastic dual dynamic program-
+    To strengthen this result, let us take a look at the implemented  ming: introducing additional variables and constraints into the
+decision under the optimal policy obtained using TS-SDDP with the     problem formulation to model right-hand side uncertainty as a lin-
+STCS model and MC-SDDP with the GPAR model, with and without          ear time series model (TS-SDDP) versus discretizing the data pro-
+using an AV@R in the objective.                                       cess to a Markov chain (MC-SDDP).
+
+    Fig. 10 shows reservoir content curves for the Southeast en-          We compare both approaches using case study data from the
+ergy equivalent reservoir for each policy. The top subfigure shows    Brazilian interconnected power system, where randomness enters
+the reservoir content over 68 years under each policy without us-     the problem through uncertainty in hydrological inflows into a
+ing an AV@R formulation. The bottom panel also shows the reser-       number of interconnected reservoirs. We study SDDP bounds as
+N. Löhndorf, A. Shapiro / European Journal of Operational Research 273 (2019) 650­661  661
+
+well as policy quality using simulated and empirical data. For this,   from the beginning of the development of the dynamic program-
+we fit a geometric periodic autoregressive (GPAR) model to histor-     ming methodology (cf., Bellman, 1957) and will create problems
+ical inflow data and compare this to a linearized version from the     for both approaches. It is still an open question, which approach
+literature (STCS) that meets the requirements of TS-SDDP.              scales better as problem dimensionality increases, and we leave its
+                                                                       answer to future work.
+    We find that MC-SDDP produces tighter lower bounds as well
+as consistently better policies for the STCS inflow model. The gap         Future work should look into extending the idea of constructing
+is largest in the early iterations, but vanishes as the number of it-  conditional cost-to-go functions to problems with time-dependent
+erations increases.                                                    randomness in the objective function, which is particularly inter-
+                                                                       esting for modeling price uncertainty. This brings the need for de-
+    We also compare solution quality using the original data and       veloping libraries of these classes of problems so that different
+find that MC-SDDP leads to significantly lower cost than TS-SDDP,      computational approaches could be compared.
+irrespective of the inflow model. We also find that the GPAR model
+yields significantly lower cost than the STCS model, which roots       Acknowledgments
+back to the STCS model overestimating high inflow outcomes. The
+effect can be mitigated by using an AV@R formulation, which ap-            The authors would like to thank Joari Paulo da Costa and Filipe
+pears to robustify the solution under the STCS model. This finding     Goulart Cabral from ONS for preparing the case study data that
+provides empirical support for the ability of the AV@R to provide      was used for the numerical experiments as well as for their valu-
+distributional robustness.                                             able input and discussion, and two anonymous referees for con-
+                                                                       structive comments which helped to improve the paper.
+    It has to be recognized that the empirical comparison was per-
+formed on a particular problem. As always with empirical studies       References
+one should be careful in making general conclusions. The conclu-
+sion of the present study is that, for the considered problem, the     Aloise, D., Deshpande, A., Hansen, P., & Popat, P. (2009). NP-hardness of euclidean
+MC approach worked better than its TS counterpart.                          sum-of-squares clustering. Machine Learning, 75(2), 245­248.
+
+    The essential feature of the considered problem is low dimen-      Artzner, P., Delbaen, F., Eber, J. M., & Heath, D. (1999). Coherent measures of risk.
+sion of the state variables and low dimension of the random vari-           Mathematical Finance, 9, 203­228.
+
+ables  t (both of dimension 4). In the TS approach the data process    Arvaniditis, N. V., & Rosing, J. (1970). Composite representation of a multireservoir
+                                                                            hydroelectric power system. IEEE Transactions on Power Apparatus and Systems,
+was modeled as first order periodical autoregressive process (this          89(2), 319­326.
+gave a reasonably good fit to the historical data). In cases where
+there is a need for higher order autoregressive models this will re-   Bally, V., & Pagès, G. (2003). A quantization algorithm for solving multidimensional
+quire to add additional state variables to the problem.                     discrete-time optimal stopping problems. Bernoulli, 6(9), 1003­1049.
+
+    Both approaches, TS-SDDP and MC-SDDP, have advantages and          Bellman, R. E. (1957). Dynamic programming. NJ: Princeton University Press,
+disadvantages. An advantage of the TS approach is that it allows            Princton .
+randomization of the generated scenarios by Monte Carlo sampling
+techniques. This could be useful in statistical testing of the com-    Birge, J. R., & Louveaux, F. V. (1997). Introduction to stochastic programming. New
+puted lower bounds. An advantage of the MC approach is that it              York: Springer.
+can deal with a broader class of random processes and is not lim-
+ited to right-hand side uncertainty.                                   Bonnans, J. F., Cen, Z., & Christel, T. (2012). Energy contracts management by
+                                                                            stochastic programming techniques. Annals of Operations Research, 200, 199­222.
+    Both approaches could be very sensitive to the number of state
+variables. There are reasons to believe that multistage stochas-       Löhndorf, N. (2017). QUASAR optimization software 2.1. Available at http://quantego.
+tic programming problems that involve high dimensional state                com .
+spaces are generally computationally intractable (cf., Shapiro & Ne-
+mirovski, 2005). In our experience with applying the TS approach       Löhndorf, N., & Wozabal, D. (2017). Indifference pricing of natural gas storage con-
+to the long-term planning problem of the Brazilian interconnected           tracts. Working Paper.
+power system, changing the inflow model from stagewise indepen-
+dent to first order autoregressive, and hence adding 4 state vari-     Löhndorf, N., Wozabal, D., & Minner, S. (2013). Optimizing trading decisions of hy-
+ables to the problem, increased the computed gap between the                dro storage plants using approximate dual dynamic programming. Operations
+upper and lower bounds from 4% to about 18%. Of course these                Research, 61(4), 810­823.
+bounds, and the corresponding optimality gap, are conservative. As
+the present study shows, in fact, the true optimality gap of the ob-   Maceira, M. E. P., Duarte, V. S., Penna, D. D. J., Moraes, L. A. M., &
+tained solutions was considerably smaller.                                  Melo, A. C. G. (2008). Ten years of application of stochastic dual dynamic pro-
+                                                                            gramming in official and agent studies in brazil-description of the newave pro-
+    It is not clear how sensitive these methods are to high dimen-          gram. In Proceedings of the sixteenth PSCC-systems computation conference.
+
+sional random vectors  t or when this dimension is different from      Pereira, M. V. F. (1989). Optimal stochastic operations scheduling of large hydroelec-
+                                                                            tric systems. International Journal of Electrical Power and Energy Systems, 11(3),
+the dimension of the corresponding state variables - which could            161­169 .
+be low. The MC approach is based on discretization of the support
+                                                                       Pereira, M. V. F., & Pinto, L. M. V. G. (1991). Multi-stage stochastic optimization ap-
+of  t. In high dimensions, the number of nodes needed to suffi-             plied to energy planning. Mathematical Programming, 52, 359­375.
+
+ciently explore the state space could grow exponentially. On the       Philpott, A. B., & de Matos, V. L. (2012). Dynamic sampling algorithms for multi-
+other hand, the TS approach will add a large number of decision             -stage stochastic programs with risk aversion. European Journal of Operational
+variables to the optimization problem which could also be prob-             Research, 218(2), 470­483.
+lematic. This so-called "curse of dimensionality" was recognized
+                                                                       Ruszczyn´ ski, A., & Shapiro, A. (2006). Optimization of convex risk functions. Mathe-
+                                                                            matics of Operations Research, 31, 433­452.
+
+                                                                       Shapiro, A. (2011). Analysis of stochastic dual dynamic programming method. Euro-
+                                                                            pean Journal of Operational Research, 209(1), 63­72.
+
+                                                                       Shapiro, A., Dentcheva, D., & Ruszczyn´ ski, A. (2014). Lectures on stochastic program-
+                                                                            ming: Modeling and theory (2nd). Philadelphia: SIAM.
+
+                                                                       Shapiro, A., & Nemirovski, A. (2005). On complexity of stochastic programming
+                                                                            problems. In V. Jeyakumar, & A. M. Rubinov (Eds.), Continuous optimization: Cur-
+                                                                            rent trends and applications (pp. 111­144). Springer.
+
+                                                                       Shapiro, A., Tekaya, W., da Costa, J. P., & Soares, M. P. (2013). Risk neutral and risk
+                                                                            averse stochastic dual dynamic programming method. European Journal of Oper-
+                                                                            ational Research, 224(2), 375­391.
+

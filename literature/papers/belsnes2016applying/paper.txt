@@ -1,0 +1,803 @@
+                                                      Electric Power Systems Research 130 (2016) 167­180
+
+                                                      Contents lists available at ScienceDirect
+
+                                         Electric Power Systems Research
+
+                                        journal homepage: www.elsevier.com/locate/epsr
+
+Applying successive linear programming for stochastic short-term
+hydropower optimization
+
+M.M. Belsnes, O. Wolfgang, T. Follestad, E.K. Aasgård 
+
+SINTEF Energy Research, Norway
+
+article info                            abstract
+
+Article history:                        We present a model for operational stochastic short-term hydropower scheduling, taking into account
+Received 11 January 2015                the uncertainty in future prices and inflow, and illustrate how the benefits of using a stochastic rather
+Received in revised form 28 April 2015  than a deterministic model can be quantified. The solution method is based on stochastic successive linear
+Accepted 24 August 2015                 programming. The proposed method is tested against the solution of the true non-linear problem in a
+Available online 25 September 2015      principal setting. We demonstrate that the applied methodology is a first-order approximation to a formal
+                                        correct head-of-water optimization and achieve good results in tests. How the concept of stochastic
+Keywords:                               successive linear programming has been implemented in a prototype software for operational short-
+Short-term hydropower scheduling        term hydropower scheduling is also presented, and the model's ability is demonstrated through case
+Stochastic optimization                 studies from Norwegian power industry. From these studies, improvements occurred in terms of the
+Successive linear programming           objective function value and decreased risk of spill from reservoirs.
+
+                                                                                                                                    © 2015 Elsevier B.V. All rights reserved.
+
+1. Introduction                                                                 schedules are to be implemented. This period may be different
+                                                                                for different systems, and in the Nordic region the watercourses
+    In Norway, power supply has traditionally been almost 100%                  are typically scheduled for the next operating day according to the
+hydropower. Hydropower optimization is challenging, and the                     daily clearing of the day-ahead market. The day-ahead market is
+main reason is that decisions are coupled in time; the optimiza-                the most important market place for power in the Nordic countries
+tion problem includes state-variables such as reservoir levels and              with 84% market share in 2013 [2]. Short-term scheduling must
+stochastic, climate dependent variables where the most important                consider many constraints due to complex cascaded watercourses,
+is inflow. Therefore, the full multi-dimensional optimization prob-             concession rules, shared ownership, multipurpose use, etc., but also
+lem is decomposed into sub-problems. Typically a long-, a medium-               technical constraints like startup costs, generation ramping and
+and a short-term sub-problem is formulated, where each prob-                    various market constraints. In Scandinavia, uncertainty in variables
+lem is solved by dedicated solution techniques [1], as illustrated in           such as inflow and market prices are handled by frequent reappli-
+Fig. 1. This paper presents a model for the short-term optimization             cation of models with updated input parameters (also called rolling
+of hydropower based on stochastic successive linear programming                 horizon), or by adding safety constraints that limit the characteris-
+and illustrates through case studies that the proposed methodol-                tics of optimization models to produce too smart schedules for the
+ogy may give improved decision support to producers acting under                hydropower system. The cost of such uncertainty imposed con-
+price and inflow uncertainty, compared to using a deterministic                 straints is calculated from sensitivity analyses or based on specific
+model.                                                                          and practical system experience. This works fine as long as some
+                                                                                flexibility is available in the hydropower system or in the differ-
+    Models for short-term hydropower scheduling have typically                  ent markets. The sequential structure of power markets creates
+focused on the constraints that are important to get feasible or                needs and opportunities for rescheduling. The volumes offered in
+close to feasible generation schedules for the period where the                 the day-ahead spot market reflects expected production for each
+                                                                                producer, but these volumes can be adjusted in the intra-day mar-
+   Corresponding author at: SINTEF Energy Research, Department of Produc-       ket, Elbas, as new information is revealed over time. In 2013, the
+tion Planning, Sem Sælands Vei 11, 7036 Trondheim, Norway. Tel.: +47 93406340;  total traded volume in the Elspot day-ahead market at Nord Pool
+fax: +47 73597250.                                                              was 349 TWh, while the volume traded on Elbas was 4.2 TWh [2].
+                                                                                Producers may also participate in the real-time balancing market
+     E-mail addresses: Michael.M.Belsnes@sintef.no (M.M. Belsnes),              for regulating power. In the regulating power market producers
+Ove.Wolfgang@sintef.no (O. Wolfgang), Turid.Follestad@ntnu.no (T. Follestad),   bid to sell additional power or buy back power from the market
+Ellen.Aasgard@sintef.no (E.K. Aasgård).
+
+http://dx.doi.org/10.1016/j.epsr.2015.08.020
+0378-7796/© 2015 Elsevier B.V. All rights reserved.
+168  M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+                                                                       utilities must therefore schedule the watercourses in such a way
+                                                                       that obligations in several different markets can be honored. The
+                                                                       challenge is to maintain flexibility for fast changes in generation
+                                                                       levels without increased spillage or efficiency loss, and to decide
+                                                                       what part of the capacity to use in what market. This task calls for
+                                                                       an explicit representation of the uncertainty of price and resource
+                                                                       availability. Continued operation with multiple re-runs or man-
+                                                                       ual rules for maintaining system flexibility is difficult when the
+                                                                       boundary conditions are constantly changing, in which case the
+                                                                       safety limits should become an integrated part of the operational
+                                                                       decisions.
+
+                          Fig. 1. Hydropower scheduling sub-problems.  1.1. Short-term hydropower scheduling
+
+in order to maintain the instantaneous balance between supply              The challenge of short-term planning is to handle non-linear
+and demand. Fig. 2 gives an overview of bid and operating hours        and non-convex elements together with state-dependencies. Non-
+for the different markets under present organization of markets in     linearities are present almost everywhere in hydropower modeling,
+Norway.                                                                in efficiency curves, reservoir curves, losses and so on. Exam-
+                                                                       ples of non-convex elements are minimum generation and spill
+    The behavior of the markets is expected to become much more        descriptions. State-dependency also occur several places; water
+volatile due to the transition toward more renewable power pro-        flow through gates and hydraulic connections [5], but regarding
+duction in the energy systems. The European Union Renewable            overall hydropower efficiency the state-dependency in turbine
+Energy Directive 2009/28/EC [3], that was implemented in 2010,         curves are the most important. Efficiency of hydro turbines depends
+define binding targets for 20% renewable contribution to total         on head and head depends on reservoirs levels but also discharge
+energy demand by 2020. From January 2012 a joint certificate           dependent losses above and sometimes below the turbine. The
+system was implemented in the Nordic market to ensure devel-           head, or pressure height, the coming hour(s) depends on the deci-
+opment of 26.4 TWh of new renewable energy toward 2020 [4]. To         sion that the operator is making this particular hour. This makes
+reach European and Nordic targets, intermittent production such        it impossible to build an exact efficiency curve for the turbines for
+as wind- and solar power will play a major role. As a consequence      coming hours and in a two-week perspective errors might be large.
+of the increased variability of inter-nordic balancing and regulat-    Different techniques are in use for handling this issue. One method
+ing power and new cables that are planned from the Nordic system       is to apply successive linear programming (SLP) [1,6,7]. This method
+to the rest of Europe, Nordic power prices may also become more        is implemented in SHOP (Short-term Hydro Optimization Program)
+volatile in the future. Hydropower producers might then have to        [7], which is applied by most large producers in Scandinavia. A large
+use more of the capacity toward the intra-day market or the bal-       effort has been put into the development of this general hydro-
+ancing markets. To optimize production in the future, hydropower       scheduling model so that it includes many details important for
+                                                                       Scandinavian watercourses.
+
+                                                                           Another approach is found in [8]. There the non-linear three-
+                                                                       dimensional relationship between the head, the water discharged
+                                                                       and the power generated is handled by discretization of a family of
+                                                                       non-linear curves. This leads to a mixed-integer linear model that
+
+     Fig. 2. Hydropower dispatch in the Nordic markets.
+M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180  169
+
+uses binary variables to represent which curve is used according          Fig. 3. An example scenario tree: a two-dimensional, five-stage tree with binary
+to the levels of stored water in the reservoirs. Ref. [9] presents a      branching.
+non-linear model for head-dependent hydro systems and shows
+that the non-linear formulation outperforms a similar linear model        the scenario probabilities. In the example in Fig. 3 the planning
+that neglects head-dependency.                                            period consists of five time steps (stages), the branching factor is
+                                                                          two, and there are two stochastic variables, price and inflow. The
+    The models described in [5­9] are deterministic. In the future,       values of these variables are given in parentheses above/below each
+hydropower utilities must schedule the watercourses in such a             node of the tree, so that at the single node at t1, both price and
+way that flexibility for fast changes in generation levels is obtained    inflow is 2 energy units. The branch probabilities are 0.5 for the
+without loss of water or efficiency. In other words, it is a need for     transition from stage t2 to t3, and 0.35 or 0.15 for the branches
+an explicit representation of the uncertainty of price and resource       from stage t3 to t4.
+availability. Application of a stochastic version of SLP, stochastic
+successive linear programming, SSLP, for this purpose is described            In the example in Fig. 3 the tree branches at each stage. For a
+in [10]. Other approaches with higher focus on the stochastic             model with an hourly time resolution and a planning horizon of
+representation and less on hydropower details has also been inves-        1­2 weeks, the number of nodes will rapidly become computa-
+tigated, for instance in [11,12]. More detailed models based on SSLP      tionally intractable. As an alternative, branching can be restricted
+are reported in [13,14]. In [13] the increased revenue from using         to a limited number of stages. For example, as spot prices are set-
+a stochastic model varied within [0; 16%] and in [10] it was 1.3%.        tled for 24 h at a time, branching every 24 h seems reasonable for
+Both results are excellent and could in monetary terms defend huge        the case of stochastic prices. Further, assuming that a 24-h ahead
+investments both in terms of development of a software model and          deterministic inflow forecast is reliable enough might be a reason-
+implementation in the hydropower utilities. In this paper we inves-       able approximation. In addition to limiting the number of branching
+tigate whether the successive linear programming method can be            points, some form of tree reduction might be needed.
+extended to a stochastic setting and if this new model can repro-
+duce these significant results based on real data.                            Several methods have been proposed for scenario tree genera-
+                                                                          tion and reduction, see e.g. [16] for an overview. In the case studies
+    The reminder of the paper is organized as follows. In Section 2       in Section 6 scenario trees are generated from the set of potentially
+we first describe how uncertainty in input variables is specified in      multi-dimensional scenarios for inflow and price using the tree-
+the model. Section 3 describes experience with a preliminary pro-         generation algorithm in [17­19]. Inflow and price scenarios can be
+totype implemented in GAMS. This model was used for the initial           generated by stochastic simulation from a statistical model fitted
+investigation of convergence qualities, and to test and verify the        to historical data. Inflow scenarios for one or more reservoirs can
+implemented methodology for head-of-water optimization. The               also be based on ensemble prognoses from a physical model like
+pure linear model formulation is presented and we describe how            the HBV model [20] or a distributed model such as the ENKI-model
+the non-linear problem elements are handled by an iterative solu-         [21]. For the former, post-processing is needed to adjust for bias and
+tion procedure. The implemented head-of-water optimization is             under-dispersion in practice [22]. However, for the case studies we
+derived formally. We also formulate and solve a corresponding non-        use unadjusted ensemble forecasts for inflow. Scenario trees that
+linear problem formulation. In Section 4 we explain how we have           adequately describe the joint forecast distribution of inflow and
+implemented uncertain variables in a prototype tool for short-term        price might pose problems in terms of the size of the tree. Gen-
+hydropower scheduling, SHARM, and also the method's capability            eration of the joint forecast distributions and multi-dimensional
+to become rich enough in detail and fast enough for operational           scenarios for inflow and price, as well as scenario tree generation,
+use. Section 5 explains a method for evaluating the solutions from        are problems in their own right, and for simplicity we look at price
+stochastic and deterministic models based on the scenario tree. This      and inflow uncertainty separately in the case studies of Section 6.
+method is then deployed to three case studies in Section 6. Final
+conclusions are provided in Section 7.                                    3. Testing aspects of the SHARM model
+
+2. Modeling uncertainty                                                       To study some important aspects of the stochastic hydropower
+                                                                          scheduling model implemented in SHARM, numerical simulations
+    The most important candidates for stochastic variables in a           based on a simplified representation of the full SHARM model has
+short-term hydropower scheduling model are inflow to one or               been conducted using GAMS [23]. The simplified model is suffi-
+more reservoirs and electricity prices. The electricity market actu-      cient to illustrate some main features of SHARM. We first describe a
+ally consists of several markets including the day-ahead spot             pure linear stochastic model. However, since the problem actually
+market, intra-day and balancing markets as shown in Fig. 2. All           is non-linear, this simple formulation is not sufficient. Therefore,
+markets contribute to the uncertainty when scheduling future gen-         we show how the linear model is updated in an iterative process to
+eration, and should ideally be taken into account. In the current
+implementation of the SHARM model however, only the day-ahead
+spot market is considered, and the spot electricity prices are the
+only stochastic prices in the model. Section 6 shows plots of typical
+forecast distributions of price and inflow for a 1 week horizon.
+
+    The hydropower scheduling problem is specified as a stochastic
+mixed-integer linear program, formulated as a deterministic equiv-
+alent. Within this formulation, the stochastic variables are specified
+in the form of a scenario tree. An example of a simple scenario tree
+is illustrated in Fig. 3. Each node of the tree contains possible future
+realizations for each of the stochastic variables, and the branches
+are assigned transition probabilities conditionally on the preceding
+node. Each root-to-leaf path of the tree constitutes one scenario,
+such that by scaling the transition probabilities for the branches
+between the latter two stages to sum to 1, these probabilities equal
+170                                        M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+Table 1                                                                                    The problem is formulated as a linear programming problem,
+Symbols for pure linear model.                                                         where the objective given by Eq. (1), is maximized subject to the
+                                                                                       constraints in Eqs. (2)­(6) and the parametric constraints for vari-
+Symbol                   Explanation                                                   ables given in Table 1. The objective function is the expected income
+                                                                                       from hydropower production, plus the value of stored water at the
+Sets and indices         Nodes in the stochastic tree                                  end of the planning period. The efficiency of hydropower is increas-
+Set I, index i           End nodes, iend  I                                            ing in an interval from zero to the best-point production. To avoid
+Set Iend, index i        Linear segments for the end-value function                    non-convexities, we apply a formulation where there are only two
+Set J, index j           Units. A unit is a reservoir plus generator(s) directly       steps on the efficiency curve. The efficiency is reduced for produc-
+Set M, index m           below the reservoir.                                          tion above best-point. The use of water is therefore divided into two
+                                                                                       variables corresponding to water-use up to best-point and above
+Variables                Use of jth segment in function for value of stored water      best-point, cf. Eq. (2). Total electricity production is the sum of used
+eij                      at the end of the planning horizon, eij  Ljmax                water multiplied with the corresponding energy conversion fac-
+                         Spillage from reservoir                                       tor, cf. Eq. (3). The amount of water at the end of each time-step
+sim                      Value of stored water at end of planning horizon              represented by a node, is given by the amount of water passed
+wi                       Reservoir storage, Xmmax  xim                                 through from the previous time-step for this branch of the stochas-
+xim                      Reservoir storage at the end of the time-step                 tic tree, plus inflow and production-water from upstream units in
+xipm                     represented by I's parent node                                the river-system, minus the amount of water used for production
+                         Water used for power generation, yim  Ymmax                   and possible spillage, cf. Eq. (4). The value of stored water at the
+yim                      Use of water at best efficency, yim  Ymbest                   end of the planning horizon is defined as a step-wise function, cf.
+yibmest                  Use of water in excess of best efficiency                     Eq. (5). If more water is stored, the marginal value of water declines.
+yirmest                  Generated electricity                                         The total amount of water available is the efficiency-weighted sum
+zim                                                                                    of amounts in all reservoirs, cf. Eq. (6).
+                         Best efficiency for generator
+Parameters               Above best-point efficiency for generator                     3.2. Iterative updating and avoiding flip­flop
+Eibmest                  Reservoir storage at start of planning period
+Eirmest                  Maximum reservoir storage                                         The model defined by Eqs. (1)­(6) is a linear model that is
+Xmstart                  Water-course identification parameter, Vipmrod  {0, 1}        straightforward to solve. However, in reality, a higher head of water
+Xmmax                    Length of each time step in marginal value function for       will add energy to each m3 of utilized water. This effect is impor-
+Vipmrod                  stored water at the end of the planning horizon               tant when scheduling buffer reservoirs and must be implemented
+Ljmax                    Probability for node I                                        in the model. Unfortunately, the model becomes non-linear if effi-
+                         Spot price in node I                                          ciencies are defined as variables, cf. Eq. (3). Therefore, we apply
+Qi                       Inflow to reservoir I                                         an iterative approach. In each iteration, efficiencies are updated in
+Pi                       Generator capacity for use of water for generator             accordance with the reservoir level in the previous round, cf. Eqs.
+Vim                      Maximum use of water at best efficiency                       (7) and (8). Additional symbols are explained in Table 2. For sim-
+Ymmax                    Marginal value of jth segment in end-value function           plicity, the applied formulation implicitly assumes that reservoirs
+Ymbest                   for stored water at the end of the planning horizon           have flat bottoms and straight walls.
+Wj
+
+account for non-linearities. The model is also modified to account                     Eibmest,new  =  Eimmin   +  (Eimmax   -  Eimmin  )   xim                                (7)
+for head-of-water optimization and to give an incentive for con-                                                                           Xmmax
+vergence of the iterative process. Finally we present a non-linear
+model formulation that is solved numerically to verify results from
+the described iterative procedure.
+
+3.1. A pure linear model                                                                                        Eibmest,new
+                                                                                                                  Eibmest
+    The linear model formulation is provided in Eqs. (1)­(6). The                      Eirmest,new  =  Eirmest                                                                 (8)
+model has hourly time-resolution, and the typical planning period
+is 1­2 weeks. All symbols for the linear model are explained in                            Solving the model in Eqs. (1)­(6) iteratively, while applying the
+Table 1. Parameters and sets are capitalized, while variables are not.                 updates in Eqs. (7) and (8), typically gives flip­flops between differ-
+Superscripts are part of symbol names, while subscripts are indices.                   ent solutions. None of the solutions are actually consistent since the
+In cases of parametric bounds for variables, these constraints are
+specified as a part of the definition in the list of symbols in Table 1.               Table 2
+All variables are positive variables by definition unless otherwise                    Symbols for updating pure linear model, and non-linear model.
+stated.
+                                                                                       Symbol                      Explanation
+max QiPi zim +                  Qi wi                                             (1)
+                                                                                       Variables                   Altered reservoir level compared to previous iteration
+     iI       m          iIEnd                                                           xim                       Penalty for altered reservoir level
+                                                                                                                   Artificial generation ­ an incentive that implements head
+yim = yibmest + yirmest                                                           (2)  pim                         of water optimization in a linear model. Free variable
+                                                                                       ziemxtra                    Best efficiency for generator
+zim = yibmest  Eibmest + yirmest  Eirmest                                         (3)                              Above best-point efficiency for generator
+                                                                                       Eibmest
+xim = xipm + Vim - yim - sim +             Vnpmrod yin                            (4)  Eirmest                     Best-point efficiency when reservoir is empty
+                                                                                                                   Best-point efficiency when reservoir is full
+                                   nM\{m}                                              Parameters                  Updated value for best-point efficiency
+                                                                                       Eimmin                      Updated value for efficiency above best-point
+wi = Wjeij                                                                        (5)  Eimmax                      Reservoir level in previous iteration in linear model
+                                                                                       Eibmest,new                 Penalty parameter for deviations from previous solution
+     jJ                                                                                Eirmest                     Electricity generated in previous solution of linear model
+                                                                                       xim                         Above best-point efficiency as relative value compared
+    eij =     xim        Eibmest   }                                              (6)  Tpen                        with best-point efficiency
+                   maxkJ {Ekbmest                                                      zim
+jJ                                                                                     Sm
+
+           m
+                                                               M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180                          171
+
+efficiencies that correspond to the solution of the model will be dif-
+ferent from the assumed efficiencies when solving it. On the other
+hand, the objective function is in many cases rather flat close to the
+optimum. Thus, for our cases, a small penalty for deviation from
+the previous-round solution, cf. Eqs. (9) and (10), was sufficient to
+provide convergence.
+
+xim           xim - Xim                                                            (9)
+
+              Xim - xim
+
+pim = T pen xim                                                                    (10)
+
+    Deviation from the previous round is measured by Eq. (9), while
+the penalty for altered reservoir level in Eq. (10) is included as a
+negative term in the objective function. However, the penalty is
+exactly zero when the algorithm converges, defined by xim = Xim.
+
+3.3. Head of water optimization
+
+    The iterative approach gives a solution of the linear model                          Fig. 4. Example system for GAMS test: two coupled hydropower stations.
+so that the assumed efficiencies that enters into the model are
+consistent with the corresponding evaluated efficiencies post the                        eirmest = Smeibmest                             (14)
+optimization. Still, this does not produce a true optimal solution
+for the problem. The reason is that efficiencies are only updated                        zim = yibmest eibmest + yirmest eirmest         (15)
+between each iteration, while the linear optimization model does
+not take into account that an altered reservoir level will give a                            In Eq. (14) the relative efficiency for the above best-point
+different efficiency. If the efficiency is treated as a variable, the                    production is set in accordance with the corresponding relative
+model becomes non-linear and different solution methods must be                          efficiency applied in the linear model. The produced amount is now
+applied. However, in the iterative approach, it is possible to formu-                    given by Eq. (15). The non-linear model maximizes Eq. (1) subject
+late a linear term that actually is a first-order approximation to the                   to Eqs. (2), (4)­(6) and (13)­(15).
+missing mechanism in the linear model. This term can be derived
+by evaluating how much higher production would be due to higher
+efficiencies if the reservoir level had been slightly higher, while
+all other variables are assumed constant and equal to the previous
+solution in the iterative loop. We evaluate this term by differentia-
+tion of Eq. (3) with respect to the reservoir level, and applying Eqs.
+(7) and (8). In Appendix A we show that this gives:
+
+ziemxtra  =   (Eimmax   -  Eimmin )Eibmest  Zim  (xim  - Xim)                      (11)  3.5. Test settings
+                           Xmmax
+                                                                                             We define a system consisting of two coupled hydro-power
+    This linear term is included in the objective function so that the                   stations in the same water course, cf. Fig. 4. Above each sta-
+efficiency-gain of increased reservoir levels are accounted for in                       tion/generator there is a reservoir. The uppermost reservoir is ten
+the linear model formulation, while at the same time the term van-                       times larger than the lower reservoir (300 versus 30). Additional
+ishes when the algorithm converges (xim = Xim). The new objective                        inflow in a full reservoir gives spillage to a different water system,
+function for the linear model is:                                                        and is hence a pure loss to the producer. The inflows to the two
+                                                                                         reservoirs are perfectly correlated, with 50% probability for each of
+max           Qi Pi        (zim + ziemxtra - pim) +            Qiwi -         pim  (12)  the two outcomes 0 and 4 in each of the five periods in the planning
+                                                                                         period, except for the first period where the inflow is 2, cf. Fig. 3. In
+          iI         mM                                iIEnd           iI,mM             addition, the lower reservoir receives production water from the
+                                                                                         above station. The capacity, measured in water units, is 3 for the
+    The successive linear model maximizes the objective function in                      upper generator and 6 for the lower generator. The highest possi-
+Eq. (12) subject to Eqs. (2)­(6), (9)­(11), and parametric constraints                   ble efficiency is 1 for both generators (full reservoir and best-point
+for the variables. Between each iteration efficiencies are updated in                    production up to 80% of capacity). For additional water-use above
+accordance with Eqs. (7) and (8).                                                        best-point the efficiency is reduced by a factor of 20%.
+
+3.4. Non-linear model                                                                        The marginal value of stored water at the end of the planning
+                                                                                         period takes 10 different values that approximates a linear declin-
+    For large numerical systems, it is typically harder to solve a non-                  ing function between 2.24 and 0.8. The same function is used for
+linear model using a non-linear solver than solving a linear system                      both reservoirs. The spot price is 2.
+using linear solver. However, for the first simple tests, it is possible
+to define and solve the problem both as a linear and non-linear                          3.6. Test results
+problem. In this way we have tested the above described iterative
+approach for a linear model against the solution when applying a                             Fig. 5 shows objective values in different iterations for three sim-
+non-linear model formulation. In the non-linear model, efficiencies                      ulations with the linear model. The black curve shows a flip­flop
+are variables instead of parameters:                                                     between two different solutions when no penalty for deviation is
+                                                                                         included. The red curve shows that the model converges after 6 iter-
+eibmest   =  Eimmin  +  (Eimmax  -  Eimmin  )   xim                                (13)  ations when the penalty for previous-round iteration is included.
+                                               Ximmax
+172  M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+                                                                                         However, these results do not prove that the methodology neces-
+                                                                                         sary will provide good results on all possible cases, nor do they
+                                                                                         prove convergence. Experience from the SHOP model confirms that
+                                                                                         successive linear programming shows adequate convergence for a
+                                                                                         large range of system topologies and states, and the authors believe
+                                                                                         that similar convergence properties will hold in the stochastic set-
+                                                                                         ting.
+
+Fig. 5. Objective function with and without penalty for deviation and head-of-water      4. The SHARM model
+optimization. (For interpretation of the references to color in the text, the reader is
+referred to the web version of this article.)                                                After implementation and testing in GAMS, a prototype model
+                                                                                         was implemented in C++ using experience from implementation of
+The blue curve shows how the converged solution is improved                              the SHOP model [7]. The name of the prototype is SHARM (Short-
+when head-of-water optimization is included.                                             term Hydro Application with Risk Modeling). The aim of this more
+                                                                                         detailed implementation of the concept described in Section 3, was
+    Fig. 6 shows simulation results for 10 different initial reservoir                   to be able to perform preliminary tests in the hydropower utilities.
+levels in the two reservoirs, ranging from empty reservoirs (0%) to                      This means that the level of detail in the prototype needed to be
+full reservoirs (100%). For each reservoir level, 10 different start-                    rich enough to describe all important features ­ at least for simple
+ing points has been applied for the non-linear model. The figure                         watercourses ­ to enable a realistic comparison of results with the
+shows average results for the linear model with and without head-                        currently used deterministic short-term model.
+of-water optimization (blue and green columns respectively), and
+for the non-linear model (red column).                                                       In the prototype implementation that was used for testing in
+                                                                                         the utilities we allowed for uncertainty in input parameters for
+    One important finding here is that the applied head-of-water                         inflow and price. As the model first of all is for use in single water-
+optimization improves the model solution. Depending on the ini-                          courses it is only possible to model one stochastic price, but the
+tial reservoir-level, the objective function was improved by up to                       stochastic properties for inflow may be different for each reservoir.
+1.5% in our cases. The variability of this result for the 10 differ-                     This results in a multidimensional description of the uncertainty
+ent starting points for each reservoir level was small. Apparently,                      and the scenario tree can potentially become very large. In this
+the improvement is largest when reservoirs are about half-full,                          initial approach we assumed that inflow and prices are uncorre-
+probably because the flexibility in the system is largest in these                       lated. The SHARM model does not rely on any particular method
+circumstances. Another major finding is that the applied iterative                       for generating input inflow and price scenarios, as long as these
+approach that includes head-of-water optimization, finds a solu-                         can be converted into a scenario tree. Thus, the model can be com-
+tion that is very close to the optimal solution as calculated by the                     bined with an external forecast module. The hydropower utilities
+non-linear model. On average, the objective function is only 0.02%                       for which the model was tested have different approaches to gen-
+higher in the non-linear model. Therefore, this test clearly indicates                   eration of inflow and price forecasts.
+that the first-order approximation for the head-of-water optimiza-
+tion in the iterative linear modeling approach provides good results.                        The model is similar to the model already tested in GAMS
+                                                                                         and to [13] but with some differences. First of all the model uses
+                                                                                         iterations and a new iteration is an incremental description of the
+                                                                                         previous iteration. Second, the model uses a two mode approach
+                                                                                         for handling turbine minimum generation without using binary
+                                                                                         variables. The concept of using an incremental description serves
+                                                                                         two purposes: speed and accuracy. Firstly, solving an incremental
+                                                                                         model were the next LP or MIP model is build as a from the
+                                                                                         solution of the previous iteration is like warm starting the solver.
+                                                                                         As the iterations go fourth more and more variables will remain
+
+Fig. 6. Objective function for different initial reservoir fillings. (For interpretation of the references to color in the text, the reader is referred to the web version of this article.)
+M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180         173
+
+           Fig. 7. Shifting linearization points in incremental model building.  to model minimum generation often combined with modeling of
+                                                                                 startup costs. Although algorithms such as CPLEX has improved
+unchanged which means that they will remain zero. This can speed                 tremendously, the dimensionality of modeling thousands of bina-
+up the calculation. Secondly, the number of segments in linearized               ries is a limit. This is still a practical limit in larger watercourses
+curves typically defines the accuracy of the produced result. An                 with many cascaded plants, and solving a multidimensional sce-
+example is a 300 MW unit where minimum generation is 50 MW.                      nario tree using MIP for the same watercourse is not yet possible.
+If it is known that this unit is running the efficiency curve might              In the prototype we have adapted a solution where mixed inte-
+be convex as such. Using 5 segments then leads to 50 MW steps in                 ger programming can be applied for the first part of the tree
+the output curve. This is a large step when closing in on maximum                while the sub-trees further out in the tree will have to do with
+generation where efficiency typically drops fast. By building                    a heuristic where unit commitment decisions are taken based on
+incrementally the set point x0 of the LP-model changes with the                  the calculated strategy for running the watercourse following a
+iterations and so does the segmentation of the linearization. This               fixed number of iterations. When unit commitment decisions are
+means that the result comes close to the result of a quadratic solu-             fixed, turbine minimum and inter-plant topology and losses can
+tion method. In practice this means that the incremental solution                be included explicitly in the efficiency curves in the linear model,
+can provide what the hydropower owner considers a marginal                       and new iterations can be used so that all system constraints are
+balance between market prices and unit efficiency. The principle of              respected.
+incremental model building is shown in Fig. 7. At the same time this
+helps limit the traditional problem of flip­flop between solutions                   Based on the description above, the concept of the SHARM pro-
+when using successive linear programming, as seen in Fig. 5.                     totype is illustrated in Fig. 8. First, the model finds unit commitment
+                                                                                 (UC) plans for all hydropower units and all time steps (left part).
+    In many aspects the minimum generation is important also in                  Then, with locked UC, the model is solved with detailed efficiency
+hydropower scheduling. When the turbines run at low load, cavita-                curves which enables quadratic adaptation in the linear model,
+tion may occur, and this typically limits minimum generation not                 resulting in detailed and accurate discharge plans for turbines,
+to zero but to 30­40% of nominal loading. This may vary strongly                 gates, etc. This is the same principle of successive linear program-
+from turbine to turbine and with pressure height above the tur-                  ming as is used in the operational SHOP model described in [6,7]
+bine. This constraint could easily prove important regarding other               and the method hence has a proven applicability for optimization
+operational constraints. This is handled by using binary variables               of short-term hydropower scheduling. In the case studies in Section
+                                                                                 6 we do not experience any flip­flop between solutions and 3 iter-
+                                                                                 ations in UC mode followed by 3 iterations of the detailed model
+                                                                                 yields a convergent solution.
+
+                                                                                     The functionality in the SHARM model does not include all
+                                                                                 functionality of the SHOP model. Hydraulic connections that are
+                                                                                 important in many Norwegian water courses have so far not been
+                                                                                 included, but the description in [5] can be included here as well.
+                                                                                 Start-up cost is included as described in [6]. Functionality such
+
+Fig. 8. Outline for the incremental SSLP method.
+174  M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+as primary and secondary reserve that is important in an opera-          Fig. 9. Expected profit from the stochastic model (full line) and the deterministic
+tional setting [15] has not been included. The SHARM model also          model (dashed line) for a one-dimensional decision variable. The values stoch and
+lacks time delay and static wave propagation that are important
+in longer watercourses. We have experience regarding how this              det are the expected profits for the optimal decisions ystoch and ydet, and det,eval is
+can be included and also how it may impact on convergence and            the expected profit for decision ydet evaluated with respect to the scenario tree.
+calculation time in SLP. In principle all these elements can be imple-
+mented also in the SSLP method but this have not yet been tested             The expected profit from operating the system according to the
+fully.                                                                   optimal decisions from the deterministic model is evaluated by a
+                                                                         step-by-step procedure similar to that presented in [15]. Optimal
+    In an operational setting, the computation time of the stochas-      first-stage decisions are computed for a set of deterministic sub-
+tic model cannot exceed certain limits due to routines in the            problems at each branching point of the tree. A branching point is a
+hydropower companies and time constraints in the market. For the         point in time when at least one branching occurs. The tree in Fig. 10
+system in case A in Section 6 the computational time is 165.75 s         has branching points at t1, t2 and t3. The approach is illustrated in
+for the stochastic model with a 16-scenario, 7-day tree as input,        Fig. 11.
+whereas it is 10.23 s for SHOP when average values for price and
+inflow is used as input. For the smaller case in case study C, SHARM         In Step 1 the optimal solution to the deterministic problem for
+uses 20.41 s compared to SHOP's 1.64 s. The computation time of          the whole planning period is found. The deterministic forecast is
+both the deterministic and stochastic model are dependent on the         computed as the point-wise probability weighted mean. The three
+time horizon and the topology and size of the system under study.        remaining steps correspond to the branching points t1, t2, and t3.
+Some systems are inherently more complex than others, and some           At each branching point one deterministic sub-problem is specified
+combinations of initial reservoir levels also give the system more       for each successor branch. All sub-problems at each branching point
+flexibility, and hence it may be more challenging to find the opti-      are solved simultaneously by a single run of the SSLP algorithm,
+mal solution. The computational time of the stochastic model is          keeping decision variables for time points prior to the branching
+also dependent on the size of the scenario tree. In [15] a simulation    point fixed to optimal values from previous steps. In Step 2 there
+study indicated that a reduction in tree size of up to 22% does not      are two successor branches at t1, leading to two deterministic sub-
+affect the value of the optimal solution by more than 0.02%, and         problems. For example, branch 2 in Step 2 equals branch 2 in the
+hence different methods for scenario tree reduction may be used          full tree between t1 and t2, the weighted mean of branches 4 and 5
+to lower the computational time. In terms of operational use of the      between t2 and t3, and the weighted mean of branches 8-11 from
+model, it will be a trade-off between the longer computational time      t3 and onwards. The sub-problems for branches 2 and 3 are solved
+of stochastic modelling against the manual analysis and multiple         simultaneously by running the SSLP algorithm using the scenario
+re-runs of a deterministic model.                                        tree consisting of the three branches 1, 2, and 3 in Step 2, keep-
+                                                                         ing the decision variables for branch 1 fixed to the optimal values
+5. Comparing stochastic and deterministic models in                      from Step 1. Since no path from time t1 and onwards share the same
+SHARM                                                                    branches, the results should be similar to the ones obtained by solv-
+                                                                         ing each of the two deterministic sub-problems one at a time. At
+    To quantify the benefits of the stochastic over the determinis-      Step 3 there are four deterministic sub-problems. In the single SSLP
+tic model, the expected profit from operating the system according       run at this step, decision variables at branch 1 are kept fixed to the
+to the optimal decisions from each of the two models should be           solution from Step 1, and at branches 2 and 3 the values are fixed
+calculated with respect to the same forecast distribution for the        to the solutions from Step 2.
+uncertain variables. The decision variables include scheduled pro-
+duction on each generator and discharge in each gate and bypass              The final step (Step 4) corresponds to solving the stochastic
+gate. In [13] results from a deterministic and a set of stochastic mod-  problem for the full scenario tree, but fixing all decisions prior to
+els are compared by evaluating all models with respect to a large        branching point t3 to values obtained from previous steps. This step
+set of new simulation scenarios. The models are thus compared by         is equivalent to evaluating the objective function for the determin-
+using a different set of scenarios than those used to generate the       istic decisions, but using the forecast distribution defined by the full
+scenario tree, preventing the stochastic model to optimally adapt
+to the scenarios used for comparison of the models [12]. In addition,                            Fig. 10. Full tree with branching at t1, t2 and t3.
+the approach does not allow the deterministic model to be updated
+as new information becomes available. In practice, decisions are re-
+scheduled at regular intervals based on the most recent information
+on prices and inflows. For example, in the case of a 24-h market, as
+the NordPool market, the scheduled decisions are typically updated
+daily, after each spot market clearing. We therefore take an alter-
+native approach for comparing the two models, where the profit
+from the deterministic decisions is evaluated with respect to the
+scenario tree used for the stochastic model, using a step-by-step
+approach as described below. By taking this approach we try to
+quantify the performance of the stochastic model over the updated
+deterministic strategy, if we assume that the scenario tree is very
+close to the true forecast distribution. In contrast, the approach of
+[13] compares how stochastic and deterministic approaches com-
+pare on average with respect to a new set of simulation scenarios
+assumed to be the truth. Our selected approach implies that the
+expected profit from the stochastic model will always be evaluated
+to be equal to or higher than that from the deterministic model, as
+illustrated in Fig. 9.
+M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180                                        175
+
+Fig. 11. Subtrees used in the evaluation method.
+
+scenario tree. The optimal objective for the final step is therefore the  the reservoir volume by producing more in order to avoid spill
+sought for value for the expected profit for the deterministic model.     of water. When price is stochastic, we focus on the allocation of
+In the case studies of Section 6, we refer to the strategy obtained       production to the highest priced hours. All case studies and cor-
+from this process as the determinitic strategy or the deterministic       responding data have been made available to us by hydropower
+solution.                                                                 producers participating in the industry testing of SHARM.
+
+    A drawback of the evaluation method described above is that           6.1. Case A: Flexible hydro system, inflow uncertainty
+the branching factor for the sub-problems is reduced as the tree is
+traversed. In addition, the length of the remaining planning period           In this example, SHARM is used for a real hydropower system
+decreases as we move from one branching point to the next. The            consisting of six reservoirs and six plants. The system is illustrated
+future will become less and less uncertain as the tree is traversed,      in Fig. 12. The inflow to all reservoirs is assumed to be stochastic,
+favoring the deterministic model. On the other hand, the same sce-        while the spot price is deterministic and increasing with a daily
+narios are used for optimization and performance evaluation of            pattern throughout the planning period, as shown in Fig. 13. The
+the stochastic model, potentially favoring the stochastic model.
+What we do is to quantify the reduction in solution quality by
+using a deterministic model, if we assume that the stochastic tree
+represents the "truth". The rolling horizon approach presented in
+e.g. [12], where new sub-trees and corresponding deterministic
+forecasts are generated for each branching node of the tree, is an
+alternative that accounts for these short-comings of the proposed
+approach.
+
+6. Case studies                                                           Fig. 12. System topology for case A.
+
+    In this section we show three examples to illustrate the poten-
+tial benefit of the stochastic model. Case A will exhibit a situation
+where several reservoirs and power plants are located along the
+same river system, thus giving the producer some flexibility for
+generation scheduling under normal operating conditions. We look
+at a situation where the reservoir levels are high and volatile inflows
+are expected in the coming week. Case B investigates price uncer-
+tainty for the same reservoir system. Case C is devoted to a special
+and difficult situation where a single reservoir must handle poten-
+tially very large inflows. In the examples where inflow is stochastic
+and price is deterministic, we illustrate how the stochastic model
+sees a risk of high inflows later in the period and therefore reduce
+176  M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+                         Fig. 13. Deterministic price forecast for case A.         Fig. 15. Actual inflow scenarios for one of the reservoirs in case A.
+
+prices are obtained from the price forecast used by the hydropower          Table 3
+producer in their daily operation scheduling                                Results for case A. Numbers given relative to the stochastic objective function.
+
+    The multi-dimensional scenario tree for inflow is generated             Income          Stochastic  Deterministic
+by applying the scenario tree generation approach in [17] to a              End value
+set of ensemble forecasts for the inflow, generated by the HBV              Penalties       9.43        7.54
+model [20]. The 51 scenarios for each reservoir are assigned equal          Start-up costs  990.80      991.78
+probabilities. This is a questionable assumption, and it is also a                          -0.22       -3.18
+well-known fact [22, and references therein] that hydrological                              -0.002      -0.005
+ensemble forecasts generated from meteorological ensembles tend
+to underestimate the uncertainty. However, the decision to use the          Total           1000        996.12
+ensemble scenarios without any additional processing was taken
+in cooperation with system operators at the power companies and             balance of producing today versus saving water for later is more
+therefore deemed valid for our test cases. It is further assumed that       shifted toward producing today for the stochastic model than for
+the inflow profiles for the two most downstream reservoirs are              the deterministic approach. The differences can be explained by
+equal, so that the inflows differ only by a constant. This leaves us        the fact the deterministic model do not see the same risk of spill as
+with a five-dimensional scenario tree. The structure of the total           is represented by the scenario tree in the stochastic model. Seeing
+scenario tree and the inflow values for one of the reservoirs are           the low prices at the start of the period, the deterministic model
+shown in Figs. 14 and 15. The future value of water is given as a           chooses a low production level in order to save water for more
+water value function, so that the water value decreases linearly            favorable prices later in the period or after the end of the time hori-
+by increasing reservoir level at the end of the planning period.            zon. This can be seen by comparing Figs. 13 and 16 which shows
+The mixed-integer problem of the first iteration in the successive          the prices over the optimization time horizon and the average pro-
+linear programming procedure has 165 502 variables and 39 638               duction in the deterministic and stochastic model. Saving water for
+constraints, and is solved in about 20 s. Solving the problem with 3        later is a viable strategy when the potential for large inflows is not
+iterations in UC-mode and 3 iterations with locked UC as explained          accounted for, but it is exactly in such situations that the strategy
+in Section 4 takes a total of 165.75 s on an Intel Core 3 GHz processor     fails, as is evident by the larger amount of spill from the determin-
+with 8 GB RAM.                                                              istic model. In fact, there is 60% more spill from the deterministic
+                                                                            than the stochastic model, 34 Mm3 versus 14 Mm3, which leads to
+    Using the evaluation method described in Section 5, the objec-          the higher penalties shown in Table 3. The stochastic model, on the
+tive function is 0.39% higher for the stochastic solution than for the      other hand, chooses to produce at higher levels even for less favor-
+deterministic solution. The break-down of the objective function            able prices in order to avoid spillage. Any losses due to producing
+into income form power sold, end reservoir value, start-up costs            at lower prices are offset by the gain from avoided spillage, and
+and penalties is given in Table 3. Income is higher for the stochas-        hence the stochastic model provides a better strategy in a setting
+tic model due to higher volumes produced during the optimization            where future inflows are uncertain. The reservoir storage level in
+period. As a consequence, the end reservoir storage is lower. The           the most downstream reservoir is shown in Fig. 17, indicating that
+                                                                            the bolder strategy chosen by the deterministic model leads to spill
+
+     Fig. 14. Scenario tree for inflow in case A.                           Fig. 16. Average production in stochastic and deterministic models for case A.
+M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180                                                                                         177
+
+Fig. 17. Average reservoir level for the most downstream reservoir in case A.                            Fig. 19. Actual price scenarios used in case B.
+
+while the stochastic model keeps the reservoir within its bounds               in the successive linear programming procedure has 337 702
+for a larger set of hours.                                                     variables and 81 542 constraints, and is solved in about 20 s.
+                                                                               Solving the problem with 3 iterations in UC-mode and 3 iterations
+    The net gain of 0.39% is taken to be a representative estimate of          with locked UC as explained in Section 4 takes a total of 186.37 s.
+the potential gain of using SHARM in full/empty conditions rather
+than the current practice of reapplication of a deterministic model,               The initial reservoir storage is set at a lower level of 40%, in order
+as the case presented above is based on a realistic physical situation         to investigate the ability of the two models to select only the high-
+and applies information on inflow that is already available to pro-            price hours for production. If the reservoir level is higher, there is
+duction schedulers at the utilities. Even small gains are interesting          enough water in the system to produce in most hours and the gain
+to producers as the models for short-term scheduling are applied               from allocating production to the highest priced hours diminishes.
+every day for a large portfolio of reservoir systems.                          When reservoir levels are high, the main emphasis is to reduce spill,
+                                                                               whereas when reservoir levels are low, optimal allocation of the
+6.2. Case B: Flexible hydro system, price uncertainty                          water as a scarce resource is more important. Looking at the price
+                                                                               profiles in Fig. 19, it is evident that the main issue in this particular
+    This case study investigates the same reservoir system as in case          case is to allocate production such that the nightly dips in price are
+A illustrated in Fig. 12, but with the price represented as uncertain          avoided and enough water is maintained in the system to be able
+variables and the inflow assumed to be deterministic. The inflow is            to exploit the potential price peaks toward the end of the period.
+taken as the step-wise probability weighted average of the scenario
+tree for inflow used in case A. The price is represented by applying               Table 4 gives the result for the objective functions of the stochas-
+the scenario tree generation method of [20] to a set of forecasted             tic and deterministic method. The stochastic method is in total
+market prices obtained from a market analysis company, SKM                     0.01% better than the deterministic method, which may not be a
+Market Predictor AS [24], which develops and supplies price                    significant result. This is due to the large contribution of the end
+forecasts to the power industry. The 60 price scenarios are based              reservoir value to the objective function. The numbers for revenues
+on different combinations of fundamental events that affect the                from sales tells a different story: the improvement in revenue is
+market price, such as electricity consumption or transmission to or            2.71%. Fig. 20, which shows the average production in the two mod-
+from connected areas. Prior to the scenario tree generation, all sce-          els, shows that the solutions are quite similar as the production
+narios are given the same probability. This may be a questionable              volumes follow the price profile closely. The stochastic model is to
+assumption, as the probability of the individual scenarios depends             a larger extent able to avoid production in the low price hours, and
+on the probability of the underlying events. Assessment of these               the stochastic model in total produces less than the deterministic
+probabilities is beyond the scope of this paper. The structure of the          model. The deterministic model is actually more able to exploit the
+scenario tree for price is shown in Fig. 18, and the actual values             first and highest price peak, and allocates slightly more produc-
+are shown in Fig. 19. The scenario tree has been generated using a             tion to this hour than the stochastic model. For the two remaining
+24-h branching period to reflect the daily clearing of the day-ahead           peaks, the stochastic model allocates more production. In terms of
+electricity market. The mixed-integer problem of the first iteration           obtained average prices, calculated as the total revenue from sales
+                                                                               divided by total production, the stochastic model performs better:
+                                                                               obtaining an average price of 25.00 D/MWh against the determin-
+                                                                               istic model's 24.95 D/MWh, which yields an improvement of 0.19%.
+
+                                                                                   The results for price as uncertain variable indicates a seemingly
+                                                                               insignificant gain when measured for the total objective function
+                                                                               value. However, in terms of revenues the results indicate that the
+                                                                               stochastic model gives a strategy where production to a larger
+
+                                                                               Table 4
+                                                                               Results for case B. Numbers given relative to the stochastic objective function.
+
+Fig. 18. Scenario tree for price in case B.                                    Income          Stochastic  Deterministic
+                                                                               End value
+                                                                               Penalties       0.29        0.28
+                                                                               Start-up costs  999.71      999.60
+                                                                                               -0.0        -0.0
+                                                                               Total           -0.004      -0.005
+
+                                                                                               1000        999.88
+178  M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+Fig. 20. Average production for the stochastic and the deterministic model in case         Fig. 22. Actual inflow scenarios for the reservoir in case C.
+B.
+                                                                                    Table 5
+degree is allocated to high-price hours than in the deterministic                   Results for case C. Numbers given relative to the stochastic objective function.
+strategy. This yields a higher obtained average price, which will
+benefit producers in the short-term perspective.                                    Income          Stochastic  Deterministic
+                                                                                    End value
+6.3. Case C: Less flexible hydro system                                             Penalties       688.37      522.39
+                                                                                    Start-up costs  312.29      402.73
+    The system under study in case C consists of one reservoir and                                  -0.87       -10.66
+one plant. The reservoir is mostly surrounded by mountains which                                    -0.20       -3.51
+make it hard to predict when actual inflow peaks will occur. Peak
+inflow can be higher than the nominal production discharge at the                   Total           1000        910.95
+plant which is about 20 m3/s, reducing the flexibility of the system.
+In this case study, the reservoir level is as high as 80% at the start              that the deterministic model chooses a low production level in the
+of the 1 week optimization period, and high inflows are expected.                   start of the planning horizon, failing to recognize the risk of spill
+A scenario tree for inflow is generated by using the scenario tree                  if reservoir levels are allowed to rise prior to the potentially very
+generation method to a set of 51 ensemble scenarios for inflow. The                 high inflows later in the period. This can be seen from Fig. 23 which
+structure of the scenario tree and the actual values for inflow are                 shows the reservoir storage level in the three scenarios with highest
+shown in Figs. 21 and 22.                                                           amounts of spill, and Fig. 24 which show the point-wise weighted
+                                                                                    average production in the stochastic and deterministic models.
+    Price is kept deterministic and is taken as the price forecast used
+by the hydropower producer in their daily operation scheduling.                         Looking at Fig. 23 it is evident that the deterministic strategy
+The value of water is represented as a linear function of the reservoir             of low (or variable) production in the start of the period fails and
+levels at the end of the planning period. The water value is low                    leads to spill if the inflow later on turns out to be high. The stochas-
+in comparison to the forecasted prices to reflect the high water                    tic model is able to avoid spill to a far greater extent by choosing to
+level in the system and the potential for spill. The mixed-integer                  produce at high levels from the start. Spill occurs in both models,
+problem of the first iteration in the successive linear programming                 but the amount is decreased by almost 90% in the stochastic model,
+procedure has 14 572 variables and 3976 constraints, and is solved                  0.09 Mm3, versus 0.7 Mm3 in the deterministic strategy. The large
+in less than 1 s. Solving the problem with 3 iterations in UC-mode                  gain obtained by the stochastic model in this particular case may
+and 3 iterations with locked UC as explained in Section 4 takes a                   not be obtainable on an average basis, but it illustrates that account-
+total of 20.41 s.                                                                   ing for risk and making more robust production schedules can be
+                                                                                    very valuable in some situations.
+    Table 5 shows the objective function value results for the
+stochastic and the deterministic models. The objective function is
+8.9% better for the stochastic solution. This is again due to the fact
+
+     Fig. 21. The structure of the scenario tree for case C.                        Fig. 23. The reservoir storage level in the three scenarios with highest spill in case
+                                                                                    C.
+M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180           179
+
+Fig. 24. The average production in the stochastic and deterministic model in case  is reduced as the tree is traversed. The length of the remaining time
+C.                                                                                 horizon is also reduced by traversing the tree. This will reduce the
+                                                                                   accuracy of the stochastic model and may hence decrease the value
+7. Summary and discussion                                                          of stochastic modelling. On the other hand, taking the stochastic
+                                                                                   tree as the "truth" clearly benefits the stochastic approach over the
+7.1. Summary of work and testing                                                   use of mean values in the deterministic method. Ideally, evaluation
+                                                                                   should be based on rolling time horizons for both methods, where
+    In this paper we have presented the concept of stochastic short-               the process of updating input and reapplication of the models often
+term hydropower scheduling implemented in the SHARM model,                         seen in hydropower companies could be modeled to a larger degree.
+and illustrated the performance of the model by examples. We
+have also illustrated how non-linearities can be handled in a in lin-                  In addition, we have only showed cases where either inflow or
+ear model for stochastic short-term hydropower scheduling. The                     price is uncertain. It is difficult to determine which of price and
+improvement in terms of objective function value and decreased                     inflow is more important to consider as a stochastic parameter. The
+risk of spill by the stochastic model is demonstrated in case stud-                results from our case studies indicate that inflow is more important
+ies, as well as the model's ability to allocate production to hours                since larger gains are obtained by considering inflow uncertainty
+with higher prices.                                                                than by considering price. This is however not a general result, and
+                                                                                   we expect the relative importance of price and inflow to depend
+    An elementary representation of the SHARM model is also for-                   on the system under study as well as time of year. In the future,
+mulated in the paper. For this model, we demonstrate that the                      prices are expected to become more volatile due to larger share of
+applied methodology is a first-order approximation to a formal                     intermittent renewables, and this will further increase the value of
+correct head-of-water optimization. Simulation results for three                   considering uncertain prices. Having only one uncertain variable
+model formulations are compared: An iterative solution method                      does not fully utilize the potential of the stochastic model in its
+with and without head-of-water optimization, and the solution of                   current implementation where both parameters can be described
+the non-linear model. In our cases, the head-of-water optimization                 as uncertain. We expect the combination of inflow and price uncer-
+improves simulation results by approximately 1.5%. The non-linear                  tainty to further increase the added value of stochastic modelling.
+model gives a slightly better result (0.02%).
+                                                                                   7.3. Further work
+
+                                                                                       A joint market formulation that accounts for the different elec-
+                                                                                   tricity markets could be promising. The installed capacity for any
+                                                                                   given producer is a constraining factor, even in cases where there is
+                                                                                   large flexibility for the amount for available energy in the system.
+                                                                                   How to develop consistent strategies for bidding into sequential
+                                                                                   electricity markets could be an area of application for the stochastic
+                                                                                   short-term model. In addition, inflow and prices are often corre-
+                                                                                   lated. Methods for representing correlated scenarios for inflow and
+                                                                                   price are therefore of interest, and may further contribute to the
+                                                                                   application of the stochastic model in practice. In a multiple market
+                                                                                   setting, prices in additional electricity market must also be ade-
+                                                                                   quately modeled. The SHARM model will be further tested by the
+                                                                                   industry, both regarding cost benefits and other application areas.
+
+7.2. Discussion                                                                    Acknowledgments
+
+    Even though we have shown that the implemented method is                           This work has been supported by the Research Council of
+a first-order approximation for a head-of-water optimization, we                   Norway and sponsors from Norwegian hydropower industry in
+have not provided a formal proof that could guarantee that the                     the project Optimal Short-term Scheduling of Wind and Hydro
+methodology will provide almost optimal solutions for all cases.                   Resources (Project No: 190999/S60). The industry sponsors are
+The test cases for the simplified version of the SHARM model indi-                 Statkraft Energi AS, Norsk Hydro ASA, Agder Energi Produksjon AS,
+cate that the implemented method is well functioning. On average,                  E-CO Energi AS and TrønderEnergi Kraft AS. We thank the members
+it provides a solution that is very close to the solution of the                   of the steering committee of the SHARM project for valuable input
+corresponding non-linear problem formulation. The relative per-                    and discussions in the process of developing the SHARM model.
+formance we have documented compared to the solution of the                        Special thanks are owned to Jarand Røynstrand at Agder Energi, Dan
+non-linear problem is however valid only for those cases we have                   Soknes and Gunnar Aronsen at TrønderEnergi for providing data for
+analyzed. We have not demonstrated that the properties of the                      the case studies. We are also grateful for the contributions of Olav B.
+non-linear problem formulation guarantee that the solution of the                  Fosso and Stein-Erik Fleten as advisors from the Norwegian Univer-
+non-linear model must be a global optimum. However, we have not                    sity of Science and Technology. We thank four anonymous referees
+identified any non-convexities in the optimization problem in the                  for valuable comments and suggestions on an earlier version of this
+simple model.                                                                      paper.
+
+    When we compare the results from using the stochastic strategy                 Appendix A.
+to the deterministic strategy on the basis of the scenario tree, we
+find that the stochastic model gives more robust results. The three                    In the following we derive how the produced amount will be
+examples shown in the case studies are representative of what we                   increased if the head of water increases because of a higher reser-
+have found in testing together with the hydropower industry. There                 voir level. We calculate this by differentiation of Eq. (3) with respect
+are, however, some limitations to our chosen method of evaluation.                 on the reservoir level. In this calculation, we treat the solution for
+The branching factor (number of branches at each branching point)
+180                                                             M.M. Belsnes et al. / Electric Power Systems Research 130 (2016) 167­180
+
+all variables as constants, given from the previous solution of the                   [7] O.B. Fosso, M.M. Belsnes, Short-term hydro scheduling in a liberalized power
+model. Thus, this is a first-order approximation:                                           system, in: Proc. of POWERCON 2004, Singapore, 2004.
+
+    We define:                                                                        [8] A.J. Conejo, J.M. Arroyo, J. Contreras, F.A. Villamor, Self-scheduling of a hydro
+                                                                                            producer in a pool-based electricity market, IEEE Trans. Power Syst. 17 (4)
+dz =    yibmest  dEbimest   +  yirmest  dErimest    dxim                                    (2002) 1265­1272.
+                 dxim                   dxim
+                                                                                      [9] J.P.S. Catalão, S. Mariano, V.M.F. Mendes, L.A.F.M. Ferreira, Non-linear optimiza-
+     =  (Eimmax  -  Eimmin  )  yibmest     1 + yirmest Eirmest  dxim                        tion method for short-term hydro scheduling considering head-dependency,
+                               Xmmax               Eibmest                                  Eur. Trans. Electric. Power (2008), http://dx.doi.org/10.1002/etep.301.
+
+     =  Eimmax - Eimmin        yibmest  +  yirmest  Eirmest  dxim                    [10] I. Honve, T. Follestad, M.M. Belsnes, A model for operational stochastic short-
+            Xmmax                                   Eibmest                                 term scheduling for hydropower systems ­ examples of use. Extended abstract,
+                                                                                            in: 4th IEEE and Cigr International Workshop `Hydro Scheduling in Competitive
+     =  (Eimmax  -  Eimmin)Eibmest Zim     dxim                       (A.1)                 Markets', Bergen, 14­15 June, 2012, 2012.
+                    Xmmax
+                                                                      (A.2)          [11] S.-E. Fleten, T.K. Kristoffersen, Short-term hydropower production planning by
+which gives Eq. (11).                                                 (A.3)                 stochastic programming, Comput. Oper. Res. 35 (2008) 2656­2671.
+
+ziemxtra  dzim                                                                       [12] S.-E. Fleten, K. Høyland, S.W. Wallace, The performance of stochastic dynamic
+dxim  (xim - Xim)                                                                           and fixed mix portfolio models, Eur. J. Oper. Res. 140 (2002) 37­49.
+
+References                                                                           [13] D. De Ladurantaye, M. Gendreau, J.Y. Potvin, Strategic bidding for price-taker
+                                                                                            hydroelectricity producers, IEEE Trans. Power Syst. 22 (2007) 2187­2203.
+[1] N. Flatabø, A. Haugstad, B. Mo, O.B. Fosso, Short-term and medium-term gen-
+     eration scheduling in the norwegian hydro system under a competitive power      [14] D. De Ladurantaye, M. Gendreau, J.Y. Potvin, Optimizing profits from hydro-
+     market structure, in: Proc. of EPSOM '98, Zurich, Switzerland, September 1998.         electricity production, Comput. Oper. Res. 36 (2009) 499­529.
+
+[2] Nord Pool Spot, Central to European Power Integration, Annual Report 2013.       [15] T. Follestad, O. Wolfgang, M.M. Belsnes, An approach for assessing the effect
+     www.nordpopl.spot (accessed 08.04.15).                                                 of scenario tree approximations in stochastic hydropower scheduling models,
+                                                                                            in: Proc. of the 17th Power System Computation Conference (PSCC), Curran
+[3] OJ, Directive 2009/28/EC of the European Parliament and of the Council of 23            Associates Inc., Stockholm, August 2011, pp. 271­277.
+     April 2009 on the Promotion of the Use of Energy From Renewable Sources and
+     Amending and Subsequently Repealing Directives 2001/77/EC and 2003/30/EC,       [16] M. Kaut, S.W. Wallace, Evaluation of scenario-generation methods for stochas-
+     L 140/16 5.6.2009, 2009.                                                               tic programming, Pac. J. Optim. 3 (2) (2007) 257­271.
+
+[4] Legislation 2011-06-24 nr 39, Lov om elsertifikater.                             [17] H. Heitsch, W. Römisch, Scenario reduction algorithms in stochastic program-
+[5] M.M. Belsnes, J. Røynstrand, O.B. Fosso, Handling state dependent non-linear            ming, Comput. Optim. Appl. 24 (2­3) (2003) 187­206.
+
+     tunnel flows in short-term hydropower scheduling, in: Proc. of POWERCON         [18] N. Gröwe-Kuska, H. Heitsch, W. Römisch, Scenario reduction and scenario tree
+     2004, Singapore, 2004.                                                                 construction for power management problems, in: Proceedings of IEEE Bologna
+[6] M.M. Belsnes, O.B. Fosso, J. Røynstrand, T. Gjengedal, E. Valhovd, Hydropower           Power Tech, Bologna, Italy, 2003.
+     short-term scheduling in an online environment, in: Proc. of MedPower 2002,
+     Athens, November 2002.                                                          [19] J. Dupac^ová, N. Gröwe-Kuska, W. Römisch, Scenario reduction in stochastic
+                                                                                            programming ­ an approach using probability metrics, Math. Program. 95 (3)
+                                                                                            (2003) 493­511.
+
+                                                                                     [20] S. Bergström, The HBV Model ­ Its Structure and Applications, SMHI Reports
+                                                                                            RH, No. 4, Norrköping, 1992.
+
+                                                                                     [21] ENKI ­ A Hydrological Modelling Toolbox and Hydrological Forecasting System.
+                                                                                            [Online]. Available from: http://www.opensource-enki.org/ (accessed 6.10.14).
+
+                                                                                     [22] H.L. Cloke, F. Pappenberger, S.J. van Andel, J. Schaake, J. Thielen, M.-H. Ramos,
+                                                                                            Hydrological ensemble prediction systems. Preface to Special Issue: Hydrolog-
+                                                                                            ical Ensemble Prediction Systems (HEPS), Hydrol. Process. 27 (2013) 1­4.
+
+                                                                                     [23] GAMS Software GmbH, P.O. Box 4059, 50216 Frechen, Germany, General Infor-
+                                                                                            mation and Sales: (+49) 221 949-9170, Fax: (+49) 221 949-9171, Contact:
+                                                                                            info@gams.de.
+
+                                                                                     [24] SKM Market Predictor AS, P.O. Box 2637, 7414 Trondheim, Norway. Tel: (+47)
+                                                                                            73 80 58 00, Fax: (+47) 73 80 58 01. Contact: info@skmenergy.com.
+

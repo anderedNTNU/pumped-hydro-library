@@ -1,0 +1,934 @@
+    energies
+
+Article
+
+Medium-Term Hydropower Scheduling with Variable
+Head under Inflow, Energyand Reserve Capacity
+Price Uncertainty
+
+Martin N. Hjelmeland 1,* , Arild Helseth 2 and Magnus Korpås 1
+  1 Department of Electric Power Engineering, NTNU Norwegian University of Science and Technology,
+       7491 Trondheim, Norway; Magnus.korpas@ntnu.no
+  2 SINTEF Energy Research, 7034 Trondheim, Norway; arild.helseht@sintef.no
+ * Correspondence: martin.hjelmeland@ntnu.no
+
+  Received: 11 November 2018; Accepted: 2 January 2019; Published: 8 January 2019
+
+ Abstract: We propose a model for medium-term hydropower scheduling (MTHS) with variable head
+ and uncertainty in inflow, reserve capacity, and energy price. With an increase of intermittent energy
+ sources in the generation mix, it is expected that a flexible hydropower producer can obtain added
+ profits by participating in markets other than just the energy market. To capture this added potential,
+ the hydropower system should be modeled with a higher level of detail. In this context, we apply
+ an algorithm based on stochastic dual dynamic programming (SDDP) to solve the nonconvex
+ MTHS problem and show that the use of strengthened Benders (SB) cuts to represent the expected
+ future profit (EFP) function provides accurate scheduling results for slightly nonconvex problems.
+ A method to visualize the EFP function in a dynamic programming setting is provided, serving as
+ a useful tool for a priori inspection of the EFP shape and its nonconvexity.
+
+ Keywords: hydropower scheduling; stochastic programming; integer programming
+
+1. Introduction
+
+      Increasing rates of renewable energy generation are resulting in a higher demand for flexible
+power units to balance the power system and to deliver ramping capacity. Regulated hydropower is
+a flexible renewable energy source that is well suited to provide such services. The increased demand
+for flexibility has led to the requirement of more detailed optimization models, such that the flexible
+power units can perform an optimal allocation of resources in the different power markets for energy
+and ancillary services. In this work, we focus on rotating reserve capacity, providing what is normally
+referred to as primary and secondary reserves.
+
+      The stochastic dual dynamic programming (SDDP) algorithm proposed in [1] is commonly
+used for hydropower scheduling and can be seen as a sampling-based approach of the nested
+Benders decomposition proposed in [2]. The sampling-based method for solving multistage stochastic
+programming problems consists of two main procedures: the forward and backward pass. Instead of
+visiting all nodes in the scenario tree, the forward pass samples a set of scenarios used to generate
+candidate solutions. The backward pass follows the trajectories of the candidate solutions computed in
+the forward pass, starting from the final stage, to approximate the expected future profit (EFP) function.
+Subsequently, a statistical confidence interval can be computed for controlling the convergence of the
+method. A more in-depth explanation of the method can be found in [3­5].
+
+      In this work, we investigate how improvements in the SDDP algorithm, derived from the
+stochastic dual dynamic integer programming (SDDiP) algorithm [6], can be used to improve the
+medium-term hydropower scheduling (MTHS) problem under uncertainty. The MTHS problem
+normally covers a planning horizon of one to three years, aiming at maximizing a single producer's
+
+Energies 2019, 12, 189; doi:10.3390/en12010189  www.mdpi.com/journal/energies
+Energies 2019, 12, 189                                                2 of 15
+
+expected profit. We have from ongoing research experienced that SDDiP requires considerably more
+computational force than SDDP [7]. Nevertheless, an improved type of the Benders (B) cuts, called
+strengthened Benders (SB) cuts, derived from the SDDiP method, show promising results by improving
+the convergence of the algorithm with a reasonable increase in computation time. The generation of
+SB cuts requires solving an additional mixed integer programming (MIP) problem to compute the
+right-hand-side parameter of the cut. This provides an at least as good a cut as the original B cut.
+
+      A considerable amount of research has been conducted for solving the nonconvex MTHS problem,
+such as [8­11]. Except [10], which proposed a novel approach that uses step functions to model
+a nonconvex EFP function, they all rely on solving some relaxation of the original problem. This is also
+the case for the SB cuts applied in this work. However, instead of solving the Lagrangian problem to
+convergence to obtain the cuts, one solves the Lagrangian problem only once, as elaborated in Section 3.2.
+
+      For the MTHS problem, a hybrid stochastic dynamic programming (SDP)-SDDP method
+is currently the state-of-the-art in the Nordic power system. This method was developed in the
+late 1990s and uses a discrete Markov chain to describe the price uncertainty and an autoregressive
+model to describe the inflow to the reservoirs [5,12]. The discrete Markov chain is used to circumvent
+the nonconvexity caused by the bilinear term where the energy price and the generation are multiplied.
+As the uncertainty is described by two different stochastic processes, it is challenging to model
+correlations between these processes. For an MTHS problem with weekly decision stages, it has
+been shown that the correlation between inflow and energy price has not been too significant
+on a weekly basis, yielding sufficient results by the hybrid SDP-SDDP method [12]. Nonetheless,
+adding additional markets would extend the dimension of the Markov chain. This comes at a
+significant increase of computational cost, as presented in [13], where a reserve capacity market
+was added to the Markov process for an MTHS problem. The recent works [14,15] proposed an
+elegant approach for including uncertainty in the objective function for dynamic programming (DP)
+problems, utilizing the fact that the EFP function is a saddle function that is convex w.r.t. to the
+objective coefficient and concave w.r.t. the state variables. In the following work, we build on the work
+in [15] to model the MTHS problem with uncertainty of inflow, energy, and reserve capacity price.
+
+Contributions
+
+      The work carried out in this paper is based on earlier work on developing improved methods to
+solve the MTHS problem, as in [7,16]. The main contributions are:
+
+· A procedure to visualize and evaluate the shape of the EFP function to give a better insight into
+      the nonconvexities in dynamic programming problems.
+
+· The application of SDDP with SB cuts on a realistic nonconvex MTHS case study. The SDDP
+      model considers correlated stochastic processes of inflow, energy, and reserve capacity price.
+
+· The representation of nonconcave generation functions that are dependent on discharge and water
+      head by concave regions.
+
+2. The Medium-Term Hydropower Scheduling Problem
+
+      A dense formulation of the MTHS problem is given as the following multistage stochastic
+programming problem:
+
+                                                  T
+                                                      ft(xt, yt, ~t)
+                         (x1                                          (1)
+                          max         ,yT  )  E~  t=1
+
+                        ,y1),...,(xT
+
+                        s.t. Wxt + Hxt-1 + Gyt = h(~t)                (2)
+Energies 2019, 12, 189                                 3 of 15
+
+                        Byt = 0                        (3)
+
+                        Cyt - Dxt  0                   (4)
+
+                        Cyt + Dxt  Cymax               (5)
+
+                        (xt, yt)  Yt                   (6)
+
+                        xt  Rk1 · Zk2 , yt  Rl1 · Zl2  (7)
+
+                        t  {1, 2, . . . , T}.          (8)
+
+      The state variables, xt, carry information between stages with a known initial state, x0.
+Stage variables are given by yt. The objective is to maximize the expected value of some real
+value function ft that describes the profit the system can obtain. The expectation is taken over
+~t, which describes a stochastic process of the inflow to the reservoirs as well as energy and reserve
+capacity prices. The matrices W, H, G, B, C, D are of suitable dimensions and define the parameters
+for a given hydropower system. The time-linking constraints in Equation (2) constrain the unit
+commitment of hydro stations and provide reservoir balances, where the function h(~t) describes the
+inflows to the reservoirs. The energy balance is given by Equation (3). The system's ability to provide
+reserve capacity is included in Equations (4) and (5). The generation function defining the relationship
+between power output, discharge and net head for each station, and the head function, describing
+how the head is related to reservoir volume, are also described by these constraints. More details on
+the these functions are given in Section 2.1. Other system constraints, not imperative for this study,
+are given in Equation (6).
+
+      In contrast to earlier characterizations of the MTHS problem, such as [5], where the objective
+was to maximize income from selling only energy, we extend this to include sales of reserve capacity.
+In order to keep the MTHS tractable, we define the reserve capacity as a composition of the provision
+of primary and secondary reserves. Further operational details associated with participation in the
+different markets are left for the short-term hydropower scheduling (STHS) problem [17] to handle.
+
+2.1. Generation Function
+
+      The generation function describes a power station's power output. An illustration is given in
+Figure 1, where the generation is a function of discharge and net head. Since the generation function
+describes the station's overall power output, one must assume that the units are started by a given
+sequel. The station consists of two units, as can be seen from the two concave regions along the water
+discharge in Figure 1.
+
+      Due to the computational complexity of the MTHS problem, the generation function is normally
+cast as a concave function, where the power output only depends on discharge. For a well-regulated
+and loosely-constrained hydropower system where the producer only considers sales of energy,
+this assumption is reasonable. Roughly speaking, the optimal solution is to discharge as much water
+as possible in the hours with the highest energy prices and produce nothing the rest of the year.
+However, as discussed in Section 1, we expect that hydropower plants will more frequently run at
+low-level power output in the future to provide ancillary services. Similar behavior might also be
+imposed by environmental constraints, such as minimum discharge limits for certain periods of the year.
+While operating at low power outputs, the linear optimization model will observe a higher power output
+than what is physically feasible and thus overestimate the system's potential profit, as discussed in [7,16].
+This overestimation can be avoided by more accurate modeling of the generation function. However,
+such improvements bring about increased model complexity and computation time. In the following,
+we define the generation function as a nonconcave function of net head and discharge. The generation
+function of a power station, for a given stage t, is defined by the following:
+Energies 2019, 12, 189                                                                                     4 of 15
+
+                                                     pc  iqc + bixc + ih, i  K(c), c  C                    (9)
+
+                                                     Qmc inxc  qc  Qmc axxc, c  C                          (10)
+
+                                                     Pcminxc  pc  Pcmaxxc, c  C                            (11)
+
+                                                      xc  1                                                (12)
+
+                                                     cC
+
+                                                     xc  {0, 1}, (pc, qc)  R+                              (13)
+
+where h is the net head, i.e., height difference between the station's upstream reservoir and
+the tailwater level. The set C contains concave regions of the generation function, where the
+discharge, qc, and generation, pc, are constructed for each of these regions. For each concave
+region, the generation function is bounded above by a set of hyperplanes, K(c), with coefficients
+i(c) and i(c), and a right-hand side parameter bi(c). The generation function describes the entire
+station's power output; therefore, one must make an assumption that the units are started in a certain
+sequence. This sequence of starting up new units leads to nonconcavities in the generation function,
+as seen in Figure 1. Furthermore, another source of nonconcavity comes from the fact that power
+output for a hydropower station is a nonconcave function w.r.t. head. Therefore, one must make a
+trade-off between accurate problem formulation and computation time. To tackle this, we base our
+implementation on the generation function presented in [16].
+
+                        Energy equivalent [MWh/ m3]
+
+                        610
+
+                                                     620                                               60
+                                                                   630
+                                                                                            50
+                                                      Head [m]
+                                                                                        40
+
+                                                                                    30
+
+                                                                        640 10  20
+
+                                                                                    Discharge [m 3/s]
+
+Figure 1. A generation function dependent on net head and discharge. For the purposes of illustration,
+the z-axis is given by the energy equivalent [MWh/m3].
+
+      Several authors have investigated how to include variable head in the hydropower scheduling
+problem. Most of the publications are related to solving the STHS problem; see [17­20]. There has also
+been some work conducted on how to include variable head in MTHS problems [8,21]. A nonconcave
+generation function is described in [8], using a piecewise-linear approximation. The formulation
+in [8] requires one binary variable for each discrete point of the generation function, compared to one
+binary variable for each concave region in the generation function, as in Equations (9)­(13). In [21],
+the generation function is approximated by hyperplanes, and the authors propose a quadratic function
+to describe the relationship between head and reservoir volume. The bilinear terms are divided into a
+grid with different cells, where each cell is represented by McCormick envelopes [22]. Our approach
+avoids the bilinear term as the generation function is described by a set of hyperplanes for each of the
+concave regions. The method of using hyperplanes to describe the generation function is not novel,
+e.g., as proposed in [20], so our approach is thus an extension to an already established methodology.
+
+      The head function, relating head and reservoir volume, can for most Norwegian reservoirs be
+approximated by a concave function without significantly compromisingaccuracy. Most Norwegian
+Energies 2019, 12, 189                                                                           5 of 15
+
+hydropower plants have a relatively high head, and generation is typically less dependent on head
+variations than it is for hydropower systems in other parts of the world. An illustration of the head
+function is given in Figure 2, where the head function is illustrated with some constructed reservoirs.
+One can observe that the head function is concave for a reservoir with a monotonically-increasing
+cross-section, but it may be nonconcave for a reservoir that inhabits a subsurface cave.
+
+90                                                                        90
+
+80                                                                        80
+
+70                                                                        70
+
+60                                                                        60
+
+Head [m]50                                                                50
+                                                                Head [m]
+40                                                                        40
+
+30                                                                        30
+
+20                                   Reservoir 1                          20
+
+10                                   Reservoir 2                          10
+                                     Reservoir 3
+
+00 500 1000 1500 2000 2500 3000 3500 -040 -30 -20 -10 0 10 20 30 40
+                                                                              Cross-section [m]
+                        Volume [m3]
+
+       Figure 2. (Right) Cross-section of some artificial hydropower reservoirs. (Left) Head as a function of
+       reservoir volume for the same reservoirs (corresponding line style). It is assumed that, from the view
+       of the cross-section, the reservoirs has a depth of one unit.
+
+2.2. Stochastic Processes
+
+      To solve the MTHS problem with uncertain inflow, energy, and reserve capacity price, we apply a
+vector autoregressive model of order one (VAR-1); see Equation (14).
+
+                                     nt = nt-1 + ~t                                              (14)
+
+                                     rt = µt + tnt.                                              (15)
+
+where nt is the vector of the normalized stochastic processes,  is a time-invariant correlation matrix,
+and ~t is a vector of white noise with realizations denoted as t. The physical realizations rt of
+the normalized variables are given by Equation (15), where µt and t are the expected value and
+standard deviation of the processes. pt is defined as the subset of rt that describes the objective term
+coefficients. As described in [15], these coefficients must be computed a priori to solving the stage-wise
+decision problem. Thus, the energy and reserve capacity prices are found beforehand and provided
+as parameters to the stage-wise decision problem, while the constraints on the normalized inflows
+are included in the weekly decision problem. Note that the normalized inflows can be calculated
+a priori and provided to the optimization problem as a parameter, but for modeling convenience,
+they are added as constraints. The treatment of objective term uncertainty in the SDDP method was
+first described in [15] and is further discussed in Section 3.3.
+
+3. Methodology
+
+      The following section first describes how one can visualize and inspect the EFP function.
+Following that, it gives some insight into how the uncertain objective function is included and how the
+SB cuts introduced in [6] are used to solve the MTHS problem with variable head and price uncertainty.
+Energies 2019, 12, 189                                                                                                                    6 of 15
+
+3.1. The EFP Visualization Approach
+
+      In order to gain insight into the shape of EFP function, we solve the extensive form of the MTHS
+problem given by Equations (1)­(8). By visually inspecting the EFP function, one can get a first-hand
+impression whether it can be approximated using SB cuts with sufficient accuracy or not.
+
+      To solve the extensive MTHS problem, we rely on a tractable scenario tree representing some of
+the underlying uncertainty with a one-year planning horizon. Then, by looping over different initial
+reservoir levels, re-solving the MTHS problem, and storing the objective value, one can obtain an estimate
+of the EFP function for the first stage. This procedure is performed for some cases of the MTHS problem
+with and without capacity reserves, as seen in Figure 3.
+
+70                                  70                                                                          690
+
+                                        ConstLP
+
+68                                  68  Const                                                                   680
+                                        Conc
+
+                                        NConc
+
+66                                  66  Orig
+
+                                                                                                                670
+
+64EFP [1000 NOK]
+                                                   EFP [1000 NOK]
+
+                                                                                                      head [m]
+62                                  64
+                                                                                      660
+
+                                    62
+
+                        ConstLP                                                                                 650
+
+60                                  60
+
+                        Const                                                                                                      Const
+
+58                      Conc        58                                                                          640                Conc
+                        NConc
+                                                                                                                                   NConc
+
+                        Orig                                                                                                       Orig
+
+560 50 100 150 200 250 300 350 400  560 50 100 150 200 250 300 350 400 6300 100 200 300 400 500
+
+    Volume [Mm3]                        Volume [Mm3]                                                                 Volume [Mm3]
+
+       Figure 3. (Left) EFP with sales of reserve capacity and energy. (Middle) EFP with sales of energy.
+       (Right) Different head functions. The colors of the lines in the two leftmost figures refer to the head
+       function, h(V), in the right figure. The different head functions are constant (Const), concave (Conc),
+       original (Orig) and nonconcave (NConc), respectively. The ConstLP function refers to the linear
+       programming relaxation of the MTHS problem. Both dashed lines refer to the constant head function;
+       thus, the power output only depends on discharge.
+
+      The approach is limited in the sense that it only provides an approximation of the EFP function
+for a given time stage. Moreover, it can only provide meaningful visualizations a few state variables
+at a time. The results should therefore only assist the modeler in the choice of what approach to use.
+Note that this visual approach can be combined with numerical indices, such as those presented in [23],
+to indicate the degree of nonconcavity of the MTHS problem.
+
+Inspecting the EFP for the MTHS at Hand
+
+      The MTHS problem, given by Equations (1)­(8), was defined with different head functions;
+a highly concave, highly nonconcave, constant and the actual function for a given reservoir. They are
+illustrated in the right plot in Figure 3. The resulting EFP function is given in the two leftmost plots,
+where the plot to the left includes sales of reserve capacity. It is clear that the shape of the head function
+has a significant impact on the corresponding shape of the EFP function, yielding information that can
+be used for deciding which solution strategy, and possible required simplifications, one should use.
+
+      The two EFP functions corresponding to a constant head are plotted (in black, dashed lines).
+One of them is the linear programming (LP) relaxation, denoted as PQHLP. As expected, the LP
+relaxation yielded a concave EFP function. Moreover, the LP relaxation significantly overestimates
+the EFP function. Since the EFP function with the actual head function is not a highly nonconcave
+Energies 2019, 12, 189                                                                                             7 of 15
+
+function, we expect that representing the generation function by piecewise-linear functions (cuts)
+provides acceptable results.
+
+3.2. DP Formulation
+
+      In SDDP, the forward pass is used to generate valid candidate solutions that are used for computing
+the EFP function in the backward pass. All possible candidate solutions generated in the forward
+pass must, therefore, be present in the solution space in the problem used in the backward pass. The EFP
+function is described by an upper approximated piecewise-linear concave function, generated in the
+backward pass. For the forward pass, we define the following DP problem for iteration i:
+
+                        FPit :  Qit(xt-1, ut-1, t)  :=      max         ft(xt, yt, ut, t)    +  ti (xt, ut, ~t+1)  (16)
+
+                                                           xt,yt,zt,ut
+
+                                              s.t. (zt, xt, yt)  Xt(t)                                             (17)
+
+                                                           zt = xt-1                                               (18)
+
+                                                           (zt, ut)  R, (xt, yt)  R · Z.                           (19)
+
+      The objective function (16) consists of the present profit function, ft, and the EFP function ti.
+The problem is constrained by the set Xt and the copy constraint Equation (18) as described
+
+in [6] together with the copy variable zt. In addition to the state and stage variables (xt and yt),
+
+the additional state variable ut is included in the formulation to include the uncertain objective
+
+coefficients, as discussed in [15].
+      In order to compute the EFP function, we define a backward pass problem, BPit, where integrality
+
+has been relaxed.
+
+                        BPit :  Qit(xt-1, ut-1, t)  :=      max         ft(xt, yt, ut, t)    +  ti (xt, ut, ~t+1)  (20)
+
+                                                           xt,yt,zt,ut
+
+                                              s.t. (zt, xt, yt)  Xt(t)                                             (21)
+
+                                                           zt = xt-1                                               (22)
+
+                                                           (zt, ut, xt, yt)  R.                                    (23)
+
+      By solving BPit, we obtain the cut coefficients ti, from the dual values of the copy constraint in
+Equation (22). The cut coefficients aligned with the objective-term uncertainty are purely given by the
+
+sampled value, as described in [15]. Further, the cut used to describe the EFP function is enhanced by
+solving the following Lagrangian problem based on a Lagrangian relaxation of problem FPit.
+
+                        LGit :  Lit (t )  :=   max         ft(xt,  yt,  ut,  t)  +  ti (xt,  ut, ~t+1)  -  t  zt   (24)
+
+                                              xt,yt,zt,ut
+
+                                              s.t. (zt, xt, yt)  Xt(t)                                             (25)
+
+                                                           (zt, ut)  R, (xt, yt)  R · Z,                           (26)
+
+      By solving the Lagrangian problem, one can obtain the SB cut, as proposed in [6]. Note that the
+
+constant term t xt-1 is neglected in the Lagrangian problem as it would be subtracted in the SB cut,
+which is given as;
+
+                                t   qtmLm(mi ) +  qtm(mi ) xt - (pit) µt.                                          (27)
+
+                                mC(t)                              mC(t)
+
+Similarly, the B cut is given as:
+
+                        t   qtmQim +  qtm(mi ) (xt - xt) - (pit) µt.                                               (28)
+
+                                mC(t)               mC(t)
+Energies 2019, 12, 189                                                                8 of 15
+
+where Qim is the objective value of BPim and xt is the candidate solution. The problem is solved for
+m  C(t), where C(t) is the set of children nodes from a node in stage t and qtm is the conditional
+
+probability. Recall that SDDP requires the stochastic variables to be stage-wise independent; therefore,
+the set C(t) is the same for all nodes in time stage t. The function ti(xt, ut, ~t+1) is thus confined by
+some upper bound and the acquired set of B or SB cuts.
+
+3.3. Uncertainty Modeling
+
+      In the following, we provide some insight into how the objective term uncertainty modeling
+is done. For the purposes of illustration, we assume that all state variables are fixed and that we only
+look at the terms where the auxiliary term ut is present. Assume that two samples of the objective term
+coefficient p1t and p2t are available and that two cuts were constructed around these. Subsequently,
+a third sampling is done, and the problem to be solved can be given as:
+
+                        max   p3t ut + t : t  Cti - pitut, (t, ut)  R+, i  {1, 2}  .  (29)
+
+                          ut
+
+      Since the state variables are assumed fixed, they are embedded in the constant term Cti. One can
+see that the problem consists of maximizing the present profit, p3t ut, and future profit, described by
+the two cuts. The problem given by Equation (29) is, therefore, able to assert whether there is an
+expectancy for greater profits in the future or not, depending on the current realization of the objective
+term coefficient. An illustration of this is given in Figure 4.
+
+                                           3 
+                                   1 - 1 
+
+                                                                            2 - 2 
+
+                                                                                          
+
+       Figure 4. Illustration of the representation of the uncertain objective term price. The EFP function w.r.t.
+       to the auxiliary variable ut is given, and xt is assumed fixed and added to the parameter C. Observe that
+       the cuts represent the potential for future profit, whereas the sampled objective term coefficient p3t
+       describes the present profit potential. Thus, the model can compute the trade-off between them.
+
+      The algorithm for how the MTHS problem is solved is given in the next section.
+
+3.4. Solution Approach
+
+      We define Algorithm 1 based on the SDDP framework. As seen from Lines 14 and 16 in the
+algorithm, one can choose which type of cut (B or SB) to use. After a certain amount of iterations, a final
+simulation is carried out on a larger set of scenarios.
+
+      Note that convergence cannot be guaranteed as FPit is a nonconcave function w.r.t. the state
+variables. However, the approach will give an approximate solution that can yield good results
+depending on how nonconcave the true EFP function is. The nonconvexity of the EFP function can be
+visualized by the approach proposed in Section 3.1. Other measures to characterize how prominent
+the nonconcavities are could also be performed, as in Chp. 7.2. of [23].
+Energies 2019, 12, 189                                                               9 of 15
+
+Algorithm 1: Solving the MTHS problem.
+
+1 Set x0i , i  1, UB = +, and LB = -
+2 while i < imax or some other stopping criteria do
+
+3       Sample N scenarios i = 1k, . . . , Tk k=1,...,N
+
+        /* Forward iteration                                                         */
+
+4 for k = 1,. . . ,N do
+
+5           for t = 1,. . . ,T do
+
+6                 Solve FPit, and collect solution ft from Equation (16)
+
+7           lbk  t=1,...,T ft
+
+        /* Compute lower bound                                                       */
+
+8       µ      1  kN=1lbk    and 2             1         kN=1 (lbk  - µ)2
+               N                             N-1
+
+9       LB     µ  +     z    
+                               N
+
+        /* Backward iteration                                                        */
+
+10 for t = T, . . . , 2 do
+
+11          for k = 1,. . . , N do
+
+12                for m C(t) do
+
+13                      Solve BPit, and collect mi from Equation (22)
+
+14                      if B cuts then
+
+15                           Collect Qit from Equation (20)
+
+16                      else if SB cuts then
+
+17                           Solve LGit, and collect Lit from Equation (24)
+
+18                Collect pt  rt from Equation (15)
+
+19                Add desired cut to ti
+
+        /* Compute upper bound                                                       */
+
+20      UB  Q1i (x0i , u0, 0i )
+
+21 i  i + 1
+
+    /* Final simulation                                                              */
+
+22  Sample M scenarios i           =   1k ,  .  .  .  ,    k  k=1,...,M
+                                                           T
+
+23 for k = 1,. . . ,M do
+
+24 for t = 1,. . . ,T do
+
+25          Solve FPit, and collect solution ft, xtik, yitk from Equation (16)-(19)
+
+26      lbk  t=1,...,T ft
+
+    /* Compute lower bound                                                           */
+
+27  µ      1  kM=1lbk   and 2           1       kM=1 (lbk     -     µ)2
+           M                          M-1
+
+28  LB      µ  +  z     
+                          M
+
+4. Case Study
+
+      The case study is a representation of a Norwegian hydropower system, comprised of three
+reservoirs and two power stations. The power stations have 13.8 MW and 365 MW of installed capacity.
+There is a short-term and long-term reservoir connected to the largest power station, as seen in Figure 5.
+Thus, the aim for the long-term reservoir is to store as much water for usage in the most remunerated
+hours during the year, while the short-term reservoirs need to be properly managed in order to avoid
+spillage. This system was also used as a study case in [7,24].
+
+      The VAR-1 model representing the stochastic processes was fitted to 70 historical years of inflow
+and energy prices obtained from a fundamental market model generating energy prices for those
+70 years [25]. Historical prices for the primary reserve market are used to describe the reserve capacity prices.
+Energies 2019, 12, 189                                                                                                                  10 of 15
+
+                                      51%
+
+                                                              7%
+
+                                      13.8        1.42
+
+                           24%        27                   1
+
+                                                  91%              25%
+
+                                                                                      2%
+
+                           365        1.69                    343  1.58
+
+                                  60           2              60            3
+
+Figure 5. Illustration of the hydropower system. There are three reservoirs, each represented by its
+
+relative storage capacity and inflow compared to the system as a whole. As an example, Reservoir 1 has
+
+7% of the system's storage capacity and 51% of the inflow. Reservoirs 2 and 3 have a hatch downstream
+
+that controls which reservoir is depleted. Only one of the reservoirs can be depleted at a time, due to
+
+their different head. Reservoir 2 can also bypass water, indicated by the arrow between the reservoirs.
+
+The hydropower stations are represented by their maximum power at nominal head, discharge and the
+
+energy  equivalent      (  MW     MWh/m3).        Since       the  lower       power  station  is  connected  to  two  reservoirs,  it  has
+                           m3 /s
+
+different efficiencies, depending on which reservoir is depleted.
+
+      We use weekly decision stages. Each weekly decision problem consists of 1858 constraints
+(not considering the cuts) and 1152 variables (837 continuous and 315 binary). There are 104 weeks in
+the scheduling horizon, and we consider 15 branches in the backward pass of the SDDP algorithm.
+Each week has 21 time-steps representing three time blocks of the day. Three scenarios are sampled for
+each forward SDDP iteration, and the final simulation is carried out with 300 scenarios. We use the
+same sampled scenarios for all cases. From the final simulation, a confidence interval is computed.
+The problem was formulated in C++ with Gurobi 7.5 as the optimization solver. The computations were
+carried out on a computer cluster with two Intel Xeon E5-2690 v4 processors, 2.6 GHz, and 384 GB RAM.
+No parallelization was carried out except the one from the optimization solver. Parallelization in
+the SDDP framework is well studied, as in [26], and thus neglected in this work. It would, however,
+contribute to significantly reducing the CPU time.
+
+Results and Discussion
+
+      In the following, the results from Algorithm 1 are outlined with the use of both B and SB cuts.
+The MTHS problem was first solved with uncertainty of inflow, reserve capacity, and energy price.
+A case with only uncertainty in inflow was performed for comparison.
+
+      The convergence plot for Algorithm 1 is shown in Figure 6, when B and SB cuts were used. It is
+clear that the SB cuts provided significantly tighter cuts and a better policy. One can also observe that
+the upper bound converged slowly and would most likely continue to improve with more iterations.
+The computation time did, however, become more prominent for SB cuts, as seen in Table 1. Algorithm 1
+required approximately five-times more time with SB cuts than with B cuts. The use of parallel processing
+could easily drive the computation time down, making the use of SB cuts better suited for daily
+operational use.
+Energies 2019, 12, 189                                                                  11 of 15
+
+                                                    105
+
+                                                14                                  B
+
+                                                                                    SB
+
+                        Objective value [MNOK]  12
+
+                                                10
+
+                                                8
+
+                                                6
+
+                                                4
+
+                                        5 10 15 20 25 30 35 40 45 50
+                                                                 Iteration
+
+Figure 6. Convergence of the approach with Benders and strengthened Benders cuts.
+
+Table 1. Economic and computational performance of the two case studies with use of either B or SB
+cuts. Uncertainty of inflow, reserve capacity, and energy price (top) and uncertainty of inflow (bottom).
+
+                                                         UB  stat. LB Gap Time
+
+                                                         (kNOK) (kNOK) (%) (h min)
+
+                                                    B 1,209,510 502,838 58.4 5 17
+                                                    SB 820,466 525,493 36.0 23 59
+
+                                                    B 1,017,580 537,808 47.1 5 52
+                                                    SB 614,616 563,280 8.4 34 31
+
+      The expected value of water, or water values (WV), for the largest reservoir in the system are
+shown in Figure 7. The WVs were computed by fixing all the other state variables in the EFP function
+and finding the coefficients of the binding cuts. One can observe that even though the cut coefficients
+from both B and SB cuts came from the problem BPit, the water values for the SB cuts were generally
+lower than the B cuts. This can be seen as a result of the right-hand-side in the SB cuts being lower,
+therefore lowering the cuts, which resulted in a lower water value for the same state, as the EFP
+function is concave. An illustration of this is given in Figure 8, where two cuts are generated in the
+first iteration of the SDDP algorithm. The coefficients of the cuts were the same for both SB and B cuts,
+but as seen from the top left and right plot, the SB cuts had a tighter right-hand side. This results in
+the water values given in the lower plot. After consecutive iterations, the water values with SB cuts
+tended to stabilize on lower values, which is a reasonable observation as the SB cuts made the model
+see less expected profit in the future.
+
+      A percentile plot of the reservoir trajectories for the largest reservoir is shown in Figure 9, for both
+B and SB cuts. The figure clearly shows how the algorithm was able to utilize the reservoir better when
+SB cuts were used. When B cuts were used, the algorithm saw a higher expected future profit than
+what was achievable, resulting in a simulated operation at very high reservoir volumes. Implications
+of this can be seen in Figure 7b,d, where the change in water values is substantial around Week 18,
+due to the spring flood, giving a high risk of spillage for large reservoir volumes.
+
+      In Table 1, the bounds of the algorithm are shown, computed from the final simulation, together with
+the percentage-wise gap and computation time for the 50 forward and backward iterations. For comparison,
+the problem was solved with only uncertainty of inflow, which is given in the bottom half of the table.
+Observe how the convergence properties improve, indicating that the approach of including objective
+term uncertainty in SDDP by [15] requires more iterations. In validation studies using a smaller system
+with fewer decision stages, it was observed that the approach does slowly converge. This illustrates the
+difficulty of solving multi-stage stochastic problems with high dimensions of uncertainty.
+Energies 2019, 12, 189                                                                                                                  12 of 15
+
+                       0                                                                                  0                             483.5
+
+                                                                  483.5  Water Value [kNOK/Mm3]                                         452.0              Water Value [kNOK/Mm3]
+                                                                                Reservoir level [Mm3]
+Reservoir level [Mm3]  100                                        452.0                                100                              420.5
+                                                                  420.5
+
+                       200                                        389.0                                200                              389.0
+
+                                                                  357.5                                                                 357.5
+
+                       300                                        326.0                                300                              326.0
+
+                                                                  294.5                                                                 294.5
+
+                       400                                        263.0                                400                              263.0
+
+                                                                  231.5                                                                 231.5
+
+                       0 10 20 30 40 50 200.0                                                             0 10 20 30 40 50 200.0
+                                    Stage [Week]                                                                       Stage [Week]
+
+                                          (a) With SB cuts.                                                     (b) With B cuts.
+
+                       0                                          483.5                                      0                          483.5
+
+Reservoir level [Mm3]  100                                        452.0  Water Value [kNOK/Mm3]           100                           452.0  Water Value [kNOK/Mm3]
+                                                                  420.5            Reservoir level [Mm3]                                420.5
+
+                       200                                        389.0                                   200                           389.0
+
+                                                                  357.5                                                                 357.5
+
+                       300                                        326.0                                   300                           326.0
+
+                                                                  294.5                                                                 294.5
+
+                       400                                        263.0                                   400                           263.0
+
+                                                                  231.5                                                                 231.5
+
+                       0 10 20 30 40 50 200.0                                                                0 10 20 30 40 50 200.0
+                                    Stage [Week]                                                                          Stage [Week]
+
+                       (c) With SB cuts and only uncertainty of inflow.                                   (d) With B cuts and only uncertainty of inflow.
+
+                                          Figure 7. Water values for Reservoir 2 for the different case studies.
+
+                       EFP [MNOK/Mm3]                                    EFP [MNOK/Mm3]
+
+                                          Reservoir Volume [Mm3]                                                Reservoir Volume [Mm3]
+
+                       WV [1000 NOK/Mm3]
+
+                                                                                           Reservoir Volume [Mm3]
+
+                                          Figure 8. Illustration of the B and SB cuts and how this affects the water value.
+Energies 2019, 12, 189                                                    13 of 15
+
+                                400
+
+                        [Mm 3]  200
+
+                                0
+
+                                     10  20  30           40  50  60  70
+
+                                                 Time [week]
+
+                                400
+
+                        [Mm 3]  200
+
+                                0
+
+                                     10  20  30           40  50  60  70
+
+                                                 Time [week]
+
+Figure 9. Percentile plot of reservoir trajectories for Reservoir 2. (Top) With Benders cuts and (bottom)
+with strengthened Benders cuts.
+
+5. Conclusions
+
+      A medium-term hydropower scheduling (MTHS) problem with variable head and uncertainty
+in inflow, reserve capacity, and energy price was investigated. The proposed model based on the stochastic
+dual dynamic (SDDP) method included correlations between the different stochastic processes and allowed
+for representation of a detailed hydropower system.
+
+      By means of visualization, we found that the expected future profit (EFP) function for the MTHS
+case study was not highly nonconcave, and we argue that the approximation of the EFP as a concave
+function within the SDDP method is a fair compromise between accuracy and computation time.
+We compared two types of Benders cuts to approximate the EFP function, namely the Benders (B) and
+the strengthened Benders (SB) cuts.
+
+      In the presented case study, it was found that the use of SB cuts provided a significantly better
+policy than with the use of B cuts. The policy improvement comes at an increased computational time,
+around five-times higher for SB than B in the case study. Moreover, we found that the inclusion of
+objective term uncertainty led to significantly slower convergence.
+
+Author Contributions: Conceptualization, M.N.H., A.H., and M.K.; methodology, M.N.H. and A.H.; software,
+M.N.H.; validation, M.N.H., A.H., and M.K.; writing, original draft preparation, M.N.H.; writing, review and
+editing, A.H. and M.K.; visualization, M.N.H.
+
+Funding: This research was funded by the Research Council of Norway and industry partners under Grant
+228731/E20.
+
+Conflicts of Interest: The authors declare no conflict of interest.
+
+Abbreviations
+The following abbreviations are used in this manuscript:
+
+B      Benders
+DP     Dynamic programming
+EFP    Expected future profit
+LP     Linear programming
+MIP    Mixed integer programming
+MTHS   Medium-term hydropower scheduling
+SB     Strengthened Benders
+SDDiP  Stochastic dual dynamic integer programming
+SDDP   Stochastic dual dynamic programming
+SDP    Stochastic dynamic programming
+WV     Water values
+Energies 2019, 12, 189  14 of 15
+
+References
+
+1. Pereira, M.V.F. Optimal Stochastic Operations Scheduling of Large Hydroelectric Systems. Int. J. Electr.
+       Power Energy Syst. 1989, 11, 161­169, doi:10.1016/0142-0615(89)90025-2. [CrossRef]
+
+2. Birge, J.R. Decomposition and partitioning methods for multistage stochastic linear programs. Oper. Res.
+       1985, 33, 989­1007, doi:10.1287/opre.33.5.989. [CrossRef]
+
+3. Pereira, M.V.F.; Campodónico, N.; Kelman, R. Application of Stochstic Dual Dp and Extensions to Hydrothermal
+       Scheduling; Technical Report 2; PSRI: Rio De Janeiro, Brazil, 1999.
+
+4. Shapiro, A.; Tekaya, W.; da Costa, J.P.; Soares, M.P. Risk neutral and risk averse stochastic dual dynamic
+       programming method. Eur. J. Oper. Res. 2013, 224, 375­391, doi:10.1016/j.ejor.2012.08.022. [CrossRef]
+
+5. Gjelsvik, A.; Belsnes, M.; Haugstad, A. An algorithm for stochastic medium-term hydrothermal scheduling
+       under spot price uncertainty. In Proceedings of the Power Systems Computation Conference (PSCC),
+       Trondheim, Norway, 28 June­2 July 1999.
+
+6. Zou, J.; Ahmed, S.; Sun, X.A. Stochastic dual dynamic integer programming. Math. Program. 2018,
+       doi:10.1007/s10107-018-1249-5. [CrossRef]
+
+7. Hjelmeland, M.N.; Zou, J.; Helseth, A.; Ahmed, S. Nonconvex Medium-Term Hydropower
+       Scheduling by Stochastic Dual Dynamic Integer Programming. IEEE Trans. Sustain. Energy 2018,
+       doi:10.1109/TSTE.2018.2805164. [CrossRef]
+
+8. Thome, F.; Pereira, M.V.F.; Granville, S.; Fampa, M. Non-Convexities Representation on Hydrothermal
+       Operation Planning Using SDDP. 2013. Available online: https://www.researchgate.net/publication/
+       283091434_Non-Convexities_Representation_on_Hydrothermal_Operation_Planning_using_SDDP
+       (accessed on 20 September 2018).
+
+9. Abgottspon, H.; Andersson, G. Medium-term optimization of pumped hydro storage with stochastic
+       intrastage subproblems. In Proceedings of the Power Systems Computation Conference (PSCC), Wroclaw,
+       Poland, 18­22 August 2014; pp. 1­7, doi:10.1109/PSCC.2014.7038352. [CrossRef]
+
+10. Philpott, A.B.; Wahid, F.; Bonnans, F. MIDAS: A Mixed Integer Dynamic Approximation Scheme; Electric Power
+       Optimization Centre, University of Auckland: Auckland, New Zealand, 2016.
+
+11. Steeger, G.; Rebennack, S. Dynamic Convexification within Nested Benders Decomposition using Lagrangian
+       Relaxation: An Application to the Strategic Bidding Problem. Eur. J. Oper. Res. 2017, 257, 669­686,
+       doi:10.1016/j.ejor.2016.08.006. [CrossRef]
+
+12. Gjelsvik, A.; Mo, B.; Haugstad, A. Long- and Medium-term Operations Planning and Stochastic Modelling
+       in Hydro-dominated Power Systems Based on Stochastic Dual Dynamic Programming. In Handbook of
+       Power Systems I; Energy Systems; Section 2; Springer: Berlin/Heidelberg, Germany, 2010; pp. 33­55,
+       doi:10.1007/978-3-642-02493-1_2.
+
+13. Helseth, A.; Fodstad, M.; Mo, B. Optimal Medium-Term Hydropower Scheduling Considering Energy and
+       Reserve Capacity Markets. IEEE Trans. Sustain. Energy 2016, 7, 934­942, doi:10.1109/TSTE.2015.2509447.
+       [CrossRef]
+
+14. Baucke, R.; Downward, A.; Zakeri, G. A Deterministic Algorithm for Solving Stochastic Minimax Dynamic
+       Programmes. 2018. Available online: http://www.optimization-online.org/DB_HTML/2018/02/6449.
+       html (accessed on 5 September 2018).
+
+15. Downward, A.; Dowson, O.; Baucke, R. Stochastic Dual Dynamic Programming with Stagewise Dependent
+       Objective Uncertainty. 2018. Available online: www.optimization-online.org/DB_HTML/2018/02/6454.
+       html (accessed on 5 September 2018).
+
+16. Hjelmeland, M.N.; Helseth, A.; Korpås, M. Impact of Modelling Details on the Generation
+       Function for a Norwegian Hydropower Producer. J. Phys. Conf. Ser. 2018, 1042, 012010,
+       doi:10.1088/1742-6596/1042/1/012010. [CrossRef]
+
+17. Fosso, O.B.; Belsnes, M.M. Short-term hydro scheduling in a liberalized power system. In Proceedings of the
+       2004 International Conference on Power System Technology (PowerCon 2004), Singapore, 21­24 November
+       2004; Volume 2, pp. 1321­1326, doi:10.1109/ICPST.2004.1460206. [CrossRef]
+
+18. Guedes, L.S.M.; de Mendonça Maia, P.; Lisboa, A.C.; Vieira, D.A.G.; Saldanha, R.R. A Unit Commitment
+       Algorithm and a Compact MILP Model for Short-Term Hydro-Power Generation Scheduling. IEEE Trans.
+       Power Syst. 2017, 32, 3381­3390, doi:10.1109/TPWRS.2016.2641390. [CrossRef]
+Energies 2019, 12, 189  15 of 15
+
+19. Borghetti, A.; D'Ambrosio, C.; Lodi, A.; Martello, S. An MILP Approach for Short-Term Hydro Scheduling
+       and Unit Commitment With Head-Dependent Reservoir. IEEE Trans. Power Syst. 2008, 23, 1115­1124,
+       doi:10.1109/TPWRS.2008.926704. [CrossRef]
+
+20. Diniz, A.L.; Maceira, M.E.P. A Four-Dimensional Model of Hydro Generation for the Short-Term
+       Hydrothermal Dispatch Problem Considering Head and Spillage Effects. IEEE Trans. Power Syst. 2008,
+       23, 1298­1308, doi:10.1109/TPWRS.2008.922253. [CrossRef]
+
+21. Cerisola, S.; Latorre, J.M.; Ramos, A. Stochastic dual dynamic programming applied to nonconvex
+       hydrothermal models. Eur. J. Oper. Res. EJOR 2012, 218, 687­697, doi:10.1016/j.ejor.2011.11.040. [CrossRef]
+
+22. McCormick, G. Computability of global solutions to factorable nonconvex programs: Part I--Convex
+       underestimating problems. Math. Program. 1976, 10, 147­175, doi:10.1007/BF01580665. [CrossRef]
+
+23. Abgottspon, H. Hydro Power Planning: Multi-Horizon Modeling and Its Applications. Ph.D. Thesis,
+       ETH Zurich, Zurich, Switzerland, 2015.
+
+24. Hjelmeland, M.N.; Korpås, M.; Helseth, A. Combined SDDP and simulator model for hydropower
+       scheduling with sales of capacity. In Proceedings of the 2016 13th International Conference on the European
+       Energy Market (EEM), Porto, Portugal, 6­9 June 2016; pp. 1­5, doi:10.1109/EEM.2016.7521187. [CrossRef]
+
+25. Wolfgang, O.; Haugstad, A.; Mo, B.; Gjelsvik, A.; Wangensteen, I.; Doorman, G. Hydro reservoir handling in
+       Norway before and after deregulation. Energy 2009, 34, 1642­1651. [CrossRef]
+
+26. Helseth, A.; Braaten, H. Efficient Parallelization of the Stochastic Dual Dynamic Programming Algorithm
+       Applied to Hydropower Scheduling. Energies 2015, 8, 12431, doi:10.3390/en81212431. [CrossRef]
+
+                                c 2019 by the authors. Licensee MDPI, Basel, Switzerland. This article is an open access
+                               article distributed under the terms and conditions of the Creative Commons Attribution
+                               (CC BY) license (http://creativecommons.org/licenses/by/4.0/).
+

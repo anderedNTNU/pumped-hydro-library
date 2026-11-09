@@ -1,0 +1,486 @@
+Evaluation of scenario reduction methods for
+stochastic inflow in hydro scheduling models
+
+          Camilla Thorrud Larsen                                                    Birger Mo
+              Gerard L. Doorman                                       SINTEF Energy Research Center
+
+Department of Electric Power Engineering                                       Trondheim, Norway
+                          NTNU
+
+                Trondheim, Norway
+
+    Abstract-The long-term hydropower scheduling problem is           Methods based on mlntmlzmg a probability metric [6], [7]
+inherently stochastic due to uncertainty in future reservoir inflow.  are popular in stochastic programming. Scenario reduction can
+We use Stochastic Dual Dynamic Programming (SDDP) to solve            also be accomplished by clustering methods.
+this problem. This work evaluate and compare three scenario
+reduction methods used to construct a multistage scenario tree           Previous work on scenario generation and reduction in
+which represents the underlying stochastic inflow process in the      applications for hydropower scheduling include [8]-[10]. The
+SDDP model. A case study is carried out to numerically assess         problem of optimal scenario tree reduction for stochastic
+the performance of the different scenario reduction methods.          streamflows was addressed in [8]. They present two methods
+The performance is measured using out-of-sample simulation,           that are assessed numerically on inflow sequences generated
+simulating the solution strategies obtain with the various scenario   for the Brazilian power system. [9] analyzed four different
+models on an exogenously given set of inflow scenarios. Our           clustering techniques used to generate a scenario tree, which
+results show that the choice of scenario reduction method             subsequently was reduced. The methods were applied to hydro
+impacts the solution to a hydropower operation planning problem       inflow and compared. [10] apply k-means clustering to an
+substantially.                                                        initial scenario set generated from a statistical model, to
+                                                                      construct a scenario tree. The sensitivity and stability, with
+    Index Terms-Hydropower, scenario reduction, stochastic dual       respect to the scenario tree, of scheduling policies resulting
+dynamic programming, stochastic inflow                                from solving a two-stage hydro-thermal scheduling problem
+                                                                      was analyzed. Both [9] and [8] evaluate and compare different
+                               I. INTRODUCTION                        methods, but the quality was not assessed in any applications
+                                                                      for production planning.
+   The long-term (1-5 years) hydropower scheduling problem
+is important for systems containing large reservoirs with                SDDP is a solution algorithm that utilizes sampling to
+multiannual regulation capabilities. Results from long-term           keep the problem computationally tractable. Most of the re
+models are used for several purposes, including risk analysis,        search concerning inflow modelling in SDDP-based operation
+maintenance scheduling and for making various predictions.            planning models has focused on different sampling strategies
+Moreover, the models provide target values for short-term             to internally generate inflow scenarios [11], [12]. This work
+scheduling and daily bidding processes [1]. Due to substan            concentrates on different scenario reduction procedures which
+tial uncertainty related to important parameters, in particular       can be used to construct a scenario tree, representing stochastic
+reservoir inflow, it is usually considered more important to          inflow in SDDP based scheduling models.
+properly account for uncertainty than to include a high level
+of technical details in long-term models [2]. We consider                The basis for generation of inflow scenarios in this work
+operation planning problems which can be formulated as a              is a statistical time series model, which account for seasonal
+multistage stochastic linear programming problem and solved           effects and autocorrelation. A white noise process constitute
+using Stochastic Dual Dynamic Programming (SDDP) [3], [4].            the random component of the model. Because the noise is
+                                                                      stage-wise independent, methods for scenario generation and
+   Solution methods for stochastic problems, including SDDP,          reduction developed for two-stage problems apply [13]. Our
+require the stochastic parameters to be represented by a finite       approach to construct a scenario tree combines a stage-wise
+number of scenarios. A scenario is one possible outcome of            discretization of the noise distribution with the use of a
+the random data, with a corresponding probability. Moreover,          parametric description of the underlying inflow process. A
+the number of scenarios must be relatively small in order for         scenario tree can then be generated from the inflow model
+the stochastic model to be computationally tractable. There           by considering all the discrete noise alternatives in each
+exists numerous approaches to scenario generation. We refer           stage. This scenario representation within SDDP was used
+to [5] and reference therein for an overview and discussion           in [12], where the scenario reduction was carried out using
+of different scenario generation methods. Related to scenario         K-means clustering. In this work, we analyze and compare
+generation is scenario reduction methods. The goal of scenario        three different methods to obtain the noise scenarios; K-means
+reduction is to find a scenario subset of prescribed cardinality
+that provides a good approximation to the initial scenario set.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+clustering [14], fast forward selection [6], [7] and a simple     constructs a linear approximation to the expected future benefit
+approach called the 'bracket mean' method [15].                   function in each stage.
+
+   We restrict attention to approximation of a univariate            One main iteration of the SDDP algorithm consists of a
+stochastic process. In practice, the process is often a multi     forward simulation and a backward recursion:
+variate one and often of large dimension. This have conunonly
+been handled using principal component analysis, e.g. [1],           · Forward pass The purpose of the forward pass is to
+to reduce the dimension. Scenario reduction can then be                  generate trial solutions that yield reasonable values for the
+carried out on each principal component individually, and the            state variables used in the next backward pass. For each
+resulting scenarios are combined all against all to form a               sampled scenario, a set of linear programming problems
+discrete approximation to the multivariate distribution. Thus,           is solved at each stage, moving forward to the last stage.
+the methods and analysis provided here are also relevant for             End reservoir levels and costs at each stage are saved.
+multivariate stochastic processes.                                       At the end of the forward pass, the total cost for each
+                                                                         scenario is calculated and a convergence criterion is
+   The quality of the scenario reduction method should be mea            tested. If convergence is not achieved, the algorithm starts
+sured in terms of the solution to the underlying optimization            the backward pass. The scenarios are resampled in each
+problem [16]. One of the contribution of this paper is therefore         forward pass.
+to increase the understanding about how different scenario
+representations may influence the quality of the solution to         · Backward pass The solutions are updated by adding
+the hydropower planning problem. To this end, a realistic case           cuts that approximate the expected future cost function to
+study was carried out to evaluate and compare different sce              each stage problem, starting at the last stage and moving
+nario representations for the stochastic inflow parameter. We            backward to the first. At each stage, given the values
+compare the quality of the obtained solutions using different            for the state variables found in the last forward pass, the
+scenario models, derived from the same initial scenario set,             next stage problem is solved for all possible outcomes
+by out-of-sample simulation. With this approach, the resulting           of the stochastic parameters (for the current stage). The
+solution strategies are simulated on a different sample than             expected values of the cost and dual variables are saved
+was used to solve the problem, and thus provides a neutral               and used to construct a cut that is passed to the previous
+basis for comparison of the different methods.                           stage problem.
+
+   The remainder of this paper is organized as follows. Section      Different sampling strategies have been considered for
+II briefly describes the structure of the long-term planning      SDDP [11], [12]. The approach taken in this work follows the
+problem, the SDDP solution methodology and how inflow             one described in [12], referred to as selective sampling. With
+uncertainty is represented within this framework. The different   this approach, the basis for the internally sampled scenarios is
+scenario reduction methods used in this study are outlined in     a complete finite scenario tree which is assumed to represent
+section III. Section IV presents numerical results, and finally   the true process adequately.
+section V ends the paper with a discussion and suggestions
+for further work.                                                    Figure 1 illustrates the sampling process for one iteration
+                                                                  of the algorithm. Imagine the stochastic inflow process is
+             II. PROBLEM FORMULATION AND SDDP                     fully represented by the complete scenario tree in Figure
+                                                                  la. Figure 1b illustrates the forward simulation pass, where
+   The goal of long-term hydro planning for a producer in         a predetermined number of scenarios is sampled from the
+a deregulated market is to determine a weekly operation           complete tree and a sequence of one-stage problems are solved
+schedule which maximizes expected profits over the planning       for each sampled scenario. Note that, to ensure convergence
+period (risk-neutral approach). A high level of technical de      of the algorithm, the forward scenarios should be resampled in
+tails is usually omitted in long-term models and nonlinear        each iteration [19]. The backward pass traces back along each
+relationships are usually approximated by linear or piecewise     of the sampled forward scenarios and solves the next stage
+linear expressions, e.g. [2]. The planning problem can then       problem for each branch leaving the node, as shown in Figure
+be formulated as a multistage stochastic linear programming       lc.
+problem.
+                                                                                    III. SCENARIO TREE GENERATION
+   The long-term hydro scheduling problem can in principle be
+solved by stochastic dynamic programming or scenario-based           This section presents the stochastic inflow model which
+approaches such as (nested) Benders decomposition. However,       constitute the basis for the scenario tree generation, and
+they both suffer from the so-called curse of dimensionality,      the scenario reduction methods used to construct a tree of
+see e.g. [17]. SDDP [3], [4] was developed to overcome            manageable size.
+these dimensionality problems. It is an iterative algorithm that
+employs a combination of sampling and Benders decomposi           A. Stochastic inflow model
+tion [18]. Instead of using a complete pre-generated scenario
+tree, the SDDP method utilize internal sampling, sampling            We use a linear time series model accounting for seasonality
+the scenarios during the solution procedure. The technique        and lag-one autocorrelation. This model is commonly used in
+of Benders decomposition is used to find a set of cuts that       SDDP based scheduling models in the Nordic countries [1].
+
+                                                                     Weekly inflow series are usually characterized by seasonal
+                                                                  variations and is as such a non-stationary process. The first
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+                                                                                          methods for two-stage problems can be applied to each stage
+
+                                                                                          separately. The problem of scenario reduction thus reduces to
+
+                                                                                          that of discretizing the the original error distribution into K
+
+                                                                                          {Ek}f=l discrete outcomes  with corresponding probabilities
+
+                                                                                          kP 2: 0, k = 1, ..., K. A full scenario tree can then be built by
+                                                                                          evolving the stochastic inflow model, using the full discrete
+
+                                                                                          noise distribution in each stage.
+
+                                                                                          We consider three different scenario reduction methods
+
+                                                                                          which are outlined in the following.
+
+(a)           (b)       (c)                                                               1) Fast forward selection: Consider a probability distri
+
+                                                                                          bution P defined over an initial (large) scenario set n with
+
+                                                                                          cardinality N. In the case where n is obtained by simple
+
+Fig. 1. Illustration of scenario representation of stochastic inflow in the SDDP          random sampling from a specified distribution, the scenarios
+algorithm for a three stage problem. The first stage is deterministic. (a) the
+complete scenario tree, (b) scenarios sampled in the forward pass and (c)                 have equal probabilities Pi = liN, i = 1, 2, ..., N. The
+scenarios solved in the backward pass                                                     objective is to find the subset nred C n of cardinality K
+
+                                                                                          and assign to it new probabilities, such that the corresponding
+
+                                                                                          approximate distribution Q is closest to P with respect to
+
+step is therefore to eliminate seasonal variations such that we                           a probability distance. We refer to [6], [7] for details on the
+are left with a seasonally adjusted time series which can be
+considered (weakly) stationary, and further described by a non                            notion of optimal reduction with respect to probability metrics.
+
+at seasonal AR( l)-process. Let denote a univariate seasonal                              The most commonly used probability distance in stochastic
+at inflow time series. The original series is deseasonalized by
+                                                                                          programming is the Kantorovich distance. Let w E n and
+subtracting the weekly mean and standard deviation,
+                                                                                          W E nred denote scenarios belonging to their respective sce
+                                                                                     (1)
+                                                                                          nario sets. For discrete distributions the Kantorovich distance
+
+                                                                                          DK between the probability distributions P and Q can be
+
+                                                                                          determined by
+
+where the subscript notation s represents the season corre                                                           L Pw       _min      d(w,w),  (3)
+
+sponding to the time index t. For weekly data, the relationship                                          wE!1\!1,ed             wE!1,·ed
+between the season and time index is given by s = (t - 1)
+mod (52) + 1.                                                                             where Pw is the probability of scenario w, and dO denotes
+
+   An estimate of the mean of season s across all of the years                            the Euclidean distance.
+                                                                                             Based on this expression, several heuristic algorithms have
+M is determined using
+                                                                                          been developed to find nred, including the FFS algorithm
+                                         s = 1, 2, ..., 52,                               introduced in [6] and further refined in [7]. FFS is appropriate
+                                                                                          when the number of scenarios in the reduced set is much
+and, correspondingly, the standard deviation of season s is                               smaller than the number of initial scenarios (strong reduction).
+estimated by                                                                              It is a greedy algorithm that starts with an empty set, and
+                                                                                          iteratively selects the scenario that minimizes the Kantorovich
+o-s =  M2)aS,i - Ps)2,  s = 1, 2, ..., 52.                                                distance between the reduced and initial scenario set, and adds
+                                                                                          it to the reduced scenario set. The algorithm ends when a
+        i =l                                                                              predetermined number of scenarios have been selected and
+                                                                                          new probabilities are assigned to them. The new probability
+Subsequent to deseasonalization, the series Zt is fitted to an                            of a selected scenario is equal to its former probability plus
+AR(I) model                                                                               the probabilities of deleted scenarios that are closest to it with
+
+                                                                                     (2)  respect to d(·).
+
+where ¢ is the autoregressive parameter. The innovation pro                                  2) K-means clustering: K-means clustering [14] is a well
+                                                                                          known heuristic clustering algorithm which has been applied
+Et cess is assumed to be a white noise process, that is, it is                            for scenario reduction purposes [ lO], [ lO], [12], [20]. The
+
+uncorrelated with zero mean and constant variance.                                        method partitions the initial scenario set into K disjoint
+
+B. Scenario reduction                                                                     clusters. Each cluster is described by its center and members,
+                                                                                          found by minimizing the sum of distances from each cluster
+   The aim of scenario reduction techniques is to downsize an                             member to its center, over all clusters. The distance measure
+original scenario set, while keeping the loss of stochastic infor                         used in this work is the squared Euclidean distance. This
+mation embedded in it as small as possible. Since the random                              algorithm moves objects, i.e. the initial scenario values, be
+error terms are stage-wise independent, scenario reduction                                tween clusters until the sum of distances cannot be decreased
+                                                                                          any further. The cluster centers form the reduced scenario set
+                                                                                          and inherits the total probability of its cluster members. The
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+probability of scenario k is given by                                                 [:0                                 :                      FFS     1
+                                                                                        0                                                     ·3
+                              Pk=N Nk'                                                    -3  -2         -1  0                     2             K-' '4  5
+
+where N is the cardinality of the initial scenario set and Nk                         [:0                    II                                          1
+
+is the number of objects allocated to cluster k.                                      -3      -2         -1  0                     2          3       4   5
+   3) Bracket mean: The 'bracket mean' (B-mean) method is a
+                                                                                      [:0 ·                                                       1 B-'
+simple approach to reduce an initial scenario set of cardinality
+
+N into a reduced set of smaller cardinality K. The initial
+scenario set is first sorted and then divided into K intervals,
+where each interval contains N/K scenarios. In the case where
+N is not divisible by K, the additional scenarios are included
+
+in the first interval. The mean of each interval is calculated
+
+and form the reduced scenario set. All the scenarios in the
+
+reduced set have probability 1/K.
+
+                        IV. RESULTS                                                                                    I
+
+                                                                                      -3      -2         -1  0                     2          3       4  5
+
+In this section, the three different scenario reduction meth
+
+ods outlined in section III-B are evaluated and compared. The
+
+quality of the reduction methods are examined from two per                            Fig. 2. Approximate distribution with K = 3 scenarios (blue bars). The
+                                                                                      normalized histogram for the initial distribution is shown in light grey.
+spectives. First, the statistical properties of the approximated
+
+discrete distribution are compared to those of the original                           [ :'.---.l ·-1-' :0
+
+distribution. Secondly, the quality of the different scenario                                                                                    FFS
+
+models are evaluated through a realistic case study.
+
+A modified version of the Tokke hydropower system lo
+
+cated in the south of Norway was used in the case study.                              .. _ .. __
+
+The system consist of seven interconnected reservoirs and                             -3      -2         -1  0                     2          3       4   5
+
+power plants, and has a total installed capacity of 986 MW.                           ,:f  1 K-' '
+
+sInerflioesw,  information for this  site is contained in the univariate              oLt----I II .L-_-' -----
+               Eggedal', for which   weekly observations from 1958 to
+
+2013 are available from the Norwegian Water and Resource
+
+Directorate (www.nve.no).                                                             -3      -2         -1  0                     2          3       4   5
+
+A. Statistical results                                                                [ '... 1 :0                                                B-'
+
+   The parameters of the   infoflrowtheminofdleolwwsaesrieessti,mEgagteeddaul's.inAg          ,
+2912 weekly observations
+
+usual diagnostics checking was carried out and showed that the                                                                  .
+
+errors are uncorrelated with approximately constant mean and                                                                       
+
+variance. However, the noise distribution is right-skewed and                         -3      -2         -1  0                     2          3       4   5
+
+clearly deviates from normality. For the purpose of this study
+
+{t'df=l we assume that the empirical distribution  provides a                         Fig. 3. Approximate distribution with K = 7 scenarios (blue bars). The
+                                                                                      normalized histogram for the initial distribution is shown in light grey.
+reasonable approximation to the true error distribution and let
+
+it constitute the original scenario set.
+
+The original scenario set was subsequently reduced into K                                                                             TABLE I
+                                                                                      MEAN, STANDARD DEVIATION AND SKEWNESS F OR THE ORIGINAL AND
+scenarios using each of the reduction methods presented in
+                                                                                                             APPROXIMATED ERROR DISTRIBUTIONS.
+section III-B. We considered K = 3 and K = 7 scenarios.
+
+Figure 2 and 3 graphically display the resulting discrete                                     Statistic      Original     FFS K-means            B-mean
+                                                                                                                               K=3
+distributions for K = 3 and K = 7 scenarios (blue bars),
+
+respectively, together with the normalized histogram of the
+
+initial scenario set (light grey). It is clear from these plots that                          Mean           0.000     -0.006          0.000     0.000
+                                                                                              Std.           0.789      0.5 10         0.684     0.568
+the scenarios and their probabilities obtained differ between                                 Skewness       2.029      2.507         15.592     0.4 12
+
+the reduction methods. In particular, the scenarios obtained
+
+using K-means covers a wider range of the original noise                                                                     K= 7
+
+distribution.
+
+Table I reports the mean, standard deviation and skewness                                     Mean           0.000     -0.00 1         0.000     0.000
+                                                                                              Std.           0.789      0.694          0.764     0. 692
+of the original and the approximated distributions discretized                                Skewness       2.029      5.259         13.554
+                                                                                                                                                 1. 134
+into K = 3 and K = 7 scenarios.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+   We see that the mean is preserved by the approximate             400 r--,.r
+distributions obtained by the k-means and b-mean reduction
+methods, while it is slightly lower than that of the original            300
+scenario set for the FFS method. However, it approaches the
+nominal value when the number of scenarios is increased to          
+seven. In the case of three scenarios, all methods yield a stan
+dard deviation that is lower than for the original distribution.     200
+The standard deviation increases when the number of scenarios
+is increased from 3 to 7, for all methods. However, the K           o
+means method yields a standard deviation that is higher, and        z
+closer to that of the original distribution, than the FFS and
+B-mean methods. Since the original noise distribution is not             100
+sYlmnetric, we also compared the skewness (Fisher-Pearson
+coefficient of skewness). W hile the deviation from the original    O L---------------------------
+distribution is moderate for the discrete distributions obtained
+by FFS and B-means, the skewness is substantially higher in                   o  10       20        30  40       50
+the scenarios obtained by the K-means method.
+                                                                                              Week
+B. Application to a hydropower scheduling problem
+                                                                    Fig. 4. Average weekly day-ahead prices from 20 14 (blue) and average
+   A simple scheduling problem for the test system was              weekly prices with inflated variance (red)
+considered to numerically assess the performance of different
+scenario reduction methods.                                            We considered two different price series. The first series are
+                                                                    weekly average Nord Pool day-ahead prices for price area NOI
+   Decisions are taken weekly over a planning horizon of one        from the year 2014, published by the Nordic power exchange
+year, and the planning period starts in the first week of January.  Nord Pool (www.nordpoolspot.com). The second price series
+The producer operates in a deregulated electricity market, and      was constructed by artificially inflating the variance of the first
+is small enough to be considered a price-taker. The objective       series, while retaining the yearly average. Both price series are
+of the modelling is to find a release policy that maximizes         displayed in Figure (4).
+expected revenues from sales in the day-ahead market, minus
+penalty costs for violating bounds on the reservoir volumes,           For each of the two price series, the scheduling model was
+over the planning horizon. For the purpose of this analysis         run for six cases, differing only in the scenario representation
+we assume the market is represented by an exogenously given         of stochastic inflow. The performance is measured in terms
+deterministic price. Since the price is deterministic, the SDDP     of the expected value of the objective function from the out
+method applies directly to this problem, whereas a stochastic       of-sample simulation. Higher values are better. The scenarios
+price would require a hybrid SDDP based solution approach           used in the simulation was pregenerated and equal for all cases
+as described in [1]. The constraints of the problem are water       and price profiles.
+balance equations and bounds on reservoir volume and water
+discharge, for individual reservoirs and plants.                                                            TABLE II
+                                                                      EXPECTED VALUE OF OBJECTIVE F UNCTION (MNOK) F OR
+   The inflow scenario models were preprocessed in MAT              OUT-OF -SAMPLE SIMULATION WITH 1000 SYNTHETIC INFLOW
+LAB, and integrated with an SDDP model developed in C++
+for the hydro scheduling problem. To limit computation time                          SCENARIOS. ORIGINAL PRICE SERIES.
+we stopped the algorithm after 15 iterations, which was suffi
+cient for the upper bound to stabilize. We used 100 sampled         K FFS                 K-means       B-mean
+scenarios in each forward pass and these were resampled in
+each iteration. The number of backward openings was equal to        3            1298.79  1289.29       1298.47
+                                                                                          1297.47       1298.68
+the number of branches in the complete scenario tree; K = 3         7            1297.85
+and K = 7.
+                                                                       Table II shows the simulation results obtained with the
+   We compared the different reduction methods using an out         original price series. The expected values of the objective
+of-sample simulator approach. This was carried out as follows:      function are very similar for all the scenario models, except for
+After the last iteration of the SDDP algorithm a final forward
+simulation was performed to evaluate the resulting policy,          the K-means clustering with K = 3 which performs noticeable
+using a new set of realistic inflow scenarios. It is important
+that these scenarios are provided exogenously, and to this end      worse than the other scenario models. The performance of K
+we used 1000 scenarios generated from the estimated inflow
+model, by sampling from the original scenario set of the noise      means improves with more than 8 MNOK when K = 7, for
+distribution.
+                                                                    which it is approximately equal to the other models.
+                                                                       The simulation results from using the variance inflated price
+
+                                                                    series are shown in Table III. We observe that the results are
+                                                                    consistent with the ones obtained using the original price. The
+
+                                                                                                            TABLE III
+
+                                                                      EXPECTED VALUE OF OBJECTIVE F UNCTION (MNOK) F OR
+                                                                    OUT-OF -SAMPLE SIMULATION WITH 1000 SYNTHETIC INFLOW
+
+                                                                             SCENARIOS. VARIANCE INFLATED PRICE SERIES.
+
+                                                                    K FFS                 K-means       B-mean
+
+                                                                    3            1392.39  1378.42       1392.29
+                                                                                          1388.68       1390.78
+                                                                    7            1392.03
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+worst scenario model is still the one obtained with K-means        to draw more solid conclusions about the quality of the
+
+clustering for K = 3. Although the result for this method          different scenario reduction methods.
+improves by more than 10 MNOK for the case with K = 7, it
+                                                                                                                REFERENCES
+still performs worse than the FFS and B-mean methods. Thus,
+the difference in performance between K-means and the other          [ 1] A. Gjelsvik, B. Mo, and A. Haugstad, "Long- and medium-term op
+methods increase when we use a more variable price. This                   erations planning and stochastic modelling in hydro-dominated power
+was expected, since the potential benefits of a more efficient             systems based on stochastic dual dynamic programming," in Handbook
+use of the available water will increase with increasing price             of Power Systems I. Springer, 2010.
+variations.
+                                                                     [2] O. B. Fosso, A. Gjelsvik, A. Haugstad, B. Mo, and I. Wangensteen,
+   Overall, the results from this study have shown that it is              "Generation scheduling in a dereulated system. the norwegian case,"
+difficult to select a unanimous 'winner' among the scenario                Power Systems, IEEE Transactions on, vol. 14, pp. 75-81, 1999.
+reduction methods. FFS and B-mean performs approximately
+                                                                     [3] M. Y. A. Pereira, "Optimal stochastic operations scheduling of large
+equally well for both K = 3 and K = 7, given either of the                 hydroelectric systems," International Journal of Electrical Power and
+                                                                           Energy Systems, vol. 1 1, no. 3, pp. 161- 169, 1989.
+price series. However, the study did reveal that the K-means
+method is not appropriate compared to the other scenario             [4] M. Y. A. Pereira and L. M. Y. G. Pinto, "Multi-stage Stochastic
+reduction methods for this hydro scheduling problem.                       Optimization Applied to Energy Planning," Mathematical Programming,
+                                                                           vol. 52, pp. 359-375, 199 1.
+   Finally, a comment is in order with regards to the results
+for the B-mean reduction method, using the variance inflated         [5] M. Kaut and S. W. Wallace, "Evaluation of scenario-generation meth
+price. One would not expect that the case with three scenar                ods for stochastic programming," Humboldt-Universitat zu Berlin,
+ios performs better than the case with seven scenarios. We                 Mathematisch-Naturwissenschaftliche FakulUit II, Institut fUr Mathe
+repeated the model run and out-of-sample simulation, using a               matik, 2003.
+new set of 1000 inflow scenarios in the simulation part. The
+                                                                     [6] J. Dupacova, N. Growe-Kuska, and W. Romisch, "Scenario reduction
+results showed that the case with K = 7 now achieved an                    in stochastic programming: An approach using probability metrics,"
+                                                                           Mathematical Programming, Series A, vol. 95,no. 3,pp. 493-5 1 1,2003.
+expected value of the objective function that was l.64 MNOK
+                                                                     [7] H. Heitsch and W. Romisch,"Scenario reduction algorithms in stochastic
+higher than the case with K = 3. It is therefore likely that               programming;' Computational Optimization and Applications, vol. 24,
+                                                                           pp. 187-206, 2003.
+differences of this magnitude can be attributed to sampling
+errors.                                                              [8] w. L. de Oliveira,C. Sagastizabal,D. D. J. Penna,M. E. P. Maceira,and
+                                                                           J. M. Damazio, "Optimal scenario tree reduction for stochastic stream
+                                V. DISCUSSION                              flows in power generation planning problems," Optimization Methods
+                                                                           Software, vol. 25, no. 6, pp. 9 17-936, 2010.
+   In this paper, we have evaluated and compared three differ
+ent methods for scenario reduction used to provide a scenario        [9] J. M. Latorre, S. Cerisola, and A. Ramos, "Clustering algorithms
+tree, which can be sampled from during the solution procedure              for scenario tree generation: Application to natural hydro inflows,"
+of SDDP.                                                                   European Journal of Operational Research, vol. 181, no. 3, pp. 1339 -
+                                                                           1353, 2007. [Online]. Available: http://www.sciencedirect.com/science/
+   A case study was carried out to numerically assess the                  article/pii/S037722170600 1858
+performance of the different scenario reduction methods. Out
+of-sample simulation was used to compare the solution strate       [ 10] G. C. Oliveira and 1. P. Costa, "Hydrothermal scheduling policy stability
+gies obtained using the different scenario models. This study              under inflow uncertainty," Not ajournal, check out, vol. 1,pp. 1-2,2002.
+demonstrated that the choice of scenario reduction method
+affect the solution of the multistage hydropower scheduling        [II] T. Homem-de Mello, Y. de Matos, and E. Finardi, "Sampling strategies
+problem solved using SDDP. Of the three methods investigated               and stopping criteria for stochastic dual dynamic programming: a case
+in this work, the FFS and B-mean methods performed substan                 study in long-term hydrothermal scheduling," Energy Systems, vol. 2,
+tially better than the K-means clustering approach. Although               no. 1, pp. 1-3 1, 20 1 1. [Online]. Available: http://dx.doi.orgllO. 1007/
+we cannot conclude that one method is better than another                  sI2667 - 0 1 1 - 0024 - y
+for a general hydropower planning problem based on this
+study, it is interesting to observe that different methods affect  [ 12] D. D. 1. Penna, M. E. P. Maceira, and J. M. Damazio, "Selective
+the solution strategy and in turn the simulated expected net               sampling applied to long-term hydrothermal generation planning," in
+income. In particular, the K-means clustering method performs              17th PSCC - Power Syst. Compo Conf., Stockholm,Sweden, Aug. 20 1 1.
+substantially worse, and was much more sensitive to the
+number of scenarios, than the other two scenario reduction         [ 13] J. Dupacova, "Stochastic programming: Approximation via scenarios,"
+methods considered here.                                                   1996.
+
+   Further work is under way to investigate the sensitivity        [ 14] D. Arthur and S. Vassilvitskii, "K-means++: The advantages of careful
+of the results with respect the number of forward scenarios                seeding," in Proceedings of the Eighteenth Annual ACM-SIAM Sympo
+sampled and to the out-of-sample scenario set, for which the               sium on Discrete Algorithms, 2007, pp. 1027-1035.
+obtained solution strategies are simulated on. A more thorough
+performance analysis should be carried out by considering          [ 15] K. Hsz;yland and S. W. Wallace,"Generating scenario trees for multistage
+different test systems and operation planning designs, in order            decision problems," Management Science, vol. 47, no. 2, pp. 295-307,
+                                                                           2001.
+
+                                                                   [ 16] M. Kaut and S. Wallace, "Evaluation of scenario-generation methods for
+                                                                           stochastic programming," Pacific Journal of Optimization, vol. 3, no. 2,
+                                                                           pp. 257-271, 2007.
+
+                                                                   [ 17] P. Kall and S. Wallace, Stochastic Programming. Springer, 1994.
+                                                                   [ 18] J. F. Benders, "Partitioning procedures for solving mixed-variables
+
+                                                                           programming problems," Numerische Mathematik, vol. 4, pp. 238-252,
+                                                                           1962.
+                                                                   [ 19] A. B. Philpott and Z. Guan, "On the convergence of stochastic dual dy
+                                                                           namic programming and related methods," Operations Research Letters,
+                                                                           vol. 36, no. 4, pp. 450-455, 2008.
+                                                                   [20] D. L. D. D. Jardim, M. E. P. Maceira, and D. M. Falcao, "Stochastic
+                                                                           streamflow model for hydroelectric systems using clustering techniques,"
+                                                                           in Power Tech Proceedings, 2001 IEEE Porto, vol. 3, 2001, p. 6.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 13:47:48 UTC from IEEE Xplore. Restrictions apply.
+

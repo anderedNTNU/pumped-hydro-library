@@ -1,0 +1,361 @@
+Considering Head Variations in a Linear Model for
+Optimal Hydro Scheduling
+
+Anders Gjelsvik & Arne Haugstad
+SINTEF Energy Research, Trondheim, Norway
+
+ABSTRACT
+Linear models are very often used for hydropower optimization, both because this often re-
+presents a good approximation to the problem and because powerful software is generally
+available. In general, however, it is difficult to properly take into account the effects of varia-
+tions in head in linear optimization algorithms. This is because head variations create non-
+linear conditions, and may lead to non-convexity. Even in cases where head variation is small
+compared to nominal head, it may be an important factor to consider when optimizing reser-
+voir management. The problem can be solved exactly for a single reservoir, but for water-
+courses with cascaded plants and reservoirs simplifications have to be made.
+
+This paper describes a solution where head sensitivity coefficients are introduced in a linear
+stochastic optimization model in a somewhat heuristic manner. The model in question is
+based on stochastic dual dynamic programming (SDDP) (Pereira 1989), is mainly used for
+mid-term scheduling in hydro systems, and requires linear conditions. The head coefficients
+are an extension of the model that entail awarding extra storage in reservoirs with plants that
+benefit from added head. In addition to presenting the solution technique and a theoretical
+background, cases are presented that show positive effects of introducing these coefficients in
+the form of simulated income and reservoir management.
+
+1 INTRODUCTION
+Maintaining optimal head is one of many considerations when operating a hydropower sys-
+tem. Finding the optimal head is however not a trivial problem, since it has to be weighed
+against other considerations such as risk of overflow, operating at best possible turbine effici-
+ency and generating when prices are highest, all taking into account an uncertain future in-
+flow and market price for generated power. The relative importance of considering head vari-
+ations depends on the characteristics of a particular system, but it is nearly always a factor
+that one would prefer to take into consideration if possible. An optimization model that does
+not in some way take head variations and their effects on generation into account will gener-
+ally produce a less than optimal strategy, perhaps even an unacceptable strategy for operating
+some hydropower systems.
+
+Hydropower optimization models are often linear models, because this generally gives a good
+approximation to the problem and allows use of very efficient linear optimization algorithms.
+Introducing variable head creates non-linearities, and may lead to non-convexity. So in order
+to use linear optimization algorithms the effects of head variations are generally either ig-
+nored, or an approximate methodology such as the one described in this paper is introduced.
+A more precise solution is possible for systems without cascaded reservoirs, but for the
+general case approximations are necessary.
+
+SINTEF Energy Research has developed the ProdRisk model for scheduling in hydropower
+systems based on stochastic dual dynamic programming (SDDP, see (Pereira 1989)) in
+combination with stochastic dynamic programming (Gjelsvik et al. 1999). SDDP requires
+linear conditions or at least convexity. The model is mainly designed for mid-term scheduling
+in hydropower systems, but it may also include optimal hedging for a defined utility function
+in the optimization problem (Mo et al. 2001). The present paper describes correction
+coefficients for variable head, in the form of head sensitivities, that have been implemented
+and tested in this model.
+
+2 MATHEMATICAL DESCRIPTION
+The variable head correction used in this paper is based upon an expansion around a nominal
+reservoir operation schedule. Release is considered fixed, and sensitivities of economic gain
+with respect to small changes in reservoir levels are calculated and added to the cost function,
+to approximately account for head variations. This section describes this expansion.
+
+Consider a hydropower system with n reservoirs. The study period is divided into T time
+intervals of length one week each. (In the description of the power market, a finer subdivision
+may be added.) We focus on the i-th reservoir, with a storage of Vti at the end of week t and a
+water surface elevation of hti , referred to sea level, say. We assume that there is a power plant
+with output Pti immediately downstream of this reservoir. If there is a reservoir below this
+plant, let j be its number and htj its water surface elevation. In general, we then assume that
+the outlet of plant i in reservoir j is submerged, so that there is pressure coupling.
+
+We assume that generated power Pti depends linearly on water head:
+
+                 ( ) Pti =      hti - htj
+                       f i uti    hoi                                                     (1)
+
+where uti is water release and h0i the nominal head for plant i. The function f i describes how
+
+the output varies with the release at nominal head. We then obtain:
+
+      Pti   = Pti         and   Pti  = - Pti                                              (2)
+      hti   hti  -  h  j        htj      hti - htj
+                       j
+
+We now consider the situation where the volume Vti is changed by an amount Vti , without
+changing the release uti (the change can be thought of as being brought about by a different
+operation at earlier stages). One effect of this is that the power generation in power plant i
+
+changes. We obtain:
+
+           Pti = Pti hti = 1 Pti                                                          (3)
+           Vti hti Vti Ati hti - htj
+
+where Ati is the current surface area of reservoir i at time t.
+
+For the influence of the downstream reservoir j, we obtain correspondingly, for plant i:
+
+            1      Pt i
+         -  Atj  hti - htj      when the outlet is submerged
+Pt i  =                         otherwise                                                 (4)
+Vt j
+         
+         0
+Let the prevailing market price of power be t . We take t as the marginal value of changed
+
+generation. As seen from power plant i the change of cost (negative of change in income) due
+to the changes in reservoir volumes upstream and downstream is:
+
+                                      Pti      -     Vti      Vt        j  
+                                    hti - htj         Ati      Atj         
+                              t                            +                                          (5)
+
+The first term has a negative sign, because an increase in reservoir content increases head and
+reduces cost. The positive sign of the second term is due to reduced generation and increased
+cost when the tailwater elevation is increased. The second term is zero if there is no reservoir
+downstream, or if the outlet is not submerged.
+
+We now assume that we have available a nominal reservoir operation schedule with nominal
+
+values of { Pti }, { t }, {Vti }, { hti } and { Ati } for all t and i. Using the above formulas, we
+
+may then approximately account for the cost change due to variable head by use of extra cost
+
+terms containing V :
+
+                                             Tn
+
+                                            ctiVti                                                    (6)
+
+                                          t=1 i=1
+
+where the cti -coefficients follow directly from (5).
+
+Formula (5) contributes to both cti and ctj . Using (5) and collecting terms, we find:
+
+                         cti  =  t -        Pti      +    Ptk      hti       1                        (7)
+                                          hti - htj     htk -                Ati
+                                                                        
+
+to be used in (6). Here k is the index of the power plant immediately above reservoir i, if there
+is any. As expected an increase in reservoir storage decreases cost associated with the
+
+downstream plant (i), but increases cost in the upstream plant (k). A c-coefficient may be
+positive or negative. As seen from (7), this also depends on the nominal generations
+Pti and Ptk .
+
+The basic interval of one week may have time-varying prices. In that case, the term t Pti is
+
+replaced by the corresponding sum over suitable subintervals within the week.
+
+In the above, we have assumed the reservoir levels hti to be constant over the week. This may
+be a good approximation in many cases, at least for relatively large reservoirs. We have
+chosen, however, to use mean reservoir levels, taken as the mean of the values at the
+beginning of the week and at the end. Thus the value of Vti at the end of week t affects the
+generation in both week t and t+1. In this case (5) is replaced by
+
+1       Pti           -  Vti        Vt    j       1           Pi              -   Vti      Vt    j  
+2     hti - htj           Ati        Atj          2             t +1               Ati      Atj     
+   t                             +             +     t +1                               +             (8)
+                                                           hi      -  hj
+                                                             t +1       t +1
+
+and (7) has to be changed correspondingly.
+Use of the sensitivities derived above has been implemented in the model ProdRisk, as
+mentioned in the Introduction. This model uses hyperplanes to represent the expected future
+cost functions. The model states are the reservoir contents and inflow states. For this to work,
+the cost functions must be convex, and all state dependency must be contained in the hyper-
+planes. So it is not possible in general to have different model coefficients for various system
+states. Therefore the mean values of the sensitivity coefficients calculated above are used,
+where the mean is taken over the various inflow scenarios.
+
+As indicated above, calculations are carried out in two steps. First, the scheduling program is
+run without head coefficients. From the releases and reservoir and price trajectories obtained
+from this run, a full set of head sensitivities {cti} is calculated for each inflow scenario. For
+each week, the sensitivities are averaged over the different inflow scenarios. The mean values
+of the sensitivities are then used to perturb the cost function according to (6) in a second run.
+The second run is then generally considered as giving the final schedule. Repeated
+recalculation of the head sensitivities based on rerunning the program with the last calculated
+sensitivities is possible, but the sensitivities could in principle oscillate between each
+calculation. Tests indicate, however, that results may converge after a few repetitions of the
+recalculation procedure. Furthermore, recalculation does not seem necessary for a good result.
+
+3 SAMPLE CASES
+In this section two cases are presented to illustrate the effects of introducing head sensitivity
+coefficients in an SDDP-based hydro optimization model. The effects of head coefficients
+have been tested by comparing simulated system behaviour based on strategies calculated
+with and without head coefficients respectively. Simulations are conducted using historical
+inflow statistics available for the respective systems, for these cases 50 ­ 60 years of inflow.
+We have mainly compared economic results, generated energy and reservoir operation.
+
+Testing a strategy by simulating in this way may be a bit risky, and there are some pitfalls to
+be avoided. 50 ­ 60 years of inflow statistics is not enough to be sure of avoiding sampling
+errors, but enough that we feel relatively comfortable with the results.. The ProdRisk model
+will calculate a strategy, and simulate operation, from a given initial reservoir storage. The
+model depends on the EOPS model (Flatabø et al. 1998) for valuating reservoir contents at
+the end of the planning horizon. The EOPS model is based on a combination of stochastic
+dynamic programming to calculate marginal water values for an aggregate hydro model and a
+rule-based logic for disaggregation. In order to avoid effects of which initial reservoir con-
+tents are used, and avoid having to valuate end point reservoir contents when comparing gen-
+eration and economic results, the model has been run with a planning horizon of 3 years for
+these tests and results extracted from the second year. Ideally a longer planning period could
+have been used, e.g. 5 years with results extracted from year 3 or 4, but for these cases 3 years
+has proved sufficient. For the second year initial reservoir storage is very nearly equal to final
+reservoir storage on average for the simulated historical scenarios, and the effects of end point
+storage valuation are not dominating.
+
+3.1 CASE 1
+Case 1 consists of two separate rivers with hydro systems sharing a common market, illu-
+strated in Figure 1. The mean annual generation from the two rivers is about 2200 GWh.
+
+What typifies this system is that there are two major reservoirs with plants that have consider-
+able variations in head, reservoirs 2 and 6. The largest plant is the one below reservoir 4, with
+close to 75% of the total generation. But reservoir 4 is small and is in the model operated
+more or less along a fixed planned storage level every week. Of the other plants, the one
+below reservoir 6 provides about 20% of the total generation.
+Figure 1     The Case 1 hydro system. Numbers in parenthesis show each reservoir's share of
+             the total reservoir volume. The boxes indicate plants. Reservoir 2 has a maxi-
+             mum head variation of 30 meters, almost 60% of nominal head. For reservoir 6
+             maximum variation is almost 50 meters and nominal head over 900 meters.
+
+We have run the model for this system with and without head coefficients. The model shows
+an increase in income when head coefficients are included of 6.4 NOK/MWh on average,
+about US$1/MWh at present exchange rates, referring to generation without head coefficients.
+Average market prices are 194 NOK/MWh. Generation increases by about 1% on average.
+This is achieved without any significant increase in spilled water.
+
+Including head coefficients changes the strategy for operation of reservoirs considerably, as
+shown in Figure 2 and Figure 3. It is mainly these changes that affect generation and income.
+Since reservoir 4 has a fairly fixed operation, the main contribution to increased generation
+and improved results with head coefficients comes from changed storage in reservoirs 1, 2, 5
+and 6.
+
+          Reservoir 1: mean storage (% )                                                                      Reservoir 2: mean storage (% )
+
+0 20 40 60 80 100                                                                                                               No head correction
+                                                                                           0 20 40 60 80 100                    Head correction
+                            No head correction
+                            Head correction
+
+          0  10  20  30     40  50                                                                            0  10  20  30     40  50
+
+                     W eek                                                                                               W eek
+
+Figure 2 Simulated mean storage in reservoirs 1 and 2. Head considerations cause deple-
+               tion of reservoir 1 in order to increase head above the plant below reservoir 2.
+          Reservoir 5: mean storage (% )                                                                      Reservoir 6: mean storage (% )
+
+0 20 40 60 80 100                                                                                                               No head correction
+                                                                                           0 20 40 60 80 100                    Head correction
+                            No head correction
+                            Head correction
+
+          0  10  20  30     40  50                                                                            0  10  20  30     40  50
+
+                     W eek                                                                                               W eek
+
+Figure 3 Simulated mean storage in reservoirs 5 and 6. Head considerations cause deple-
+               tion of reservoir 5 in order to increase head above the plant below reservoir 6.
+
+3.2 CASE 2
+
+Case 2 also consists of two separate rivers, illustrated in Figure 4. The mean annual genera-
+tion from the system is about 3270 GWh. There are four plants with significant variations in
+head (5, 7, 8 and 10).
+
+Figure 4     The Case 2 hydro system. Numbers in reservoir symbols show each reservoir's
+             share of the total reservoir volume. Boxes indicate plants. Reservoirs 5, 7, 8 and
+             10 have a maximum head variation of 45, 70, 17 and 26 meters respectively.
+             Nominal head for all these plants is in the area of 300 ­ 350 meters.
+Run with and without head coefficients, the model shows an increase in income when head
+coefficients are included of 1 NOK/MWh on average referring to generation without head
+coefficients. Average market prices are 123 NOK/MWh. Generation increases by about 1%
+on average, despite an increase in spilled water.
+
+Once more head coefficients change the strategy for operation of reservoirs considerably, as
+shown in the following figures. Note particularly the increased storage in reservoir 8, shown
+in Figure 7. Storage increases dramatically here, and this leads to a doubling of spilled water
+from this reservoir. Despite this, average annual generation from the plant below 8 is virtually
+the same in the two cases. However, the real optimum may well be somewhere in between the
+two solutions.
+
+                   Reservoir 3: mean storage (% )                           Reservoir 6: mean storage (% )
+
+0 20 40 60 80 100                    No head correction  0 20 40 60 80 100                    No head correction
+                                     Head correction                                          Head correction
+
+                   0  10  20  30     40  50                                 0  10  20  30     40  50
+
+                              W eek                                                    W eek
+
+Figure 5              Simulated mean storage of reservoirs 3 and 6. These are reservoirs without plants
+                      immediately below, so they are depleted in the case with head coefficients in
+                      order to increase head above plants further downstream.
+
+                   Reservoir 5: mean storage (% )                           Reservoir 7: mean storage (% )
+
+0 20 40 60 80 100                    No head correction  0 20 40 60 80 100                    No head correction
+                                     Head correction                                          Head correction
+
+                   0  10  20  30     40  50                                 0  10  20  30     40  50
+
+                              W eek                                                    W eek
+
+Figure 6 Simulated mean storage of reservoirs 5 and 7. These reservoirs have plants, and
+               head variation is significant.
+          Reservoir 8: No correction                                                                            Reservoir 8: Head correction
+
+0 20 40 60 80 100        100 per cent                                                                                          100 per cent
+                                                                                          0 20 40 60 80 10075 per cent         75 per cent
+                         50 per cent                                                                                           50 per cent
+                         25 per cent                                                                                           25 per cent
+                         0 per cent                                                                                            0 per cent
+
+0         10  20  30     40           50                                                                     0  10  20  30     40  50
+
+                  W eek                                                                                                 W eek
+
+Figure 7  Simulated storage in reservoir 8, shown as percentiles from 50 simulated
+          scenarios. Note the dramatic increase in storage when head correction
+          coefficients are included.
+
+4 CONCLUSION
+We have calculated head sensitivity coefficients for the hydro scheduling problem and
+established a heuristic method of including them in a linear stochastic optimization model.
+This helps the model take head considerations into account when establishing hydropower
+strategy, while at the same time preserving the problem's convexity and linear properties.
+
+The cases presented in Section 3, along with numerous other cases run, indicate that the cal-
+culated head sensitivity coefficients improve hydro strategy (although it can be argued that
+the starting point, ignoring head variations completely, is poor for comparison). These cases
+by themselves do not constitute proof that the coefficients provide a general solution to the
+problem of head in such models. Among possible sources of errors when comparing results
+are:
+· sampling errors
+· simplifications in valuating end point reservoir contents (which we have tried to avoid by
+
+    providing for virtually equal initial and end point reservoir contents)
+· other errors and simplifications in the model, e.g. statistical errors in stochastic models
+
+    used to describe inflow and price.
+
+However, virtually all cases run indicate that a step has been taken in the right direction. The
+head coefficients generally provide for a strategy that gives better economic results, higher
+expected generation and a qualitative change in the strategy that generally makes the model
+more acceptable to hydro system owners (avoids some clearly unwise strategies that lack of
+head optimization may give). So this seems to be an approach suited to improving linear
+stochastic optimization models that otherwise lack head considerations in their objective
+functions.
+
+REFERENCES
+Flatabø, N., A. Haugstad, B. Mo & O. B. Fosso, 1998. Short-term and Medium-term
+Generation Scheduling in the Norwegian Hydro System under a Competitive Power Marked
+Structure. Proceedings from EPSOM '98, Zurich, September 23-25, 1998.
+Gjelsvik, A., M. M. Belsnes & A. Haugstad, 1999. An algorithm for stochastic medium-term
+hydrothermal scheduling under spot price uncertainty. Proceedings 13th Power System
+Computation Conference, Trondheim , 28. June ­ 2. July 1999.
+
+Mo, B., A. Gjelsvik & A. Grundt, 2001. Integrated risk management of hydro power
+scheduling and contract management. IEEE Transactions on Power Systems, vol. 16, no. 2:
+216-221.
+
+Pereira, M. V. F., 1989. Optimal stochastic operations scheduling of large hydroelectric
+systems. Electrical Power & Energy Systems, vol. 11, no. 3: 161-169.
+

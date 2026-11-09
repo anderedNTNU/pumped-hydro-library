@@ -1,0 +1,2392 @@
+Energy Systems
+https://doi.org/10.1007/s12667-023-00614-y
+
+ ORIGINAL PAPER
+
+Optimal pricebased scheduling of a pumpedstorage
+hydropower plant considering environmental constraints
+
+Asja Alic1 · Linn Emelie Schäffer2,4 · Marco Toffolon1 · Vincenzo Trovato1,3
+
+Received: 2 December 2022 / Accepted: 6 August 2023
+© The Author(s), under exclusive licence to Springer-Verlag GmbH Germany, part of Springer Nature 2023
+
+Abstract
+
+The paper proposes a novel medium-term scheduling model for a hydropower sys-
+tem composed by a pumped storage hydropower plant connected to a traditional
+hydropower plant subject to three types of environmental constraints; these deal
+with the maximum water abstraction from the reservoir thought the turbines and
+through the pump for energy production, the minimum environmental water flow
+and the ramping capabilities of water volumes inside the system's reservoirs. The
+scheduling problem is formulated for a planning horizon of 1 year with weekly deci-
+sion stages. The methodology to determine the optimal operation of the plant is
+based on a stochastic dynamic programming algorithm which allows for an accurate
+representation of the uncertainties associated to the water inflows and energy prices.
+Moreover, it facilitates the handling of the non-convex characteristic of the state-
+dependent constraint on maximum water abstraction from the reservoir. The model
+is applied to the case of a real hydropower system based on a cascaded watercourse
+with two conventional hydropower plants in south of Norway to assess the economic
+benefits of having a pumping unit and the technical impact of the above-mentioned
+environmental constraints. Furthermore, this work proposes a methodology to ana-
+lyze the optimal operation of the hydropower system, computed for different tempo-
+ral resolutions, in order to investigate the techno-economic impact of the constraints
+involving dependencies on the states of the system, the different environmental con-
+straints and other seasonal effects on the accuracy and the applicability of medium-
+term scheduling models. Further case studies assess the computational burden and
+the precision of the results when adopting a finer discretization of the state variables
+of the dynamic-programming-based methodology.
+
+Keywords Pumped storage hydropower plant · Optimal hydropower scheduling ·
+Environmental constraints · Electricity markets · Stochastic dynamic programming
+
+Abbreviations
+
+BCBase Case
+FSForward Simulation
+
+Extended author information available on the last page of the article
+
+                                                                       1 3 Vol.:(0123456789)
+                                                                     A. Alic et al.
+
+GHGGreen House Gases
+HPPHydropower Plant
+MEFMinimum Environmental Flow
+PSHPPumped Storage Hydropower Plant
+RESRenewable Energy Sources
+SCWAState-dependent Constraint on Maximum Water Abstraction
+SDPStochastic Dynamic Programming
+WVsWater Values
+
+Sets
+
+DhSet of discharge segments from turbine per hydropower plant h
+E
+     Set  of  pumped-water  segments  from  pump  in  the  upstream  hydropower
+  h
+
+      plant h
+HSet of hydropower plants
+ISet of sub-intervals within each daily stage z
+J Set of iterations in SDP algorithm
+KSet of sub-intervals within each weekly stage t
+
+LSet of stochastic states per stage t
+N Set of discrete reservoir segments per reservoir
+SpSet of endogenous states­reservoirs' volumes
+SuSet of all stochastic states­weekly water inflows and average weekly
+
+            energy prices
+Shu,tSubset of stochastic states for reservoir h in stage t
+T Set of weekly stages
+TenvSubset of weeks during which the state-dependent constraint on maxi-
+
+      mum water abstraction is active
+TMEFSubset of weeks during which the minimum environmental flow is
+
+      required
+ZSet of daily stages
+
+Indexes
+
+dIndex for discharge segment for turbines
+eIndex for pumped-water segment for pumps
+hIndex for hydropower plant
+iIndex for the sub-interval within stage z
+lIndex for stochastic state in reservoir h within stage t
+kIndex for the sub-interval within stage t
+mIndex for volume segment in upper reservoir
+nIndex for volume segment in lower reservoir
+rIndex for water volume intervals for the evaluation of ramping constraints
+tIndex for weekly stage
+zIndex for daily stage
+
+Decision variables
+bh,kVariable for minimum environmental flow from reservoir h, in sub-inter-
+
+            val k [ m3/s]
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+fh,kSpillage from reservoir h, in sub-interval k [m3/s]
+ph,kGenerated power from reservoir h, in sub-interval k [MW]
+pph,kPower absorbed by the pump in the upstream reservoir h, in sub-interval
+
+            k [MW]
+qh,k,dWater discharge from turbine in sub-interval k, segment d from reservoir
+
+            h [ m3/s]
+qph,k,eWater pumped from pump in sub-interval k, segment e from the upstream
+
+            reservoir h [ m3/s]
+resh+,kSvalalckk[ vMamria3b] le for positive volume variations for reservoir , in sub-inter-
+resh-,kSvalalckk[ vMamria3b] le for negative volume variations for reservoir , in sub-inter-
+mef h,kSlack variable for minimum environmental flow for reservoir , in sub-
+
+            interval k [m3/s]
+vh,kWater volume in reservoir h, at the end of sub-interval k [ Mm3]
+
+ t+1Expected future revenue at stage t []
+ n,mWeighting variable for reservoir segments n, m
+
+Parameters
+CcPenalty cost for slack variables [/m3/s]­[/Mm3]
+CsPenalty cost for spillage [/m3/s]
+ENumber of segments of the approximating piecewise liner function of the
+
+            pump unit
+FHConversion factor, number of hours in each sub-interval k [h]
+FCConversion factor, flow to volume [Mm3/m3/s]
+FzConversion factor, number of hours in each sub-interval z [h]
+FVn,mExpected future revenue points for reservoir segments n and m []
+INumber of sub-intervals in each daily stage z
+JMaximum number of iterations in SDP algorithm
+KNumber of sub-intervals in each weekly stage t
+LNumber of states in each weekly stage t
+NNumber of discretization points per reservoir
+NrNumber of water volume intervals for the evaluation of ramping
+
+            constraints
+pphm,aexMaximum power absorbed by pump in the upstream reservoir h and
+
+            pumped-water segment e [MW]
+PdhParameter for pump direction
+QhminMinimum environmental flow from hydropower plant h [ m3/s]
+Qhm,adxdM[ amxi3m/su] m discharge from turbine per reservoir h and discharge segment
+QPmh,aexMaximum pumped water from pump in the upstream reservoir h and
+
+            pumped-water segment e [m3/s]
+spEndogenous state
+shu,t,lStochastic state l at stage t per hydropower plant h
+TNumber of stages in yearly-planning horizon
+
+                                                            13
+                                                                               A. Alic et al.
+
+vh,0Initial water volume in reservoir h for week t = 1 [Mm3]
+
+VhlimEnvironmental threshold for the downstream reservoir h [ Mm3]
+VhmaxMaximum storage volume in reservoir h [ Mm3]
+
+VhminMinimum   storage volume in reservoir h [ Mm3]   h  for  pumping          [ Mm3]
+V h Threshold  volume in the downstream reservoir
+
+Yh,tTotal weekly water inflow to reservoir h at stage t [ Mm3]
+Yh,zTotal daily water inflow to reservoir h at stage z [ Mm3]
+
+ZNumber of stages in weekly-planning horizon
+
+ h,kNet water head for hydropower h, in sub-interval k [m]
+jwvChange in Water Value matrix in iteration j /Mm3]
+ Convergence tolerance for WVs [/Mm3]
+ hDeviation index for reservoir h [Mm3]
+ h,dPerformance slope for turbines per hydropower plant h and discharge seg-
+
+            ment d [MW/m3/s]
+
+ph,ePerformance slope for pump in the upstream hydropower plant h and seg-
+           ment e [m3/s/MW]
+
+t,kScaling factor for price variability in sub-interval k for stage t
+
+z,iScaling factor for price variability in sub-interval i for stage z
+
+tWeekly average energy price at stage t [/MWh]
+
+zDaily average energy price at stage z [/MWh]
+   hs,N[WMamte3r]volume for reservoir h per segment s and N discretization points
+l+Maximum water level increase for ramping constraints [m]
+l-Maximum
++v Maximum     water  level decrease for ramping constraints [m]
+               water  volume increase for ramping constraints [Mm3]
+v-maximum water volume decrease for ramping constraints [Mm3]
+
+   h,kDistribution factor of inflow to each sub-interval k in reservoir h
+
+hj,t(... )Water value matrix for reservoir h, stage t, iteration j
+
+   hs,NUpper extreme for the water segment s in hydropower plant h, for N dis-
+             cretization points [Mm3]
+   s Lower
+_           extreme  for  the  water  segment  s  in  hydropower    plant  h,  for  N
+   h,N
+   discretization points [Mm3]
+
+1Introduction
+
+The penetration of Renewable Energy Sources (RES), such as wind and solar
+energy, in the several power systems worldwide have reached a remarkable share
+contributing to the reduction of Green House Gas emissions (GHG) stemming from
+conventional thermal power plants [1, 2]. However, the uncertainty and intermit-
+tency of their outputs and the lack of support to the system inertial response [3] may
+affect the system frequency stability since the existing protection schemes might fail
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+to operate because of their pre-set condition [4, 5]. To mitigate these shortcomings
+and provide safe operation and control of power systems, additional and appropriate
+control schemes and ancillary services are needed. Furthermore, power system oper-
+ators may require energy storage technologies and adequate management strategies
+to flexibly change their generation/demand output and provide ancillary services to
+the power systems. Pumped Storage Hydropower Plants (PSHPs) are nowadays one
+of the most mature and most spread technologies for energy storage [6]. The basic
+principle relies on the movement of water between two interconnected reservoirs,
+which are located at different altitudes. A volume of water may be diverted from the
+upper reservoir through a penstock to spin a hydraulic turbine coupled to a synchro-
+nous generator in order to produce electrical energy (discharge phase). Afterwards,
+the system may absorb electrical energy to spin a hydraulic pump to move the vol-
+ume of water from the lower reservoir back to the upper one (recharge phase) [7].
+The opportunity to pump water towards the upper reservoir allows to store potential
+energy associated to a volume of water at a certain altitude and use this energy, later
+when needed, to produce electricity. Their round-trip efficiency, which indicates
+the percentage of the stored energy that can be retrieved later [8] may reach 80%--
+depending on site-specific conditions [6]. Moreover, the typically large water stor-
+age capacities of PSHPs make these systems suitable for energy-shifting over short-,
+medium- and long-term horizons [6]. On the one hand, PSHPs can produce energy
+if the power system position is short (the total demand exceeds the generation e.g.
+due to a lack of wind/solar generation). On the other hand, PSHPs absorb energy,
+while in pumping operation, to help the power system cope with long positions (the
+total generation is higher than the demand e.g., due to extra-availability of RES).
+
+   Such flexible operation of PSHPs may provide economic benefits. In fact, PSHPs
+may engage in energy arbitrage, operating in pump-mode in moments of low energy
+prices and operating in turbine-mode when the energy prices are higher. While con-
+tributing to secure integration of uncertain and intermittent RES in power system,
+PSHPs might therefore give also significant potential economic advantages.
+
+   Even though traditional hydropower plants (HPPs)--with no pumping capabili-
+ties--and PSHPs might play a key role in the energy transition, they have a non-
+negligible impact on the surrounding ecosystems [9, 10] which must be considered
+when operating the existing hydropower systems or before constructing new ones.
+HPPs and PSHPs may modify both the morphology and the hydrodynamics inside
+the reservoirs as well as the flow regimes and the water quality of downstream
+watercourses [11]. The construction of dams and artificial reservoirs reduces the
+connectivity of aquatic systems, altering the flow regimes and causing hydropeaking
+phenomena. Consequently, non-natural hydropower waterflows may endanger flood-
+plains, threaten fish, bird species and facilitate erosion processes [9]. These effects
+might be even more relevant in PSHPs where a pumping system is present. As a
+matter of fact, a more frequent movement of water between two interconnected res-
+ervoirs might increase both the frequency and the magnitude in the water level vari-
+ations inside each of the reservoirs [11]. Furthermore, the vertical mixing of water
+volumes can alter the thermal structure, deep water mixing processes and water cir-
+culation characteristics [12]. Consequent changes in stratification can modify the
+water quality, the oxygenation and the nutrient concentration inside the water bodies
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+which in turn might affect aquatic species and the wildlife [12]. Especially during
+winter periods, also the stability of the ice cover of the reservoirs might be affected
+by these variable and frequent water fluctuations [13].
+
+   To mitigate these shortcomings and preserve the sustainment of the local flora
+and fauna, several site-specific environmental restrictions might be imposed by the
+national regulators or by the hydropower producers themselves as a voluntary act
+[14]. To find an efficient and sustainable trade-off between power production and
+the requirements on environmental flows, these environmental regulations must be
+precisely modelled and implemented as constraints in scheduling models. Among
+others, the minimum environmental flow (MEF) and the ramping constraints are
+the most commonly applied in HPPs and they are already adopted by many Euro-
+pean countries. Note that MEF indicates the minimum amount of water that must
+be released from the reservoirs to preserve the quality of watercourses downstream
+the hydropower plants. The ramping constraints limit the variations of the flow
+downstream the outlet of the HPPs or the water level fluctuations inside the reser-
+voir below a certain threshold. In addition, there are other types of environmental
+constraints known as "state-dependent" constraints, which are already widely used
+in Norwegian hydropower systems. Differently from the previous constraints, the
+state-dependent constraints are strictly dependent on the values of one or more state
+variables of the system, e.g., incoming water inflows and reservoirs' volumes [15].
+Moreover, they can be enforced or not or even simply modified in accordance with
+specific logical conditions and/or within determined periods of the year [16]. It is
+easy to be convinced that the application of any environmental constraint eventually
+decreases the possible operation of the PSHP, restricting the set of feasible solu-
+tions for the optimal sequence of operations of the power plant. This, in turn, would
+reduce the associated revenue for the system.
+
+1.1Context and related works
+
+In light of the techno-economic and environmental considerations above, the
+assessment of the optimal operation of hydropower systems becomes crucial
+[17]. In general, the assessment of the optimal operation of a HPP over a certain
+horizon is subject to external uncertainties such as water inflows, snow storage
+and wholesale energy prices which in turn depend on other issues such as the
+available energy mix [18]. The modelling of these uncertainties into an optimal
+scheduling model depends on the length of the considered horizon. It is common
+to refer to long-, medium- and short-term optimal scheduling models for HPPs
+[19]. Long-term scheduling models are typically stochastic models used to make
+forecast on future energy prices, water inflows and energy production and they
+have typical scheduling horizon of 1­10 years. Medium-term models instead are
+used to evaluate the optimal management of the water volumes inside the reser-
+voirs under inflow and price uncertainty for a planning horizon of few months
+up to a year [20]. Short-term scheduling models consider shorter periods of days
+or weeks during which the modelling and impact of certain uncertainties can be
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+neglected. In fact, differently from the long- and medium- term models, short-
+term scheduling problems are deterministic models [17]. The optimal scheduling
+model developed in the proposed paper belongs to the category of medium-term
+problems.
+
+   Furthermore, it is worth pointing out that the assessment of the optimal operation
+of a HPP, e.g., in order to maximize the revenues, may not be trivial when state-
+dependent constraints are enforced. This is because of the specific formulation of
+these constraints which would eventually make the overall optimization problem
+non-convex and thus hard to be solved. One practical example is the state-depend-
+ent constraint on maximum water discharge, which prohibits the discharge of water
+through the turbines for energy production when the water levels of the reservoirs
+are below a certain threshold. This constraint aims to retain water during summer
+periods when inflows are abundant in order to satisfy both the ecological and recrea-
+tional needs for high water levels during spring-summer seasons.
+
+   Previous works have demonstrated that the Stochastic Dual Dynamic Program-
+ming (SDDP) is the most effective methodology in the field of the medium-term
+(and long-term) scheduling models for a hydropower system [21]. In addition,
+another methodology--the Stochastic Dynamic Programming (SDP)--stands out in
+literature as an effective tool when models are characterized by pronounced non-
+convexities. The SDP is an efficient tool for solving sequential optimization prob-
+lems--such as hydropower scheduling problems involving multi-stage decision
+processes--by decomposing the main optimal control problem into smaller optimi-
+zation problems, according to Bellman's principle of optimality [22]. Furthermore,
+the SDP algorithm facilitates the implementation of constraints involving time
+and state-dependent logical conditions--which in turn might result in non-convex
+mathematical formulations--and enables the representation of uncertainties such as
+water inflows and energy prices [20]. Finally, the SDP algorithms are suitable for
+small systems involving a limited number of state variables due to the intrinsic large
+computational capability required.
+
+   Two interesting and similar applications of the SDP are in [23] and [24] where
+the operational profitability of a hydropower system selling both energy and reserve
+capacity in a competitive market setting is presented. A mathematical model based
+on SDP is used to compute the Water Values (WVs) for the hydropower system. An
+effective extension of the SDP method, especially for large watersheds with multidi-
+mensional inflows, is the sampling-SDP. As opposed to SDP, the WV function with
+the sampling-SDP depends on the index of an inflow scenarios. The optimization
+is therefore performed by using the inflow sequences directly rather than statistical
+models of the inflow scenarios. An application of this methodology to a real hydro-
+power system in Canada is presented in [25]. Finally, a deterministic formulation of
+a discrete dynamic programming methodology to consider the variability and uncer-
+tainty of water inflows and market energy prices is adopted in [26].
+
+   The medium-term optimal scheduling model proposed in this paper relies on the
+use of the SDP methodology. The choice is driven by the presence of non-convex
+and state-dependent environmental constraints. Moreover, it is worth noting that the
+analysis of the integration of the environmental constraints developed in this paper
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+within alternative methodologies (e.g., stochastic dual dynamic integer program-
+ming or sampling-SDP) is beyond the scope of the paper.
+
+   Concerning the integration of environmental restrictions, previous studies have
+investigated the implementation of site-specific environmental constraints in opti-
+mal scheduling models for traditional HPPs and how they can affect the hydropower
+system operation. The methodologies developed in [26­28] have explored the eco-
+nomic impacts of MEF and of ramping constraints both on the WVs and on the
+annual operation of conventional HPPs. Results in [27] have evidenced how the
+implementation of such constraints can significantly affect the WVs which tend to
+increase with a larger MEF and decrease with more severe ramping constraints. In
+particular, the influence of MEF is stronger during the wettest seasons while the
+impacts of ramping constraints are more pronounced during the driest periods. Note
+that the MEF--which usually has the highest values during spring and summer--
+can be seen as a reduction in the reservoir level which is reflected as an increase in
+the WVs. Additionally, [26] has demonstrated how the annual losses in energy pro-
+duction and revenues increase quadratically as function of ramping constraints and
+increase almost linearly as function of MEF. Instead, the authors of [28] have found
+that ramping constraints can negatively affect the overall revenue by redistributing
+the power generation from periods of high energy prices to periods of lower energy
+prices but may give an increase in the total energy production.
+
+   On the other hand, [20] and [29] have investigated how the presence of state-
+dependent constraints on maximum water discharge can affect the water manage-
+ment inside the reservoir and the WVs themselves, especially during the restriction
+period. Results in [20] have shown that the state-dependent constraint on maximum
+discharge significantly impacts the WVs and therefore the operation of the system.
+Specifically, simulation results have shown that systems subject to this constraint
+exhibit an overall decrease in both the total energy production and in the revenues.
+Instead, the outcomes of [29] have evidenced how a tighten linear approximation
+can lead to a more accurate model representation and improvement in the system
+operation.
+
+1.2Contributions
+
+This paper provides clear contribution to the existing literature. The initial meth-
+odology developed in [20] is effectively extended to produce a novel medium-
+term scheduling model for a hydropower system composed by a PSHP and a tra-
+ditional HPP. Furthermore, the system is subject to state-dependent constraints
+on maximum water release throught both the turbines and the pump unit and
+two additional environmental constraints: the constraints on MEF and on the
+ramping characteristics. It must be pointed out that the original model consid-
+ered only the state-dependent constraint on maximum discharge for a traditonal
+HPP--thus limiting the discharge of water through the turbines for power produc-
+tion. The addition of a pumping unit required therefore the re-formulation of the
+state-dependent constraint on maximum discharge in order to consider also the
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+maximum water allowed to be pumped by the pump during the restriction period.
+To highlight this fundamental modelling advancement, the present work refers
+to this constraint as "state-dependent constraint on maximum water abstraction"
+(SCWA), thus considering both the water discharged through the turbines and the
+water pumped by the pump unit.
+
+   The novel medium-term stochastic scheduling model allows therefore the assess-
+ment of the optimal techno-economic operation of a hydropower system that aims
+to maximize the potential economic revenue while respecting the three above-men-
+tioned environmental restrictions. The impact of these limitations is evaluated also
+considering the effect in PSHP operation on the sorrounding ecosystem. The SDP
+algorithm is used to evaluate the solution strategy for a hydropower system based
+on a cascaded watercourse composed by two interconnected reservoirs with relative
+power stations, enabling the representation of the uncertainties of water inflows and
+energy prices and facilitating the resolution of non-convexities present in the prob-
+lem formulation due to state-dependent constraint on maximum water abstraction.
+
+   The main contributions of this paper can be summarized as follows:
+
+1. The first contribution deals with the modelling of the optimal scheduling algo-
+    rithms. The original medium-term scheduling model--developed for a cascade
+    system of two traditional HPPs--has been extended to include a pumping unit.
+    Moreover, the model considers the simultaneous presence of three environmen-
+    tal constraints: (i) a constraint on MEF, (ii) a set of constraints on the varia-
+    tions on the water level fluctuations inside the reservoir and (iii) a SCWA from
+    the reservoir. To the best of the authors' knowledge, the implementation of the
+    above-mentioned constraints to a hydropower system with a PSHP has not been
+    formulated and tested in previous works. Similarly, previous works did not imple-
+    ment the three above-mentioned constraints, simultaneously.
+
+2. The second contribution is the analysis on the actual ability to effectively ensure
+    state-dependent constraints over different optimization horizons (e.g., weekly and
+    daily horizons). In fact, due to their strict dependence on the knowledge and value
+    of the state variables, the effectiveness of specific state-dependent constraints
+    reduces when considering a weekly-resolution, leading to an under- or over-
+    estimation of the weekly energy production and revenues. Therefore, the proposed
+    work investigates how specific state-dependent constraints might be enforced
+    more precisely because of a more frequent knowledge of the state variables and
+    the consequent changes in the system operation. In other words, this paper pro-
+    poses a novel methodology which, without introducing any computational burden,
+    may effectively combine the typical framework of a mid-term scheduling model
+    with the benefits of a more rapid optimal setting of the state variables.
+
+3. The proposed model is applied to a real hydropower system located in south of
+    Norway to assess the potential increase in annual revenues by adding a pump-
+    ing unit in a conventional hydropower plant. Moreover, the study evaluates the
+    changes in operation, energy production and expected revenues of the hydropower
+    system (both in traditional and pumping mode) when considering the presence
+    of ramping constraints. Finally, the case studies investigate the effectiveness on
+    the interpolation procedure for the calculation of the water volumes varying the
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+    fundamental features of the SDP algorithm e.g., the granularity of the discretiza-
+    tion of the state variables.
+
+   This paper is organized as follows: Sect. 2 provides with an overview of the struc-
+ture of the model, describing the considered hydropower system (Sect. 2.1) and
+explaining the use of the SDP algorithm for the calculation of WVs (Sect. 2.2) and
+the use of a Forward Simulation (FS) algorithm to assess the optimal operation of
+the hydropower system (Sect. 2.3). Section 3 deals with a description on the new
+modelling features (3.1 and 3.2) and describes in detail the mathematical formula-
+tion of the optimization problem (3.3). Section 4 proposes a new methodology based
+on the features of the medium-term scheduling to simulate the operation of a hydro-
+power system with daily stages. The case studies used to validate the model and the
+obtained results are reported in Sect. 5. Conclusive remarks are addressed in Sect. 6.
+
+2Methodology
+
+The proposed medium-term scheduling model is used to compute the optimal opera-
+tion of a PSHP connected to a traditional HPP. The planning horizon is 1 year with
+weekly decision stages. The objective is to maximize the operational revenues whilst
+considering the presence of stochastic variables (i.e., water inflows and energy
+prices) and fulfilling technical and environmental constraints.
+
+   For this purpose, the proposed model requires the consecutive resolution of two
+algorithms: the SDP algorithm and the FS algorithm. The overall description of the
+resolution process is illustrated in Fig. 1.
+
+   The SDP algorithm solves the scheduling problem for each stage while consider-
+ing all states of the model, i.e., the water inflows, wholesale energy prices and water
+volumes inside the reservoirs. For each combination of stages and states, the SDP
+algorithm calculates the relative WVs which inform on the optimal management of
+the water sources inside the reservoirs. The algorithm is solved backwards, starting
+
+Fig.1Model structure and
+resolution process of the SDP
+and FS algorithms
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+from the end of the planning horizon, until convergence on the WVs is reached.
+Afterwards, the FS algorithm generates and simulates a certain number Ns of deter-
+ministic scenarios in which the water inflows and energy prices are known before
+the weekly optimization problem is solved. Based on the optimal values of WVs
+(denoted with a star WVs* and being outputs of the SDP algorithm), the FS algo-
+rithm optimizes the system's operation and computes the expected revenues. Spe-
+cific details on each of the algorithms are reported in the following.
+
+2.1Hydropower system description
+
+In general, a watercourse is referred to a set H of interconnected HPP where each
+HPP, indexed by h  H, is composed by a reservoir, a penstock, and a powerhouse.
+Part of the water may be released from the reservoir though the penstock towards the
+turbine in the powerhouse, spinning it to activate a generator to produce electricity.
+Furthermore, a powerhouse may be equipped with a pump: by absorbing electrical
+energy from the power grid, the pumping machine allows for the water to be sent
+back to the reservoir of the plant. This setup is referred to a PSHP.
+
+   The presented medium-term scheduling model considers a hydropower system
+based on a watercourse composed by two cascaded interconnected plants such that
+H = h, h . The upstream one is indicated with h = h and it is a PSHP; it dis-
+charges the spilled water and the water used for energy production directly into the
+downstream reservoir denoted with h = h. Furthermore, given the presence of a
+pumping machine in the upper powerhouse h, the movement of water is also allowed
+from the reservoir h to the upper one h. The downstream plant h is a traditional HPP
+which discharges the spilled water and the water flowing through the turbines to pro-
+duce electricity.
+
+   Moreover, as explained in Sect. 1.2, the proposed model considers that only the
+downstream reservoir h is subject to the SCWA.
+
+2.2Stochastic dynamic programming algorithm
+
+The objective of the SDP algorithm is the evaluation of the optimal WVs at each
+stage t = {1, ... , T} of the optimization horizon. In this work, the optimization hori-
+zon is chosen to be 1 year with weekly decision stages t, thus leading to T = 52.
+Furthermore, each of the stages t is divided into K = 56 sub-intervals of three hours
+length, indexed by k = {1, ... , K}.
+
+   The WVs are expressed in /Mm3 since they have an economic meaning. In fact,
+they represent the marginal value of storing water in a reservoir of a hydropower
+system. In accordance with the definition proposed in [30], the WVs represent the
+opportunity cost associated with the water stored in the reservoirs. The producer
+may decide to use the available water in the reservoir to direct energy towards the
+main power grid and collect revenues for it or store the water and use it at a later
+stage with a potential increase in profit. Note that, the WVs tend to decrease with
+increasing water volumes because the risk of spillage is higher, on the other hand
+
+                                                           13
+                                                       A. Alic et al.
+
+they tend to increase for low storage volumes because of a higher risk of empty-
+ing the reservoirs. Therefore, the knowledge of WVs at each of the weekly stages t
+allows for an optimal management of the water volumes inside the reservoirs.
+
+   The SDP algorithm requires the definition of the state variables, which contain
+the main information of the system between one stage t - 1 and the next one t. In
+this case, the set of state variables is made of two subsets: the first subset refers to
+the endogenous variables of the system (Sp) while the second one considers the
+exogenous and stochastic variables (Su) [20]. The endogenous state variables are
+the water volumes of the upper (h) and of the lower (h) reservoirs. Furthermore, as
+typically done for dynamic programming problems, these states are discretised.
+In this work, both the upper and the lower water volumes are equally divided
+into N equidistant points leading to a total of N2 possible water volume combina-
+tions. The exogenous stochastic state variables are considered for each of the res-
+ervoirs h and at each stage t. Hence, a subset (Shu,t  Su) containing five possible
+states, indexed by l = {1, ... , L} with L = 5, is considered. Each of the L states
+comprises a pair of values: the total weekly inflow for each of the reservoirs (Yl)h,t
+[Mm3] and the corresponding average weekly wholesale energy prices ( l)t [/
+MWh]--as expressed in (1). It is worth noting that the weekly energy prices are
+the same for both the reservoirs.
+
+    Shu,t = Y1, ... Yl, ... YL; 1, ... , l, ... L h,t  (1)
+
+   The stochastic variables are modelled as discrete nodes using a discrete Markov
+chain [20]. This model receives as input several annual historical data of weekly
+inflows together with weekly average energy prices corresponding to the same
+weeks. A serial correlation between the inflows of two adjacent weeks t and t + 1
+is evaluated, while a cross-correlation is calculated between the weekly inflows
+and the corresponding prices. For each week t, 10000 points--corresponding to
+a combination of water inflows and relative energy prices--are sorted from the
+autoregressive model and grouped into five discrete nodes, using a K-means clus-
+tering algorithm [31]. The transition probabilities from one state to another are
+determined by counting the shares of scenarios transitioning between different
+nodes, from one week to the next one [20].
+
+   The SDP algorithm solves the revenue-maximization problem described in
+Sect. 3.3 and calculates the WVs for each of the reservoirs (h  H), at each of the
+weekly stages (t  T) and for all the reservoir volume combinations (sp  Sp) and
+stochastic states (suh,t,l  Shu,t  Su) of the model.
+
+   The evaluation of the WVs requires an iterative strategy since the WVs are
+unknown at the beginning of the procedure. In other words, the SDP algorithm
+is solved J times until a certain degree of convergence concerning the WVs is
+reached. At the first iteration (j = 1), the WVs for the last stage T are initialized
+to zero (W Vj=1,t=T = 0). Afterwards, within each iteration j  J , the SDP algo-
+rithm is solved backwards, i.e. starting from the final stage T up to the initial one,
+iterating over all reservoirs h, water volume states sp and their stochastic states
+suh,t,l as illustrated in a simplified form in Fig. 2. Further explanations on the solu-
+tion strategy can be found in [20].
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+   The convergence of the SDP algorithm is checked by means of the stopping
+criterium (2) as done in [23], which evaluates whether wj v, i.e. the absolute value
+
+Fig.2Pseudocode of the SDP Algorithm scheme
+
+of the difference between the WVs at t = T and t = 0 at the end of iteration j, is
+smaller than a given tolerance :
+
+wj v = ||||jh,t=T sp, shu,t,l - jh,t=0 sp, shu,t,l ||||    sp  Sp, suh,t,l  Shu,t  Su, h  H
+
+                                                                                                  (2)
+   Where hj,t(... ) indicates the matrix storing the values of WVs expressed in /
+Mm3 for reservoir h, stage t at iteration j. If convergence is reached, the iterative
+
+procedure stops. If not, (3) applies, where the WVs obtained from the first stage in
+iteration j (W Vj,t=0) are used as WVs for the last week T in the next iteration j + 1
+(i.e. WVj+1,t=T). This is to implement an infinite-planning horizon formulation i.e.,
+
+assuming periodic yearly boundary conditions.
+
+hj+1,t=T sp, suh,t,l = hj,t=0 sp, suh,t,l    sp  Sp, suh,t,l  Shu,t  Su, h  H
+                                                                                         (3)
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+2.3Forward simulation algorithm
+
+In accordance with Fig. 1, the FS algorithm computes the optimal operation of the
+combined plants of the considered hydropower system.
+
+   As explained in Fig. 3, for each generated scenario Ns, the FS solves the deter-
+ministic weekly optimization problem by running the Scheduling Algorithm in
+Sect. 3.3 for each reservoir h, starting from the first week of the year t = 1 till the last
+one t = T, and adopting the corresponding optimal WVs* obtained from the SDP
+algorithm. As a matter of fact, the states of the system, i.e., the water volumes in the
+reservoirs at the end of the previous stage vht-,k1=K, the total weekly water inflows Yh,t
+and average weekly energy prices t, are now known quantities at the beginning of
+each stage t and given as input to the weekly-decision problem.
+
+   Hence the FS algorithm evaluates the optimal amount of water that must be
+released from the reservoirs for energy production (qh,k,d) and optimal amount of
+water pumped by the pump unit (qph,k,e) at each sub-interval k.
+
+Fig.3Pseudocode of the FS Algorithm
+
+3Modelling and formulation of the scheduling problem
+
+3.1Pumping system
+
+The proposed formulation of the PSHP adopts a modelling simplification of ignor-
+ing the grid-connection configuration and types of electrical machines (e.g., fixed-
+speed pumps vs. fully-fed or doubly-fed electrical machines). This allows to quantify
+a common overall upper bound for the flexibility and the additional value that can be
+provided by the PSHP whilst respecting fundamental environmental constraints. It
+is worth noting that the flexible operation of the pump unit enabled in this work bet-
+ter resembles the features of a fully-fed or doubly-fed electric machine rather than a
+fixed-speed pump. Within this context, the first additional feature introduced in this
+paper is the modelling of the pumping system to upgrade the upstream traditional
+HPP to a PSHP. While in pumping operation, the pump installed in the upstream
+power station h would move a volume of water from the corresponding downstream
+reservoir h.
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+   To do so, at each sub-interval k, the pump requires the absorption of electric power
+pph,k which is a function of the pumped water qph,k, the net head h,k and the pump effi-
+ciency ph,k. The dependency of pph,k from the recalled parameters is non-linear e.g.,
+due to the non-linear variation of the pump efficiency ph,k with respect to the net head
+ h,k and on the pumped water qph,k. In accordance with the modelling assumptions of
+the turbines in [20], the proposed model neglects the net head variations with respect to
+the gross head available. This assumption if often implemented in medium-term sched-
+uling models and lets the electric power pph,k be expressed by means of a single curve
+as the blue dotted one in Fig. 4. This curve can be therefore approximated by a concave
+piece-wise linear function (red solid line in Fig. 4).
+
+Fig.4Concave piecewise linear function modelling the relationship between the power consumption of
+the pump and the corresponding pumped water
+
+The domain of the function is split into E intervals, indexed with e = {1, ... , E}. A
+
+generic  interval  e    E    is  defined    by  the  partition  of  the  domain     Qpmax , Qpmax      and
+
+                          h                                                              h,e-1 h,e
+
+the image    ppmax ,    ppmax    .  Within  a   generic  interval   e    Eh,  the   relationship  between
+
+                 h,e-1      h,e
+
+the power consumption of the pump and the pumped water is imposed to be linear and
+
+it is described by the slope coefficient defined in (4):
+
+                                    Qpmax - Qpmax
+                                    h,e              h,e-1
+                          ph,e =                                         e     E                       (4)
+                                    ppmax - ppmax
+                                                                                 h
+
+                                    h,e              h,e-1
+
+Consequently, the power required by the pump pph,k at the upstream power station h
+
+at each sub-interval k, is formulated as in (5), while the relative pumped water qph,k,e is
+                          Qpmax
+limited  by  (6),  where            indicates   the  maximum    water    that  can  be  pumped    for  each
+                               h,e
+
+segment e:
+
+                                                                                        13
+                                                                             A. Alic et al.
+
+                       pph,k    =       qph,k,e                k  K          (5)
+                                          ph,e
+                                   eEh
+
+                  0    qph,k,e     Qpmax         k             K,  e    E    (6)
+
+                                        h,e                               h
+
+Moreover, it is important to account for the cavitation effect while in pump mode.
+
+Hence, the dependence of the pumping functioning with respect to the water levels
+
+inside the reservoirs has been considered. This issue is implemented by means of a
+
+state-dependent constraint on the water pumped by the pump qph,k,e where the state
+variables considered are the water volumes inside the downstream reservoir h from
+
+which the pump h is subtracting water. Since the reservoir volumes are known only
+
+at the beginning of the stages, the constraint is formulated as in (7). Here, the water
+volume used as reference threshold is the one at the end of the previous week vth-,k1=K:
+
+if the water volume inside the downstream reservoir h happens to go below a certain
+
+threshold Vh, the pump is not allowed to pump water for all the K steps of the
+
+incoming week t.  
+
+                      qph,k,e = 0            if vht-,k1=K  Vh      k  K      (7)
+
+                  eEh
+
+   Depending on the current state of the water volume, the constraint is activated
+in the mathematical formulation before the optimization problem is solved at each
+stage t.
+
+3.2Environmental constraints
+
+The proposed model acknowledges two additional constraints dealing with environ-
+mental issues related to the water inside the reservoirs and the surrounding envi-
+ronment. In particular, the first constraint regards the quality-related environmental
+standard of the flow downstream the hydropower plants; the second constraint deals
+with the frequent water level fluctuations inside the reservoirs caused by the opera-
+tion of the hydropower system. These two issues are translated into a set of math-
+ematical constraints (8, 9) that the optimal operation of the hydropower system must
+respect. In particular:
+
+· The minimum environmental flow (MEF) bh,k [ m3/s] in (8) indicates the minimum
+    amount of water that has to be released from the reservoir h at each sub-interval
+    k in order to sustain the downstream ecosystems. The MEF may be active only in
+    specific weeks of the year:
+
+    bh,k = Qmh in                  t  TMEF  T                                (8)
+
+· The ramping constraints aim at reducing possible fast and high variations of
+   the water levels inside the reservoirs pursuant to the operations of the hydro-
+   power system. Since the optimization model proposed in this work considers
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+the water volumes vh,k as decision variables, the changes in water levels inside
+
+the reservoirs are formulated as changes in water volumes as in (9). The vari-
+
+ations in water volumes from one sub-interval k - 1 to the next k are bounded
+                                                -               +
+by the downward and    upward ramping rates,    v  and          v  respectively  and  both  are
+expressed in M m3. In  this specific case, the
+                                                ramping         constraints are imposed to
+
+be active along the whole planning period.
+
+-    vh,k  -           vh,k-1    +  t  T                                                    (9)
+v                                v
+
+3.3Scheduling algorithm
+
+As illustrated in Figs. 2 and 3, the execution of the Scheduling Algorithm is nested
+in the SDP Algorithm and the FS Algorithm, respectively. The Scheduling Algo-
+rithm requires the solution of a multi-stage revenue maximization problem where
+the hydropower system is assumed to be a price-taker agent operating in a competi-
+tive energy market; thus, the operation of the hydropower system does not affect the
+market clearing.
+
+   Figure 5 illustrates the procedure for running the Scheduling Algorithm. For
+both the SDP and FS algorithms, the corresponding input values are read and the
+optimization problem (10­20) is built. The algorithm checks if the limitations on
+the pumping capabilities (Check 1) or if any of the environmental constraints (i.e.,
+SCWA and ramping constraints indicated with Check 2 and Check 3 respectively)
+are required and solves the optimization problem subject to the applicable set of
+constraints.
+
+Fig.5Pseudocode of the Scheduling Algorithm
+
+   The objective function t(sp, shu,t,l) of the above-mentioned optimization problem
+is expressed by (10).
+
+                                                           13
+                                                                    A. Alic et al.
+
+t(sp, shu,t,l) = max  FH t               ph,k - pph,k  - CS         fh,k
+
+                                t,k
+
+                            kK       hH                      kK hH        (10)
+
+-CC         resh+,k + res-h,k + mef h,k + t+1 vhH,k=K , suh,t+1,l
+
+     kK hH
+
+                      t+1 =          n,m FV n,m
+
+                             nN mN                                        (10a)
+
+   Equation (10) maximizes the revenue from operating the hydropower system at
+the current stage t, considering all the actions taken at each of the sub-intervals k
+and the expected future profit for stage t + 1. The expected future profit t+1 is a non-
+convex function expressing the expected value of maintaining a certain amount of
+water stored in the reservoirs at the end of the stage t and it depends on both endoge-
+nous (sp) and exogenous (shu,t,l) state variables of the system. Moreover, the objective
+function (10) considers the power produced by the turbines ph,k at each sub-interval
+k and the power used to operate the pump pph,k.
+
+   The weekly energy prices t, expressed in /MWh, are obtained from the Markov
+model described in Sect. 2.2 and they are distributed along the K sub-intervals by
+means of a scaling factor t,k to maintain a generic daily pattern. The numerical val-
+ues are courtesy of the Norwegian University of Science and Technology (NTNU).
+The values of t,k have been used in this paper only as input parameters to the opti-
+mization model. Moreover, since the power is expressed in MW and the electricity
+price in /MWh, the conversion factor FH--which considers the number of hours
+within each sub-interval k--is used to express the objective function in . The spill-
+age of water fh,k--which is used to discharge the surplus of water when the water
+volumes inside the reservoir have exceeded their maximum capacity--is penal-
+ized with a cost Cs. Moreover,res+h,k and resh-,k are two variables included both in the
+objective function (10) and in the ramping constraints (29) as penalizing factors.
+This has been done to provide a higher degree of flexibility to the operation of the
+hydropower system during the wet season. As a matter of fact, in cases of high-water
+inflows, it might be difficult to maintain the water level fluctuations within a given
+range and the hydropower system is allowed to violate the restriction on maximum
+water level variations by paying a penalty fee Cc. Finally, mef h,k is a slack variable
+included also in Eq. (20) which ensures the requirements on the MEF even during
+the restriction periods on SCWA.
+
+   The non-convex characteristics of the expected future value t+1 is overcome by
+formulating the function as a linear combination of the weighting variables n,m--
+bounded to the discrete water volumes of the reservoirs--and the expected future
+profit points (FVn,m) which in turn are dependent on the WVs (10a). The indices
+n and m refer to the volume segments in the upper and in the in lower reservoir
+respectively. Hence, a Special Order of Sets (SOS2) is used to approximate t+1 into
+a piecewise linear function. A more detailed description of the methodology used
+can be found in [20].
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+   The water volumes inside the reservoirs are subject to the constraints described
+by (11a­14).
+
+vh,k  -  vh,k-1  +  F  C          qh,k,d   +    fh,k  +  bh,k  -                            =  h,k Yh,t  k  K
+                                                                          qph,k,ePdh                        (11a)
+                          dDh                                       eEh                                     (11b)
+
+                 vh,k  -  vh,k-1  +  F  C             qh,k,d     +  fh,k  +   bh,k  -                  
+                                                                                            qph,k,ePdh
+                                           dDh                                         eEh
+
+                                                            
+                    -                                       
+                            qh,k,d   +    fh,k  +     bh,k    =     h,k Yh,t        k  K
+                      dDh
+
+                          Vhmin  vh,k  Vhmax                              k  K, h  H                     (12)
+
+   The equality constraints (11a and 11b) express the water mass balance for the
+
+upstream reservoir h and for the downstream one h, respectively. When considering
+(11a), vh,k indicates the water volume of the upstream reservoir h at the end of the sub-
+interval k while vh,k-1 indicates the water volume at the end of the sub-interval k - 1.
+
+The same considerations can be done for the downstream reservoir h in Eq. (11b).
+In the FS algorithm, when considering the first sub-interval (k = 1) of the first week
+(t = 1), the water volumes vh,k-1 of both the reservoirs assume the value of vh,0 which is
+
+treated as an input parameter:
+
+                                     vth=,k1=0 = vh,0                     h  H                           (13)
+
+   Considering the first sub-intervals (k = 1) of the following weeks (t > 1), vh,k-1
+assumes the value of the water volumes at the end of the previous stage t - 1:
+
+                                  vth,k=0 = vth-,k1=K                         h  H                       (14)
+
+   Considering the upstream reservoir h in (11a), Yh,t indicates the total weekly incom-
+ing water inflows, qh,k,d the water discharged from the turbine, fh,k the spilled water and
+bh,k the MEF. Similarly, the water mass balance in (11b) considers the water outflows
+from the downstream reservoir h, thus the water discharged through the turbine qh,k,d,
+the spilled water fh,k and the MEF bh,k. Furthermore, besides the total weekly incoming
+inflow Yh,t , the equation considers also all the incoming water that is discharged from
+the upstream reservoir h. Finally, since only h is a PSHP, Eqs. (11a) and (11b) con-
+sider also the water pumped by the pump qph,k,e together with the parameter Pdh, which
+indicates its flowing direction. When considering the downstream reservoir h, Pdh=h
+is equal to - 1, indicating that the water is subtracted from the downstream reservoir.
+When considering the upper reservoir h, Pdh=h assumes the value 1, indicating that the
+upstream reservoir is receiving water from the downstream one. Note that h,k and h,k
+
+                                                                                                         13
+                                                                       A. Alic et al.
+
+are the inflow distribution factors for the intra-weekly sub-intervals k for the upstream
+and downstream reservoir respectively and FC is the conversion factor from m3/s to
+Mm3. As expected, the water volumes of the two reservoirs are maintained between a
+maximum volume Vhmax and a minimum one Vhmin by (12).
+
+Moreover, the system is subject to the technical constraints (15­19).
+            
+    ph,k =                  h,d qh,k,d    k  K, h  H
+                                                                       (15)
+            dDh
+
+    0  qh,k,d  Qmh,dax                    k  K, h  H, d  Dh            (16)
+
+         pph,k    =              qph,k,e                k  K           (17)
+                                   ph,e
+                            eEh
+
+    0    qph,k,e            Qpmax         k             K,  e    E     (18)
+
+                                 h,e                               h
+
+                                      if vht-,k1=K  Vh      k  K
+        qph,k,e = 0
+                                                                       (19)
+    eEh
+
+   Constraint (15) represents the relationship between the power produced by the tur-
+bines ph,k and the corresponding water discharges qh,k,d which in turn are limited by
+(16). In a similar way, the relationship between the power absorbed by the pump pph,k
+and the corresponding pumped water qph,k,e is expressed by (17) where qph,k,e is limited
+by (18) and (19), as explained in Sect. 3.1. Since the pumping unit is present only in the
+upper reservoir h, Eq. (19) considers the water volumes inside the downstream reser-
+voir h to regulate the pumping activities. The procedure used to regulate the pumping
+unit is illustrated in Fig. 6.
+
+Fig.6Pseudocode of the Check 1 Algorithm relevant to the constraints on pumping functionality (19)
+
+   Finally, Eqs. (20­29) implement the environmental constraints required by the local
+regulation.
+
+    bh,k + mefh,k = Qmh in              k  K, h  H, t  TMEF  T         (20)
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+                                  if vth-,k1=K < Vhlim        k  K, t  Tenv  T
+               qh,k,d = 0
+                                                                                  (21)
+          dDh
+
+                                  if vth-,k1=K < Vhlim        k  K, t  Tenv  T    (22)
+           qph,k,e = 0
+
+       eEh
+
+     qh,k,d         Qhm,dax       if vth-,k1=K + Yh,t  Vhlim    k  K, t  Tenv  T
+                                   if vth-,k1=K + Yh,t  Vhlim
+dDh            dDh                if vth-,k1=K + Yh,t  Vhlim
+
+     qph,k,e        Qpmax                                                                 (23)
+                                                                k  K, t  Tenv  T
+                         h,e
+eEh            eEh
+
+                                                                                  (24)
+
+          vh,k=K  Vhlim                                         t  Tenv  T        (25)
+
+          qh,k,d        Qmh,dax   if vht-,k1=K  Vhlim           k  K, t  Tenv  T (26)
+
+     dDh           dDh
+
+     qph,k,e            Qpmax            if vht-,k1=K  Vhlim    k  K, t  Tenv  T (27)
+
+eEh                eEh       h,e
+
+          vh,k  Vhlim         if vth-,k1=K  Vhlim         k  K, t  Tenv  T        (28)
+
+     res-h,k +  -       vh,k  -  vh,k-1    +  +  resh+,k        k  K, h  H (29)
+                v                          v
+
+   Equation (20) implements the MEF bh,k that must be released from the reservoir
+h to maintain the quality of the ecosystem downstream the relevant plant. It is worth
+noting that, in (11a), (11b) and (20), the MEF has been modelled by means of a
+water route that is independent from the one referring to the energy production. This
+choice would allow to extend the functionalities of the model without major com-
+plexities. In fact, it can be adapted to different configurations and adjusted to satisfy
+site-specific water allocations (i.e., water supply for civil uses, support irrigation,
+fish water routes and/or other bypass channels).
+
+   The SCWA imposed to the reservoir h are described by (21­28). The limitations
+on the maximum discharge through the turbines and on the maximum water pumped
+by the pump, as well as the constraint on the pumping functionality (19), are state-
+dependent constraints which depend on the storage volumes in the reservoirs at the
+beginning of the stages i.e., the endogenous variable sp. The SCWA are active only
+for specific weeks of the year (t  Tenv) and only depending on the current state of
+the system i.e., the water volumes vth-,k1=K and the weekly incoming inflows Yh,t. Note
+
+that the relevant constraints are added to the formulation before the optimization
+problem is solved, as illustrated in pseudocode of the Check 2 Algorithm in Fig. 7.
+
+                                                                                13
+                                                                                      A. Alic et al.
+
+Fig.7Pseudocode of the Check 2 Algorithm relevant to the SCWA (21­28)
+
+   If the water volume at the beginning of the restriction period is below a certain
+threshold Vhlim, no water is allowed to be discharged through the turbine nor pumped
+
+by the pump from the reservoir for energy production purposes and constraints (21)
+
+and (22) replace (16) and (18) respectively. When and if the water volume reaches
+the threshold Vhlim within the restriction period due to a high weekly incoming water
+
+inflow Yh,t, the turbine is allowed to discharge water for energy production and the
+pump is allowed to pump water: constraints (21) and (22) are relaxed and replaced
+
+with (23) and (24) while (25) is added to the problem formulation. Note that (25) is
+
+active for the first week in which the storage volume reaches the desired threshold,
+and it imposes the water volume inside the reservoir to stay above Vhlim by the end of
+
+the stage (k = K). Constraints (26) and (27) become active from the following week
+
+together with constraint (28) which imposes a minimum regulation volume for all
+
+the sub-intervals k of the stage: the discharge of water for power production and the
+
+withdraw of water by the pump are permitted as long as the water volume inside the
+
+reservoir is kept above the limit.
+
+   Finally, (29) represents the ramping constraints which impose the maximum
+
+water level variations between two adjacent operating time-steps. Also in this case,
+
+the ramping constraints are expressed as function of the water volume of the reser-
+                                         vht-,k1=K,
+voir at the end of the previous stage    given       where   the  upward and downward ramp-
+ing rates are expressed in Mm3 and                        +  and   v-. Therefore, the maximum
+                                                     by   v
+
+threshold of the water level variations expressed in meters must be converted in vari-
+                                                                                             +
+ations in water volumes. Furthermore, it is worth noting that, given the positive            l
+              -
+and negative  l  water  level  variations,  the  corresponding    variations  in  water      volume
++       -
+v  and  v  change  accordingly  to  the  state  of   the  stored  water  volume.  In  fact,  because
+
+of the irregular shape of the reservoirs, the same variations in water levels corre-
+
+spond to higher variations in terms of water volumes if the reservoirs are almost at
+
+their maximum capacity. On the contrary, they correspond to smaller volume vari-
+
+ations if the reservoirs are almost empty. In order to find the correct water volume
+variation required, the maximum storage water volume of the reservoir Vhmax has
+
+been divided into Nr intervals of water volumes indicated as Vr with r = 1, ... , Nr .
+
+For each generalized interval Vr, Vr- corresponds to the lower bound while Vr+ to the
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+upper one.   It is worth noting that Vr+ = Vr-+1. For each interval, the negative                          -  and
+          +  water volume variations corresponding to the required water level                             v
+          v
+positive                                                                                                   varia-
+
+tions - l- and +l respectively - are evaluated.
+   The implementation of such constraint is performed by running the Check 3
+
+Algorithm whose pseudocode is in Fig. 8. Before solving the optimization problem
+
+for the stage t, the Check 3 Algorithm determines the predefined intervals of water
+                           evxth-,pk1=reKssaendd,ininMtumrn3,-cthooboeseasdtdheedptoosEitqiv.e(29v+)a. nd            -
+volumes Vr which include                                                                                   negative  v
+water volume variations -
+
+Fig.8Pseudocode of the Check 3 Algorithm relevant to the ramping constraints (29)
+
+4Assessing the solution of the mediumterm scheduling model
+
+As explained in Sect. 2.2, the SDP algorithm computes the 1-year worth set of WVs
+considering weekly decision stages. In turn, the optimal operation resulting from
+the solution of the FS algorithm maintains the same temporal weekly resolution
+t = {1, ... , T} and the same intra-weekly sub-intervals k = {1, ... , K}. It is worth
+noting that the selection of weekly stages is typical for medium-term scheduling
+models. These models are in fact adopted to evaluate the optimal management of
+the water sources inside the reservoirs for planning periods of several months up
+to 1 year considering the uncertainties of water inflows and energy prices. To grant
+a more explicit representation of these stochastic variables while at the same time
+maintaining an affordable computational time, medium-term scheduling models are
+usually formulated and solved via SDP algorithms.
+
+   Note that, under this approach, the states of the system (e.g., water volumes inside
+the reservoirs sp, incoming water inflows and average energy prices shu,t,l) are known on
+a weekly basis. Such "infrequent" weekly disclosure of the states of the system may
+prevent the effective actual enforcement of some of the constraints of the FS algorithm.
+This issue might be more relevant during those weeks where the constraints depending
+on the state of the system are particularly binding. As a result, the optimal operation
+of the system might be affected by an over- or under-estimation of the hydropower
+system technical constraints and external issues (e.g., water inflows). In turns, the eco-
+nomic performance of the hydropower system might be over- or under- assessed.
+
+                                                            13
+                                                                                         A. Alic et al.
+
+   Considering the FS algorithm, if the states of the systems--thus the water vol-
+umes, the total water inflows, and the average energy prices--are known and
+assessed more frequently, e.g., on a daily base rather than on a weekly base, the
+actual enforcement of the constraints involving dependencies on the water lev-
+els inside the reservoirs or on the incoming inflows could be implemented more
+effectively.
+
+   An illustrative example is offered in Fig. 9, where the data are taken from actual
+simulation results. The figure illustrates the evolution of the water volume inside the
+lower reservoir which is subject to the state-dependent constraint on maximum
+water abstraction. More specifically, the results report the water volumes evaluated
+at the stage t = 24 over all the K sub-intervals, for a randomly selected scenario
+among the Ns ones. The blue dotted line indicates the optimal water volumes
+obtained when solving the optimization problem with weekly stages, while the green
+solid line illustrates the water volumes obtained when solving the same problem by
+using daily stages. The state-dependent constraint on maximum water abstraction is
+active since week t - 1 but it might not be immediately satisfied because of the low
+water volumes at the beginning of the week and small external inflows. In this case,
+the water volume inside the lower reservoir at the beginning of the stage t--indi-
+cated by the red square--, is below the threshold limit Vhlim (horizontal dashed red
+
+line). Referring to the Check 2 Algorithm explained in Sect. 3.3, the weekly-stages
+model evaluates if the water volume reaches the predefined threshold by the end of
+the week (i.e. in K = 56) due to the total weekly incoming inflow Yh,t and applies
+(23­25). If so, the constraint on the minimum regulation volume (28) becomes
+active from the following week (t = 25). In the daily-stage resolution instead, the
+model considers the state of the reservoir volume at the beginning of each day and
+the corresponding daily water inflow Yh,z within the week t. Considering the same
+week t and the same boundary conditions (i.e. the very first initial water volumes
+vht ,k=0, energy prices and water inflows at every sub-interval k), the predefined
+threshold Vhlim is already reached at the end of the first day (for k = 8) because of a
+
+sufficient amount of daily water inflow, as indicated by the black dot in Fig. 9. The
+constraints (26) and (27) are immediately activated and the constraint on minimum
+
+                           90          Water Volume threshold (87.44 Mm3)
+                         89.5          Optimal water volumes with weekly stages
+                                       Optimal water volumes with daily stages
+                           89
+    Water Volumes [Mm3]  88.5
+
+                           88       8  16  24  32                   40           48  56
+                         87.5
+
+                           87
+                         86.5
+
+                           86
+                         85.5
+
+                                 0
+
+                                       K sub-intervals in stage 24
+
+Fig.9Evolution of water volume in reservoir subject to state-dependent constraint on maximum water
+abstraction
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+volume regulation (28) becomes active for the following days as illustrated by the
+green solid line.
+
+   This first example demonstrates how a finer resolution would permit a more accu-
+rate implementation of the state-dependent constraints resulting in a more realistic
+operation of the hydropower system. However, the sequential resolution of both the
+SDP and FS algorithm by using daily stages would deviate from the objectives and
+benefits characterizing medium-term scheduling models. A finer resolution would
+require changes to the Markov chains for the representation of the daily-based sto-
+chastic variables but also changes to the formulation of non-linear relationships
+characterizing specific constraints and further technical details. Furthermore, the
+implementation of these changes would largely increase the computational effort.
+Therefore, to evaluate the accuracy of using a daily-stages approach instead of a
+weekly one without impacting too much both the computational time and the model
+structure itself, this paper proposes a new methodology in which the temporal gran-
+ularity between weekly stages t and t + 1 is increased only in the FS algorithm. In
+other words, when moving from one week to the next one, the FS optimizes the
+operation of the hydropower system taking advantage of a daily update of the rele-
+vant WVs, total daily water inflows Yh,z, daily average energy prices z, and the very
+first initial volume states vth,k=0 evaluated previously in the SDP algorithm. A more
+detailed setup is graphically explained in Fig. 10; note that z = {1, ... , Z} indexes
+represent the days within a week, thus Z = 7.
+
+   The higher granularity introduced by this proposed approach, requires updating
+the weekly WVs obtained from the SDP algorithm on a daily base, while respecting
+the boundary values at the beginning and at the end of the reference weeks. There-
+fore, the following boundary conditions are applied:
+
+WVz=1 = WVt; WVZ+1 = WVt+1 with Z = 7                           (30)
+
+   The WVs referring to the remaining days within the week, i.e.,  z = {2, ... , Z},
+are computed by interpolation [32]:
+
+Fig.10A graphical illustration
+of the weekly (top) and daily
+(bottom) setup
+
+                                                                13
+                                                        A. Alic et al.
+
+                     WVz = WVt +      z-1  WVt+1 - WVt                                 (31)
+                                        Z
+
+   For the sake of consistency, the objective function (10) is updated below to
+account for the modifications above:
+
+z sp, shu,z,l = max    FZ z               ph,i - pph,i
+
+                                 z,i
+
+                             iI       hH
+
+-CS         fh,i - CC            res+h,i + resh-,i + mefh,i + z+1 vhH,k=I , shu,z+1,l
+
+     iI hH             iI hH
+
+                                                                                       (32)
+
+   The K sub-intervals in the optimization problem based on weekly decisions are
+distributed equally along the daily stages, providing each stage z with I sub-inter-
+vals indexed with i = {1, ... , I}: therefore, the values of natural water inflows from
+the surroundings and the energy prices, expressed for each of the sub-intervals
+k = {1, ... , K}, do not change when moving to a daily resolution setup. Further-
+more, the water volumes at the beginning of the considered weeks are set to be the
+same for both the weekly and daily stages resolution, as indicated by the red square
+in Fig. 9. In other words, considering the week t, the initial water volumes vht ,k=0 of
+the weekly-optimization problem are equal to the initial water volumes of the first
+day z = 1 of the same week t when considering the daily resolution vzh=,i=1 0. For the
+
+following stages of the daily-optimization problem, thus for z = {2, ... , Z}, the cor-
+responding initial water volumes vhz,i=0 will be equal to the water volumes obtained
+
+as result of the optimization problem of the previous day vhz-,i=1I. This is to allow a
+more precise comparison between the weekly and the daily results, maintaining the
+same initial boundary condition regarding the states of the reservoirs at the begin-
+ning of the considered week, as well as the total incoming inflows and average
+energy prices.
+
+   By doing so, the constraints that are dependent on the states of the system do not
+consider the state values at the beginning of each week t, but the values at the begin-
+ning of each day z ­ thus the water volumes vzh,i=0, the total daily inflows Yh,z and the
+daily average energy price z-, granting the optimal decisions with higher accuracy.
+
+5Case studies and results
+
+5.1Case studies
+
+The optimal scheduling algorithm comprising a PSHP (pertaining to the upper res-
+ervoir h) connected to a HPP (relevant to the lower reservoir h) subject to technical
+and environmental constraints proposed in Sect. 3.3 is applied to the actual
+Rosskrepp-Kvinen hydropower, schematized in Fig. 11. The site is part of the
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+Fig.11Schematics of the
+Rosskrepp-Kvinen hydropower
+system in its actual configura-
+tion
+
+Sira-Kvina watercourse, located in the South of Norway. As per today, the upper
+
+hydropower plant comprises the Rosskreppfjorden reservoir with its relative power
+
+station--Rosskrepp--while the lower one considers the Øyarvatn reservoir with the
+                                                                1v0o4l.u1m0eM Vmhma3x.
+Kvinen power station. The   upper reservoir has  a regulation                           of 684.10
+M m3, while the regulation  volume of the lower  reservoir is                           Note that,
+
+the regulation volume indicates the admissible volume of freshwater used for energy
+
+production only. The upper power station is equipped with a Francis turbine whose
+rated capacity is 38 MW and the maximum water discharge is 58 m3/s. Another 80
+
+MW Francis turbine is installed in the lower power station, where the maximum
+water discharge is 90 m 3/s. The discharge water routes for energy production are
+
+indicated with blue solid lines, the water routes for spillage with blue dashed lines.
+The blue dotted line and the parameter Qhm,itn indicate water route for the MEF (20)
+
+from the lower reservoir during a certain stage t. The other two arrows, each of them
+
+pointing at one reservoir, indicate the weekly water inflows Yh,t at stage t.
+
+It is worth noting that the upstream HPP of the considered site cannot currently
+
+operate as a PSHP because the turbine in the upper power station is not able to oper-
+
+ate in pumping mode.
+
+Currently, the set of environmental constraints--the state-dependent constraint
+
+on maximum discharge through the turbines expressed by equations (21), (23), (25),
+
+(26), (28) and the MEF (20)--are applied to the lower reservoir. The threshold val-
+
+ues implemented in (21), (23), (25), (26), (28) and (20) together with the reference
+
+weeks during which these constraints are enforced, are reported in Table 1.
+
+                                                                                        13
+Table1Settings of the environmental constraints in Øyarvatn reservoir.                     A. Alic et al.
+
+Environmental constraints                   Restriction period (weeks)            Thresholds
+                                                                                  Vhlim = 87.44 Mm3
+State-dependent constraint on maximum dis-  t  {23, ... , 38}
+  charge (21), (23), (25), (26), (28)                                                Qhmin = 0.5 m3 s
+                                            t  {25, ... , 38}                        Qmh in = 0.2 m3 s
+Minimum Environmental Flow (20)             t  {39, ... , 42}
+
+   The state-dependent constraint on maximum discharge prohibits the water dis-
+charge through the turbines for energy production during summer weeks (i.e.,
+23­38) if the reservoir volume is below the threshold of 87.44 M m3. This threshold
+represents the 84% of the total water capacity of the reservoir. According to the
+Check 2 Algorithm explained in Sect. 3.3, if the water volume vht-,k1=K at the begin-
+ning of the restriction period is below the above-mentioned threshold Vhlim and the
+
+total weekly inflows Yh,t are low, constraint (16) would be replaced by (21): by doing
+so, the water is impeded to flow through the turbine for energy production purposes.
+Nonetheless, if the water volume reaches the predefined limit due to large water
+inflows, constraint (21) is relaxed and replaced by (23). Constraint (25) is also added
+to ensure the achievement of Vhlim by the end of that week. From the following weeks,
+
+constraint (23) is replaced by (26) while constraint (25) is replaced by Eq. (28)
+which imposes the regulation on the minimum reservoir volume: the HPP may oper-
+ate as long as the water volume during all the sub-intervals k is maintained above
+that given limit. Moreover, the MEF (20) must be released from the lower reservoir
+to preserve the water flow downstream the plant. A water discharge of 0.5 m 3/s is
+required from week 25 to week 38, while a MEF of 0.2 m 3/s is imposed from week
+39 to week 42. During the remaining weeks of the year, no environmental con-
+straints are set. As per today, there are no ramping constraints (29) applied to the
+two reservoirs.
+
+   Starting from the framework and the numerical settings currently implemented in
+the Rosskrepp-Kvinen hydropower system, this paper considers four different case
+studies whose main features are summarized in Table 2. In fact, the proposed paper
+aims to evaluate how the operation of the current hydropower system might change
+with the presence of a hydraulic pump unit and/or under the restrictions on water
+
+Table2Characteristics of the four case studies.          SCWA           MEF (20)  Ramping
+                                                         (21­28)                  constraints
+                            Pumping system 38 MW for                    x         (29)
+                            upper power station (17­19)  x              x
+                                                         x              x         x
+Base Case (BC)                                           x              x         x
+                                                         x
+Case A          x
+
+Case B
+
+Case C          x
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+level variations. The results of the paper could be considered to evaluate the conse-
+quent impact of such water level variations on the surrounding ecosystem. There-
+fore, the Base Case (BC) considers the current framework and settings of the system
+where the lower reservoir is subject to the state-dependent constraint on maximum
+discharge and the MEF, as required by the current regulation [33]. Case A consid-
+ers the same layout of the BC where, in addition, the electric machine in the upper
+power station (Rosskrepp) can now function also in pumping mode: the same rated
+power capacity of 38 MW is assumed for the two operating regimes. The state-
+dependent constraint on maximum discharge through the turbine has been extended
+to consider also the water pumped by the pump. Therefore, the optimization problem
+for Case A considers the SCWA expressed by equations (21­28). Case B and Case
+C, replicate respectively, the BC and Case A with the additional application of the
+ramping constraints (29) to the upper reservoir--Rosskreppfjorden. Depending on
+the site-specific conditions and on the ecological activities present in the reservoirs,
+local regulations might require the limitation on water level fluctuations in order
+to reduce the negative impacts on the local surroundings arising from the frequent
+operation of the hydropower plant. In the case of the Rosskreppfjorden, fast and
+recurrent water level oscillations--in particular in a PSHP--can negatively affect
+the spawning activities of fishes and other aquatic species present in the reservoir.
+
+   All the numerical simulations concerning the case studies above-mentioned
+implement a planning horizon of T = 52 weeks with an intra-weekly resolution of
+3 hours, for a total of 56 sub-intervals K per each weekly stage t. Concerning the
+SDP algorithm, the endogenous states of the system (su), i.e. the upper and the lower
+water volumes in the reservoirs, have been discretized using N = 25 equidistant
+points, leading to 625 possible couples of volume's combinations evaluated at each
+stage t. The convergence tolerance is set to 10-3 /m3/s. The discrete Markov chain
+used for the formulation of the stochastic state variables suh,t,l is generated by using
+inflow data from 30 historical years--from 1981 to 2010--and they are provided by
+the Norwegian Water Resources and Energy Directorate [33]. The wholesale elec-
+tricity market prices are instead provided by [34], reflecting a potential 2030 power
+system in the Nordic scenario. The penalty cost for spillage CS is equal to 1 M/m3/s
+while the penalty cost for ramping constraints CC is equal to 0.1 M/Mm3. Each of
+the case studies simulates the same Ns = 100 scenarios using the WVs from the cor-
+responding SDP algorithm.
+
+   Ramping constraints (29) are imposed only to the upper reservoir--Rosskreppf-
+jorden--with upper and lower bounds for the water level fluctuations set to l+ =
+0.03 m and l- = - 0.03 m respectively. In this case, as explained in Sect. 3.3
+
+Table3Water volume variations in Rosskrepp reservoir
+
+Index for water volume intervals              r=1      r=2      r=3      r=4
+
+Water volume lower bound Vr- [ Mm3]           0        78       239      452
+                                              78       239      452      684.3
+Water volume upper bound Vr+ [ Mm3]           ±0.2364  ±0.4815  ±0.6380  ±0.7734
+
+Corresponding water volume variations,  -  ,
+                                        v
++  [ Mm3]
+v
+
+                                                                         13
+                                                                                      A. Alic et al.
+
+concerning the Check 3 Algorithm, the maximum capacity of the reservoir has been
+
+divided into Nr = 4 intervals indexed by r (first row of Table 3). The numerical val-
+ues of the lower Vr- and upper Vr+ bounds of these intervals are in the second and
+third row of Table 3, respectively. The fourth row expresses the corresponding nega-
+                                                   -         +v . For the sake of example, in
+tive or positive water volume variations           v  and    volume Vr-    vt-1       Vr+
+
+accordance   with  the  Check  3  Algorithm,  for  a  water                 h,k=K  <          at  the
+
+end of the previous stage t - 1--where r = 3 and thus Vr- = 239 M m3 and Vr+ = 452
+
+Mm3 --the positive and negative water volume variations for the stage t are set to be
+          +             Mm3         -                 Mm3
+equal to  v  =+0.6380          and  v  =  -0.6380          respectively.
+
+The choice of imposing these water level fluctuations has been taken considering
+
+the alteration parameters provided in [35].
+
+Finally, the model has been developed using the programming environment
+
+Julia 1.7.3 [36] and the JuMP package [37], while the optimization problem has
+
+been solved using the CPLEX solver [38]. The case studies were carried out on an
+
+Intel(R) Core(TM) i5-52000 processor with 8.0 GB RAM.
+
+5.2Results
+
+5.2.1Energy production and revenues
+
+The first set of results assess the annual energy production and the associated rev-
+enues under each of the four case studies schematized in Table 2. The authors wish
+to emphasize that the present study aims to evaluate how both the annual energy
+production and the total revenues might change when considering the different oper-
+ating conditions of the hydropower plants, i.e., when considering the presence of a
+hydraulic pump unit and/or limitations on water volume variations. In other words,
+this paper only evaluates potential operational benefits without carrying out a full
+investment analysis which includes the investment costs of the hydraulic pump.
+
+   The box and whisker plots in Fig. 12 indicate the variability of the total energy
+production from the whole system considering all the Ns=100 simulated scenarios.
+
+Fig.12Annual energy production for Rosskrepp-Kvinen system considering the four case studies
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+   The total energy production is calculated as the sum of the energy output from
+the turbines of both HPPs along the whole planning period. More specifically, the
+results consider only the gross energy production which has been injected into the
+grid, neglecting thus the pumping load. Additionally, the numerical values reported
+inside the boxes indicate the median of the percentage variation in energy produc-
+tion with respect to the BC (blue box with horizontal pattern) over the set of Ns
+scenarios. In general, the introduction of a pumping system leads to a higher energy
+production compared to traditional settings. As expected, the higher boost is granted
+by Case A (+9.34%)--yellow box with vertical pattern --, due to its increased
+flexibility stemming from the pumping functionality and the absence of ramping
+constraints (29). When considering Case B instead (green box with oblique pat-
+tern)--which considers a traditional system with the enforcement of the ramping
+constraints--the results exhibit a decrease of -0.08%. Case C instead (red box with
+squared pattern), where the ramping constraints are imposed on a PSHP, illustrates
+an increase in energy production of +6.74%.
+
+   Concerning the annual energy consumption, the pumping unit in Case A requires
+0.044 TWh to pump 182.68 Mm3 on average considering all the simulated scenar-
+ios. When considering Case C instead, 0.0297 TWh are required to move an aver-
+age of 122.53 Mm3 of water among the relevant scenarios. As expected, the energy
+required by the hydropower system to operate the pump in Case C is lower with
+respect to Case A due to the presence of the ramping constraints. Clearly, these val-
+ues are null when considering the Case BC and the Case B.
+
+   Similar results occur when considering the whole system's revenues, as illus-
+trated in Fig. 13. The graphs consider the net annual revenues over the Ns scenarios
+
+Fig.13Total annual revenues from Rosskrepp-Kvinen system
+
+simulated, i.e., the difference between the total revenues resulting from the produc-
+tion of the two turbines and the costs for pumping. The differences in terms of per-
+centage with respect to the BC (blue box with horizontal pattern) are reported inside
+the boxes and they are calculated in the same way as done for the total energy pro-
+duction. The results evidence that systems operating with a pumping unit exhibit
+higher incomes with respect to traditional systems, regardless of the implementation
+
+                                                           13
+                                                                                        A. Alic et al.
+
+of ramping constraints. Case A (yellow box with vertical pattern) leads to the most
+remunerative results, with in an increase in the total annual revenues of +2.35%.
+Case B (green box with oblique pattern) exhibits a decrease in the annual revenues
+of -1.01% which can be explained by the fact that ramping constraints might redis-
+tribute the production from periods of high energy prices to periods of lower energy
+prices, similar to [28]. It is worth pointing out that Case C (red bow with squared
+pattern) exhibits an increase in revenues of +0.47 % with respect to the BC, even
+though the increase is lower than without the ramping constraints (Case A). There-
+fore, the results confirm that the benefits arising from the use of a pumping system
+overcome the limitations imposed by the ramping constraints.
+
+5.2.2Water levels
+
+The evaluation of water level variations and the analysis of their frequencies of
+
+occurrence is fundamental for understanding the rate of change in water volumes and
+
+the possible setup of ramping constraints. This section illustrates the results regard-
+
+ing the Rosskrepp reservoir considering all the four cases previously described. In
+
+particular, Fig. 14 indicates the percentage of sub-intervals k along the whole plan-
+
+ning period during which the water level variations can be found in between a cer-
+
+tain set of values. Furthermore, in order to have a complete understanding of the
+
+results in Fig. 14, it is worth computing, for each range of water level variations,
+
+the cumulative amount of water moved. The latter quantity is evaluated as the aver-
+
+age--for all the simulated scenarios Ns--of the sum of the water volume variations
+recorded at the sub-interval k. These metrics are expressed in M m3 and are reported
+
+in Fig. 14 by means of numbers above each column. It is worth recalling that the
+
+same water level variations might result in different variations in terms of water vol-
+
+umes because of the irregular shape of the reservoir.
+
+In general, positive water level variations higher than 0.05 m in 3 hours are rela-
+
+tively frequent in reservoirs where ramping constraints are not present, in particu-
+
+lar in those involving a pumping system (they occur for the 5.25% and 11.11% of
+
+the time in the BC and in Case A respectively). Similar results can be found for
+
+negative water level variations, which occur for 6.42% of the time in the BC (blue
+
+column with horizontal pattern) and for 8.79% of the time in Case A (yellow col-
+
+umn with vertical pattern). In fact, the results obtained from the FS algorithm have
+
+demonstrated that the water levels can increase to values higher than 0.20 m and can
+
+decrease down to -0.15 m in 3 hours. However, in few cases, positive and negative
+
+water level variations also exceed 0.05 m in Case B (green column with oblique
+
+pattern) and Case C (red column with squared pattern) where ramping constraints
+
+(29) are imposed. This can be explained by two possible factors. First, the incoming
+
+water inflows from the surrounding catchment might be too high with respect to the
+
+volume variations permitted, especially during the snow-melting season. To avoid
+
+the spillage of potential water for energy production, the hydropower plant prefers to
+
+pay a penalty fee and therefore break the ramping constraint. Secondly, these large
+                                                                                        +
+water level variations could be related to the incorrect selection of the upward        v
+              -
+and downward  v    ramping  rates.  In  fact,  similarly  to  the  constraint  on  the  pumping
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+functionality (19) and to the SCWA (21­28), the ramping constraints (29) consider
+the water volumes at the end of previous stage vth-,k1=K as reference values for the
+                                          -             v+. However, this could lead to small inaccuracies in the
+optimal choice of                         v        and
+
+evaluation of the right water volume variations since the water volumes themselves
+
+can increase or decrease during the operations within stage t, passing to another
+
+interval of volumes, but maintaining the initial water volume variations. A practical
+
+solution to overcome this issue, is to increase the number of water volumes intervals
+
+Nr (Table 3) to evaluate the optimal water volume variations to be used in Eq. (29)
+
+or to directly use the bathymetry of the reservoir.
+
+                          Furthermore, results highlight that the frequency of occurrence of negative water
+
+fluctuations between -0.05 m and 0.00 m, increases pursuant to the introduction
+
+of a PSHP in the hydropower system (Case A 42.77% vs. BC 34.56% and Case C
+
+45.87% and Case B 37.2%). An opposite trend is registered considering the fre-
+
+quency of occurrence of positive water level fluctuations between 0.00 m and 0.05
+
+m. Also, the implementation of ramping constraints always increases the positive
+
+and negative frequency of occurrence of water level fluctuations (Case B 61.08%.
+
+vs. BC 52.86% and Case C 53.01% vs. Case A 36.42%).
+
+                          In addition, concerning the null water level fluctuations, these occur less than 1%
+
+of the time in all the four case studies. The results exhibit that this phenomenon
+
+is triggered in two conditions. The first one envisages null water level fluctuations
+
+when there are no water inflows from the surrounding catchment and the system is
+
+idling (thus the turbine and the pump unit are not working). The second condition
+
+refers to a case when the turbine discharges exactly the same amount of the incom-
+
+ing water inflow.
+
+                          Another important result from Fig. 14 is that, for each of the simulated cases, the
+
+sum of all negative cumulative water volume variations is equal to the sum of the
+
+overall positive cumulative variations, confirming the correct implementation of the
+
+water mass balance during the operation of the plants over the planning horizon.
+
+Furthermore, for each of the four case studies, higher or lower frequency of occur-
+
+rences in the positive and negative intervals do not imply higher or lower fluctua-
+
+tions in absolute terms.
+
+                                                   BC   CASE A             CASE B           CASE C
+
+                          70%
+
+                                                                                                   390.5
+
+Frequencies of occurance  60%                                                               293.5   476.0
+
+                          50%                                       478.9
+                                                        409.9
+                          40%                                                               244.5
+                                                              391.6
+                                                   336.4
+
+                          30%
+
+                          20%
+
+                          10%  83.9114.9                                                                        279.9
+                                                                                                           126.3
+                                          4.5 3.3                          0.0 0.0 0.0 0.0
+                                                                                                                        5.2 5.7
+                          0%
+                                                                                                                 v>0.05
+                               v<-0.05                  -0.05v<0.00        v=0              0<v0.05
+
+                                                        Water level variation ranges
+
+Fig.14Water level variations in Rosskrepp reservoir considering a time interval of 3 h
+
+                                                                                                           13
+                                                                                                                  A. Alic et al.
+
+   In fact, more frequent water level variations do not necessarily lead to larger
+cumulative water volume variations. This happens, for instance in Case BC (blue
+column with horizontal pattern). The negative water level fluctuations between
+-0.05 m and 0.00 m are less frequent (34.56%) than the positive ones between 0.00
+m and 0.05 m (52.86%). Nevertheless, the overall negative cumulative water volume
+variations are higher than the positive ones, corresponding to 336.4 M m3 and 293.5
+Mm3 respectively. Similarly, in Case A positive water level variations higher than
+0.05 m occur for the 11.11% of the time and correspond to an overall water cumula-
+tive volume variation of 279.9 Mm3. On the other hand, positive water level varia-
+tions lower than 0.05 m happen for the 36.42% of the time but they correspond to a
+lower amount of cumulative water volume variation (244.5 Mm3).
+
+   Moreover, it is worth noting that, when considering the sum of the positive cumu-
+lative water volume variations and the sum of the negative ones, these are higher in
+Case A with respect to the Case BC (524.4 Mm3 and 419.8 M m3 respectively). This
+is consistent with the presence of a pumping system: the natural inflows and the
+water pumped by the pump might increase the overall water entering the reservoir,
+leading to positive volume variations. Consequently, because of the higher availabil-
+ity of water inside the reservoir for energy production, the turbines work more fre-
+quently thus increasing the overall negative water volume variations. A similar situ-
+ation occurs in cases where ramping constraints are imposed: Case C exhibits more
+consistent cumulative water volume variations (481.7 M m3) with respect to Case B
+(395.7 M m3) due to the presence of a pumping unit.
+
+   This consideration is further highlighted in Case C (red column with squared pat-
+tern). The negative water level variations between -0.05 m and 0.00 m appear for
+the 45.87% of the time and correspond to a cumulative water volume variation of
+478.9 M m3. On the contrary, the positive water level variations between 0.00 m and
+0.05 m occur more frequently (53.01%) but correspond to a lower value of cumula-
+tive water volume variations i.e., 476.0 Mm3. Even though positive variations are
+more frequent than the negative ones, the corresponding cumulative water volume
+variations are lower.
+
+   Regardless the possible implementation of ramping constraints, the results of the
+paper have highlighted fundamental differences already due to the fact that a tradi-
+tional hydropower system (only with HPPs) is equipped with a PSHP. Results indi-
+cated that a hydropower system with a PSHP can effectively boost both the annual
+energy production and the annual net revenues--accounting for the energy cost sus-
+tained during the pump-mode operation--with respect to the traditional system with
+only HPPs.
+
+   Considering the Ns simulated scenarios, which are common to all the case stud-
+ies, the results indicated that the median energy production can increase up to 9.34%
+with respect to a traditional system, while the median value of annual revenues can
+increase up to 2.35%. This is further confirmed by the cumulative water volume var-
+iations evaluated during the planning horizon. Due to the presence of a pumping
+unit, the cumulative water volume variations are more frequent with a PSHP with
+respect to a traditional HPP (524.4 M m3 and 419.8 M m3 respectively). Besides the
+natural inflows entering the reservoir, the additional water inflow due to the pump-
+ing unit increments the water availability in the reservoir. Consequently, driven by a
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+larger potential for energy production, the turbine tends to operate more frequently
+leading to larger energy production and annual revenues.
+
+   Nevertheless, it is worth reminding that the previous results considered only the
+potential increase in operation revenues from operating the existing system with a
+pumping unit. It would still be necessary to consider all the relevant investments
+costs in order to have a full financial analysis on the actual feasibility and profitabil-
+ity of retrofitting an existing conventional HPP with a PSHP. Besides the costs for
+purchasing the relevant machineries, additional expenses accounting for civil works
+(i.e., enlargement of power station or construction of additional tunnels), permits,
+design phases as well as the installation of new monitoring systems should also be
+considered.
+
+5.2.3Results from FS algorithm with daily stages
+
+With respect to the methodology proposed in Sect. 4, two specific weeks of the year
+have been chosen and solved with a daily-stages approach. The system's layout con-
+sidered is the one of Case C which takes into account a hydropower system equipped
+with a PSHP where the upper reservoir is subject to the ramping constraints (29).
+Now the FS algorithm considers a daily optimization problem (10­29) where each
+stage z is divided into I = 8 sub-intervals of 3 hours each. The main characteristics
+of the weeks are described in Table 4.
+
+   The two above-mentioned weeks have been chosen because of the different imple-
+mentation of the state-dependent constraint on maximum water abstraction (21­28).
+As explained in Sect. 3.3, the constraint is applied differently according to the states
+of the system i.e., initial water volumes and total water inflows, at the beginning of
+the stage. Week 23 indicates the beginning of the snow-melting period, and it is the
+first week for which the limitation on the water discharged through the turbines and
+on the water pumped by the pump for energy production is active. Week 34 instead
+represents a mid-summer week for which the state-dependent constraint on maxi-
+mum water abstracted from the reservoir has long been present and during which the
+water volumes inside the reservoirs are kept above the predefined threshold limit.
+Moreover, a MEF of 0.5 m 3/s is required.
+
+   Fig. 15 reports the percent variation in energy production and in revenues when
+using the FS algorithm with daily stages compared to weekly-stages, evaluated
+
+Table4Simulated weeks for a  Weeks Characteristics
+daily-stages approach
+
+                             23  Early summer
+
+                                 First activation week of state-dependent constraint on maxi-
+
+                                 mum water abstraction from the reservoir
+
+                                 No MEF
+
+                             34  Mid-summer, high water inflow period
+
+                                 State-dependent constraint on maximum water abstraction
+
+                                   is active
+                                 MEF = 0.5 m3/s
+
+                                                                           13
+                                                                                    A. Alic et al.
+
+Fig.15Differences in percent-                               Total production        Total revenue
+age in energy production and                      0%
+in revenues between daily and
+weekly stages                                     -5%
+
+                               Percent variation  -10%
+
+                                                  -15%
+
+                                                  -20%
+
+                                                                           Week 23
+
+                                                  -25%  Week 34
+
+over the Ns scenarios simulated. The results demonstrate that decreasing the time
+length between stages may not necessarily improve the results despite a more
+accurate implementation of the constraints and that the differences in the out-
+comes between two different resolutions might be more accentuated in specific
+periods of the year.
+
+   When considering week 23 (blue column with vertical pattern), in which the
+state-dependent constraints on maximum water abstraction from the reservoir
+should be activated for the first time, the results obtained with the daily-stages
+approach exhibit a decrease of -20.59% in energy production compared to the
+results obtained with a weekly-stage approach. Similarly, there is a decrease of
+-24.21% in the total revenues of this week. On the other hand, when considering
+week 34 (red column with horizontal pattern), during which the state-dependent
+constraint on maximum water abstraction from the reservoir has long been present
+and the water volumes at the beginning of the week are already above the given
+threshold, the differences are smaller. In fact, the daily-stages simulations register
+a decrease of -8.06% in the energy production and a reduction of -6.55% in the
+revenues.
+
+   This could be explained by the fact that knowing the states of the system
+daily--thus the water volumes at the beginning of each of the stages vzh-,i=1 I and
+the daily total water inflows Yh,z--the state-dependent constraint on maximum
+water abstraction is applied more accurately with respect to a weekly resolu-
+tion. Given a more frequent knowledge of the state variables and of the WVs--
+which have been previously calculated with (31)--the system might find a dif-
+ferent optimal operation that maximizes the revenues. Consequently, the amount
+of water discharged and pumped might change with respect to the weekly reso-
+lution and lead to different water volumes inside the reservoirs. This effect is
+clearly exhibited in Figs. 16 and 17 which illustrate the optimal water volumes
+evaluated with weekly (blue dotted line) and daily resolution (green solid line)
+for week 23 and week 34 respectively. The endogenous state variables--thus the
+initial water volumes inside the reservoir--are represented by the red squares for
+the weekly resolution and by the black diamonds for the daily one. At the begin-
+ning of week 23, the initial water volume (red square) is below the predefined
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+Water Volumes [Mm3]  94.0         Optimal water volumes with weekly stages
+                     92.0         Optimal water volumes with daily stages
+                     90.0         Water Volume threshold (Mm3)
+                     88.0
+                     86.0      8  16  24  32                          40               48  56
+                     84.0
+                     82.0
+                     80.0
+
+                            0
+
+                                  K sub-intervals in stage 23
+
+Fig.16Evolution of the optimal water volumes in week 23 considering weekly and daily resolution
+
+threshold as shown in Fig. 16. Considering the high daily incoming water
+inflows, (23­25) are effectively applied with the daily-resolution: the predefined
+lower threshold (red dashed line) is reached already at the end of the first day
+(at sub-interval k = 8). With a weekly resolution instead, given the high weekly
+incoming inflow, the system releases water for power production--Eqs. (23)
+and (24)--and reaches the predefined threshold by the end of the week (thus for
+k = 56) as required by Eq. (25).
+
+   Instead, in week 34 the state-dependent constraints on maximum water abstrac-
+tion through the turbine and the pump (26, 27) and the relative regulation on mini-
+mum volume (28) are already strongly consolidated. As a result, the differences
+in water volumes are less accentuated, as illustrated in Fig. 17, suggesting that the
+overall optimal operation evaluated with a daily resolution does not significantly dif-
+fer from the one obtained with weekly stages.
+
+Water Volumes [Mm3]                          Optimal water volumes with weekly stages
+                     89.8
+
+                                             Optimal water volumes with daily stages
+
+                     89.3         Water Volume threshold (87.44 Mm3)
+
+                     88.8
+
+                     88.3
+
+                     87.8
+
+                     87.3      8  16  24  32                          40               48  56
+                            0
+
+                                  K sub-intervals in stage 34
+
+Fig.17Evolution of the optimal water volumes in week 34 considering weekly and daily resolution
+
+                                                                                               13
+                                                                                               A. Alic et al.
+
+   In conclusion, the results confirm that the weekly model might overestimate the
+total energy production and revenues from the hydropower system. Especially, the
+less precise knowledge of the states of the system may cause inaccuracies in the
+implementation of state-dependent constraints in the FS algorithm when changes in
+the system's states change the optimization problem.
+
+5.2.4Assessment on the interpolation procedure
+
+As mentioned in Sect. 1.1, the main drawback of SDP algorithms is the computa-
+
+tional burden to solve them, which increases with the number of state variables and
+
+with an increase in their discretization.
+
+    This paper analyses the main differences, both in the computational time and in
+
+the effectiveness of the interpolation procedure used to evaluate the water volumes
+
+at the end of the weekly stage. When solving the optimization problem, the stor-
+
+age water volumes calculated at the end of the stage vh,k=K are linked to the dis-
+cretized endogenous variables sp through an interpolation procedure. Within this
+
+purpose, each of the reservoirs has been discretized by using the same number of
+points N, indexed with s = {1, ... , N}, for a total of N2 possible combinations of
+
+water volumes states. All the s segments discretizing the same reservoir h have the
+                                                              s    [ Mm3].
+same water volume and they are indicated with                 h,N            To   assess  the  effective-
+
+ness of the above-mentioned interpolation procedure, the same case study and same
+
+scenarios have been simulated considering 5 different combinations of discretized
+                                                         s
+segments. Table 5 summarizes the values of               h,N  for  both  the   reservoirs  considering
+
+the different discretization combinations.
+
+    When solving the optimization problem, the optimal water volumes vh,k are found
+
+to be inside one of the s segments above-mentioned. Figure 18 provides an illustra-
+                                                          s=2
+tive example for the upper reservoir h. While             h,N  indicates     the  water  volume     of  the
+
+discretized segment s = 2 using N = 5 discretization points, the corresponding
+upper and the lower bounds ­ still expressed in Mm3 ­ are indicated with                       s=2
+                                                                                               h,N=5    and
+
+_  s=2    respectively.  More  precisely,  the    water  volume    vh,k  is  more  likely  to  be   found
+   h,N=5
+                                           s=1
+
+in  between  one  of  the  two  halves  (  h,N=5  )  composing     the  corresponding      volume   seg-
+
+                                            2
+ment s. The same considerations are valid for the lower reservoir h.
+
+Table5Volume segments for the two reservoirs, considering five discretization combinations
+
+Combination  Total number       Discretized volume segment for          Discretized volume segment for
+             of points N2                            s    [ Mm3]                               s    [ Mm3]
+                                upstream reservoir   h,N                downstream reservoir   h,N
+
+5×5          25                 171.03                                  26.03
+                                 76.01                                  11.57
+10×10        100                 48.86                                   7.44
+                                 36.01                                   5.48
+15×15        225                 28.50                                   4.34
+
+20×20        400
+
+25×25        625
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+Fig.18Graphical representation of vh,k and of the corresponding discretized volume segment s
+
+   In order to give a quantitative measure of the impact of a finer volume discretiza-
+tion on the interpolation procedure for the water volumes, the performance index PI
+(33) is used:
+
+                                        h×   s        h×      s
+                                      
+                               PI  =         + h,N=5  s      h,N=5                            (33)
+                                                      h,N=5
+                                              2              2
+                                                       2         
+                                             s
+
+                                             + h,N=5
+
+                                              2
+
+   Where    h indicates  the deviation from the water       volume       vh,k=K  of the reservoir h at
+the end of  the stage t  from the closest extremes          s            s of    the water segment s
+                                                            h,N  or   _
+                                                                         h,N
+
+to which it bs elongs tos, as illustrated in Fig. 18. Moreover, the equation considers the
+            h,N=5       h,N=5
+values of          and         which  indicate  the   half  of   the  volume     segment  s   for  the
+             2           2
+upper and lower reservoir respectively when using a discretization of N = 5. This
+
+allows to have the same reference points as unit of measure and enables a more
+
+proper comparison between the different discretization combinations. Clearly, the
+
+higher the number of discretization points N is, the finer the water volumes seg-
+       s
+ments  h,N  will   be.  The    same   trend  regards  the   effectiveness        of  the  interpolation
+
+procedure.
+
+Figure 19 indicates the results obtained from Eq. (33) considering all the T weeks
+
+simulated. The box and whisker plots illustrate the variability of the PI character-
+
+izing the different combinations. As expected, the variation of the PI and the median
+
+values over the T stages considered decrease with a finer discretization of the reser-
+
+voir volumes.
+
+                                                                                          13
+                                                                               A. Alic et al.
+
+Fig.19Performance index for different discretization points
+
+   Finally, Fig. 20 indicates the computational time--expressed in hours--required
+to solve the SDP-FS algorithms for the different combinations of discretization. The
+graph clearly demonstrates that the computational time increases with a finer dis-
+cretization of the reservoir volumes. However, it must be noted that these results
+are obtained with a processor with average computational capabilities (Sect. 5.1).
+Although the underline trend would be confirmed, the computational time could
+decrease by using a processor with higher performances.
+
+              25
+
+              20
+
+    Time [h]  15
+
+              10
+
+              5
+
+              0              10x10  15x15  20x20                        25x25
+                        5x5
+
+                             Discretization combinations
+
+Fig.20Computational time for the different discretization combinations
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+6Conclusions
+
+This paper presents a SDP-based approach to solve the hydropower scheduling of
+a hydropower system composed by a PSHP connected to a traditional HPP. More
+specifically, the model is an extension of a medium-term scheduling model origi-
+nally developed for a cascade system of two traditional hydropower plants subject
+to state-dependent constraints on maximum discharge [20]. The implementation
+of a pumping system with the relative technical constraints and the introduction
+of two additional environmental constraints--the minimum environmental flow
+and the ramping constraints--allows the model to consider a pumped-storage
+hydropower plant connected to a traditional hydropower plant subject to the three
+environmental constraints all together at the same time. The optimization prob-
+lem is formulated for a planning horizon of one year with weekly stages and it is
+solved by using a stochastic dynamic programming algorithm, allowing for the
+representation of the stochastic variables and the resolution of the non-convex
+objective function.
+
+   The model has been tested on the Rosskrepp-Kvinen hydropower system located
+in south of Norway. In this context, the paper aims to investigate the potential incre-
+ment in energy production and annual revenues when operating the system with the
+addition of a pumping unit and/or in the presence of ramping constraints.
+
+   Regardless the implementation of ramping constraints, the results show that
+the system with a pump unit has a higher total energy production and higher total
+revenues if compared to the traditional system. For the Ns scenarios simulated, the
+annual median energy production increases up to +9.34% for a pumped storage sys-
+tem compared to a traditional system, while the increase in the annual median rev-
+enue can reach the +2.35%. This increment in energy production is further validated
+by the cumulative water volume variations evaluated along the planning period. As
+expected, these are higher with a PSHP with respect to a traditional HPP: the addi-
+tional water inflows due to the pumping system lead to a higher availability of water
+inside the reservoir. Consequently, the system operates the turbine more frequently,
+resulting in higher increments in energy production and therefore in annual reve-
+nues. In fact, the hydropower systems with a PSHP may increase the revenues by
+effectively operating the plant in turbine mode when the wholesale prices reach high
+values. As explained, the results pertain the operational revenues of the hydropower
+system and may serve as input, in future work, to run a full investment analysis on
+the financial viability of upgrading a traditional HPP into a PSHP. This assessment
+will also have to consider the costs for civil works and for the purchase of the rela-
+tive machineries.
+
+   Moreover, the results demonstrate how ramping constraints can effectively influ-
+ence the operational scheduling of the system and its economics. For the traditional
+hydropower plant both the energy production and in the annual revenues decrease
+(with -0.08% and -1.01% respectively) when the ramping constraints are imposed,
+suggesting the redistribution of energy production along periods of low energy
+prices. Still, even though the ramping constraints were found to reduce the energy
+production and the total revenue, there was an increase in the energy production
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+of +6.74% and an increase in the annual revenues of +0.47% for pumped-storage
+systems with ramping constraints compared to the traditional system without the
+constraint.
+
+   For what concerns the water levels inside the reservoirs, systems operating with-
+out the restriction of ramping constraints tend to have higher variations, with incre-
+ments and decrements higher than 0.15 m in the 3-hour interval. In systems where
+ramping constraints are imposed instead, the water level variations tend to stay in
+between the required range for most of the time. However, there are some cases
+in which this limitation cannot be fully satisfied because of high water inflows or
+because of an inaccurate choice of the right water volume variations in the optimiza-
+tion problem.
+
+   Secondly, the results obtained from the case study with resolution on the stages
+in the forward simulation, demonstrated how the use of a medium-term model might
+underestimate the effect of constraints and overestimate some technical considera-
+tions and thereby the economic performance of the power system. For this particular
+case study, the results show that a more accurate knowledge of the state variables
+and therefore a more accurate implementation of the state-dependent constraints,
+leads to a global decrease both in the energy production and in the total revenues.
+Furthermore, the analysis regarding the discretization level of the water volumes
+clearly demonstrated how the effectiveness of the interpolation procedure used for
+the evaluation for the water volumes increases with an increasing number of discre-
+tization points, but at a higher computational cost.
+
+   The results presented in this paper suggest further pathways for further develop-
+ment. First, the additional revenues stemming from the introduction of a pumping
+unit should contribute to a full investment analysis considering the related invest-
+ment cost. In addition, the benefits of a pumping functionality should be assessed in
+a competitive market framework where the PSHP is treated as a price-maker agent.
+Concerning the modelling exemptions of the PSHP, future studies will refine this
+analysis by incorporating more detailed description of the relevant technologies of
+the main electrical machines and components (e.g., converters) and their impact
+on the outcomes of the analysis. This would allow to acknowledge the flexibility of
+fully-fed or doubly-fed electrical machines with respect to more traditional fixed-
+speed pumps. Finally, the optimal operation of the PSHP should consider additional
+revenue streams such as availability fees for frequency response or other ancillary
+services. This of course would require an extension of the modelling formulation to
+account for technical related constraints.
+
+Acknowledgements The authors would like to express their gratitude to the anonymous reviewers for the
+insightful comments on the manuscript. The research leading to these results is part of the HydroConnect
+project funded by The Research Council of Norway, Agder Energi, BKK, EnergiNorge, HydroEnergi,
+Lyse Produksjon, Sira-Kvina Kraftselskap. The Ph.D. work of Asja Alic contributing to this research is
+supported by the Italian National PhD in Photovoltaics ­ workpackage: solar intermittency and storage.
+
+Declarations
+
+Conflict of interest The authors declare that they have no known competing financial interests or personal
+relationships that could have appeared to influence the work reported in this paper.
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+
+References
+
+ 1. IEA - International Energy Agency: IEA. Global Energy Review 202: Assessing the Effects of Eco-
+      nomic Recoveries on Global Energy Demand and CO2 Emissions in 2021. April 2021. [Online].
+      Available: https://www.i ea.org/reports/global-energy-review-2021. Accessed Oct 2022
+
+ 2. Gong, X., Yang, M., Du, P.: Renewable energy accommodation potential evaluation of distribution
+      network: a hybrid decision-making framework under interval type-2 fuzzy environment. J. Clean.
+      Prod. 286(124918), 4270 (2021)
+
+ 3. Trovato, V.: System scheduling with optimal time-varying delivery intervals for frequency response.
+      IEEE Trans. Power Syst. 37(6), 4270­4285 (2022)
+
+ 4. Telukunta, V., Pradhan, J., Agrawal, A., Sing, M., Srivani, S.G.: Protection challenges under bulk penetra-
+      tion of energy resources in power systems: a review. CSEE J. Power Energy Syst. 3(4), 365­379 (2017)
+
+ 5. Trovato, V., Martinez Sanz, I., Chaudhuri, B., Strbac, G.: Preventing cascading tripping of dis-
+      tributed generators during non-islanding conditions using thermostatic loads. Int. J. Electr. Power
+      Energy Syst. 106(19), 183­191 (2019)
+
+ 6. Pitorac, L., Vereide, K., Lia, L.: Technical review of existing norwegian pumped storage plants.
+      Energies 13(18), 4918 (2020)
+
+ 7. Ma, X., Wu, D., Wang, D., Huang, B., Desomber, K., Fu, T., Weimar, M.: Optimizing pumped stor-
+      age hydropower for multiple grid services. J. Energy Storage 51, 104440 (2022)
+
+ 8. EIA, US Energy Information Administration: Utility-scale batteries and pumped storage return
+      about 80% of the electricity they store. 12 February 2021. [Online]. Available: https://www.e ia.
+      gov/todayinenergy/detail.php?id=46756#:~:text=Round%2Dtrip%20effi ciency%20is%20the,lost%
+      20in%20the%2 0storage%20proc ess. Accessed Nov 2022
+
+ 9. Mattmann, M., Logar, I., Brouwer, R.: Hydropower externalities: a meta-analysis. Energy Econom.
+      57, 66­77 (2016)
+
+10. Patocka, F.: Environmental impacts of pumped storage hydro power plants. NTNU--Norwegian
+      University of Science and Technology, Trondheim--Norway (2014)
+
+11. Solvang, E., Charmasson, J., Sauterleute, J., Harb, A., Killingtveit, A., Egeland, H., Andersen, O.,
+      Ruud, Ø., Aas, Ø.: Norwegian hydropower for large-scale electricity balancing needs. SINTEF
+      Report--SINTEF Energy Research, 14 Feb 2014
+
+12. Bermúdes, M., Cea, L., Agudo, J.P., Rodrígues, N., Baztán, J.: Numerical modelling of the impact
+      of a pumped-storage hydroelectric power plant on the reservoir's thermal stratification structure: a
+      case study in NW Spain. Environ. Model. Assess. 23(1), 71­85 (2018)
+
+13. Kobler, U.G., Martin, S.: Ensemble modelling of ice cover for a reeservoir affected by pumped-
+      storage operation and climate change. Hydrol. Process. 33(20), 2676­2690 (2019)
+
+14. Schäffer, L.E., Adeva-Bustos, A., Bakken, T.H., Helseth, A., Korpås, M.: Modelling of environ-
+      mental constraints for hydropower optimization problems--a review. In: 17th International Confer-
+      ence on the European Energy Market (EEM), Stockholm, Sweden (2020). https://doi.org/10.1 109/
+      EEM49802.2020.9 22191 8
+
+15. Alfredsen, K., Harby, A., Linnansaari, T., Ugedal, O.: Development of an inflow-controlled environ-
+      mental flow regime for a Norwegian river. River Res. Appl. 28(6), 731­739 (2012)
+
+16. Helseth, A.: Environmental constraints in seasonal hydropower--survey and feasibility. hydroCen,
+      Trondheim (2019)
+
+17. Helseth, A., Cordeiro Geber de Melo, A.: Scheduling toolchains in hydro-dominated systems. SIN-
+      TEF Energy Research, Trondheim, Norway (2020)
+
+18. do Prado, J.C., Qiao, W.: A stochastic distribution system market clearing and settlement model
+      with distributed renewable energy utilization constraints. IEEE Syst. J. 16(2), 2336­2346 (2022)
+
+19. Shang, L., Li, X., Shi, H., Kong, F., Wang, Y., Shang, Y.: Long-, medium-, and short-term nested
+      optimized-scheduling model for cascade hydropower plants: development and practical application.
+      Water MDPI 14(10), 1586 (2022)
+
+20. Schäffer, L.E., Halseth, A., Korpås, M.: A stochastic dynamic programming model for hydropower
+      scheduling with state-dependent maximum discharge constraints. Renew. Energy Elsevier 194, 571­
+      581 (2022)
+
+21. Hjelmeland, M.N., Zou, J., Helseth, A., Ahmed, S.: Nonconvex medium-term hydropower scheduling
+      by stochastic dual dynamic integer programming. IEEE Trans. Sustain. Energy 10(1), 481­490 (2018)
+
+22. Bellman, R.: Dynamic programming and stochastic control processes. Inf. Control 1(3), 228­239
+      (1958)
+
+                                                           13
+                                                                                                                  A. Alic et al.
+
+23. Helseth, A., Fodstad, M., Askeland, M., Mo, B., Nilsen, O.B., Pérez-Díaz, J.I., Chazarra, M.,
+      Guisández, I.: Assessing hydropower operational profitability considering energy and reserve mar-
+      kets. IET Renew. Power Gener. 11(13), 1640­1647 (2017)
+
+24. Pérez-Díaz, J.I., Guisández, I., Chazarra, M., Helseth, A.: Medium-term scheduling of a hydro-
+      power plant partecipating as a pricemaker in the automatic frequency restoration reserve market.
+      Electr. Power Syst. Res. 185, 106399 (2020)
+
+25. Côté, P., Arsenault, R.: Efficient implementation of sampling stochastic dynamic programming
+      algorithm for multireservoir management in the hydropower sector. J. Water Resour. Plan. Manag.
+      145(4), 05019005 (2019)
+
+26. Guisández, I., Pérez-Díaz, J.I., Wilhelmi, J.R.: Assessment of the economic impact of environmen-
+      tal constraints on annual hydropower plant operation. Energy Policy Elsevier 61, 1332­1343 (2013)
+
+27. Guisández, I., Pérez-Díaz, J.I., Wilhelm, J.R.: The influence of environmental constraints on the
+      water value. Energies 9(6), 446 (2016)
+
+28. Niu, S., Insley, M.: On the economics of ramping rate restrictions at hydro power plants: balancing
+      profitability and environmental constraints. ELSEVIER Energy Econom. 39, 39­52 (2013)
+
+29. Helseth, A., Mo, B., Hagenvik, H.O., Schäffer, L.E.: Hydropower scheduling with state-dependent
+      discharge constraints: an SDDP approach. J. Water Resour. Plan. Manag. 148(11), 04022061 (2022)
+
+30. Hjelmelnd, M.N., Helseth, A., Korpas, M.: Impact of modelling details on the generation function
+      for a norwegian hydropower producer. J. Phys. 1042, 012010 (2019)
+
+31. Ikotun, A.M., Ezugwu, A.E., Abualigah, L., Abuhaija, B., Heming, J.: K-means clustering algo-
+      rithms: a comprehensive review, variants analysis, and advances in the area of big data. Inf. Sci.
+      622, 178­210 (2023)
+
+32. Haugen, M., Helseth, A.: Primod--A fundamental short-term model for power system analyses and
+      multi-market price forecasting. SINTEF, Trondheim (2018)
+
+33. NVE - The Norwegian Water Resources and Energy Directorate: Historical water flow data for pro-
+      duction planning. 18 06 2021. [Online]. Available: https://n ve.no/v ann-o g-vassdr ag/h ydrologiske-
+      data/h istoriske-d ata/histor iske-vannfo ringsdata-til-produksjonsplanl egging/
+
+34. The Project Bank: New environmental restrictions--overall impact on the power system," The
+      Research Council, [Online]. Available: https://p rosje ktban ken.f orskningsr adet.no/e n/p roject/
+      FORISS/309622?Kilde=FORISS&distribution=Ar&chart=bar&calcType=funding&Sprak=no&
+      sortBy=d ate&s ortOrder=d esc&result Count=30&o ffset=0&Prosjektleder=Solgun%20Furnes
+
+35. Bakken, T., Beck, V., Schnfelder, L., Charmasson, J., Thrane, J., Lindholm, M., Brabrand, A.:
+      Testing and evaluation of HYMO classification system for lakes and reservoirs--proposed new and
+      modified hydromorphological (HYMO) classification system. SINTEF, Trondheim, Norway, (2019)
+
+36. "The Julia Programming Language," 2022. [Online]. Available: https://j ulialang.o rg/. Accessed Feb
+      2022
+
+37. JuMP, "Introduction to JuMP," [Online]. Available: https://j ump.dev/JuMP.jl/stable/
+38. "IBM CPLEX optimizer," 2022. [Online]. Available: https://www.ibm.com/i t-i t/analytics/cplex-
+
+      optimi zer. Accessed Feb 2022
+
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+Springer Nature or its licensor (e.g. a society or other partner) holds exclusive rights to this article under
+a publishing agreement with the author(s) or other rightsholder(s); author self-archiving of the accepted
+manuscript version of this article is solely governed by the terms of such publishing agreement and
+applicable law.
+
+Authors and Affiliations
+
+Asja Alic1 · Linn Emelie Schäffer2,4 · Marco Toffolon1 · Vincenzo Trovato1,3
+
+* Asja Alic
+     asja.alic@unitn.it
+
+     Linn Emelie Schäffer
+     linnemelie.schaffer@sintef.no
+
+13
+Optimal pricebased scheduling of a pumpedstorage hydropower...
+     Marco Toffolon
+     marco.toffolon@unitn.it
+     Vincenzo Trovato
+     vincenzo.trovato@unitn.it
+
+1 Department of Civil, Environmental and Mechanical Engineering, University of Trento, Trento,
+     Italy
+
+2 Department of Electric Power Engineering, Norwegian University of Science and Technology,
+     Trondheim, Norway
+
+3 Department of Electrical and Electronic Engineering, Imperial College London, South
+     Kensington Campus, London, United Kingdom
+
+4 Department of Energy Systems, SINTEF Energy Research, Trondheim, Norway
+
+                                                           13
+

@@ -1,0 +1,1164 @@
+Hydropower reservoir management using multi-factor price model and correlation
+                              between price and local inflow
+
+                         Joakim Dimoskia, Sveinung Nerstena,, Stein-Erik Fletena, Nils Lo¨hndorfb
+
+        aNorwegian University of Science and Technology, Norway , bVienna University of Economics and Business, Austria
+
+Abstract
+
+Hydropower producers with reservoir capacity have a special challenge when it comes to weighing the short-term profit
+from selling power in the day-ahead spot market against waiting for better electricity prices. In this paper, we propose a
+medium-term scheduling model for a price-taking hydropower producer, using a horizon of two years. We use the price of
+forward contracts to forecast future spot prices, and use multiple factors to describe movements in price. Further, we include
+a short-term correlation between movements in electricity price and local inflow. Our main contribution is a comparison
+of the performance of our scheduling model to a model in which price and local inflow are assumed to be independent
+and a model in which price movements are described using only one factor. We quantify the loss in expected revenues of
+using the latter two models compared to ours when price movements are in fact driven by multiple factors and correlated
+with local inflow. In both cases, we find the loss to be approximately 2-3 %. We have based our study on a Norwegian
+hydropower plant.
+
+Keywords: Hydropower reservoir management, Markov decision process, multi-factor price process, price and local inflow
+correlation, stochastic dynamic programming
+
+1 Introduction                                                   Our contributions in this work include the use of a
+                                                                 multi-factor price process, as opposed to existing models
+The decision problem of hydropower producers, which seek         for reservoir management which often use single-factor
+to dispatch the water in their reservoir optimally, has existed  processes to describe movements in price. We include
+for many years, and multiple approaches for formulating and      a correlation coefficient between changes in price and
+modelling such problems have been proposed. Masse´ (1946)        local inflow, thereby treating them as dependent variables.
+argues that deterministic models are not good enough, as         Further, we quantify the loss in expected revenues if they
+they do not incorporate the flexibility a production planner     assume price and local inflow to be independent when
+has when it comes to the timing of production. Instead,          they are in fact correlated, and equivalently, the losses that
+one should use a flexible approach which can provide the         occur if they use a single factor price process when price
+hydropower producer with optimal decision policies for both      movements are in fact described by multiple factors.
+the current and future states of the world, incorporating
+the uncertainty in future states. The flexible approach          To obtain optimal decision policies in each discrete state
+proposed by Masse´ (1946) is still relevant for how reservoir    for the production planner, one can use stochastic dynamic
+management is performed today.                                   programming as introduced by Bellman (1957). An
+                                                                 issue with dynamic programming is the so-called curse
+Inspired by Masse´ (1946) and multiple papers of more            of dimensionality, that is, the problem might become too
+recent date, we aim to create a dynamic scheduling model         difficult to solve when the state space and number of
+for a price-taking hydropower production planner that            decision variables become too large. In order to avoid
+participates in a deregulated power market. The planner          this, Pereira and Pinto (1991) introduce an algorithm
+operates a plant that is assumed to be sufficiently small so     for stochastic dynamic programming, a solution approach
+that the decisions of the production planner do not affect       known as stochastic dual dynamic programming (SDDP).
+the market as a whole. We also assume that the production        SDDP and similar approaches are widely used in existing
+planner only participates in the spot market. Further, we        literature on hydropower production scheduling, e.g. in
+consider two stochastic variables (spot price and inflow) and    Mo et al. (2001) and Rebennack (2015). Lo¨hndorf et al.
+we use a time horizon of two years and weekly granularity        (2013) introduce a framework that integrates SDDP with
+which is suitable for medium-term planning. This is in           Markov processes, referred to as approximate dual dynamic
+compliance with multiple current models for medium-term          programming (ADDP). Given a current state of the world,
+reservoir management, as described in Iladis et al. (2008),      the next state value of a variable following a Markov process
+Wolfgang et al. (2009) and Abgottspon and Andersson              is only dependent on its current state value, and not its entire
+(2014).                                                          history. Similarly, in a Markov Decision Process (MDP), all
+
+Lead author. Kolbjørn Hejes vei 1E, 7034 Trondheim, Norway. +47 458 23 304. sveinung.nersten@gmail.com
+
+Submitted to the IAEE International Conference 2018                                                     May 8, 2018
+decisions are made based on the current state of the world         or snow melting, one is likely to experience consecutive
+and its future expected states, irrelevant of all past states.     days and weeks of increased inflow. A significant degree of
+                                                                   autocorrelation favors the use of autoregressive processes.
+Multiple authors, e.g., Lamond and Boukhtouta (1996),              In EOPS, the inflow for a local system is assumed to follow
+show that it is reasonable to treat hydropower reservoir           an ARIMA(1,1) process. Maceira and Dama´zio (2006)
+management problems as MDPs, an approach we adopt in               propose a periodic autoregressive process (PAR) for inflow
+this paper. We therefore treat inflows and price movements         in the Brazilian hydropower system. Since PAR allows
+as Markov processes, and use a scenario lattice to discretize      for negative inflows and do not account for the skewness
+all future states and transition probabilities. To construct       of the inflow distribution very well, Shapiro et al. (2013)
+the lattice, we use the method proposed by Lo¨hndorf and           propose to use geometric PAR models (GPAR). In GPAR,
+Wozabal (2017). We also use their method for solving               the deviations of the log inflows from their periodic mean
+stochastic dynamic programs, ADDP, to obtain all optimal           are represented as an AR(1) process. We will adopt this
+decision policies.                                                 approach in this paper.
+
+We incorporate two stochastic state variables; spot price and      For hydropower dominated systems, multiple papers show
+inflow. EOPS (SINTEF, 2017b), which is one of the most             that there exists a general a negative correlation between
+common commercial programs for medium-term reservoir               inflow and the electricity price, e.g., Mo et al. (2001).
+management for smaller systems in the Nordic countries,            Naturally, when reservoir levels are low, prices increase as
+uses spot price scenarios generated using EMPS (SINTEF,            a result of lower supply. The nature and strength of this
+2017a). EMPS is a fundamental model which, among                   correlation will depend on several factors. Among these
+others, can forecast spot prices in larger power systems by        is the choice of time resolution, and whether we look at
+using historical scenarios of stochastic variables like area       local or system-level inflow. All else equal, one will expect
+inflow and demand (Wolfgang et al., 2009). Mo et al. (2001)        the strength of the relationship to be stronger for a coarse
+show that there is a high correlation between the prices of        granularity of time (e.g., quarterly or yearly data), as the
+successive weeks simulated using EMPS. Therefore, until            impact on the supply will be more substantial for inflow
+2000, EOPS used an AR(1) process (a single-factor model)           aggregated over a longer time.
+to describe the price movements found by EMPS, illustrated
+in Flatabø et al. (1998). As shown in Mo et al. (2000),            The inflow-price relationship is in varying degree taken into
+price scenarios in EOPS are still generated using EMPS, but        account in the literature and commercial software. Kolsrud
+the prices are now organized in a lattice using the scenarios      and Prokosch (2010) found a relationship between the spot
+directly instead of expressing them with an autoregressive         price, the overall aggregated reservoir level in a given
+process.                                                           geographical area and the local reservoir level of a single
+                                                                   plant. Further, EMPS, which is used to find spot price
+In contrast to how spot price scenarios are generated in           scenarios to be used in EOPS, finds spot price as a function
+EOPS, we generate them using movements in the price of             of aggregated, regional inflow. On the contrary, Fosso et al.
+forward contracts traded in the market. These movements            (1999) show that EOPS treats movements in local inflow and
+are modelled using a multi-factor model, commonly referred         price as independent variables. Intuitively, we would expect
+to as an HJM model (Heath et al., 1992). Clewlow and               the correlation between price and inflow to be stronger on
+Strickland (2000), Koekebakker and Ollmar (2005) and               an aggregated national level, than between the local inflow
+Bjerksund et al. (2008) argue that one-factor models such          of a particular power plant and the system price. However,
+as AR(1) are unrealistic for accurately representing forward       we do not expect local inflow and price to be independent.
+and spot price movements. Instead, they propose using              This is because the local inflow can be heavily correlated
+multi-factor models, which according to them give a much           with the aggregated national inflow, as found in Boger et
+more realistic representation of the dynamics behind price         al. (2017). Therefore, we include a correlation between
+movements. Like Koekebakker and Ollmar (2005), we find             movements in local inflow and the price of forward contracts
+the coefficients of the price process empirically by first         in the stochastic processes.
+constructing forward curves for many consecutive trading
+days, and then calculate daily deviations between the curves       The paper is organized as follows. In Section 2, we
+and use PCA to obtain multiple factors.                            present the reservoir management decision problem as a
+                                                                   mathematical program. We also give an overview of
+The other stochastic variable we consider is inflow. When          the stochastic processes used to describe the correlated
+determining the characteristics of the inflow, there are           movements of inflow and price and how these can be used to
+several questions that must be answered - whether the              generate a scenario lattice. The section is concluded with a
+system is a local or a regional system consisting of a             short description of ADDP, the framework used to solve the
+number of power plants, if there is a seasonal pattern             decision problem. In Section 3, we present a multi-reservoir
+to the inflow, if there are rain periods or snow melting           hydropower plant in Norway on which we have tested our
+periods, and the choice of temporal resolution of the inflow       model. We also present the obtained process coefficients
+measurements. For inflow, there is often, depending on the         and correlation, and show empirical results from running
+time resolution, a significant degree of autocorrelation from      the model. The section is concluded with a calculation
+one period to the next. E.g., after a period of precipitation      of the losses associated with using a single factor price
+
+                                                                2
+process and from omitting the price-inflow correlation. Final            The objective of MDPs is to obtain optimal decision policies
+conclusions are made in Section 4.                                       (t ) for all current and future states of the world. These
+                                                                         policies maximize the value of all current and future cash
+2 Methods                                                                flows, meaning that the policies do not only depend on their
+                                                                         respective states, but also the space of potential future states.
+In the following sections, we will first formulate the                   We denote by Vt the time t value of the current time cash flow
+decision problem associated with reservoir management as a               and all future expected cash flows, and formulate it using the
+mathematical program. Then, we will show how movements                   Bellman equation, first introduced by Bellman (1957)
+in the two relevant stochastic variables, spot price and
+inflow, can be modeled. Further, we present how all future                 Vt (Pt ,Y^t , t ) = max CFt (Pt , t )
+states of price and inflow can be discretized using a scenario
+lattice, and briefly present the solution method used to obtain                                        t
+optimal decision policies for each state.
+                                                                                              + t E[Vt+1(Pt+1,Y^t+1, t+1|Pt ,Y^t , t )] (2)
+2.1 Hydropower decision problem
+
+In this part, we describe the problem faced by a                         Equation (2) is a recursive formula, meaning that the time
+price-taking hydropower production planner with multiple,                t value of all future cash flows Vt is a function of the
+interconnected reservoirs that participates in deregulated               immediate cash flows CFt and the expected next step value
+market. Based on a broad set of endogenous and exogenous                 Vt+1. The possible values of Vt+1 are, however, dependent
+variables such as reservoir level, inflow and spot price, they           on the current time decisions, indicating the importance of
+must decide how much water they should use for power                     choosing t such that it does maximize not only the current
+production in a given period and how much they should store              cash flow, but also all expected future cash flows.
+for future production. The production planner is limited by
+multiple constraints, e.g., on reservoir volume and turbine              In hydropower production, the cash flows earned by the
+capacity, and his primary concern is how they can utilize                production planner equal the product of spot price and the
+their water to maximize the expected present value of all                amount of produced energy. When ignoring turbine and
+discounted future cash flows.                                            generator start-up costs, which is quite common in other
+                                                                         papers discussing hydropower reservoir management (e.g.,
+The problem faced by the production planner is a stochastic              Wallace and Fleten, 2003), cash flows can be set equal
+dynamic decision problem, meaning that decisions must be                 to revenues. Thus, (2) can be considered as the objective
+made at different stages in time and in light of uncertainty             function of the decision problem. For a hydropwer system
+about future states of their environment. For each time step,            consisting of B interconnected reservoirs, we denote by wbi,t
+there are two stochastic, exogenous variables that affect the            the amount of water in [m3] nominated for production in a
+decisions of the production planner; spot price Pt and inflow            turbine connecting reservoir b and reservoir i. In case the
+Yb,t into all reservoirs b = [1, ..., B]. For convenience, we            nominated water flows into an outlet (e.g., a river, lake or
+denote Y^t = {Yb,t : b = [1, ..., B]} as a set of all inflows to all     fjord), we set i = O. Further,  and  are the number
+reservoirs at time t. Like Bjerksund et al. (2008), we assume            of seconds and hours, respectively, the plant's turbines are
+that the decision maker participates in a complete market                running per week. Given that the plant produces at constant
+with no riskless arbitrage opportunities. Harrison and Pliska            rate, we can define qbi,t = wbi,t / as the water discharge in
+(1981) define a complete market as a market where the price              [m3/s] from reservoir b flowing into reservoir i at time t.
+of all securities is attainable, and there exists only one single        Further, we let Hb,t denote the head elevation in reservoir
+price for each security. In a complete and arbitrage-free                b, and bi,t the efficiency rate of a turbine connecting
+market, there would exist a unique risk-neutral, martingale              reservoir b and i. In reality, these are typically functions of
+measure Q that represents the risk-neutral probabilities of all          multiple decision variables, e.g., reservoir volume and water
+future states for spot price and inflow.                                 discharge. While we do not define these functions now, we
+                                                                         discuss their form further in Section 3.2. Lastly, given a
+Using the complete market and no-arbitrage assumption and                water density  and gravitational acceleration G, the cash
+denoting t as a decision policy at time t providing a cash               flow CFt at time t can be written as
+flow of CFt = CFt (Pt ,Y^t , t ) and an appropriate discount
+factor t < 1, the expected discounted cash flows over a time
+horizon T^ are given by
+
+                                                                           CFt = Pt ·  · G ·  · Hb,t ·  qbi,t · bi,t
+
+                                                                         bB  iB,i=b
+
+   T^                                                                                                   t = [1, ..., T^ ] (3)
+
+ max EQ( tCFt (Pt ,Y^t , t ))  (1)
+
+t  t=1
+
+                                                                           We denote by lb,t the water level in [m3] in reservoir b at time
+Like Lamond and Boukhtouta (1996), we treat the reservoir t. Further, ubi,t is the amount of water flowing from reservoir
+management problem as a Markov decision process (MDP). b to reservoir i outside a turbine, that is, either through a
+
+                                                                      3
+regulated channel or as spillage. Like above, we set i = O if                traded in a market with maturity (or delivery) at time T .
+the water flows into an outlet. The general volume balance                   For a forward contract with immediate delivery (T = t),
+of all reservoirs will then be given by                                      the price of that contract is simply the current time spot
+                                                                             price, that is Pt = Ft,t . Thus, a stochastic process for the
+  lb,t = lb,t-1 -                                                            price development of forward contracts with different times
+     [wbi,t + ubi,t ] + Yb,t +          uib,t                                to maturity can be used to represent future spot prices. In
+                                                                             a liquid power market, the available future and forward
+iB,i=b                          iB,i=b                                       contracts traded at time t should represent the current time
+                                                                             risk-adjusted market expectations for future spot prices,
+        t = [0, ..., T^ ], b = [1, ..., B] (4)                               meaning that the spot prices projected by the process will
+                                                                             incorporate these expectations. A further advantage is that
+Further, the problem faces multiple restrictions. All                        the price of all forward contracts traded in the market
+reservoirs are subject to a minimum and maximum level                        include the seasonality of electricity prices, an important
+of water, denoted by lb,t and lb,t . These limits can be                     characteristic of electricity spot prices, as described by
+based on physical constraints such as reservoir geometry and                 Johnson and Barz (1999). This implies that the process
+dam robustness, but also on government regulations, some                     does not need any deterministic function to account for
+of which may be seasonal. There are also restrictions in                     seasonality.
+the turbines, stating the maximum allowed water discharge
+qbi that they can handle. In case there exists no turbine                    As stated previously, we want to use a multi-factor process
+at reservoir b whose water flows into reservoir i, qbi will                  to describe movements in price. Including multiple factors
+logically be 0. Finally, due to infrastructural reasons (e.g.,               should allow the process to better explain the real dynamics
+too small channels or insufficiently robust spillways), there                driving forward price movements, and thereby make better
+might be a maximum constraint on the allowed amount of                       price predictions. Such a process can be formulated as
+water flowing from reservoir b to i, ubi,t . If no water can                 a multi-factor extension of the HJM model, originally
+flow from reservoir b to i, either due to the lack of physical               presented by Heath et al. (1992). An HJM model with I
+connections or the effects of gravity (the head elevation                    sources of uncertainty is given by
+of reservoir i is higher than that of reservoir b), ubi,t will
+logically be 0. All these constraints can be summarized in                            dFt,T                 I
+(5)-(8).
+                                                                                     Ft,T              = i,t,T dZi,t
+                                                                                                                                     (9)
+                                                                                                           i=1
+
+lb,t  lb,t for t = [1, ..., T^ ], b = [1, ..., B] (5)
+
+lb,t  lb,t for t = [1, ..., T^ ], b = [1, ..., B] (6)                        Here, i,t,T is the ith volatility function of a forward contract
+                                                                             with maturity at time T , and dZi,t is a source of uncertainty
+qbi,t  qbi for t = [1, ..., T^ ], b = [1, ..., B], i  B, i = b               where Zi,t follows a Wiener process. Together, i,t,T for i =
+                                                                     (7)     [1, ..., I] explain the dynamics driving the time t movement of
+                                                                             a forward contract with maturity at time T . The ith volatility
+                                                                             function is associated with the ith source of uncertainty,
+                                                                             dZi,t . Since our decision problem considers discrete time
+                                                                             stages, (9) must be discretized. By using Ito's lemma and
+                                                                             setting dt = t, the process can be written as
+
+ubi,t  ubi,t for t = [1, ..., T^ ], b = [1, ..., B], i  B, i = b             Ft,T = Ft-t,T · exp
+                                                                     (8)
+                                                                             1   N   i2,T                     N             
+By combining all expressions and restrictions, our dynamic                     -2i=1                      +  i=1              t i,t
+program can be summarized as solving the following                                                -t+t t          i,T -t+t           (10)
+mathematical program at time t
+
+max     Vt (Pt ,Y^t , t )                                                                     
+                                                                             Here, Zi,t = ti,t where i,t  N(0, 1). Using Pt = Ft,t ,
+subject to (4), (5), (6), (7), (8)                                           we can modify (10) into an expression for the spot price Pt
+                                                                             as a function of Ft-t,t , given by
+
+2.2 Electricity price process                                                Pt = Ft,t = Ft-t,t · exp  1   N   i2,t t      N        
+                                                                                                       2  -i=1         +  i=1  i,t    t i,t
+We model spot price movements as a Markov process and
+use the price of forward contracts to forecast future spot                                                                           (11)
+prices. At time t, Ft,T is the price of a forward contract
+
+                                                                          4
+2.3 Estimating the volatility functions of the price process          dimensionality of a dataset consisting of highly correlated
+                                                                      variables. Mathematically, the principal components of
+In the literature, multiple ways are proposed on how the              XJ×A, whose correlation matrix is denoted V, are given by
+volatility functions in (9) can be obtained. Koekebakker and          P = XJ×AW. Here, W is a matrix whose columns are the
+Ollmar (2005) propose that they can be found empirically              eigenvectors wi of V sorted in descending order based on
+as a function of time to maturity, that is, on the form               their corresponding eigenvalue i. As shown in Clewlow
+i,t,T = i(T - t). In order to do so, we must construct a              and Strickland (2000), the volatility functions will then be
+sufficiently large dataset of daily returns for multiple types        given by i,a = iwai, where i = [1, ..., A].
+of forward contracts m = [1, ..., M] with time to maturity
+m = T - t. Using  as time to maturity, the volatility                 To reduce the dimensionality, we only include the volatility
+functions can be denoted i, . In order to calculate these             functions associated with the first I principal components.
+returns series, Koekebakker and Ollmar (2005) propose                 Typically, one would choose I such that the proportion
+constructing multiple forward curves for a large set of               of variance explained by the first I factors is around
+historical trading days and then calculate daily returns as the       90%-95%. Clewlow and Strickland (2000) show that only
+deviations between two consecutive curves.                            two components are needed to explain 96.8% of total
+                                                                      variation of NYMEX crude oil futures contracts, whereas
+In the Nordic power market, tradable forward and future               Koekebakker and Ollmar (2005) needed more than ten
+contracts have delivery periods stretching over longer time           components to explain the same proportion for Nordic
+periods. A forward curve is a curve that aims to explain the          electricity forwards in the period 1995-2000.
+expected forward price for delivery in each hour/day/week
+in a time interval (tb,te) based on all contracts available in        2.4 Inflow process
+the market whose delivery periods span the interval. A
+forward curve constructed on the date ts is denoted f (ts).           The inflow process is based on the geometric periodic
+f (ts,t) where t > ts denotes the value of that curve for             autoregressive (GPAR) model presented by Shapiro et al.
+time t, and intends to represent the price of a fictional             (2013). The authors found that a first-order periodic
+forward contract with delivery exactly at time t. Multiple            autoregressive process of the log-inflows provides a
+ways of constructing forward curves are presented in the              good description of the dataset, which contained inflow
+literature, e.g. by Fleten and Lemming (2003), Benth et al.           observations from the Brazilian hydropower system. They
+(2007), Alexander (2008) and Kiesel et al. (2017). After              found that the distribution of inflow observations Yt is highly
+constructing a set of curves for multiple consecutive days,           right-skewed. Therefore, they work with ln(Yt ) to obtain a
+we can use (12) to calculate daily returns at time t j for            distribution with less skew.
+contracts with time to maturity a. This is a modified
+version of the method used by Koekebakker and Ollmar                  Let µ^t , t = 1, ..., 52 be the weekly averages of ln(Yt ) and
+(2005), as we choose to calculate continuously compounded             Wt = ln(Yt ) - µ^t be the corresponding deviations. Shapiro
+logarithmic returns rather than discrete compounded returns.          et al. (2013) found that Wt could be described by an AR(1)
+We do this because it allows us to calculate returns over             process. (14) shows how the deviations of the log inflows
+longer time periods by addition, thereby simplifying many             from their mean can be described as an 1-lag autoregressive
+calculations. This approach is also used by Bjerksund et al.          process.
+(2008).
+
+                                                                      Wt = 0 + 1Wt-1 + Y,t  (14)
+
+       x j,a = ln( f (t j,t j + a)) - ln( f (t j-1,t j + a)) (12)     Here, 0 and 1 are parameters of the process, and Y,t
+                                                                      is the error term representing the difference between the
+Here, j = [2, ..., J] and a = [1, ..., A], where J is the number
+of forward curves and A is the number of maturity dates for           observed and predicted value. To be able to model the
+which we want to construct a dataset. The returns series
+matrix calculated using J + 1 forward curves (meaning we              inflow as a stochastic process, we assume that the error terms
+can find J returns) and A different time to maturities is then        are distributed Y,t  N(0, Y2 ), where Y is the standard
+given by                                                              deviation of the error terms. The parameters 0 and 1
+                                                                      are estimated by ordinary least squares regression. Because
+         x1,1 x1,2 . . . x1,A
+                                                                      Wt observations are themselves deviations, 0 is highly
+                                                                      insignificant. We set 0 = 0 and use 1 =  from this point
+                                                                      on. Next, we find the log inflow, Wt + µ^t
+
+XJ×A  =  x2,1 x2,2 . . . x2,A      (13)
+
+           ...  ...  ...  ...    
+                                 
+                                 
+         
+
+           xJ,1 xJ,2 . . . xJ,A                                         Wt + µ^t = Wt-1 + Y,t + µ^t
+                                                                                        =  (Wt-1 + µ^t-1) -  µ^t-1 + Y,t + µ^t (15)
+Having found XJ×A, we use principal component analysis
+(PCA) to find the desired I volatility functions. PCA                 The inflow Yt can be expressed as a function of Wt + µ^t .
+is an orthogonalization technique used to reduce the
+
+                                                                   5
+We insert the obtained expression of Wt + µ^t into Yt =              are correlated with i. Afterwards, the location of all states
+exp (Wt + µ^t ), and get                                             Stn is found by minimizing the Wasserstein distance between
+                                                                     all Nt nodes and the K simulated draws S^tk for each time
+  Yt = exp(Wt + µ^t ) =                                              stage t. Having located all nodes, the transition probabilities
+                    exp (Yt-1) exp (- µ^t-1 + Y,t + µ^t ) (16)
+                                                                     between two subsequent nodes Stn and St+1,m can be found
+                                                                     by looking at the number of simulated paths whose time t
+
+                                                                     and t + 1 states lie closest to the nodes Stn and St+1,m.
+
+By rewriting, we obtain the inflow process described by (18).        2.6 Solution method for optimization problem
+          Yt = exp ( lnYt-1) exp (µ^t -  µ^t-1 + Y,t ) (17)
+                                                                     We adopt the method known as approximate dual dynamic
+Yt = exp (Y,t ) exp (µ^t -  µ^t-1)Yt-1  (18)                         programming (ADDP) to find the near optimal decision
+                                                                     policies tn in all nodes of the price and inflow lattice.
+We further allow the error term standard deviation Y and             ADDP was first introduced by Lo¨hndorf et al. (2013). In
+the coefficient  to be time-dependent. The final inflow              principle, obtaining optimal decision policies for a Markov
+process can then be expressed as                                     decision process should be possible using traditional
+                                                                     dynamic programming (DP) as introduced by Bellman
+                                                                     (1957). Using the notation introduced in Section 2.5, the
+                                                                     Bellman equation given in (2) can then be rewritten into
+
+Yt = exp (Y,t + µ^t - t µ^t-1)Yt-t 1                                 Vt (Stn, tn) = max CFt (Stn, tn)+
+                                        (19)                         tn
+
+                                                                         t E[Vt+1(St+1, t+1|Stn, tn)] (20)
+
+where t is the week number and Y,t now follows the                   A common problem with dynamic programming is the
+distribution Y,t  N(0, Y2,t ). Since inflow Yt is a function of      curse of dimensionality. It has been addressed by multiple
+its first lag only, future values of inflow are only dependent       authors, i.e. by Powell (2011). In this case, the main
+on their current value and not the entire history. Thus,             issue with a high-dimensional problem is that the decision
+inflow also follows a Markov process, which was one of               space can become too large to find the optimal decisions
+the prerequisites for representing our decision problem as           for all states within a reasonable amount of time. We must,
+a Markov decision process.                                           therefore, use a method that resolves this issue by obtaining
+                                                                     decision policies that are approximately optimal. Multiple
+2.5 Scenario lattice for spot price and inflow                       such methods are proposed in the literature, and they are
+                                                                     often referred to as approximate dynamic programming. A
+To solve the MDP, we must discretize the exogenous Markov            method that has been widely used to manage hydropower
+process that describes inflow and price movements. As in             reservoirs is stochastic dual dynamic programming (SDDP),
+Lo¨hndorf and Wozabal (2017), we do this by reducing the             first introduced by Pereira and Pinto (1991). Lo¨hndorf et
+continuous Markov process to a discrete scenario lattice. In         al. (2013) extend the method of SDDP so that it can also
+our case, each lattice node represents a state of both reservoir     be used for scenario lattices, calling it ADDP. When using
+inflow and spot price. Generally, we keep the number of              SDDP and ADDP, one of the main simplifications is that the
+nodes per stage in the lattice constant. In comparison,              value function Vt is approximated to be a piece-wise linear,
+the number of nodes per stage in a scenario tree grows               concave function of all resource variables (e.g., reservoir
+exponentially with the number of time stages. Thus, the              levels). In short, the value function is found by first drawing
+lattice approach allows for a greater number of time stages          a given number of forward passes through the lattice, that
+while still keeping the problem computationally feasible.            is, a sequences of states. For each forward pass, the optimal
+                                                                     decision policies are found by maximizing the approximate
+In order to construct a lattice, we use the method proposed          post-decision value functions. After each forward pass,
+by Lo¨hndorf and Wozabal (2017). We denote Nt as the                 a backward pass is performed, where the approximated
+number of nodes at time t. Further, Stn = {Ptn,Ytn} denotes          value functions are updated relative to the sampled sequence
+the nth state (or node) at time stage t, where Ptn is the            of states and all state decision policies. In practice, the
+state spot price and Ytn = {Ib,tn : b = [1, ..., B]} is a set of     approximate value function of each state is constructed by
+inflows into all B reservoirs for the same state. We also let        a set of supporting hyperplanes (linear constraints), where
+n  [Nt ], where Nt is the total number of states at time t.          each pair of forward and backward passes results in the
+In short, the lattice is constructed by first drawing a set of       addition of a new hyperplane to the set. For a more detailed
+K Monte-Carlo simulations (S^k) of spot price and inflow,            description of the ADDP algorithm, consult Lo¨hndorf et al.
+where S^tk = {Ptk,Ytk} is the time t state of simulation k where     (2013).
+k  [K]. These simulations are drawn using (11) for the spot
+price and (19) for inflow, where the error terms i,t and Y,t
+
+                                                                  6
+3 Results                                                         Table 1: Characteristics of the Søa hydropower plant
+
+In this section, we summarize the results of a case               Maximum power capacity                 Value   Unit
+study conducted with data from a Norwegian hydropower             Mean yearly production
+producer. The Søa hydropower plant is presented in Section        Avg. yearly inflow, total              36      MW
+3.1. In Section 3.2, we discuss the decision problem. Section     Average inflow to Søvatn               191.3   GW h
+3.3 discusses the characteristics of the price process and        Average inflow directly to Vasslivatn  311     mill m3
+its associated volatility functions. Then, we present the         Energy coefficient                     60.5    % of total
+parameters of the inflow process in Section 3.4 and the price     Turbine capacity                       39.5    % of total
+and inflow correlation in Section 3.5. Section 3.6 shows                                                 0.6748  kW h/m3
+how we construct the scenario lattice using correlated Monte                                             17      m3/s
+Carlo simulations. We present the expected revenues by
+applying the scheduling model in Section 3.7. In Section          The energy coefficient listed in Table 1 takes into account
+3.8, we perform a backtest of our model compared to               all sources of energy loss in the system, including head
+historical operations. Further, in Section 3.9 we analyze         loss, turbine losses, generator losses and transformer losses.
+potential differences and losses in expected revenues with        It is calculated using the production-weighted average
+regards to different values of the price-inflow correlation.      head elevation (273.1 m) and production-weighted average
+We perform a similar analysis in Section 3.10, considering        discharge to the turbine.
+the case were the number of factors I used in the forward
+price process is altered. All code and calculations are           Table 2: Water level constraints for Søa. All water levels are denoted in
+produced in MATLAB and R, except for the algorithms used          meters above sea level
+to construct a lattice and the ADDP solver.
+                                                                  Reservoir   Restriction type    Min [MASL]     Max [MASL]
+3.1 Case: Søa hydropower plant
+                                                                  Vasslivatn  Physical            260.00         279.83
+                                                                  Søvatn      Physical            275.00         279.83
+                                                                  Søvatn      Regulatory          278.33         279.83
+                                                                              (May 25 - Oct. 15)
+
+We have received empirical data from the Søa hydropower           3.2 Revised decision problem
+plant, a plant owned and operated by the integrated electric
+utility company TrønderEnergi. Apart from sharing the             In order to construct the lattice mentioned earlier and
+relevant characteristics of the plant, TrønderEnergi has          perform ADDP on Søa hydropower plant, we use QUASAR,
+also provided us with historical time series for inflow           a general purpose solver for stochastic optimization
+and production. The plant is mid-sized both in terms of           (Lo¨hndorf and Wozabal, 2017). To keep computation
+regulating capacity and power capacity, and it is located         complexity at bay, we use a linear reformulation of the
+in the NO3 area in Norway. It consists of two reservoirs          problem.
+- Vasslivatn and Søvatn, and one Francis turbine. The
+discharge from the Søvatn reservoir to the Vasslivatn             The number of reservoirs is B = 2, and we let l1,t and l2,t
+reservoir is controllable. In Table 2, we have listed the         denote the water levels in Vasslivatn and Søvatn respectively.
+physical boundaries of both reservoirs. There is also             Also, Y1,t and Y2,t denote the inflows into each reservoir.
+a special summertime restriction that applies for Søvatn,         Since the system only contains one turbine which connects
+which is set by local authorities. This restriction and its       Vasslivatn to the outlet of Hemnefjorden, we denote the
+duration are also listed in Table 2. The outlet of the            amount of water nominated for production as wt and its
+hydropower plant is in Hemnefjorden, which has an average         discharge as qt . The amount of water flowing from Søvatn
+head of -1 MASL (meters above sea level).                         to Vasslivatn (denoted u12,t using notation from Section 2.1)
+                                                                  is now denoted by ut , and the amount of spilled water
+                                                                  flowing from Vasslivatn to Hemnefjorden is denoted by st
+                                                                  (previously denoted u1O,t ). With these new notations, the
+                                                                  general volume balance constraint from (4) can be written
+                                                                  as (21) and (22) for Vasslivatn and Søvatn, respectively.
+
+                                                                  l1,t = l1,t-1 - wt - st +Y1,t + ut for t = [1, ..., T^ ] (21)
+
+                                                                  l2,t = l2,t-1 +Y2,t - ut for t = [1, ..., T^ ] (22)
+
+Figure 1: The Søa hydropower plant and the reservoir capacities. The Neither ut nor st are restricted by an upper bound ui j,t ,
+
+elevation of 273.1m is the production-weighted average head difference so this constraint is omitted from the revised problem
+
+between Vasslivatn and Hemnefjorden.                              formulation. Due to the linearity requirement, the cash flow
+
+                                                               7
+expression CFt defined by (3) can only be a function of             where t = {wt , l1,t , l2,t , ut , st , l2S,t }. All coefficients and
+one decision variable. While head elevation, turbine and            constant parameter values are given in Table 3. We recall
+generator efficiency are typically functions of one or more         that water discharge is defined as qt = wt / where  is the
+decision variables, we must model them as constants in              number of seconds of production per week. The larger we
+order to keep the expression linear. Such simplifications           choose  , the larger becomes the maximum limit for wt ,
+are made in similar models for reservoir management, e.g.,          water nominated for production at time t. In cases of large
+EOPS (SINTEF, 2017b). Madani and Lund (2009) also use               inflows, low values for  will only result in larger amounts
+a fixed head and argue that this is a reasonable assumption         of spilled water, indicating that  should be set as large
+for high-elevation hydropower systems. There is no formal           as possible. Also, since efficiency rate is not modeled as
+definition of high-elevation plants, but they typically have a      a function of water discharge qt , the choice of  will be
+head elevation above 250-300 meters. As the head elevation          irrelevant for the value function in all stages where spillage
+of Søa is within this interval, it is not highly unreasonable       is of no concern. We, therefore, set  = 604800s, which
+to argue for using a constant head. Also, if the head               is the total number of seconds in one week. Furthermore,
+is chosen as the centre of gravity for the reservoir (i.e.,         we find the time-dependent discount factor t using the
+about 270 MASL, indicating an elevation of 271 meters               risk-free rate r given by the Norwegian Interbank Offered
+between the reservoir and the outlet), the deviations between       Rate (NIBOR). To get comparable results between runs for
+realized power and approximated power will be in the range          different days, we chose to use a constant value of r (NIBOR
+[-3.7%, 3.7%]. We believe this is acceptable, considering           for 6-month maturity debt on January 7, 2013). Optimally,
+the granularity of our model.                                       we would have used an estimate of the two-year maturity
+                                                                    risk-free rate, but six months was the longest maturity
+When we use constant values for head elevation and                  available. The discount factor t is found using continous
+efficiency rate, the objective function of the optimization         compounding, given by t = exp (-rt).
+problem consists of many constants whose product is the
+energy coefficient. By definition, the energy coefficient                         Table 3: Model coefficients and constants
+is the average amount of energy a hydropower plant can
+produce by using one cubic meter of water. In the                   Coefficient/  Value Unit           Dates
+objective function, we, therefore, make the simplification          Parameter
+GH/ = , where  denotes the energy coefficient.                                    44.5        Mm3      t = [1, ..., T^ ]
+                                                                    l1,t          22.5        Mm3      t = [1, ..., T^ ]
+Further, we only have available data on the aggregated              l2,t          0           Mm3      t = [1, ..., T^ ]
+inflow into both reservoirs, forcing us to treat inflow as          l1,t          0           Mm3
+a single stochastic variable Yt = Y1,t + Y2,t . In order to         l2,t          15.05       Mm3      t =[October 16,...,May 24]
+obtain Y1,t and Y2,t , we have used the historical inflow split     l2,t          0.6747      kW h/m3
+given in Table 1. We let  = 0.395 denote the historical                           604800               t =[May 25,...,October 15]
+fraction of inflow flowing into Vasslivatn, and thereby set                       17          s        t = [1, ..., T^ ]
+Y1,t = Yt and Y2,t = (1 - )Yt . Also, since the water                             0.0198      m3/s     t = [1, ..., T^ ]
+level in Søvatn is subject to a minimum restriction during          q                         -        t = [1, ..., T^ ]
+the summer l2,t > 0, we must include a slack variable l2S,t         r                                  t = [1, ..., T^ ]
+to account for cases in which this constraint cannot be
+held. Since we do not know the exact cost of violating the          3.3 Electricity spot price and forward curve dynamics
+constraint, we add a sufficiently large cost  associated with
+the slack variable to the value function such that its value        The first step towards obtaining the volatility functions
+is kept at a minimum. By combining all the mentioned                describing the forward curve dynamics is to construct
+simplifications and adjustments, our optimization problem           historical forward curves. They are found by interpolating
+at time t is reduced to                                             between forward prices as described by Alexander (2008).
+                                                                    The dataset of this study includes forward prices for all
+max         Vt = Pt ·  · wt -  · l2S,t                              trading days between April 28, 2011, to December 30, 2016,
+subject to  + t E[Vt+1|Pt ,Yt , t ]                                 resulting in 1450 forward curves. The forward curves are
+            l1,t = l1,t-1 - wt - st + Yt + ut                       constructed using closing prices of futures contracts traded
+            l2,t = l2,t-1 + (1 - )Yt - ut                           at NASDAQ Commodities. These contracts are listed in
+            l1,t  l1,t                                              Table 4.
+            l2,t  l2,t
+            l1,t  l1,t                                              Table 4: Electricity forward contracts traded on NASDAQ Commodities
+            l2,t + l2S,t  l2,t
+            qt  q                                                   Code   Length         of  Trading period
+
+                                                                    ENOW   delivery period    1, 2, 3, 4, 5, 6 weeks ahead
+                                                                    ENOM                      1, 2, 3, 4, 5 and 6 months ahead
+                                                                    ENOQ   Week               1, 2, 3, 4, 5, 6, 7 and 8 quarters ahead
+                                                                    ENOYR  Month              1, 2 and 3 years ahead
+                                                                           Quarter
+                                                                           Year
+
+                                                                    Figure 2 shows the forward curve found for January 7, 2013.
+                                                                    It is clear that the forward curves found using this method
+
+                                                                 8
+will be discontinuous in the points where we switch from                                                                    decreasing for ascending values of , as forward prices tend
+one contract type to another, as illustrated in Figure 2. As                                                                to change more the closer they come to maturity. This is
+can be seen in Figure 2, weekly contracts was used in the                                                                   called the Samuelson effect, discussed by Jaeck and Lautier
+short end of the curve, monthly contracts in the mid-short                                                                  (2016) and originally proposed by Samuelson (1965). The
+part of the curve, quarterly contracts in the mid-long part of                                                              reasoning behind this phenomenon is that an information
+the curve, and yearly contracts in the long end of the curve.                                                               shock that affects the short-term price has an effect on the
+                                                                                                                            succeeding prices that decreases as the time to maturity
+                                                         Forward curves - January 7, 2013                                   increases. Weather forecasts are an example of information
+55                                                                                                                          that one would expect to have short-term effects only on the
+                                                                                                                            electricity price.
+                                                                                                    Week contracts
+                                                                                                                            The electricity forward return series show a substantial
+50                                                                                                  Month contracts         degree of inter-correlation. This can be seen from the
+                                                                                                                            correlation matrix that is shown in Figure 4. A high degree
+45                                                                                                  Quarter contracts       if inter-correlation is in accordance with our experience,
+                                                                                                                            which is that forward electricity prices more often than not
+                                                                                                    Year contracts          move in the same direction. Further, the correlation matrix
+                                                                                                                            shows that there is a clear decreasing trend in the correlation
+40                                                                                                                          between contracts with larger maturity spreads.
+
+35                                                                                                                          The high degree of inter-correlation is also demonstrated
+                                                                                                                            by the explanatory power of the first principal component,
+30                                                                                                                          which explains 73.3% of the variance in the dataset. Only
+                                                                                                                            six principal components are needed to explain over 95% of
+          100      200      300      400                                                   500      600             700     the cumulative variance, as shown in Table 5.
+
+                        Days to the beginning of the delivery period
+
+      Figure 2: Forward curve created using linear interpolation
+
+A time series of daily log returns is calculated for each
+relevant time to delivery, resulting in a 1449 × 104 matrix.
+To obtain a set of volatility functions that describe forward
+price movements, PCA is used on the returns time series
+as explained in Section 2.2. Remember that each volatility
+function is associated with an independent uncertainty
+factor. The volatility function determines by how much,
+and in which direction the random shock associated with the
+uncertainty factor moves each point of the forward curve. As
+we use weekly granularity and a time horizon of 105 weeks,
+the volatility functions i, = i() must be constructed
+for the same granularity and length. That is, we find the
+volatility functions i, for all i = [1, ..., N] and time to
+maturity given by  = [1, 2, ..., 104] weeks.
+Annual volatility                                                                                                                                                                                                                                  1
+
+                                                                                                                           11
+                                                                                                                                2
+                                                                                                                                      32                                                                             0.8
+                                                                                                                                           4
+                                                                                                                                                 5
+                                                                                                                                                      6
+                                                                                                                                                            9
+                                                                                                                                                                 12
+                                                                                                                                                                       20
+                                                                                                                                                                            28
+                                                                                                                                                                                  42
+                                                                                                                                                                                       52
+                                                                                                                                                                                             65
+                                                                                                                                                                                                  78
+                                                                                                                                                                                                        91
+                                                                                                                                                                                                             104
+Using the time series of returns, we can estimate an overall                                                                3
+volatility curve for the term structure of forward prices, as
+well as the volatility functions associated with the principal                                                              4                                                                                        0.6
+components. In Figure 3, the overall volatility function
+can be understood as the volatility of returns of forward                                                                   5
+contracts with time to maturity . Since it represents the
+actual volatility of forward price returns, it will always                                                                                                                                                                                       0.4
+be positive. The volatility functions associated with the
+principal components must, however, not be interpreted the                                                                  6
+same way as the overall volatility function, as they do not
+represent the volatility in terms of price movements of a                                                                   9                                                                                        0.2
+single asset. They can also take negative values, as opposed
+to the overall volatility function.                                                                                         12
+
+                                                                                                                                                                                                                                                     0
+
+                                                                                                                            20
+
+                                                                                                                            28                                                                                       -0.2
+
+                                                                                                                            42
+
+                                                                                                                            52                                                                                       -0.4
+
+                                                                                                                            65
+
+                                                                                                                                                                                                                                                  -0.6
+
+                                                                                                                            78
+
+                                                                                                                            91                                                                                       -0.8
+
+0.8                                                                                                                         104
+
+                                                                                                                                                                                                                                                      -1
+
+0.6                                                                                                          Overall
+
+                                                                                                             fn 01
+
+0.4                                                                                                          fn 02
+
+0.2                                                                                                          fn 03          Figure 4: Correlation matrix associated with returns of forward contracts.
+                                                                                                                            The column and row names are both the number of weeks until the
+                                                                                                             fn 04          beginning of the delivery period
+
+0                                                                                                            fn 05
+
+                                                                                                             fn 06
+
+-0.2
+
+      10       20  30   40       50  60         70                                              80       90  100
+
+                            Time [Weeks ahead]
+
+Figure 3: Volatility functions found by using method of linear
+interpolation. 'Overall' denotes the overall volatility curve, and fn i denote
+the volatility functions given by principal component i
+
+                                                                                                                            Table 5: Proportion of explained variance for different numbers of
+                                                                                                                            explanatory factors
+
+As can be seen from the dark blue curve in Figure 3,                                                                        Number of factors n 1  2  3  4  5                                                     6
+the overall volatility is monotonically decreasing. One
+would expect the overall volatility function to be strictly                                                                 Explained variance 0.73 0.88 0.92 0.93 0.95 0.96
+
+                                                                                                                         9
+3.4 Inflow process parameters                                                                             6 shows the partial autocorrelation of the Wt time series.
+                                                                                                          Similar to the findings of Shapiro et al. (2013), our dataset
+We fit the geometric periodic autoregressive (GPAR) model                                                 showed a high value at lag 1 and insignificant values for
+suggested by Shapiro et al. (2013) to the inflow data for                                                 larger lags, indicating that it is sufficient to include one lag
+the Søa hydropower plant. The dataset consists of daily                                                   only in the autoregressive model.
+inflow observations for each day between January 1, 1958,
+and December 31, 2016. According to TrønderEnergi, the                                                    Sample Partial Autocorrelations                                                    Sample Partial Autocorrelation Function
+data set has been constructed by combining observations                                                                                    1
+from two different sources. The observations from the most
+accurate source are found by measuring the change in water                                                                                 0.5
+level at the reservoirs and finding the inflow by adjusting
+for water used in production and spilled water. For days                                                                                   0
+without available production data, the inflow is calculated
+by measuring the water level in the rivers in the catchment                                                                                     5             10  15  20  25       30  35                                             40  45  50
+area of the hydropower plant.
+                                                                                                                                                                              Lag
+
+                                                                                                                                                Figure 6: Partial autocorrelation of the Wt time series
+
+Recall that the inflow is given by                                                                        The inflow process is periodic in the sense that it accounts
+                                                                                                          for seasonality - both in terms the expected weekly log
+              Yt = exp (Y,t + µ^t - t µ^t-1)Yt-t 1  (19)                                                  inflow µ^t , the strength of the autoregressive coefficient (t )
+                                                                                                          and the standard deviations of the error terms (Y,t ). Figure
+Here,                                                                                                     7 shows the seasonal pattern in the inflows. Specifically,
+                                                                                                          there is an inflow peak during the spring due to snow
+        · Yt is the inflow in week t                                                                      melting, and there are higher inflow levels in the fall due
+                                                                                                          to high precipitation levels in September, October, and
+        · µ^t is the mean log inflow in week t = 1, ..., 52                                               November.
+
+        · t is the coefficient in the autoregressive process in                                           Average inflow [m3]                2 ×107
+           week t = 1, ..., 52                                                                                                             1.5
+                                                                                                                                                              10  15  20  25       30  35                                             40  45  50
+        · Y,t  N(0, Y2,t ) is the error term representing the                                                                                1
+           difference between the observed and predicted value                                                                             0.5
+           in the autoregressive process
+                                                                                                                                             0
+        · Y,t is the standard deviation of the error terms in                                                                                              5
+           week t = 1, ..., 52
+                                                                                                                                                                          Week number
+
+                                                                                                                                                Figure 7: Average inflow for a certain week of the year
+
+For a right-skewed distribution such as the one that can be                                               3.5 Price and inflow correlation
+seen in Figure 5, a geometric process is better suited than an
+arithmetic process. It better captures the inflow dynamics,                                               As previously mentioned, we consider the correlation
+which can be extreme. Further, a geometric process does                                                   between the electricity spot price and inflow to the
+not allow for negative inflows. Shapiro et al. (2013) found                                               hydropower plant. In Section 2.5, this was introduced
+the inflow distribution for Brazilian hydropower plants to be                                             as the correlation i between the error terms i,t and Y,t
+right-skewed as well, favoring a log transformation of the                                                from Equation (11) and (19), where i = [1, ..., I] indicates
+inflow observations.                                                                                      a principal component. Since the first principal component
+                                                                                                          explains 73.38% of the total variation, we choose only to
+600                                               400                                                     calculate i for i = 1, and set i = 0 for i = 1. Therefore,
+                                                                                                          1 is hereby denoted . Mathematically, the correlation was
+400                                               300                                                     calculated by estimating the historical correlation coefficient
+                                                                                                          between the normalized error term of the inflow process,
+200                                               200                                                     Y,t , and the normalized first principal component (p1).
+
+0                                                 100
+
+     0  1  2  3  4  5                                0
+                                                      12 13 14 15 16 17 18
+        Distribution of weekly inflows [m3] ×107
+                                                                    Distribution of log observations
+
+        Figure 5: Distribution of inflow and log inflow observations                                      The error term in the inflow process is the difference
+                                                                                                          between the predicted and realized log-inflow. To be able
+Wt , the deviation of the log inflows from their mean,                                                    to find a correlation with the weekly inflow data, p1 had to
+is represented as an AR(1) process. The suitability of                                                    be transformed into a weekly resolution as well. Similar to
+a 1-lag process can be determined by investigating the                                                    how one would transform daily log returns to weekly log
+partial autocorrelation of the historical data for Wt . Partial                                           returns, the historical p1 observations were aggregated from
+autocorrelation is the correlation for a time series with its                                             daily to weekly observations by simple addition.
+own lagged variables, but removing the correlation effects
+of the values of the time series at all shorter lags. Figure                                              The resulting Pearson correlation coefficient was found
+                                                                                                          to be -0.1765, based on a time series of 248 weekly
+
+                                                                                                      10
+observations from April 28, 2011, to December 30, 2016.           have scaled the inflow values down with a factor of 105 such
+The 95% confidence interval was [-0.28, -0.06]. This              that their magnitudes are closer to those of the spot prices.
+suggests that there has been a weak offsetting effect between
+weekly inflow deviations and the first principal component,
+historically.
+
+3.6 Monte Carlo simulations and lattice construction
+
+In order to create a lattice, we had to run multiple parallel     (a) 105-weeks spot price lattice
+Monte Carlo simulations of spot price and inflow paths. The        (b) 105-weeks inflow lattice
+starting values of the price simulations included one current
+time spot price and the price of T^ - 1 forward contracts.
+Since we use weekly granularity and a horizon of T^ = 105
+weeks, this requires 104 weekly forward contracts with
+time to delivery  = [1, ..., 104]. However, only six weekly
+contracts are traded at NASDAQ Commodities, meaning
+that we must construct 99 synthetic weekly contracts. This
+is done by constructing a forward curve using the method
+of Fleten and Lemming (2003) and then discretizing it into
+104 weekly prices. Unlike the forward curves used to
+construct the volatility functions, which were discontinuous
+(see Figure 2), forward curves constructed using the method
+of Fleten and Lemming (2003) are both continuous and
+smooth. The method did, however, not provide us with
+plausible volatility functions, as we experienced issues with
+unrealistic oscillations in the near end for some of the
+forward curves.
+
+Mathematically, the forward price of a contract with delivery     Figure 8: Spot price and inflow lattices constructed with data for January
+in a given week W = [2, ..., 105] is calculated using the         7, 2013. The Y-axis for all plots denotes the time stages (weeks), while the
+average value of the forward curve within the time interval of    X-axis of the price lattice is denotes the spot price in EUR/MWh. For the
+that particular week. For the weeks W = [2, ..., 7], the weekly   inflow lattice, the Y-axis is denoted in 105m3. The red lines in the figures
+average value of the forward curve will be the price of the       represent the mean values. In the case of the spot price lattice, the mean
+six weekly forward contracts sold in the market. Also, if the     line is the initial forward curve.
+model is run on a Monday, the starting week spot price is
+set equal to the price of the one week ahead weekly contract      3.7 Expected discounted revenues from hydropower plant
+from the last trading day. Typically, this will be the previous
+week Friday.                                                      Having constructed the lattice, it is now possible to run
+                                                                  the scheduling model. We run it for five different starting
+It is important to note that while the spot prices in the Nordic  dates with different underlying forward curves and historical
+electricity market are area specific, the price of forward        starting values for the reservoir levels. One of the key figures
+contracts is the same for the entire Nordic and Baltic region.    we are interested in is the expected discounted revenues
+Thus, the spot price forecasted by our model is actually the      for the planning horizon. This is the value of production
+system spot price and not the NO3 area spot price, the price      during the next two years, assuming negligible variable
+Søa hydropower plant receives for their production. In this       costs. The revenues are discounted using the risk-free rate,
+paper, have not tried to model the relationship between the       as we are using risk-neutral probabilities. Furthermore, a
+system price and the NO3 price. We do, however, see that          key figure is the expected discounted revenues per produced
+the two prices are quite similar to each other, and believe       unit of electricity, which we will call expected discounted
+that using the system price instead of the area price is an       revenues per production. This figure is denominated in
+acceptable approximation considering the granularity and          EUR/MWh, and it allows us to compare the performance
+the scope of this paper.                                          of policies without differences in total production affecting
+                                                                  the results. For intuition, this figure can be thought of as the
+To construct the price and inflow scenario lattice, we have       average price at which the hydropower producer sells their
+used 380.000 Monte Carlo simulations. The lattice consists        power. However, this will be inaccurate in this case, since
+of 100 nodes for all time stages except the starting one,         the average price should be calculated using undiscounted
+giving a total count of 10401 nodes. Furthermore, each node       revenues.
+has two entries, inflow and spot price. Figure 8(a) displays
+the spot price lattice with starting date January 7, 2013,        Table 6 shows the expected discounted revenues for the
+while Figure 8(b) displays the inflow lattice. Since the lattice  upcoming 105 weeks, in addition to the expected discounted
+nodes are found by minimizing the Wasserstein distance, we        revenues per production. These results are based on
+
+                                                      11
+the revenues obtained by 50.000 simulated paths through                        3.8 Backtesting the production policy with realized price
+the lattice. The number (50.000) is chosen because it                                and inflow data
+enables the first three digits of all mean values to converge,
+while simultaneously keeping the computation time at an                        A crucial analysis for assessing the performance of the
+acceptable level.                                                              scheduling model is a backtest. When backtesting, we
+                                                                               have collected the realized weekly inflows and average area
+In Table 6, we also include one of the most important                          spot prices over the entire simulation horizon. Then, we
+immediate results for the production planner; the value of                     apply the policy to the realized history of price and inflow
+w1. We recall that wt is the amount of water nominated                         and get all decisions that our model would have made for
+for production at time stage t. Based on all possible future                   the given history of inflow and price. Using this, we can
+states and their corresponding probabilities, w1 tells the                     compare how our model performs compared to the existing
+production planner how much water they should nominate                         strategies of the hydropower production planner. Using
+for production in the current week in order to maximize their                  January 7, 2013, as our starting date, we have found the
+expected discounted revenues over the upcoming 105 weeks.                      realized weekly inflows and spot prices over the next 105
+We also include the average water dispatch q1 = w1/ ,                          weeks. Next, we have found the total revenues earned using
+where  = 604800s is the number of seconds per week.                            the model policy, and compare this with the actual income
+                                                                               earned by the power plant in the same time interval. In
+Table 6: Expected discounted revenues (EDR), expected discounted               reality, the Søa power plant generated discounted revenues
+revenues per production (EDR/Prod.), the amount of water nominated for         of 10.89 million EUR between January 7, 2013, and January
+production w1, and average water discharge q1 in week one for five different   11, 2015, from trading in the spot market. By applying
+starting dates. The starting values for reservoir levels are set according to  the policy obtained by our model, the plant would have
+their historical values.                                                       had discounted revenues of 11.69 million EUR, meaning
+                                                                               that using our model could have provided the production
+Parameter Unit     Jan 7  Apr 8  Jul 8  Oct 7  Jan 6                           planner with approximately 400.000 EUR in extra yearly
+                   2013   2013   2013   2013   2014                            revenues. To explain this difference, we look at the modeled
+EDR        [M                                                                  and realized head elevation curves for both reservoirs in the
+                   15.93  15.95  14.36  15.26  13.83                           corresponding period. These are interesting to compare,
+EDR/Prod.  EUR]                                                                as they show whether the model policy agrees or disagrees
+                   40.12 41.24 35.35 38.36 33.21                               with the realized strategy. In Figure 9 we have plotted the
+w1         [EUR/                                                               modeled and realized head curves for both reservoirs over
+q1                 0      5.21 10.28 0         0                               the simulation period.
+           MWh]
+           [M m3]  0      8.62 17.00 0         0
+           [m3/s]
+
+It is somewhat surprising that the model suggests no                           By visual inspection, we see that our model empties both
+production on multiple starting weeks, especially those of                     reservoirs in the last time stage, providing it with some
+January 7, 2013, and January 6, 2014. However, this is                         additional revenues compared to the historical operations.
+because the input forward curve suggests that the spot prices                  Thus, it might be more accurate to compare the revenues
+will be higher in the upcoming weeks, making it optimal to                     obtained during the first 52 weeks - that is, between
+wait.                                                                          January 7, 2013, and January 5, 2014, instead. In this
+                                                                               period, the plant earned discounted revenues of 6.22 million
+An important question that arises is how one should handle                     EUR. On the contrary, using the policies from our model,
+the end level of the reservoir. We have not imposed any end                    the discounted revenues provided to the plant would be
+level restrictions. Thus, there is no incentive to keep water in               6.34 million EUR, meaning that our model performs well
+the reservoir at the end of the horizon. In some of the above                  compared to reality also without emptying the reservoir in
+simulations, e.g., the ones starting and ending in January,                    the last time stage. Our model did, however, utilize more of
+emptying the reservoir would probably be a poor decision in                    its water for production in these 52 weeks, so we should also
+the reality since one would normally expect high prices in                     compare the expected discounted revenues per production
+the upcoming periods. Emptying the reservoirs in the last                      as well. In reality, the plant had discounted revenues per
+time stage will result in expected discounted revenues that                    production of 39.00 EUR/MWh between January 7, 2013,
+are slightly larger than what one would achieve in reality.                    and January 5, 2014, while our model had discounted
+Nevertheless, the end-of-horizon effects should not affect                     revenues per production of 38.92 EUR/MWh.
+the optimal immediate decision policy 1, which is the most
+interesting one for the production planner, in addition to                     Further inspection of the head curves shows that our model
+most decision policies tn when t is substantially smaller                      is less risk-averse than the real-life production planner. One
+than 2 years. Note that for cases in which the time horizon                    example of this can be seen by looking at the figure for
+ends during the spring when inflows are typically at their                     Vasslivatnet around week 36, that is, in the middle of
+maximum, it is reasonable to allow emptying the reservoir                      September 2013. Here, spot prices were quite high, so
+as much as possible.                                                           both our model and the real-life operation planner chose to
+                                                                               nominate relatively large amounts of water for production.
+                                                                               However, since spot prices tend to be higher during winter,
+                                                                               it is risky to empty the reservoirs in September. Therefore,
+
+                                                      12
+the real-life production planner chooses to nominate onlyHead elevation [moh]                            give the real-life production planner an advantage compared
+half of the amount that the model nominates. The model                                                   to our model. At last, the real-life production planner has
+is, however, expecting high inflows in the upcoming weeks,                                               access to short-term weather forecasts the our model does
+and therefore nominates relatively much water before it fills                                            not. Despite the circumstances discussed above, our model
+up the reservoir around week 46. Another good example is                                                 still manages to achieve similar results.
+around week 71, that is, one week before the summertime
+restriction on the reservoir level in Søvatnet starts to apply.                                          3.9 Loss calculations: Misspecified correlation coefficient
+While the real-life production planner fills up Søvatnet a few
+weeks ahead, the model expects sufficient inflows during                                                 As previously stated, we incorporate a correlation between
+the next week and decides to reduce the water level in the                                               movements in price and local inflow. It is interesting
+reservoir to approximately 1 meter below the summertime                                                  to test the effect of introducing this feature, as it can
+restriction. It does, however, still manage to fill up the                                               tell us how models that assume no correlation perform
+reservoir and meet the constraint in time.                                                               compared to ours. Therefore, we have first calculated the
+                                                                                                         expected revenues obtained when using different values of
+                                                                 Head elevation in Vasslivatnet          the correlation coefficient . More importantly, we have also
+    280                                                                                                  tested how decision policies obtained using  = 0 perform
+                                                                                                         when inflow and price movements are in fact correlated, and
+    278                                                                                                  what losses in expected a plant can experience when this
+                                                                                                         assumption is falsely made.
+    276
+
+    274
+
+    272
+
+    270
+
+                      268                                                                                In order to test the effect of introducing the correlation,
+                                                                                                         we have first made three lattices with different correlation
+                      266                                                                                values  = [0, -0.1765, -0.353]. We then compare
+                                                                                                         the simulated expected discounted revenues and average
+                      264                                                                                reservoir level curves for all three lattices and corresponding
+                                                                                                         decision policies to see how much they deviate. Once again,
+                      262                                                                                we have used 50.000 simulated paths, and for all three runs,
+                                                                                                         the starting date is January 7, 2013. The expected discounted
+                      260     6 11 16 21 26 31 36 41 46 51 56 61 66 71 76 81 86 91 96 101                revenues of all three runs are displayed in Table 7 and
+                           1                                                                   Week      mean optimal reservoir curves for Vasslivatn are displayed
+                                                                                                         in Figure 10.
+                                                        (a) Vasslivatnet
+                                                                                                         Table 7: Expected discounted revenues (EDR) obtained using three
+                              Head elevation in Søavatnet                                                different correlation coefficients .
+
+Head elevation [moh]    280
+                      279.5
+
+                        279
+                      278.5
+
+                        278
+                      277.5
+
+                        277
+
+                      276.5
+
+                      276                                                                                Correlation                   [-]   = 0  = -0.18  = -0.35
+                                                                                                         coefficient
+                      275.5                                                                              EDR                           [M EUR] 16.10 15.93                  15.83
+
+                      275     6 11 16 21 26 31 36 41 46 51 56 61 66 71 76 81 86 91 96 101                   280
+                           1                                                                   Week
+
+                                                         (b) Søvatnet                                                                       Head elevation in Vasslivatnet
+
+Figure 9: Modelled (red curve) and realized (blue curve) reservoir curves
+
+for Vasslivatnet and Søvatnet between January 7, 2013 and January 11,                                    Head elevation [moh]  275
+
+2015.
+
+                                                                                                                               270
+
+                                                                                                                               265
+
+The aforementioned points should help our model perform                                                                        260     6 11 16 21 26 31 36 41 46 51 56 61 66 71 76 81 86 91 96 101
+better than the real-life production planner. Another factor                                                                        1                                                                   Week
+helping our model is that it does not have to perform
+maintenance, which is an event that forces all operation to                                              Figure 10: Average reservoir curves for Vasslivatnet found using three
+be temporarily suspended. However, the real-life production                                              different values of the correlation coefficient . The red curve denotes
+planner has an advantage that our model does not have.                                                    = 0, the blue curve  = -0.1765 and the green curve  = -0.353.
+Since our model uses weekly granularity, it can only make
+production decisions on a weekly basis. We assume that our                                               By looking at the expected discounted revenues, we see
+model sells the electricity at a price equal to the average                                              that the higher we choose the correlation coefficient , the
+price of that week. In real life, the production planner                                                 larger are the expected discounted revenues. The correlation
+makes hourly decisions and can utilize the fluctuations of                                               coefficient undoubtedly affects the results, implying that it
+the electricity spot price both within a single day and within                                           must be estimated correctly.
+a week. They do also have access to the intraday market,
+allowing them to optimize their production further. The                                                  Next, we test how a decision policy created using the
+opportunity to optimize production on an hourly level should
+
+                                                                                                     13
+correlation  = 0 performs when we use it in a stochastic                   Table 9: Expected discounted revenues (EDR) obtained using different
+process where  = 0. We test this by first creating a lattice               number of factors I to describe the underlying price process.
+and obtaining the optimal decision policies for each node
+using  = 0. Instead of drawing simulated lattice paths                     Number                            of [-]           I = 1 I = 3 I = 6 I = 10
+based on the risk-neutral probabilities provided when  =                   factors
+0, we draw paths corresponding to a stochastic price and                   EDR                                    [M EUR] 15.80 15.86 15.93 16.00
+inflow process where  = 0. Then, to compare the policies,
+we look at the difference between the expected discounted                                                                                                     Head elevation in Vasslivatnet
+revenues obtained using policies with  = 0 and policies                                          280
+with  = 0. In Table 8, we present the expected discounted
+revenues obtained when the stochastic processes in reality                 Head elevation [moh]  275
+have a correlation  = -0.1765 and  = -0.353. As the
+results indicate, if the real correlation is  = -0.1765, the                                     270
+policies will provide expected discounted revenues that are
+2.5% lower than if the policies incorporated this correlation.                                   265
+For  = -0.353, the expected discounted revenues become
+3.1% lower. Although these differences might seem small,                                         260     6 11 16 21 26 31 36 41 46 51 56 61 66 71 76 81 86 91 96 101
+they show that the producer at Søa can miss out on                                                    1                                                                   Week
+discounted revenues of multiple 100.000 EUR yearly if they
+misspecify the correlation coefficient. Therefore, we find                 Figure 11: Average reservoir curves for Vasslivatnet obtained using
+it reasonable to conclude that the choice of the correlation               different number of factors in the forward price process. The red curve
+coefficient does have an effect on the model performance,                  is from a run with I = 1 factors, the dark blue one for a run with I = 3, the
+and should be considered by the production planner in their                red curve for I = 6 and the light blue curve for I = 10.
+model.
+                                                                           The results in Table 9 show that there is an increasing trend
+Table 8: Expected discounted revenues (EDR) calculated when using a        in expected discounted revenues when we use more factors
+policy in which  = 0, but where the real stochastic process has  =         to describe the price process. This should make sense, as
+[-0.1765, -0.353]. The bottom row indicates the difference between the     more factors can result in larger price fluctuations, thereby
+expected discounted revenues obtained using these policies versus the      resulting in a lattice with a larger difference between the
+expected discounted revenues obtained using a policy with the same  as in  highest and lowest possible price at a time stage. The
+the stochastic process, as shown in Table 7.                               optimal policies utilize the higher prices in the lattices
+                                                                           with more factors, and the model thereby forecasts larger
+                                                                           expected discounted revenues.
+
+Correlation  [-]   = -0.1765  = -0.353
+coefficient
+EDR          [M EUR] 15.54  15.40                                          As for the case with different values of , it might be more
+Performance                 -3.1%                                          interesting to test how the policies obtained using one-factor
+difference   [-]  -2.5%                                                    price model perform when the price process can, in reality,
+                                                                           be described using I = [3, 6, 10] factors. We, therefore, redo
+3.10 Loss calculations: Number of factors in the price                     the steps explained above for the case of different numbers
+        process                                                            of factors I instead of correlation coefficient . The expected
+                                                                           discounted revenues are displayed in Table 10. By looking at
+Further, up until now, we have used a price process with six               the numbers, we see that a policy created using a one-factor
+factors to describe the movements of a forward contract. The               price model will underperform by approximately 2% when
+number was chosen such that the proportion of explained                    the price process is in fact driven by multiple factors. Similar
+variance would be larger than 95%, a threshold value used                  to the case for different values of , this can result in a
+by Koekebakker and Ollmar (2005). However, Bjerksund                       decrease in revenues of multiple 100.000 EUR yearly for
+et al. (2008) claim that a proportion of 90% is sufficient,                a hydropower plant, underlining the importance of using a
+while Clewlow and Strickland (2000) choose the number of                   price process that is as correct as possible when modeling
+factors such that the proportion becomes 98.4%. Therefore,                 reservoir management.
+we perform a set of calculations similar to those in Section
+3.9, but instead of testing different values of , we use                   Table 10: Expected discounted revenues (EDR) calculated when using a
+a different number of factors I in the price process. We                   policy where the number of factors is I = 1, but where the real stochastic
+investigate four different numbers of factors: 1 (that is, we              price process is described by I = [3, 6, 10]. The bottom row indicates the
+use the overall volatility function), 3 (91.53% explanation),              difference between the expected discounted revenues using these policies
+6 (96.04% explanation) and 10 (98.44% explanation). The                    versus the expected discounted revenues obtained using a policy with the
+obtained expected discounted revenues are shown in Table                   same number of factors I as in the stochastic process, as shown in Table 9.
+9, and the mean optimal reservoir levels in Figure 11.
+                                                                                                 Number       of     [-]      I=3                                                             I=6    I = 10
+
+                                                                                                 factors N           [M EUR]  15.52                                                           15.61  15.63
+                                                                                                                     [-]      -2.1%                                                           -2.0%  -2.3%
+                                                                                                 EDR
+
+                                                                                                 Performance
+
+                                                                                                 difference
+
+                                        14
+4 Conclusions                                                              [6] Boger, M., Fleten, S.-E., Pichler, A., Keppo, J., and Vestbøstad,
+                                                                                  E. M. "Backing out Expectations from Hydropower Release Time
+In this paper, we present a medium-term model for reservoir                       Series". In: IAEE International Conference. 2017.
+management. We model the problem as a Markov decision
+process, and use a multi-factor model to describe changes                  [7] Clewlow, L. and Strickland, C. Energy Derivatives: Pricing and
+in forward and spot prices. We incorporate a short-term                           Risk Management. London, UK: Lacima Publications, 2000.
+correlation between the local inflow model and price model
+and solve the resulting stochastic-dynamic decision problem                [8] Flatabø, N., Haugstad, A., Mo, B., and Fosso, O. B. "Short-term
+using ADDP, which descretizes the Markov processes to a                           and Medium-term Generation Scheduling in the Norwegian Hydro
+scenario lattice and then solves the problem by learning an                       System under a Competitive Power Market Structure". In: EPSOM
+outer approximation of the value function.                                        '98 Proceedings. Switzerland: ETH Zu¨rich, 1998.
+
+                                                                           [9] Fleten, S.-E. and Lemming, J. "Constructing forward price curves
+                                                                                  in electricity markets". In: Energy Economics 25(5) (2003),
+                                                                                  pp. 409­424. DOI: 10.1016/S0140-9883(03)00039-2.
+
+                                                                       [10] Fosso, O. B., Gjelsvik, A., Haugstad, A., Mo, B., and Wangensteen,
+
+We find that there exists a short-term correlation between                 I. "Generation scheduling in a deregulated system. The Norwegian
+
+the weekly residuals of the inflow model and the increment                 case". In: IEEE Transactions on Power System 14(1) (1999),
+associated with the first volatility function of the forward               pp. 75­81. DOI: 10.1109/59.744487.
+
+curve movements. Our analysis indicates that ignoring [11] Harrison, J. M. and Pliska, S. R. "Martingales and stochastic
+                                                                           integrals in the theory of continuous trading". In: Stochastic
+correlation can result in sub-optimal reservoir control                    Processes and their Applications 11(3) (1981), pp. 215­260. DOI:
+
+decisions. In our case, we observe a decrease in expected                  10.1016/0304-4149(81)90026-0.
+
+revenues of 2.5% (that is, multiple 100.000 EUR yearly) if [12] Heath, D., Jarrow, R., and Morton, A. "Bond Pricing and the Term
+
+the correlation coefficient is in fact  = -0.1765.                         Structure of Interest Rates A New Methodology for Contingent
+
+                                                                           Claims Valuation". In: Econometrica 60(1) (1992), pp. 77­105. DOI:
+
+Our analyzes also show that it is important to use multiple                10.2307/2951677.
+
+factors when describing price movements. The result of [13] Iladis, N. A., Tilmant, A., Chabar, R., Granville, S., and Pereira,
+
+our case study is that solving the problem with a one-factor               M. "Optimal operation of hydro-dominated multireservoir systems
+model when the true model has multiple factors decrease                    in deregulated electricity markets". 2008. URL: https : / / www .
+                                                                           researchgate . net / publication / 228746176 _ Optimal _
+
+profits by about 2%. The number of factors will depend                     operation _ of _ hydro - dominated _ multireservoir _
+
+on the price data. We confirm the finding of Koekebakker                   systems_in_deregulated_electricity_markets.
+
+and Ollmar (2005) that we need more factors than is typical [14] Jaeck, E. and Lautier, D. "Volatility in electricity derivative markets:
+
+of commodity price models. In our case, we use six factors                 The Samuelson effect revisited". In: Energy Economics 59 (Aug.
+which explains 96% variance.                                               2016), pp. 300­313. DOI: 10.1016/j.eneco.2016.08.009.
+
+                                                                       [15] Johnson, B. and Barz, G. "Selecting stochastic processes for
+
+Compared with historical production decisions, our model                   modelling electricity prices". In: Energy Modelling and the
+produced similar results, despite the fact that decisions                  Management of Uncertainty. Ed. by Kaminski, V. Risk Books, 1999.
+                                                                           Chap. 1.
+
+were made in weekly granularity, whereas the planner [16] Kiesel, R., Paraschiv, F., and Sætherø, A. "On the Construction of
+makes planning decisions on a daily basis. Hence, using
+                                                                           Hourly Price Forward Curves for Electricity Prices". Aug. 2017.
+
+our model provides reliable production decisions if used                   URL: https : / / papers . ssrn . com / sol3 / papers . cfm ?
+
+for medium-term planning. These results are especially                     abstract_id=2845302.
+
+interesting since our model receives the average weekly [17] Koekebakker, S. and Ollmar, F. "Forward curve dynamics in the
+
+price, while the real-life production planner can make                     Nordic electricity market". In: Managerial Finance 31(6) (2005),
+decisions on an hourly basis, allowing them to produce                     pp. 73­94. DOI: 10.1108/03074350510769703.
+
+during periods with higher prices within a particular week [18] Kolsrud, C. W. and Prokosch, M. "Reservoir Hydropower: The value
+                                                                           of flexibility". Master thesis. Norwegian University of Science and
+that are not available for our model.                                      Technology, June 2010.
+
+References                                                             [19] Lamond, B. F. and Boukhtouta, A. "Optimizing long-term
+                                                                               hydro-power production using Markov decision processes". In:
+
+                                                                           International Transactions in Operational Research 3(3-4) (1996),
+
+[1] Abgottspon, H. and Andersson, G. "Medium-term optimization of          pp. 223­241. DOI: 10.1016/S0969-6016(96)00018-4.
+
+pumped hydro storage with stochastic intrastage subproblems". In:      [20] Lo¨hndorf, N. and Wozabal, D. "Indifference pricing of natural gas
+
+Power Systems Computation Conference (PSCC). IEEE, 2014.                   storage contracts". 2017. URL: http : / / www . optimization -
+
+[2] Alexander, C. Pricing, Hedging and Trading Financial Instruments.      online.org/DB_HTML/2017/02/5863.html.
+
+Vol. III. Market Risk Analysis. Chichester, West Sussex, UK: John [21] Lo¨hndorf, N., Wozabal, D., and Minner, S. "Optimizing trading
+Wiley & Sons, Ltd, 2008.
+                                                                           decisions for hydro storage systems using approximate dual
+
+[3] Bellman, R. Dynamic Programming. Princeton Landmarks in                dynamic programming". In: Operations Research 61(4) (2013),
+       Mathematics and Physics. Princeton University Press, 1957.          pp. 810­823. DOI: 10.1287/opre.2013.1182.
+
+[4] Benth, F. E., Koekebakker, S., and Ollmar, F. "Extracting and      [22] Maceira, M. and Dama´zio, J. "Use of the PAR (p) model in the
+
+applying smooth forward curves from average-based commodity                stochastic dual dynamic programming optimization scheme used
+
+contracts with seasonal variation". In: The Journal of Derivatives         in the operation planning of the Brazilian hydropower system".
+
+15(1) (2007), pp. 52­66. DOI: 10.3905/jod.2007.694791.                     In: Probability in the Engineering and Informational Sciences
+
+                                                                           20(1) (2006), pp. 143­156. DOI: doi . org / 10 . 1017 /
+
+[5] Bjerksund, P., Stensland, G., and Vagstad, F. "Gas Storage             S0269964806060098.
+
+Valuation: Price Modelling v. Optimization Methods". 2008. URL: [23] Madani, K. and Lund, J. R. "Modeling California's
+
+https : / / brage . bibsys . no / xmlui / bitstream / handle /             high-elevationhydropower systems in energy units". In: Water
+
+11250/163949/2008.pdf?sequence=1.                                          Resources Research 45(9) (2009). DOI: 10.1029/2008WR007206.
+
+                                                                       15
+[24] Masse´, P. Les Reserves et la Regulation de I'Avenir dans la vie [31] Shapiro, A., Tekaya, W., Costa, J. P. da, and Soares, M. P. "Risk
+
+      Economique. Vol. I and II. Paris, France: Hermann, 1946.                       neutral and risk averse Stochastic Dual Dynamic Programming
+
+[25] Mo, B., Gjelsvik, A., Grundt, A., and Ka°resen, K. "Optimisation of             method". In: European Journal of Operational Research 224(2)
+        hydropower operation in a liberalised market with focus on price             (2013), pp. 375­391. DOI: 10.1016/j.ejor.2012.08.022.
+
+      modelling". In: Porto Power Tech Conference. IEEE, 2001.
+
+[26] Mo, B., Green, T., Warland, G., and Haugstad, A. Dokumentasjon [32] SINTEF. EMPS - multi area power-market simulator - SINTEF.
+                                                                                     2017. URL: https://www.sintef.no/en/software/emps-
+      av ny prismodell til bruk i Vansimtap, Plansddp og Beta. Tech. rep.
+                                                                                     multi-area-power-market-simulator/.
+      Trondheim, Norway: Sintef Energiforskning AS, Sept. 2000.
+
+[27]  Pereira, M. and Pinto, L. "Multi-stage stochastic optimization           [33]  SINTEF. EOPS - one area power-market simulator. 2017. URL:
+      applied to energy planning". In: Mathematical Programming                      http://www.sintef.no/en/software/eops- one- area-
+      52(1-3) (1991), pp. 359­375. DOI: 10.1007/BF01582895.                          power-market-simulator/.
+
+[28] Powell, W. B. Approximate Dynamic Programming: Solving the
+
+      Curses of Dimensionality. Vol. 842. Princeton, New Jersey, USA: [34] Wallace, S. W. and Fleten, S.-E. "Stochastic Programming Models
+      John Wiley & Sons, 2011.
+                                                                                     in Energy". In: Handbooks in OR and MS. Ed. by Ruszczyn´ski, A. P.
+
+[29] Rebennack, S. "Combining sampling-based and scenario-based                      and Shapiro, A. Vol. 10. Elsevier Science B.V., 2003. Chap. 10,
+
+      nested Benders decomposition methods: application to stochastic                pp. 637­677.
+
+      dual dynamic programming". In: Mathematical Programming 156
+
+      (2015), pp. 343­389. DOI: 10.1007/s10107-015-0884-3.                     [35] Wolfgang, O., Haugstad, A., Mo, B., Gjelsvik, A., Wangensteen, I.,
+
+[30] Samuelson, P. A. "Proof That Properly Anticipated Prices Fluctuate              and Doorman, G. "Hydro reservoir handling in Norway before and
+
+      Randomly". In: Industrial Management Review 6(2) (1965),                       after deregulation". In: Energy 34(10) (2009), pp. 1642­1651. DOI:
+
+      pp. 41­49.                                                                     10.1016/j.energy.2009.07.025.
+
+                                                                           16
+

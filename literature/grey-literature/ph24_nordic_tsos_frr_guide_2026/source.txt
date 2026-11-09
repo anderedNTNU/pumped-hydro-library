@@ -1,0 +1,2249 @@
+Nordic FRR balancing capacity market
+
+                         Nordic MMS
+              BSP implementation guide
+
+                                               Version: 1.4
+                                           Date: 08.10.2026
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Revision history
+
+ Ver. Date Description
+
+ 1.0 20.08. First released version covering FRR
+           2025
+                           • New interface versions – definition of the ECP message type
+                           • Publishing reserve requirements 4.6
+                                     o process.processType
+                                     o subject_MarketParticipant – removed
+                                     o explanatory text for Bid_TimeSeries
+                                     o quantity_Measurement_Unit.name - implementation change required
+                                          when using the new IEC CIM scheme
+                           • Bid submission:
+                                     o Delivery scenarios
+                                     o connecting_Domain.mRID – improved description
+                                     o status – improved description
+                                     o quantity_Measurement_Unit.name - implementation change required
+                                          when using the new IEC CIM scheme
+                                     o minimum_ConstraintDuration.duration – improved description
+                           • Publishing bid acceptance results from Nordic MMS 4.7 - implementation
+                                changes required when using the new IEC CIM scheme:
+                                     o Delivery scenarios
+                                     o explanatory text for Bid_TimeSeries
+                                     o bid_Original_MarketDocument.bid_BidTimeSeries.mRID
+                                     o quantity_Measurement_Unit.name
+                                     o price_Measurement_Unit.name
+                                     o code
+                           • In case that there are no reserve requirements defined for an auction, the empty
+                                CIM xml messages with just a header is sent.
+                                     o Correction of the description
+                           • Bid updates to Nordic MMS is also allowed via ReserveBid_MarketDocument in
+                                version 7.4 (see 2.4 and 4.7)
+
+ 1.1 14.11. New description in the chapter 4.8: publication of the quantity rejected due to bottleneck.
+           2025
+                      New explanatory text: Bid_TimeSeries, Reason.code, Point.quantity
+
+                      New description of the domain.mRID element
+
+                      No new implementation is needed.
+
+ 1.2 04.12. New description of the exclusive groups in the chapter 0.
+           2025
+                      No new implementation is needed.
+
+                                                                                                                                             2
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+ Ver. Date Description
+
+ 1.3 19.03. Changes to how indivisible bids are defined (chapters 3.3.5, 3.3.8, 4.7).
+           2026
+                      Removal of the descriptions of the features which are currently not used on aFRR/mFRR
+                      markets. Formal cleaning.
+
+ 1.4 08.10. Specification of the dates from which changes to indivisible offers and exclusive linking of
+           2026 bids will be active.
+
+Table of content
+
+1 Introduction ............................................................................................................................................... 5
+  1.1 Background ............................................................................................................................................ 5
+  1.2 Scope .................................................................................................................................................. 5
+  1.3 Terms and definitions........................................................................................................................5
+  1.4 References.......................................................................................................................................... 7
+
+2 Business context .........................................................................................................................................8
+  2.1 aFRR market timeline........................................................................................................................8
+  2.2 mFRR market timeline ......................................................................................................................8
+  2.3 Timeline description ..........................................................................................................................8
+  2.4 System context ...................................................................................................................................9
+  2.5 General rules .................................................................................................................................... 10
+      2.5.1 Date and time............................................................................................................................... 10
+      2.5.2 Document coverage ..................................................................................................................... 10
+      2.5.3 Daylight saving time .................................................................................................................... 10
+      2.5.4 Document identification and revision number ........................................................................... 10
+      2.5.5 Update/cancel principles..............................................................................................................11
+      2.5.6 Cancel all bids ...............................................................................................................................11
+      2.5.7 Acknowledgement........................................................................................................................ 12
+      2.5.8 Time series period........................................................................................................................ 13
+
+3 Business process ....................................................................................................................................... 14
+  3.1 Sequence diagram............................................................................................................................ 14
+  3.2 Reserve requirements ...................................................................................................................... 15
+  3.3 Bid submission................................................................................................................................. 15
+      3.3.1 General rules ................................................................................................................................ 16
+      3.3.2 Bid quantity ................................................................................................................................. 16
+      3.3.3 Bid price ....................................................................................................................................... 16
+      3.3.4 Block bids..................................................................................................................................... 16
+      3.3.5 Bid divisibility .............................................................................................................................. 16
+      3.3.6 Exclusive linked bids ................................................................................................................... 17
+      3.3.7 Technical linking and quality limitations (technically linked group) ......................................... 18
+
+                                                                                                                                             3
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+      3.3.8 Registered resource ID ................................................................................................................ 18
+      3.3.9 Allowed bid type combinations ................................................................................................... 18
+      3.3.10 Invalid bid type combinations .................................................................................................20
+  3.4 Market result publishing..................................................................................................................20
+      3.4.1 Accepted bids ...............................................................................................................................20
+      3.4.2 Market results – volumes and prices...........................................................................................20
+      3.4.3 Republishing of market results....................................................................................................20
+      3.4.4 Withdrawal of market results ...................................................................................................... 21
+      3.4.5 Finish with non-purchase ............................................................................................................ 21
+4 Data flow descriptions ..............................................................................................................................22
+  4.1 Classification....................................................................................................................................22
+  4.2 Coding schemes ...............................................................................................................................22
+  4.3 Bidding zones...................................................................................................................................23
+  4.4 Control areas....................................................................................................................................23
+  4.5 Macro areas......................................................................................................................................23
+  4.6 Publishing reserve requirements by Nordic MMS ..........................................................................23
+  4.7 Bid submission by BSP ....................................................................................................................26
+  4.8 Publishing bids results by Nordic MMS ..........................................................................................34
+  4.9 Publishing total market results by Nordic MMS .............................................................................39
+  4.10 Acknowledgement document returned by Nordic MMS ................................................................. 41
+5 ECP ...........................................................................................................................................................43
+  5.1 How it works ....................................................................................................................................43
+  5.2 EDX..................................................................................................................................................43
+  5.3 How to connect ................................................................................................................................44
+  5.4 ECP/EDX for capacity market.........................................................................................................44
+6 Agents and data providers acting on behalf of BSPs ................................................................................ 45
+
+                                                                                                                                             4
+              Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+1 Introduction
+
+1.1 Background
+
+Nordic MMS has been developed to facilitate common Nordic capacity markets, with purpose to ensure the
+availability of reserves to ensure operational security. Nordic MMS allows TSOs to a joint procurement of
+balancing capacity in the Nordic market area before the day ahead market runs. Nordic MMS supports
+aFRR, mFRR and FCR reserve capacity markets, however the FCR reserve capacity markets are not the
+subject of this document.
+
+Automatic frequency restoration reserve (aFRR), manual frequency restoration reserve (mFRR) and
+frequency containment reserve (FCR) are types of balancing services that TSOs use for balancing of the
+Nordic synchronous area. In the Nordic aFRR and mFRR capacity market, aFRR/mFRR balancing capacity
+is procured before the day-ahead market, considering geographical distribution and network constraints.
+
+Nordic MMS allows the consideration of geographical distribution of reserve requirements, bids and
+network constraints in the market clearing. For FRR, the clearing uses the CZC reservation methodology.
+
+The selection of bids (and reservation of cross-zonal capacity in the case of FRR) are done in an
+optimisation function maximizing socioeconomic benefit by weighing savings in reserve procurement
+through exchange of balancing capacity against the socio-economic cost incurred by reserving CZC from the
+day ahead electricity market.
+
+1.2 Scope
+
+This document covers the technical implementation details on the BSP side, when integrating with Nordic
+MMS by describing the processes required to interact with the FRR capacity markets. Both functional and
+technical aspects are covered. The intended audience of this document are the participating BSPs. In
+control areas where the BSP role has not been separated from the BRP role, the target audience for this
+document are the BRPs providing balancing services to the respective TSOs. Thus, the acronym BSP can be
+seen as synonymous to BRP in these cases.
+
+The main processes described are:
+
+    • reserve requirement publication process,
+
+    • bid submission process,
+
+    • market result publishing process.
+
+1.3 Terms and definitions
+
+Acronym Term               Definition
+
+aFRR  Automatic frequency The FRR that can be activated by an automatic control device
+      restoration reserves designed to reduce the FRCE/ACE to zero
+
+aFRR  aFRR Capacity        The aFRR capacity market's role in the balancing / ancillary service
+CM    Market               process is to procure obligations on behalf of the TSOs from the
+                           BSPs, in which the BSPs commit to offering the allocated amount
+                           of balancing energy bids in the aFRR activation market.
+
+                                                                                                 5
+                   Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Acronym Term                Definition
+
+mFRR  Manual frequency      Manual frequency restoration reserves: active power reserves that
+      restoration reserves  may be manually activated, available to restore system frequency to
+                            the nominal frequency and, for a synchronous area consisting of
+                            more than one LFC area, to restore power balance to the scheduled
+                            value
+
+mFRR  mFRR Capacity         The mFRR capacity market's role in the balancing / ancillary service
+CM    Market                process is to procure obligations on behalf of the TSOs from the
+                            BSPs, in which the BSPs commit to offering the allocated amount of
+                            balancing energy bids in the mFRR activation market.
+
+BRP   Balance Responsible A market participant or its chosen representative responsible for its
+
+      Party                 imbalances
+
+BSP   Balancing Services    A market participant with reserve-providing units or reserve-
+      Provider              providing groups able to provide balancing services to TSOs
+
+CCC   Coordinated           The Nordic RSC’s is responsible to calculate cross-border
+
+      Capacity Calculation transmission capacities to maximise the transmission capacity
+
+                            offered to the day-ahead market.
+
+CIM   IEC Common
+      Information Model
+
+CZC   Cross Zonal Capacity The cross-zonal transmission capacity between two bidding zones
+
+ECP   Energy                Reference implementation of MADES standard
+      Communication
+      Platform
+
+MADES Market Data           Communication IEC standard designed by ENTSO-E
+
+      Exchange Standard
+
+MOL   Merit Order List
+
+MTU   Market Time Unit      The period for which the market price is established or the shortest
+TSO                         possible common time period for the two bidding zones if their
+      Transmission          market time units are different.
+      System Operator
+                            A party that is responsible for a stable power system operation
+      connecting TSO        (including the organisation of physical balance) through a
+                            transmission grid in a geographical area. In the Nordic synchronous
+                            area, there are four TSOs: Svenska kraftnät, Fingrid, Energinet.dk
+                            and Statnett.
+
+                            the TSO that operates the scheduling area in which balancing service
+                            providers and balance responsible parties shall be compliant with
+                            the terms and conditions related to balancing;
+
+                                                                                                  6
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+1.4 References
+
+Ref [1] The Nordic aFRR Capacity Market rules
+Ref [2] The Nordic mFRR Capacity Market rules
+Ref [3] Nordic Balancing Model – Publications (Implementation guides for BSP, etc.)
+Ref [4] Energy Market Communications – Acknowledgement Business Process and Contextual Model for
+
+             CIM European Market (IEC 62325-451-1)
+Ref [5] ENTSO-E Reserve Bid document – UML model and schema v 7.1
+Ref [6] ENTSO-E Reserve Bid document – UML model and schema v 7.4
+Ref [7] ENTSO-E Balancing Document – UML model and schema v 4.5
+Ref [8] ENTSO-E Reserve Allocation Result document – UML model and schema v 6.4
+Ref [9] ENTSO-E Acknowledgement document
+
+                                                                                                                                              7
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+2 Business context
+
+2.1 aFRR market timeline
+
+The aFRR capacity market involves several operational phases. The diagram below shows the timeline for
+the aFRR capacity market.
+
+Figure 1: aFRR market timeline
+
+2.2 mFRR market timeline
+
+The mFRR capacity market involves several operational phases. The diagram below shows the timeline for
+the mFRR capacity market.
+
+Figure 2: mFRR market timeline
+
+2.3 Timeline description
+
+• Long-term reserve requirements are published in regular intervals on the TSOs websites and visible in
+    Nordic MMS.
+
+• At the FRR capacity markets Gate Opening Time (GOT), Nordic MMS publishes the current reserve
+    requirements of the delivery day of the opened auction to TSOs and BSPs.
+
+• FRR markets gate opening time: BSPs can submit their bids to all capacity markets from D – 7 00:00
+    CET.
+                                                                                                                                             8
+                    Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+• Subsequently, when reserve requirements are updated, Nordic MMS republishes them to BSPs and
+    TSOs up until the gate closure time (GCT).
+
+• Based on whether reserve requirements are updated after gate opening, the TSOs publishes reserve
+    requirements through the described reserve requirement publishing process.
+
+• Between the capacity market Gate Opening Time (GOT) and the capacity market Gate Closure Time
+    (GCT), the BSPs can submit and update their bids (Bidding period).
+
+• FRR capacity markets gate closing time: BSPs can submit their bids to the aFRR / mFRR market until
+    D – 1, 07:30 CET.
+
+• After gate closure, the market clearing runs. The bid selection optimisation is executed, and the market
+    results are published to BSPs and TSOs.
+
+         o mFRR result publication: no later than D – 1, 8:10 CET
+
+         o aFRR result publication: no later than D – 1, 9:20 CET
+
+• The TSOs have the possibility to extend the bidding period or reopen the bidding gate.
+
+• Day-ahead aFRR/mFRR capacities publication:
+
+         o mFRR: At 9:35 CET, available capacities for common day ahead market coupling are published
+              by the RSC
+
+         o aFRR: At 10:00 CET, available capacities on interconnectors and in the grid are published
+
+2.4 System context
+
+This document provides detailed information about the message exchanges between Nordic MMS and the
+BSPs. The other exchanges are shown for contextual information purposes only and are outside the scope of
+this document.
+
+The table below provides an overview of the flows between Nordic MMS and the BSPs. The table shows that
+IEC CIM is used as data exchange format and ECP/ EDX is used as communication platform. Please refer to
+chapter 5 for more details related to ECP/EDX.
+
+Sender Receiver Data         Document                                  ECP message type
+
+Nordic BSP  Publish reserve  iec62325-451-7-                           MO-MCC-
+MMS         requirements     reservebiddocument.xsd – version          RESERVE-
+                             7.4                                       REQUIREMENTS-
+                                                                       V7-4
+
+BSP  Nordic Bids             iec62325-451-7-                           MO-MCC-BIDS
+     MMS                     reservebiddocument.xsd – version
+                             7.1
+
+                             iec62325-451-7-
+                             reservebiddocument.xsd – version
+                             7.4
+
+Nordic BSP  Acknowledgement iec62325-451-1-                            "original message
+MMS                                     acknowledgementdocument.xsd –  code"-ACK
+                                        version 8.0
+
+                                                                                                            9
+             Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Sender Receiver Data                     Document                        ECP message type
+                                                                         "original message
+BSP  Nordic  Acknowledgement iec62325-451-1-                             code"-ACK
+     MMS                                 acknowledgementdocument.xsd –
+                                         version 7.0                     MO-MCC-
+                                                                         ACCEPTED-BIDS-
+                                         iec62325-451-1-                 BSP-V6-4
+                                         acknowledgementdocument.xsd –   MO-MCC-MARKET-
+                                         version 8.0 („preferred“)       RESULTS-V4-5
+
+                                         iec62325-451-1-
+                                         acknowledgementdocument.xsd –
+                                         version 8.1
+
+Nordic BSP   Accepted bids               iec62325-451-7-
+MMS                                      reserveallocationresult.xsd –
+                                         version 6.4
+
+Nordic TSO   Market result               iec62325-451-6-balancing.xsd –
+MMS                                      version 4.5
+
+Table 1 Flow between Nordic MMS and BSP
+
+2.5 General rules
+
+The capacity markets business process flows assume certain basic rules. These rules are described below.
+
+2.5.1 Date and time
+
+Date and time are expressed using the standard XML format for date and time: YYYY‑MM‑DDTHH:MM:ssZ,
+formatted using the universal time standard UTC by adding a 'Z' behind the time - like this: 2022-06-
+14T22:00:00Z
+
+2.5.2 Document coverage
+
+The beginning and ending date and time of the period covered by the document shall cover just one
+CET/CEST day.
+
+2.5.3 Daylight saving time
+
+    • In winter, the period is from 23:00 UTC to 23:00 UTC
+    • In summer, the period is from 22:00 UTC to 22:00 UTC
+    • On the date of the change from winter to summer time, the period is from 23:00 UTC to 22:00 UTC.
+
+         This change occurs on the last Sunday in March at 01:00 UTC
+    • On the date of the change from summer to winter time, the period is from 22:00 UTC to 23:00 UTC.
+
+         This change occurs on the last Sunday in October at 01:00 UTC
+
+2.5.4 Document identification and revision number
+
+The document identification must be unique over time for the sender in question. Furthermore, the
+document identification itself should not have any significant meaning. The revision number is not used
+and shall always be equal to '1'.
+
+                                                                         10
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+2.5.5 Update/cancel principles
+
+In general, a new received document will always completely replace a previously received document.
+Update of any time series is done by sending a new document honouring these rules:
+
+    • A new document mRID (document identification)
+
+    • The same revision number (always equal to '1')
+
+    • A newer created date-time
+
+    • The same period/day, domain, auction.mRID and subject market participant (for bids) as for the
+         data being updated
+
+I.e. to cancel one or more time series, a new document is submitted honouring the above rules, omitting the
+bids that should be cancelled.
+
+2.5.6 Cancel all bids
+
+In order to cancel all bids by a given sender, day, and control area, a new document should be submitted
+with a dummy Bid_TimeSeries using element "status" and value A09 = cancelled. The time series must
+include the element auction.mRID, with the valid market code.
+
+    • The document period is specified as usual using the reserveBid_Period.timeInterval element.
+
+    • The document's scope (control area/bidding zone) is specified using the domain.mRID element.
+
+    • The dummy timeseries must include the status element and a reference to the market using element
+         auction.mRID.
+
+    • The content of the other mandatory timeseries elements is ignored.
+
+Working example:
+
+    • targetNamespace="urn:iec62325.351:tc57wg16:451-7:reservebiddocument:7:1"
+
+<ReserveBid_MarketDocument>
+…
+
+   <Bid_TimeSeries>
+          <mRID>8c520815945a43e88e1fb72e9ad05507</mRID>
+          <auction.mRID>MFRR_CAPACITY_MARKET</auction.mRID>
+          <businessType>B74</businessType>
+          <acquiring_Domain.mRID codingScheme="A01">10Y1001A1001A91G</acquiring_Domain.mRID>
+          <connecting_Domain.mRID codingScheme="A01">10YNO-3--------J</connecting_Domain.mRID>
+          <quantity_Measure_Unit.name>MAW</quantity_Measure_Unit.name>
+          <currency_Unit.name>EUR</currency_Unit.name>
+          <price_Measure_Unit.name>MAW</price_Measure_Unit.name>
+          <divisible>A01</divisible>
+          <blockBid>A02</blockBid>
+          <status>
+                <value>A09</value>
+          </status>
+          <flowDirection.direction>A01</flowDirection.direction>
+          <marketAgreement.type>A01</marketAgreement.type>
+          <Period>
+                <timeInterval>
+                     <start>2000-01-01T00:00Z</start>
+                     <end>2000-01-01T00:00Z</end>
+                </timeInterval>
+                <resolution>PT60M</resolution>
+                <Point>
+                     <position>1</position>
+                     <quantity.quantity>0</quantity.quantity>
+                     <price.amount>0</price.amount>
+                </Point>
+          </Period>
+
+   </Bid_TimeSeries>
+</ReserveBid_MarketDocument>
+
+    • targetNamespace="urn:iec62325.351:tc57wg16:451-7:reservebiddocument:7:4"
+
+                                                                                                                                             11
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+<ReserveBid_MarketDocument>
+…
+
+   <Bid_TimeSeries>
+          <mRID>8c520815945a43e88e1fb72e9ad05507</mRID>
+          <auction.mRID>MFRR_CAPACITY_MARKET</auction.mRID>
+          <businessType>B74</businessType>
+          <acquiring_Domain.mRID codingScheme="A01">10Y1001A1001A91G</acquiring_Domain.mRID>
+          <connecting_Domain.mRID codingScheme="A01">10YNO-3--------J</connecting_Domain.mRID>
+          <quantity_Measurement_Unit.name>MAW</quantity_Measure_Unit.name>
+          <currency_Unit.name>EUR</currency_Unit.name>
+          <price_Measurement_Unit.name>MAW</price_Measure_Unit.name>
+          <divisible>A01</divisible>
+          <blockBid>A02</blockBid>
+          <status>
+                <value>A09</value>
+          </status>
+          <flowDirection.direction>A01</flowDirection.direction>
+          <marketAgreement.type>A01</marketAgreement.type>
+          <Period>
+                <timeInterval>
+                     <start>2000-01-01T00:00Z</start>
+                     <end>2000-01-01T00:00Z</end>
+                </timeInterval>
+                <resolution>PT60M</resolution>
+                <Point>
+                     <position>1</position>
+                     <quantity.quantity>0</quantity.quantity>
+                     <price.amount>0</price.amount>
+                </Point>
+          </Period>
+
+   </Bid_TimeSeries>
+</ReserveBid_MarketDocument>
+
+2.5.7 Acknowledgement
+
+For the Bid submission process, an acknowledgement document, as defined in Ref [9] is generated as
+response, either completely accepting the received document or rejecting it completely. Partial accept of
+documents is not used. The codes and values used in this document are provided in chapter 4.10.
+
+The acknowledgement will always contain a document level Reason, with either code A01 (Message fully
+accepted) or A02 (Message fully rejected).
+
+The acknowledgement may also contain further document level Reason(s), explaining document level
+errors.
+
+The acknowledgement may also contain one or more Rejected_Timeseries, with one or more
+timeseries level Reason(s).
+
+The acknowledgement may also contain one or more InError_Period within the
+Rejected_Timeseries, with one or more Reason(s) for a given time interval.
+
+See example code snippet below:
+
+<Acknowledgement_MarketDocument>
+…
+
+   <Rejected_TimeSeries>
+          <mRID>4CDF6AAA-4C0D-98DB-94CDE58FB4B5</mRID>
+          <InError_Period>
+                  <timeInterval>
+                         <start>2021-01-07T00:00Z</start>
+                         <end>2021-01-07T01:00Z</end>
+                  </timeInterval>
+                  <Reason>
+                         <code>A59</code>
+                         <text>All quantities of block bid must be equal.</text>
+                  </Reason>
+          </InError_Period>
+          <Reason>
+              <code>A22</code>
+              <text>Invalid BSP</text>
+
+                                                                                                                                            12
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+          </Reason>
+   </Rejected_TimeSeries>
+   <Reason>
+
+       <code>A02</code>
+       <text>Document fully rejected.</text>
+   </Reason>
+   <Reason>
+       <code>A51</code>
+       <text>The attribute createdDateTime cannot be in the future.</text>
+   </Reason>
+<Acknowledgement_MarketDocument>
+
+2.5.8 Time series period
+
+Within a time series period, the position must always begin with '1' and be incremented by '1' for each
+subsequent position, forming a series of contiguous numbers covering the complete range of the period.
+Furthermore, gaps in the time series are allowed. In this case, the time series will comprise of several
+periods to indicate the gaps.
+
+See code snippet below:
+
+<Bid_TimeSeries>
+...
+
+       <Period>
+              <timeInterval>
+                     <start>2018-09-17T03:00Z</start>
+                     <end>2018-09-17T05:00Z</end>
+              </timeInterval>
+              <resolution>PT60M</resolution>
+              <Point>
+                     <position>1</position>
+                     <quantity.quantity>100</quantity.quantity>
+                     <minimum_Quantity.quantity>100</minimum_Quantity.quantity>
+                     <price.amount>25.20</price.amount>
+              </Point>
+              <Point>
+                     <position>2</position>
+                     <quantity.quantity>100</quantity.quantity>
+                     <minimum_Quantity.quantity>100</minimum_Quantity.quantity>
+                     <price.amount>25.20</price.amount>
+              </Point>
+
+       </Period>
+       <Period>
+
+              <timeInterval>
+                     <start>2018-09-17T15:00Z</start>
+                     <end>2018-09-17T17:00Z</end>
+
+              </timeInterval>
+              <resolution>PT60M</resolution>
+              <Point>
+
+                     <position>1</position>
+                     <quantity.quantity>100</quantity.quantity>
+                     <minimum_Quantity.quantity>100</minimum_Quantity.quantity>
+                     <price.amount>25.20</price.amount>
+              </Point>
+              <Point>
+                     <position>2</position>
+                     <quantity.quantity>100</quantity.quantity>
+                     <minimum_Quantity.quantity>100</minimum_Quantity.quantity>
+                     <price.amount>25.20</price.amount>
+              </Point>
+       </Period>
+</Bid_TimeSeries>
+
+                                                                                                                                            13
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+3 Business process
+
+This chapter provides information related to the business rules that apply.
+
+3.1 Sequence diagram
+
+The sequence diagram for the whole capacity market is depicted below. Note that the last two shown
+exchanges are provided for information only and are outside the scope of this document. Please refer to
+local user guides for further details.
+
+Figure 1 Sequence diagram for the capacity markets
+
+                                                                                                                                            14
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+3.2 Reserve requirements
+
+Publication of the reserve requirements is maintained by the MO (market operator) as long-term
+requirements in Nordic MMS directly.
+
+Nordic MMS publishes reserve requirements as CIM xml messages at gate opening to inform the BSPs and
+TSOs about the reserve requirements known at the moment when the auction is being opened. TSOs can
+update daily reserve requirements before auction clearing, and Nordic MMS will then publish the updated
+reserve requirements to all TSOs and BSPs.
+
+In case that there are no reserve requirements defined for an auction, the empty CIM xml messages with
+just a header is sent.
+
+In Nordic MMS geographic areas that can carry reserve requirements can be bidding zones and / or macro
+areas in case of the aFRR and mFRR markets.
+
+Macro areas are sets of one or more bidding zones. The minimum and maximum regulation may be defined
+as a part of the reserve requirements definition on a macro area and if specified, it works as a localization
+constraint, i.e. it sets a minimum or maximum limit on how much of the bid volume can be selected locally
+in the macro area's set of bidding zones. This can result in forcing or limiting exchange between bidding
+zones.
+
+In CIM messages, minimum and maximum regulations that function as localization constraint in addition
+to the need, will appear in additional time series with their respective business types.
+
+This process is used for the distribution of the reserve requirements (demand, minimum regulation and
+maximum regulation) of bidding zones and macro areas towards BSPs. The provided data is considered
+public information and all BSPs receive the same document.
+
+The published reserve requirements are daily data in hourly resolution. They apply to a single auction and
+delivery day only.
+
+Reserve requirements are published shortly after gate opening. They are also sent out as result of being
+updated after they have been initially published, which allows TSOs to make and inform about changes even
+after the bidding gate has been opened.
+
+3.3 Bid submission
+
+During the bidding phase, the participating BSPs provide all information related to bids for the FRR
+capacity markets. The ReserveBid_MarketDocument is used to provide this information. Alternatively, bids
+can be submitted via the Nordic MMS web user interface. The same business rules apply for both
+alternatives.
+
+In order to be able to submit bids to Nordic MMS, the BSP needs to have a valid portfolio in the market and
+bidding zone to bid in. A portfolio represents that the BSP has prequalified resources to provide the
+required type of balancing services in a certain bidding zone and an agreement with the responsible TSO to
+participate in the market.
+
+For a general description of the ReserveBid_MarketDocument schema, please refer to Ref [5]. The codes
+and values to be used in this document are provided in chapter 4.7.
+
+The following business rules apply to the bid submission process. It is up to the BSPs’ responsible TSO to
+decide whether some the following market features are enabled or not as well as setting threshold values.
+
+                                                                                                                                            15
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+3.3.1 General rules
+
+•  A Reserve Bid Document contains a set of bids (a bid is represented by a time series)
+
+•  A Reserve Bid Document shall be for only one subject party
+
+•  The ECP endpoint used to send the data must be associated with the subject party either by:
+
+    The subject party being the same as the sender and being directly associated with endpoint
+       used
+
+    The subject party having an active agent-principal (BSP) relationship with the agent
+       identified in the sender market participant (logical sender) and by the sender ECP endpoint
+       (physical sender)
+
+•  The delivery period for a bid must belong to the same tender period for all bids in a Reserve Bid
+
+   Document
+
+•  Bids are given per bidding zone, which means as portfolio-bids, unless the TSO requires the
+
+   BSPs to provide further location information on the bid using registered resource identifiers:
+
+    Statnett requires locational information both for aFRR and mFRR.
+
+    Energinet and Fingrid require locational information for mFRR.
+
+•  One Reserve Bid Document can be sent per control area, which includes all bids for all bidding
+
+   zones the BSP has a portfolio in. It is also possible to send Reserve Bid Document per bidding
+
+   zone. The document scope (control area or bidding zone) defines the set of bids replaced by the
+
+   new document sent in. The number of bids submitted may not exceed the maximum number of
+
+   bids set per portfolio.
+
+3.3.2 Bid quantity
+
+•  Bid quantity may vary for all hours in the time series
+
+•  Bid quantity (and minimum bid quantity) must be an integer number between 0 and 999.
+
+•  Bid quantity may not exceed the [Maximum bid quality] per regulation direction and bidding
+
+   zone, given by the BSP portfolio.
+
+3.3.3 Bid price
+
+•  Bid price must be present and have the same value for all positions in a time series
+
+•  Bid price must be between 0 and 9,999 €/MW/h, with maximum two decimal places.
+
+3.3.4 Block bids
+
+•  All quantities of a block bid must be equal and represent a continuous interval of market time
+
+   units - no gap is allowed in the sequence of MTUs.
+
+•  All offered quantities of the block bid must be accepted or rejected.
+
+•  A block bid cannot be part of an exclusive group.
+
+3.3.5 Bid divisibility
+
+The divisible bid is the basic bid type. The bid can be accepted or rejected fully or partially, i.e. the accepted
+quantity is between offered quantity and zero, however accepted quantity different from zero cannot be less
+than minimum quantity of the bid. Minimum quantity of a divisible bid must not exceed 50 MW.
+
+An indivisible bid must be accepted or rejected fully, i.e. the accepted quantity is equal to the offered
+quantity or zero. Minimum quantity of the bid must not be set for indivisible bids. Offered quantity of an
+indivisible bid must not exceed 50 MW.
+
+                                                                                                            16
+                          Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Bids marked as indivisible may be submitted only for the delivery days before 27.10.2026. Since that day,
+indivisibility in a bid can only be induced by the BSP setting the minimum quantity appropriate (but not
+higher than 50 MW). Exclusive linked bids
+
+Two or more bids can be linked into single exclusive group. For each MTU, only one bid which is part of the
+exclusive group can be accepted, all other bids must be rejected in that MTU.
+
+Nordic MMS supports exclusive linking of bids within the same market and between aFRR and mFRR
+market. Markets are cleared in a specific clearing order: aFRR CM before mFRR CM. The rules for the
+cross-market exclusive linking change as of the delivery date 15.10.2026.
+
+Rules for cross-market exclusive linking valid till the delivery date 15.10.2026:
+
+   If an aFRR bid which is part of an exclusive group across markets is selected, all mFRR bids in the
+   same exclusive group will not be offered to the bid selection of the mFRR market and can thus not
+   be selected there in the same market time unit.
+
+Rules for cross-market exclusive linking valid since the delivery date 15.10.2026:
+
+   If an aFRR bid which is part of an exclusive group across markets is selected, all divisible mFRR bids
+   in the same exclusive group will be offered to the bid selection of mFRR market with the offered
+   quantity decreased by the accepted quantity of the aFRR bid. If the quantity after decreasing would
+   be less than minimum quantity, the corresponding bid becomes unavailable.
+
+Please note that the common order of the market clearings (first aFRR, second mFRR) may exceptionally be
+reversed. The above-described rules apply then analogically from mFRR to aFRR.
+
+Rules for creation of the exclusive group:
+
+•        Bids in the same exclusive group must belong to the same bidding zone
+
+         (connecting_Domain.mRID)
+
+•        Bids in the same exclusive group must be of the same direction
+
+•        An exclusive group must contain at least two bids
+
+•        A block bid cannot be part of an exclusive group.
+
+Evaluation of the exclusive groups within the same market:
+
+• Single hour bids:
+
+         o The single hour bid is evaluated separately for each MTU => multiple single hour bids can
+             be accepted but accepted MTU will be always different
+
+         Exclusive group  Block bid         1:00            2:00  3:00             4:00
+
+   BID1  2                                  1               1     1                      Single hour bids only
+   BID2
+                                            1                     1
+
+         Exclusive group  Block bid         1:00            2:00  3:00             4:00
+
+   BID1  3                                  1               1     1                 1    Single hour bids only
+   BID2                                     1                     1                 1
+
+Legend:
+
+• Green colour: the bid is accepted in the given hour
+• Red colour: the bid cannot be accepted because of acceptation of the other bid in the given hour
+• No colour: no acceptation = no restriction
+
+                                                                                                                17
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+3.3.6 Technical linking and quality limitations (technically linked group)
+The feature allows the following bid quality constraints to be set:
+
+    • Resting time
+
+    • Maximum activation duration
+
+    • Quality constraints can be set for the bids for the mFRR service.
+
+    • This feature is not allowed for the bids for the aFRR service.
+
+Bid time series with common resting time and activation duration limitations need to be specified with a
+common technical linked group identification in the linkedBidsIdentification element. These bids are then
+chosen only in MTUs where the bids are available for activation.
+
+The bid selection will not select such bids in market time units where they can be unavailable due to
+selections in other MTUs of the same or other time series with the same linkedBidsIdentification.
+
+• Bids in the same technically linked group must be situated in the same bidding zone.
+• Bids in the same technically linked group must have the same duration and resting time values.
+• The technically linked group must contain at least two bids.
+• Block bid cannot be part of technically linked group.
+
+3.3.7 Registered resource ID
+
+Nordic MMS allows specifying registered resource identifiers on the bids if the responsible TSO requires
+that information.
+
+3.3.8 Allowed bid type combinations
+
+Bids can be linked in time or mutually exclusive. They can be also technically linked. Before delivery day
+25.11.2026, they can be also indivisible, but from delivery day 25.11.2026, the bid cannot be directly market
+as indivisible. The indivisibility may be, however, achieved by the setting a sufficiently high minimum
+quantity. The table below describes each of these bid properties, and every allowed combination of these
+properties.
+
+Divisibility  Block  Exclusive  Technical    Description
+              (B)    (E)        linking and
+                                quality
+                                limitations
+
+Divisible     No     No         Technical    Single bid – varying quantity – divisible, non-
+                                linking      block bid has the same rules as described in
+                                available –  case 0 with the difference that it can be
+                                mFRR only    accepted in the range between minimum and
+                                             offered quantity. The divisibility is expressed
+                                             by the presence of the minimum quantity. The
+                                             minimum quantity can be also zero. The result
+                                             can be different for every hour of the bid.
+
+                                                                                                           18
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Divisibility  Block  Exclusive  Technical    Description
+              (B)    (E)        linking and
+Indivisible                     quality      Single bid – indivisible, non-block bid can
+(before                         limitations  span one or more hours (discontinuous
+25.11.2026)                                  interval is allowed). Each hour is cleared
+              No     No         Technical    separately, i.e. the bid can be accepted or
+                                linking      rejected separately hour by hour. The accepted
+                                available –  quantity must either be equal to the offered
+                                mFRR only    quantity or zero. The result can be different in
+                                             every hour of the bid.
+Divisible     Yes No            Technical
+                                linking not  Divisible block (between minimum and offered
+                                available    quantity) bid spans multiple consecutive hours
+                                             (discontinuous interval is not allowed) with
+Indivisible   Yes No            Technical    the same quantities per hour. In all hours, the
+                                linking not  bid must be either accepted (between
+(before                         available    minimum and offered quantity) or rejected.
+                                             I.e. it is not possible to accept the bid in one
+25.11.2026)                     Technical    hour and reject it in another hour.
+                                linking
+Indivisible   No     Yes        available –  Indivisible block bid spans multiple
+                                mFRR only    consecutive hours (discontinuous interval is
+(before                                      not allowed) with the same quantities per
+                                             hour. In all hours, the bid must be either fully
+25.11.2026)                                  accepted or rejected.
+
+Divisible     No     Yes        Technical    Exclusive bids in the same group (they have
+                                linking      the same exclusive group id) are mutually
+                                available –  exclusive for the same hour (block bids cannot
+                                mFRR only    be part of the exclusive bid group). The bid can
+                                             be accepted in the given hour only if all other
+                                             bids in the group are rejected.
+
+                                             Bids can be exclusively linked across markets
+                                             (aFRR/mFRR).
+
+                                             The same case as IE with the difference that
+                                             the bid can be accepted also partially (between
+                                             minimum and offered quantity). Please note
+                                             that the exclusive group can contain both
+                                             divisible and indivisible bids (before
+                                             25.11.2026).
+
+                                             Bids can be exclusively linked across markets
+                                             (aFRR/mFRR).
+
+                                             19
+               Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+3.3.9 Invalid bid type combinations
+ Block (B) Exclusive (E) Description
+
+Yes       Yes  Block bid cannot be part of the exclusive group.
+
+Yes       Yes  Block bid cannot be part of the exclusive group.
+
+3.4 Market result publishing
+
+When the bid selection optimization process is completed, and the result from the auction is ready, the
+following information is published from the Nordic MMS system:
+
+Document                                Information              Timing
+
+Accepted bids                           Only own bids            When bid selection
+ReserveAllocationResult_MarketDocument                           optimization process is
+                                        Both procured and        completed and the
+                                        offered prices and       auction results have
+                                        quantities               been published.
+
+Market result  Volumes                  Market volumes
+
+Balancing_MarketDocument Prices         Market prices
+
+Settlement of accepted bids uses the pay-as-cleared methodology, meaning that the market result includes
+clearing prices per bidding zone, market time unit and regulation direction with the price being included
+both in the balancing market document and the reserve allocation result market document.
+
+3.4.1 Accepted bids
+
+The ReserveAllocationResult_MarketDocument as defined in 4.7 is used to provide information about
+BSPs bids acceptation. Firstly, a status of the bids that submitted to the auction is provided after auction
+clearing.
+
+One of the following reasons is used to indicate the status of the Auction contract (bids):
+
+• bid is accepted (A73)
+• bid is not accepted (B09)
+• bid is partially accepted (A72)
+• bid is rejected by TSO or due to the bottleneck (B16)
+
+3.4.2 Market results – volumes and prices
+
+The Balancing_MarketDocument as defined in 4.9 is used to provide information about the market prices
+and the total volume per hour and direction. The codes and values to be used in this document are provided
+in chapter 4.9. Nordic MMS distributes one Balancing_MarketDocument message per BSP and market
+result publication run. BSPs which did not enter bids into an auction do not by default receive market result
+messages. A BSP can however be flagged in Nordic MMS to receive the market results messages even if the
+BSP does not enter bids into an auction. To enable this, the BSP should contact their local TSO.
+
+3.4.3 Republishing of market results
+
+Nordic MMS can republish the market results multiple times due to different reasons:
+                                                                                                                                            20
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+    • If the auction result is valid but cannot be processed by recipients due to inconsistencies in party
+         identifiers. In this case, master data in the local MMS or in Nordic MMS requires to be updated
+         before the market result is republished.
+
+    • Republishing can also be initiated when communication with some or all recipient endpoints has
+         previously failed.
+
+To support the update/cancel principle described in 2.5.5 and ensuring that the new market result replaces
+any earlier received market results, all documents that are sent will have new document mRID and updated
+createdDateTime.
+3.4.4 Withdrawal of market results
+Nordic MMS can withdraw the market result because of an invalid clearing result. As part of a withdrawal
+process, Nordic MMS will send out new market result messages with the following changes:
+
+    • Any previously accepted or partially accepted bids are changed to not accepted, which means the
+         reason code is set to B09 – Bid not accepted
+
+    • All accepted volumes in the total market results are set to 0
+    • The price element is not included
+Nordic MMS allows auction results to be published and withdrawn multiple times for one auction run.
+3.4.5 Finish with non-purchase
+Finish with non-purchase is a special market result, where:
+    • All reason codes in the accepted bids message are set to B09 – Bid not accepted
+    • All accepted volumes in the total market results are set to 0
+There are three possible scenarios for such zero results to be distributed:
+    • There are no reserve requirements
+    • No auction result has been published within the final publication deadline
+    • The auction has been cancelled because of extraordinary market conditions or a permanent failure
+
+         during market clearing
+Non-purchase market results completely replace and invalidate earlier published results.
+
+                                                                                                                                            21
+                      Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+4 Data flow descriptions
+
+This chapter provides the dependencies for the documents used to support the FRR and FCR capacity
+markets.
+
+4.1 Classification
+
+The dependency matrices describe the classification of the attributes. The following are classifications are
+used:
+
+    • M – The information is mandatory, i.e. the element is mandatory in the XSD schema
+    • R – The information is required, i.e. the element is not mandatory in the XSD schema but is
+
+         required by the business process
+    • D – The information is dependent, i.e. the presence depends on certain condition(s)
+    • O – The information is optional.
+
+4.2 Coding schemes
+
+When communication with Nordic MMS, the coding scheme to identify senders and receivers can vary by
+TSO. The local TSO defines which coding scheme and party code to use for the market participants it is
+responsible for.
+
+Some sender / receiver systems like Nordic MMS use fixed codes and coding scheme A01.
+
+Code Coding scheme Description and reference
+
+A01 EIC               Energy Identification Codes: https://www.entsoe.eu/data/energy-
+                      identification-codes-eic/
+
+A10 GS1/ GLN          Global Location Number, provided by GS1:
+                      https://gepir.gs1.org/index.php/search-by-gln
+
+NSE Swedish national
+
+NFI Finnish national
+
+NDK Danish national
+
+NNO Norwegian
+           national
+
+                                                                                                              22
+                   Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+4.3 Bidding zones
+
+The FRR capacity market consists of the following bidding zones:
+
+Name  TSO          mRID              Coding scheme
+
+DK1   Energinet    10YDK-1--------W EIC
+
+DK2   Energinet    10YDK-2--------M EIC
+
+FI    Fingrid      10YFI-1--------U  EIC
+
+NO1   Statnett     10YNO-1--------2  EIC
+
+NO2   Statnett     10YNO-2--------T EIC
+
+NO3   Statnett     10YNO-3--------J EIC
+
+NO4   Statnett     10YNO-4--------9 EIC
+
+NO5   Statnett     10Y1001A1001A48H EIC
+
+SE1   Svenska kraftnät 10Y1001A1001A44P EIC
+
+SE2   Svenska kraftnät 10Y1001A1001A45N EIC
+
+SE3   Svenska kraftnät 10Y1001A1001A46L EIC
+
+SE4   Svenska kraftnät 10Y1001A1001A47J EIC
+
+4.4 Control areas
+
+    • Denmark (DK): 10Y1001A1001A796
+    • Finland: 10YFI-1--------U
+    • Norway: 10YNO-0--------C
+    • Sweden: 10YSE-1--------K
+
+4.5 Macro areas
+
+    • Norway: 10YNO-0--------C
+    • Sweden: 10YSE-1--------K
+    • Finland: 10YFI-1--------U
+
+4.6 Publishing reserve requirements by Nordic MMS
+
+The data flow is used for distribution of the reserve requirements (demand, minimum regulation and
+maximum regulation) of bidding zones and macro areas towards BSPs.
+The publishing of reserve requirements uses the ReserveBid_MarketDocument in version 7.4.
+
+                                                                                                                                            23
+                      Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+For a general description of the ReserveBid_MarketDocument schema in version 7.4, please refer to Ref
+[6].
+
+Document scope:
+
+Each received document shall always contain data for one day and:
+
+• all bidding zones assigned to the market for aFRR/mFRR markets, and
+
+• all macro areas assigned to the market.
+
+ReserveBid_MarketDocument                  451-7-reservebiddocument.xsd – version 7.4
+
+mRID                             M  Unique identification of the document.  
+
+revisionNumber                   M  Constant value of 1 
+
+Type                             M  B21 = Reserve need document
+
+process.processType              M  A47 = Manual frequency restoration reserve
+
+                                           A51 = Automatic frequency restoration reserve
+
+sender_MarketParticipant.mRID  M  10V1001C--000284 (Nordic MMS)
+
+                                           A01 = EIC coding scheme
+
+sender_MarketParticipant.        M  A34 = Reserve Allocator
+marketRole.type 
+
+receiver_MarketParticipant.mRID  M  Identification of the party receiving the document
+
+                                           Identification is supported by several coding schemes.
+                                           See Chapter 4.2: "Coding schemes"
+
+receiver_MarketParticipant.      M  A46 = Balancing Service Provider (BSP)
+marketRole.type 
+
+createdDateTime                  M  Date and time of document creation (in ISO 8601 UTC
+                                        format)  
+
+                                           YYYY-MM-DDTHH:MM:SSZ 
+
+reserveBid_Period.timeInterval   M  The period covered by the document (in ISO 8601 UTC
+                                        format) 
+
+                                           Start: YYYY-MM-DDTHH:MMZ 
+
+                                           End: YYYY-MM-DDTHH:MMZ 
+
+domain.mRID                      M  EIC identification of the market area:
+
+                                           10Y1001A1001A91G = Nordic Area
+
+                                           A01 – EIC coding scheme 
+
+BidTimeSeries
+
+                                                                                                       24
+               Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Bidding zone requirements: Three time series may be present for each bidding zone and
+each direction:
+
+    • demand,
+    • minimum regulation,
+    • maximum regulation.
+Macro area requirements: Two time series may be present for each macro area and each
+direction:
+
+     • minimum regulation,  M  Unique identification of the need timeseries.  
+     • maximum regulation.
+mRID 
+
+auction.mRID                M  Constant value:
+
+                            MFRR_CAPACITY_MARKET
+
+                            AFRR_CAPACITY_MARKET
+
+businessType                M  For demand: B75 = The demand that should be covered
+                                   in the specified amount.
+
+                            Relevant for a bidding zones and macro areas in the
+                            acquiring domain.
+
+                            For minimum regulation: A60 = A localization
+                            constraint for the procurement of balancing capacity,
+                            forcing the market to procure the given minimum of
+                            reserves in the specified geographic area.
+
+                            Relevant for a bidding zones and macro areas in the
+                            acquiring domain.
+
+                            For maximum regulation: A61 = A localization
+                            constraint for the procurement of balancing capacity,
+                            forcing the market to procure reserves exceeding the
+                            maximum regulation outside of the given geographic
+                            area.
+
+                            Relevant for bidding zones and macro areas in the
+                            acquiring domain.
+
+                            Note: A60 and A61 does not have to be present if any
+                            relevant value is not specified.
+
+acquiring_Domain.mRID       M  The identification of the area with the reserve
+                                   requirement or localization constraint.
+
+                            This can be a bidding zone or a macro area
+                            identification.
+
+                              A01 - EIC coding scheme 
+
+                            EIC identification of the market area:
+
+                                                                                       25
+                    Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+connecting_Domain.mRID    M  10Y1001A1001A91G (Nordic Market Area)
+
+                          The EIC identification of the bidding zone where the
+                          resources bidding against the reserve requirement are
+                          located. This will be set as the Nordic market area in
+                          anticipation of a Nordic exchange of FRR balancing
+                          capacity. 
+
+                          A01 - EIC coding scheme 
+
+quantity_Measurement_Unit.name M  MAW = megawatt 
+
+Divisible                 M  A01 = Yes
+
+flowDirection.direction   M  A01 = Up
+
+                          A02 = Down
+
+Period
+
+timeInterval              M  Period covered (in ISO 8601 UTC format).
+
+                          Start: YYYY-MM-DDTHH:MMZ 
+
+                          End: YYYY-MM-DDTHH:MMZ 
+
+Resolution                M  PT60M – the time resolution.
+
+Point
+
+Position                  M  Sequential value beginning with 1.
+
+quantity.quantity         M  Quantity of:
+
+                          For business type B75: Inelastic demand per bidding
+                          zone or per macro area
+
+                          For business type A60: Minimum reserve regulation
+                          per bidding zone or Minimum reserve regulation per
+                          macro area (depending on the acquiring domain)
+
+                          For business type A61: Maximum reserve regulation
+                          per bidding zone or Maximum reserve regulation per
+                          macro area (depending on the acquiring domain)
+
+4.7 Bid submission by BSP
+
+The data flow is used by BSPs to submit the bids to the capacity market.
+
+There are two message delivery scenarios. In the first scenario, the BSP sends the message to Nordic MMS
+by own name. In the second scenario, the agent creates/updates bids on behalf of the other BSP (principal).
+
+                                                                                  26
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Explanatory table:
+
+Sender (sender_MarketParticipant) subject_MarketParticipant
+
+BSP                            BSP
+
+BSP (agent)                    BSP (principal)
+
+The ReserveBid_MarketDocument in version 7.1 or 7.4 can be used for bid submission.
+
+For a general description of the ReserveBid_MarketDocument schema in version 7.1, please refer to Ref [5].
+
+For a general description of the ReserveBid_MarketDocument schema in version 7.4, please refer to Ref
+[6].
+
+Each received document shall always contain data for one day, one BSP and one control area/bidding zone.
+The scope is therefore defined by combination of the elements:
+
+    • reserveBid_Period.timeInterval,
+
+    • domain.mRID (= control area/bidding zone),
+
+    • subject_MarketParticipant.mRID (= subject BSP),
+
+    • auction.mRID of first time series in the document (= market).
+
+The bids within the scope which are already stored in the Nordic MMS are deleted and replaced by new bids
+in the incoming XML file. In other words, each new XML document always completely replaces all existing
+bids in the scope (day, control area, subject BSP, market).
+
+Consequently, the submission of the empty XML document would lead to the removal of all existing bids in
+the scope. However, the empty document does not allow to identify the market in question because the
+element auction.mRID is on time series level. In that case, the sender must send one "dummy" time series
+with element status and value A09 = cancelled. The only purpose of this time series is to identify the
+market. The content of the time series is ignored. The completely empty document will be rejected with the
+reason code A69 and reason text: „At least one time series must be present“.
+
+ReserveBid_MarketDocument           Applicable:
+
+                                    451-7-reservebiddocument.xsd – version 7.1
+
+                                    451-7-reservebiddocument.xsd – version 7.4
+
+mRID                           M Unique identification of the document
+
+revisionNumber                 M Constant value of "1"
+
+Type                           M B40 = Complete Reserve Bid Document
+
+process.processType            M A47 = Manual frequency restoration reserve (mFRR)
+
+                                    A51 = Automatic frequency restoration reserve (aFRR)
+
+sender_MarketParticipant.mRID  M Identification of the party sending the document =
+                                       valid BSP
+
+                                    Identification is supported by several coding schemes.
+                                    See chapter 4.2: "Coding schemes"
+
+                                                                                                       27
+                 Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+sender_MarketParticipant.       M A46 = Balancing Service Provider (BSP)
+marketRole.type                         A39 = Data Provider (Agent)
+
+                                Agents sending on behalf of BSPs must use market role
+                                A39 when submitting bids. See chapter 6: "Agents and
+                                data providers acting on behalf of BSPs"
+
+receiver_MarketParticipant.mRID M 10V1001C--000284 (Nordic MMS)
+
+                                A01 = EIC coding scheme
+
+receiver_MarketParticipant.     M A34 = Reserve Allocator
+marketRole.type
+
+createdDateTime                 M Date and time of document creation (in ISO 8601 UTC
+                                        format)
+
+                                YYYY-MM-DDTHH:MM:SSZ
+
+                                Used for the general validation that a newer document
+                                (i.e. with a more recent createdDateTime) in the same
+                                scope has not already been processed.
+
+reserveBid_Period.timeInterval  M The period covered by the document (in ISO 8601 UTC
+                                        format)
+
+                                Start: YYYY-MM-DDTHH:MMZ
+
+                                End: YYYY-MM-DDTHH:MMZ
+
+                                Start and end interval must define an entire CET Day
+
+domain.mRID                     M Code of control area or bidding zone.
+
+                                Must be under the TSO responsibility
+
+                                See list of allowed Bidding zones
+
+                                See list of allowed Control areas
+
+                                Note: If BSP is active in more control areas, it must
+                                send more documents – one for each control area.)
+
+                                A01 – EIC coding scheme
+
+                                                                                       28
+Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+subject_MarketParticipant.mRID  M Identification of the party responsible for the bid
+
+subject_MarketParticipant.              subject_MarketParticipant must be:
+marketRole.type
+Bid_TimeSeries                               • the same as the BSP as
+mRID                                              the sender_MarketParticipant.
+auction.mRID
+                                             • or the subject_MarketParticipant must be the
+businessType                                      principal BSP for the agent BSP which is the
+acquiring_Domain.mRID                             sender_MarketParticipant. The relation
+connecting_Domain.mRID                            between principal and agent must be valid and
+                                                  active for the given business day
+                                                  (reserveBid_Period.timeInterval).
+
+                                        Identification is supported by several coding schemes.
+                                        See chapter 4.2: "Coding schemes"
+
+                                M A46 = Balancing Service Provider (BSP)
+
+                                M Unique identification of the time series
+
+                                M Constant value:
+
+                                        MFRR_CAPACITY_MARKET
+
+                                        AFRR_CAPACITY_MARKET
+
+                                        Note: All elements auction.mRID in the document
+                                        must have the same value. It is not allowed to submit
+                                        the bids for multiple markets in single file.
+
+                                M B74 = The time series provides an offer to provide
+                                        reserves.
+
+                                M 10Y1001A1001A91G (Nordic Market Area)
+
+                                        A01 - EIC coding scheme
+
+                                M The EIC identification of the bidding zone where the
+                                        bids are placed. See chapter: 4.3: "Bidding zones".
+
+                                        Note: this bidding zone must correspond with domain.
+
+                                        If domain is set as control area this bidding zone must
+                                        below to this control area.
+
+                                        If domain is set as bidding zone this biding zone must
+                                        be the same.
+
+                                        This bidding zone must be in the BSP
+                                        (subject_MarketParticipant.mRID) portfolio.
+
+                                        A01 - EIC coding scheme
+
+                                29
+                    Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+quantity_Measure_Unit.name (v M    MAW = megawatt
+7.1)
+                                   EUR = euro
+quantity_Measurement_Unit.name
+(v 7.4)                            MAW = megawatt
+
+currency_Unit.name              R  A01 = Divisible. Quantity may be reduced stepwise
+                                   down to the minimum quantity
+price_Measure_Unit.name (v 7.1) R
+                                   A02 = Indivisible. No reduction possible on the
+price_Measurement_Unit.name (v     quantity. Indivisible bids will not be directly allowed
+7.4)                               for the delivery days from 25.11.2026.
+
+divisible                       M  Used for technical linking of bids by providing a
+                                   technical linked group identification.
+linkedBidsIdentification        D
+                                   Bid time series with common resting time
+                                   (resting_ConstraintDuration.duration) and activation
+                                   duration limitations
+                                   (maximum_ConstraintDuration.duration) need to be
+                                   specified with a common technical linked group
+                                   identification in the linkedBidsIdentification element
+                                   such that these bids are chosen in market time units
+                                   where the bids are available for activation.
+
+                                   The bid selection will not select such bids in market
+                                   time units where they can be unavailable due to
+                                   selections in other market time units of the same or
+                                   other timeseries with the same
+                                   linkedBidsIdentification.
+
+                                   Not used if the bid is not linked or does not have
+                                   quality limitations.
+
+                                   Quality limitations and thus technical linking cannot
+                                   be combined with block bids.
+
+                                   Allowed for mFRR markets only.
+
+                                   30
+Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+exclusiveBidsIdentification  D The identification used to associate bids that are to be
+blockBid                             linked together.
+status
+                                     If one bid is selected, then all others with the same
+                                     exclusiveBidsID cannot be selected.
+
+                                     Apart from exclusive bid groups within a market and
+                                     bidding zone, it allows the exclusive cross-linking of
+                                     bids between markets, to be able to offer a resources
+                                     flexibility in two markets with simultaneous gate
+                                     closure without risking double acceptances.
+
+                                     Not used if the bid is not part of an exclusive group
+
+                                     Note: cannot be used together witch blockBid.
+
+                             O A01 – Yes – all quantities within the time interval
+                                     must be selected
+
+                                     A02 – No
+
+                                     Indicator of the block bid. In all MTUs, the block bid
+                                     must be either accepted (between minimum and
+                                     offered quantity or fully – depending on the divisible
+                                     flag) or rejected. I.e. it is not possible to accept the bid
+                                     in one MTU and reject it in another MTU.
+
+                                     If the element is not present, the bid is considered as
+                                     non-block.
+
+                             O The information about the status of the bid.
+
+                                     The element is optional. If the element is present, it
+                                     must contain the value A09 (Cancelled) and is used
+                                     for being able to cancel all bids for a given delivery
+                                     date and market. In that case, the content of the time
+                                     series is ignored.
+
+                                     If a time series with such a status is part of the
+                                     document, it must be the only time series in the
+                                     document. The time series is present only for the
+                                     purpose of the identification of the market (which is
+                                     part of the document scope).
+
+                                     As a result of uses of the status element, all bids
+                                     provided by given BSP
+                                     (subject_MarketParticipant.mRID) will be deleted
+                                     from the system. Set of the deleted bids is affected by
+                                     element domain.
+
+                                            • domain.mRID is filled by the control area =>
+                                                 bids for given control area are deleted
+
+                                            • domain.mRID is filled by the bidding zone =>
+                                                 bids for given bidding zone are deleted
+
+                                                                                                             31
+Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+registeredResource.mRID      D Location of the bid.
+
+flowDirection.direction      In other contexts this is also called “Resource
+marketAgreement.type         identifier”, “Location id” and “Stasjonsgruppe id”
+resting_ConstraintDuration.
+duration                     The element may be either mandatory or disabled for
+                             the given market and control area, depending on the
+                             local TSO rules.
+
+                             If the element is present, it must contain a valid
+                             location information according to the local TSO rules.
+
+                             If the element is not present and the attribute is set as
+                             mandatory, it is considered as an error.
+
+                             Please note that for Finland, this identifier is
+                             mandatory for mFRR (not for aFRR) and used to
+                             indicate the area location of the bid.
+
+                             The coding scheme used is EIC, and the value must be
+                             one of these:
+
+                                 • "10YFI-0--------3" for North Finland
+                                 • "10YFI-2--------K" for South Finland
+                                 • "10YFI-3-------9R" for Central Finland
+                             Coding scheme:
+
+                             •  "NNO": Norwegian national
+
+                             •  "NSE": Sweden national
+
+                             M A01 = Up
+
+                             A02 = Down
+
+                             O A01 – daily
+
+                             O The delay to be respected between the end of activation
+                                     and the start of the next activation.
+
+                             The standard ISO 8601 is used for duration. The
+                             allowed form in this context is PTnH, where n is the
+                             number of hours. Leading zeros are allowed.
+
+                             The element is optional. If the element is not present,
+                             the empty value is written to the corresponding bid
+                             attribute.
+
+                             Can be used only for the mFRR market.
+
+                                                                                        32
+Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+maximum_ConstraintDuration.  O The maximum duration that a regulation has to be up
+duration                             once the bid is activated.
+
+Period                               The standard ISO 8601 is used for duration. The
+timeInterval                         allowed form in this context is PTnH, where n is the
+                                     number of hours. Leading zeros are allowed.
+resolution
+Point                                The element is optional. If the element is not present,
+position                             the empty value is written to the corresponding bid
+quantity.quantity                    attribute.
+minimum_Quantity.quantity
+                                     Can be used only for the mFRR market.
+price.amount
+                             M Period covered (in ISO 8601 UTC format)
+
+                                     Time interval must be a subset of
+                                     reserveBid_Period.timeInterval and must not overlap
+                                     with any other time interval of the same time series.
+
+                                     Start: YYYY-MM-DDTHH:MMZ
+
+                                     End: YYYY-MM-DDTHH:MMZ
+
+                             M Constant value PT1H or PT60M
+
+                                     The precision of the interval that the different points
+                                     within the time series cover is one hour
+
+                             M Position within the time interval. Sequential value
+                                     beginning with 1
+
+                             M Offered quantity
+
+                             D The minimum quantity of energy that can be activated
+                             (M) at a given time position.
+
+                                     The minimum quantity must be present if bid is
+                                     marked as divisible (A01) and must not be present
+                                     when the bid is market as indivisible (A02).
+
+                                     Since delivery day 25.11.2026, this element is
+                                     mandatory because completely indivisible bids with
+                                     variable volumes across MTUs will no longer be
+                                     supported.
+
+                                     Must be specified as the same value across all points
+                                     across all periods of the bid.
+
+                             M The price of the product offered
+
+                                     Must be specified as the same value across all points
+                                     across all periods of the bid.
+
+                                                                                                            33
+                          Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+4.8 Publishing bids results by Nordic MMS
+
+The data flow is used for distribution of detailed results (accepted and not accepted bids) towards BSPs
+after auction clearing.
+
+There are two message delivery scenarios. In the baseline scenario, the BSP receives the message as
+expected. In the alternative scenario, an agent acting on behalf of the BSP receives the message instead of
+the affected BSP (principal).
+
+Explanatory table:
+
+Receiver  Party in time series Description
+
+BSP       BSP                Results are distributed directly to BSP which is the input of the
+                             dataflow.
+
+BSP (agent) BSP (principal)  Results are distributed to the agents – the data of their
+                             principals are sent. BSP (agent) always receives one document
+                             containing all bids in all control areas of their principals).
+
+The document is sent to:
+
+    • BSPs who have inserted at least one bid.
+    • Agent on behalf of the principal BSP if at least one bid of its principal exists.
+List of possible documents:
+
+The publishing of detailed results using the ReserveAllocationResult_MarketDocument in version 6.4.
+
+For a general description of the ReserveAllocationResult_MarketDocument schema in version 6.4, please
+refer to Ref [8].
+
+ReserveAllocationResult_     iec62325-451-7-reserveallocationresult.xsd –
+MarketDocument               version 6.4
+
+mRID                         M Unique identification of the document
+
+revisionNumber               M Constant value of "1"
+
+type                         M A38 = Reserve allocation result document
+
+process.processType          M A47 = Manual frequency restoration reserve (mFRR)
+
+                             A51 = Automatic frequency restoration reserve (aFRR)
+
+sender_MarketParticipant.mRID M 10V1001C—000284 (Nordic MMS)
+
+                             A01 = EIC coding scheme
+
+sender _MarketParticipant.   M A34 = Reserve Allocator
+marketRole.type
+
+receiver_MarketParticipant.mRID M Identification of the party receiving the document
+
+                             Identification is supported by several coding schemes.
+                             See chapter 4.2: "Coding schemes"
+
+                                                                                                             34
+                 Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+receiver_MarketParticipant.     M A46 = Balancing Service Provider (BSP)
+marketRole.type
+                                     A39 = Data Provider, see chapter 6: "Agents and data
+                                     providers acting on behalf of BSPs"
+
+createdDateTime                 M Date and time of document creation (in ISO 8601 UTC
+                                     format)
+
+                                YYYY-MM-DDTHH:MM:SSZ
+
+reserveBid_Period.timeInterval  M Period covered (in ISO 8601 UTC format)
+
+                                YYYY-MM-DDTHH:MMZ
+
+domain.mRID                     M Code of control area. Each document covers just one
+                                     control area. If BSP is active in more control areas, it
+                                     receives more documents – one for each control area.
+
+                                A01 - EIC coding scheme
+
+TimeSeries
+
+Each time series represent one bid. However, each bid may be presented by:
+
+    • one time series for accepted quantities for balancing purposes (standard output of
+         the market clearing) – this time series is always present for the bid,
+
+    • one for accepted quantities due to the bottleneck – present only if the bid is at least
+         partially accepted due to the bottleneck in the transmission network,
+
+    • one for rejected quantities due to the bottleneck – present only if the bid is at least
+         partially rejected due to the bottleneck in the transmission network,
+
+Each time series (standard and bottleneck) can contain the different time interval.
+
+mRID                            M An identification that uniquely identified the time series
+                                     within the document.
+
+                                Generated automatically by Nordic MMS. This is not an
+                                identification of the bid.
+
+bid_Original_MarketDocument.    M Constant value of "NA"
+mRID
+
+bid_Original_MarketDocument.    M Constant value of "1"
+revisionNumber
+
+bid_Original_MarketDocument.    M The bid ID
+bid_BidTimeSeries.mRID
+                                     The identification of the time series that was used in the
+                                     original tender – the reference to the bid
+
+bid_Original_MarketDocument.    M The ID of the tendering party
+tendering_
+                                     Identification is supported by several coding schemes.
+MarketParticipant.mRID               See chapter 4.2: "Coding schemes"
+
+                                                                                                 35
+                    Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+auction.mRID                 M Possible values:
+
+                             MFRR_CAPACITY_MARKET
+
+                             AFRR_CAPACITY_MARKET
+
+businessType                 M B95 = Procured capacity (used for Auction contracts)
+
+acquiring_Domain.mRID        M 10Y1001A1001A91G (Nordic Market Area)
+
+                             A01 = EIC coding scheme
+
+connecting_Domain.mRID       M The EIC identification of the bidding zone where the bids
+                                  were placed. See chapter: 4.3: "Bidding zones".
+
+                             A01 = EIC coding scheme
+
+marketAgreement.type         M A01 = daily
+
+marketAgreement.mRID         M Constant value of "NA"
+
+quantity_Measurement_Unit.name M MAW = megawatt
+
+currency_Unit.name           R EUR = Euro
+
+price_Measurement_Unit.name  M MAW = megawatt
+
+registeredResource.mRID      O The identification of a location associated with a bid.
+
+                             If location is not used, the element is omitted.
+
+flowDirection.direction      M A01 = Up
+
+                             A02 = Down
+
+resting_ConstraintDuration.  O The delay to be respected between the end of activation
+duration                          and the start of the next activation.
+
+                             The standard ISO 8601 is used. The number of hours
+                             stored in the time series is converted to the format
+                             PTnH, where n is the number of hours.
+
+                             If the value of the time series is empty, the element is
+                             omitted.
+
+maximum_ConstraintDuration.  O The maximum duration that a regulation has to be up
+duration                          once the bid is activated.
+
+                             The standard ISO 8601 is used. The number of hours
+                             stored in the time series is converted to the format
+                             PTnH, where n is the number of hours.
+
+                             If the value of the time series is empty, the element is
+                             omitted.
+
+                                                                                        36
+Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Reason (within Time Series)      M The first code informs whether the presented values
+Two reason codes are specified.       describe bid from the perspective of standard balancing
+code                                  process or acceptance due to bottleneck.
+
+code                                  B49 = bid is described by the perspective of the standard
+                                      balancing process
+text
+                                      B42 = the time series describes the bid in a bottleneck
+                                      perspective (accepted or rejected due to the bottleneck).
+
+                                 M The second code informs whether the bid has been
+                                      accepted or rejected.
+
+                                      A73 = bid has been fully accepted (in all hours of the
+                                      day)
+
+                                      A72 = bid has been partially accepted (at least in one
+                                      hour). If the bid is partially accepted for balancing
+                                      purposes and partially due to the bottleneck (and
+                                      consequently, the bid is present twice in the document),
+                                      both time series are marked as partially accepted.
+
+                                      B09 = bid has been rejected by the clearing algorithm
+
+                                      B16 = bid has been rejected by TSO (in combination
+                                      with reason code B49 above) or due to the bottleneck (in
+                                      combination with reason code B42 above).
+
+                                 D A reason for rejection described in flat text. A reason for
+                                      rejection can be specified by the TSO and will be
+                                      included here.
+
+                                      Only may be present if reason code = B16
+
+                                 37
+              Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+Period        M Period covered (in ISO 8601 UTC format)
+timeInterval
+              YYYY-MM-DDTHH:MMZ
+resolution
+Point         Each time interval represents one continuous interval of
+position      hours where accepted quantity is available.
+quantity
+price.amount  1 2 3 4 5 6 7 8 9 Etc.
+
+              VVVV  V V Etc.
+
+              "V" represents any filled-in accepted quantity.
+
+              In this case, the following intervals are built:
+
+                  • 1–4 (i.e. 00:00–4:00)
+
+                  • 7–8 (i.e. 6:00–8:00)
+
+              For the time series representing the acceptance for the
+              balancing purposes (which is present always in the
+              document), the accepted quantity is available for each hour
+              for which there is a bid quantity. The accepted quantity is
+              always filled with at least zero (in case of non-accepted
+              quantity).
+
+              For the time series representing the acceptance due to the
+              bottleneck (which is present optionally), the accepted
+              quantity is present only for hours where the bid is at least
+              partially accepted due to the bottleneck.
+
+              M PT60M – the precision of the interval that the different
+                      points within the time series cover is one hour
+
+              M Position within the time interval. Sequential value beginning
+                      with 1
+
+              M The accepted quantity of the bid in the given point.
+
+                      For combination of reason codes B42 and B16 (rejection due
+                      to the bottleneck), the element contains the quantity rejected
+                      due to the bottleneck.
+
+              D The accepted price of the contract identified for a point
+
+                      The price is present if accepted quantity > 0. The price is not
+                      present for rejected quantity.
+
+                      The accepted price can be different from the original offered
+                      price and can be different hour by hour.
+
+                      The quantity accepted for balancing purposes is charged by
+                      the clearing price. The quantity accepted due to the
+                      bottleneck is charged by the bid price.
+
+                                                                                                       38
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+secondaryQuantity         R The offered quantity identified for a point
+bid_Price.amount          R The offered price identified for a point
+
+4.9 Publishing total market results by Nordic MMS
+
+The data flow is used to distribute overall auction results (area volumes and prices) towards BSPs. The
+document is sent to all BSPs who submitted at least one bid (in any bidding zone). The document contains
+the data of all bidding zones in the given market.
+
+The publishing of market results using the Balancing_MarketDocument in version 4.5.
+
+For a general description of the Balancing_MarketDocument schema in version 4.5, please refer to Ref [7].
+
+Balancing_MarketDocument            iec62325-451-6-balancing.xsd – version 4.5
+
+mRID                                M Unique identification of the document
+
+revisionNumber                      M Constant value of "1"
+
+type                                M B34 = Market result document
+
+process.processType                 M A47 = Manual frequency restoration reserve
+                                         (mFRR)
+
+                                    A51 = Automatic frequency restoration reserve
+                                    (aFRR)
+
+sender_MarketParticipant.mRID       M 10V1001C—000284 (Nordic MMS)
+
+                                    A01 = EIC coding scheme
+
+sender                              M A34 = Reserve Allocator
+
+_MarketParticipant.marketRole.type
+
+receiver_MarketParticipant.mRID     M Identification of the BSP receiving the document
+
+                                    Identification is supported by several coding
+                                    schemes. See chapter 4.2: "Coding schemes"
+
+receiver_MarketParticipant.marketR  M A46 = Balancing Service Provider (BSP)
+ole.type
+                                         A39 = Data Provider, see chapter 6: "Agents and
+                                         data providers acting on behalf of BSPs"
+
+createdDateTime                     M Date and time of document creation (in ISO 8601
+                                         UTC format)
+
+                                    YYYY-MM-DDTHH:MM:SSZ
+
+area_Domain.mRID                    M 10Y1001A1001A91G (Nordic Market Area)
+
+                                    A01 – EIC coding scheme
+
+                                                                                          39
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+period.timeInterval                 M The period covered by the document (in ISO 8601
+                                         UTC format)
+
+                                    YYYY-MM-DDTHH:MMZ
+
+TimeSeries
+
+mRID                                M An identification that uniquely identifies the time
+                                         series
+
+businessType                        M C17 = Market price and volume
+
+acquiring_Domain.mRID               M 10Y1001A1001A91G (Nordic Market Area)
+
+                                    A01 - EIC coding scheme
+
+connecting_Domain.mRID              M The EIC identification of the bidding zone. See
+                                         chapter: 4.3: "Bidding zones".
+
+                                    A01 - EIC coding scheme
+
+type_MarketAgreement.type           M A01 = daily
+
+flowDirection.direction             M A01 = Up
+
+                                    A02 = Down
+
+currency_Unit.name                  R EUR = Euro
+
+quantity_Measurement_Unit.name R MAW = megawatt
+
+price_Measurement_Unit.name         R MAW = megawatt
+
+auction.mRID                        R Possible values:
+
+                                    MFRR_CAPACITY_MARKET
+
+                                    AFRR_CAPACITY_MARKET
+
+Period
+
+timeInterval             M Period covered (in ISO 8601 UTC format)
+
+                         YYYY-MM-DDTHH:MMZ
+
+Resolution               M PT60M = the precision of the interval that the different points within
+                              the time series cover is one hour
+
+Point
+
+Position                 M Position within the time interval. Sequential value beginning with 1
+
+Quantity                 M Total volume procured
+
+procurement_Price.a M Market price
+mount
+
+                                                                                                   40
+                     Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+4.10 Acknowledgement document returned by Nordic MMS
+
+Acknowledgement_MarketDocument iec62325-451-1-acknowledgement.xsd – v 8.0
+
+mRID                                M Unique identification of the document
+
+createdDateTime                     M Date and time of document creation (in ISO 8601
+                                         UTC format)
+
+                                    YYYY-MM-DDTHH:MM:SSZ
+
+sender_MarketParticipant.mRID       M 10V1001C--000284
+
+                                    A01 = EIC coding scheme
+
+sender                              M A34 = Reserve Allocator
+
+_MarketParticipant.marketRole.type
+
+receiver_MarketParticipant.mRID     M Identification of the BSP receiving the ACK
+
+                                    Identification is supported by several coding
+                                    schemes. See chapter 4.2: "Coding schemes"
+
+receiver_MarketParticipant.marketR  M A46 = Balancing Service Provider (BSP)
+ole.type
+                                         A39 = Data Provider, see chapter 6: "Agents and
+                                         data providers acting on behalf of BSPs"
+
+received_MarketDocument.mRID        M Information extracted from the bid document
+
+received_MarketDocument.            M Information extracted from the bid document
+revisionNumber
+
+received_MarketDocument.            M Information extracted from the bid document
+createdDateTime
+
+Rejected_TimeSeries
+
+mRID                      D Identification of the rejected time series
+
+Reason                    D One or more of the reasons described below
+
+code                      M A01 = Message fully accepted
+
+                                    A02 = Message fully rejected
+
+                                    A05 = Sender without valid contract. Used if the BSP is
+                                    not eligible for the given product in the current bid area
+
+                                    A57 = Deadline limit exceeded/Gate not open
+
+                                    A59 = Not compliant to local market rules
+
+                                    Other reason codes may also be used.
+
+                                                                                                41
+text  Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+                    M A specific reason for the rejection can be specified and
+                            included here. E.g.:
+                            «Time series ID»: The exclusive group must contain at
+                            least two bids
+
+      42
+                                      Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+5 ECP
+
+ECP is the integration channel that is supported for communication with the Nordic MMS market platform.
+It is used for all data exchanges between Nordic MMS and BSPs.
+
+5.1 How it works
+
+ECP delivers messages from the sender to a recipient within single ECP network. Messages transported
+through the ECP network can be any text or binary data. IEC CIM is used as data exchange format.
+Alongside with the message, ECP also transfers message metadata. These are (among others) information
+about sender and recipient. The former is used by platform to authenticate the message sender. ECP
+consists of three main components: endpoint, component directory and broker. See figure below:
+
+The message broker is                                               The component directory
+the «post office» that all                                          manages the information
+end point communicates                                              about connectedECP
+through                                                             components
+
+                              Broker                          Component
+                                                               Directory
+
+ Business       ECP                   The endpoint provides
+application  Endpoint                 access to the services
+                                      that are defined
+
+Figure 2 ECP Main Components
+
+5.2 EDX
+
+EDX is an extension to ECP, and is used to define the network configuration, and introduces the concept of
+services, service providers and consumers. The two central parts of the EDX network is the service
+catalogue and the toolbox. An EDX network consists of multiple toolboxes and a single service catalogue.
+
+                                                                                             43
+                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+These components communicates via ECP and is responsible for distribution of the network configuration.
+Messaging occurs directly between the toolboxes. Se figure below for EDX network overview:
+
+Service catalogue knows  EDX service catalogue
+all EDX network
+configuration               Service
+                            catalogue
+
+                                                   ECP           Broker
+                                                Endpoint
+
+EDX toolbox is deployed  EDX toolbox                                     EDX toolbox
+locally                     Toolbox
+                                                                                  ECP
+                                                                               Endpoint  Toolbox
+
+                                                   ECP
+                                                Endpoint
+
+                          Business    Business applications use                                Business
+                         application  EDX as communication                                    application
+                                      layer
+
+5.3 How to connect
+
+Please refer to the installation package and documentation provided by your local TSO.
+
+5.4 ECP/EDX for capacity market
+
+To see list of the ECP message types used for Nordic MMS, please visit chapter 2.4
+
+The addressing convention used for communicating in the ECP network is SERVICE-service.code.
+
+Note: Nordic MMS does not validate ECP service name but it is recommended to use values described in the
+following table.
+
+Market                   Market code                             EDX service ECP Service name
+
+mFRR capacity market MFRR_CAPACITY_MARKET NO-MFRRCAP SERVICE-NO-MFRRCAP
+
+aFRR capacity market AFRR_CAPACITY_MARKET AFRRCAP                        SERVICE-AFRRCAP
+
+                                                                                                  44
+                                         Nordic FRR balancing capacity market / Nordic MMS / BSP implementation guide
+
+6 Agents and data providers acting on behalf of BSPs
+
+Nordic MMS supports authorizing third parties (agents) and their users to bid and receive market results
+on behalf of one or more principal BSPs (the party delegating the right to bid and receive market results).
+The authorized parties can, but do not have to have own portfolios in Nordic MMS.
+The authorization scheme allows the agent's ECP endpoint to be used to send bids and receive market
+results for one or more subject party (principal BSP).
+For this purpose, the endpoint must belong to and identify the agent acting as a data provider on behalf of
+the principal BSPs. The agent's party code has to be set as the sender_MarketParticipant.mRID in the
+message and its sender_MarketParticipant.marketRole.type needs to be set to A39 – data provider.
+In order to authorize an agent, the principal BSP needs to request an authorization for the agent party from
+its responsible TSO. The BSP needs to provide both the agent's party code and ECP endpoint. An agent can
+only be authorized for all or none of the principal BSPs bidding zones.
+Once the association between the agent and the principal BSP is defined, the agent's users will have access
+to the bids and market results of the principal BSP. The agent's ECP endpoint will be allowed to submit bids
+and receive market results on behalf of the principal BSP.
+
+                                                                                                                                            45
+

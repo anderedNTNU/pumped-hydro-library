@@ -1,0 +1,2021 @@
+Energy Systems
+https://doi.org/10.1007/s12667-023-00605-z
+
+ ORIGINAL PAPER
+
+Comovements between forward prices and resource
+availability in hydrodominated electricity markets
+
+Andreas Kleiven1 · Simon Risanger1 · SteinErik Fleten1
+
+Received: 5 December 2022 / Accepted: 7 July 2023
+© The Author(s) 2023
+
+Abstract
+Hydropower producers estimate the opportunity value of their water, known as a
+water value, by comparing current prices to future opportunities. When hydropower
+dominates the energy mix, the system's hydrological state predominantly governs
+supply and thus prices. Despite this intuitive relationship, industry practice is to
+assume that inflow to reservoirs and prices are independent when they establish
+operational policies 1­2 years ahead. To investigate the impact of this assumption,
+we formulate the hydropower scheduling problem as a Markov decision process and
+develop a novel price model that considers the joint dynamics of forward prices and
+inflows. We find that producers underestimate their water value when they ignore
+co-movements between price and inflow. The dependency makes producers more
+willing to postpone generation and tolerate slightly higher spillage risk. This is
+because high inflow periods tend to observe low prices and the reservoir capacity
+is limited. Nevertheless, a case study of a hydropower plant with industry data sug-
+gests modest economic losses in practice. Our numerical results suggest a potential
+gain of 0.17% in expected revenue and approximately unchanged revenue variance if
+producers consider the co-movements when establishing an operational policy.
+
+Keywords Commodity pricing · Markov decision process (MDP) · Hydropower
+scheduling · Stochastic dual dynamic programming (SDDP)
+
+Simon Risanger and Stein-Erik Fleten contributed equally to this work.
+
+* Andreas Kleiven
+     andreas.kleiven@ntnu.no
+     Simon Risanger
+     simon.risanger@ntnu.no
+     SteinErik Fleten
+     stein-erik.fleten@ntnu.no
+
+1 Norwegian University of Science and Technology, Trondheim, Norway
+
+                                                                        1 3 Vol.:(0123456789)
+                                                                                                              A. Kleiven et al.
+
+1Introduction
+
+Reservoir management is fundamental to ensure efficient allocation of resources
+in electricity markets dominated by hydropower [22, 44]. Decision-makers want
+an operational policy that maximizes expected rewards or minimizes expected
+costs over a given time horizon, considering production and reservoir constraints
+and uncertainty. As a result, they must solve a sequential decision problem under
+uncertainty. From a system perspective, the goal is to minimize costs [37], pos-
+sibly with a risk measure [41]. Individual producers, on the other hand, aim to
+maximize profits [8, 17, 20, 26]. Inflow to reservoirs is a common source of
+uncertainty, and in liberalized wholesale markets, prices are also uncertain. A rea-
+sonable assumption in such markets is that producers are price-takers and cannot
+influence the price by their decisions. However, inflows impact prices. Accord-
+ing to both economic theory and empirical observations, low inflows to reser-
+voirs correlate with high prices and vice versa in hydro-dominated systems. This
+is because hydropower has no fuel price and producers instead calculate a water
+value to determine the expected price to sell energy [38]. When a system has
+abundant water in its reservoirs, the water value decreases because there is suf-
+ficient supply and even a risk of spillage. Conversely, a system with limited water
+has scarce supply and risk not being able to meet demand. Despite this intui-
+tive relationship, a common industry practice is to assume independent stochastic
+variables when determining an operational policy. One reason is that forecasting
+prices and forecasting inflow are functionally distinct activities, performed by dif-
+ferent professions. This reason is mirrored by [23], studying a problem involv-
+ing stochastic wind infeed and electricity prices. For hydropower, it is difficult
+to identify and estimate underlying co-movements because system prices typi-
+cally correlate with aggregated system inflows rather than local ones. Still, aggre-
+gate inflows are a result of the local inflows at producer locations. Consequently,
+there is little information about the value and effect of including co-movements
+between prices and inflow in medium-term hydropower planning.
+
+   [30] argue that correlations between accumulated inflow over a whole season
+and prices are more important than correlations between weekly prices and inflow
+because of storage capacity, but the authors do not provide any numerical results
+to support the argument. Common industry practice is to partially ignore cor-
+relations when optimizing release decisions. A common process is to first create
+simultaneous scenarios for price and inflow from a power market model where
+inflow is the input and price the output [45]. In the second step, typically these
+simultaneous scenarios are used as input to a more detailed optimization of reser-
+voirs in a smaller geographical area. However, the state-of-the art algorithm used
+to optimize release decisions consider price and inflow as independent stochastic
+processes [20]. Indeed, no works properly investigate the impact of ignoring co-
+movements in hydropower planning. The closest effort is [32], which present a
+case study of a Norwegian hydropower plant and include a correlation coefficient
+between the stochastic price and inflow processes. Their findings suggest notable
+reductions in expected revenues. Nevertheless, we find that their treatment of the
+
+13
+Comovements between forward prices and resource availability...
+
+topic is incomplete, and we aim to address the gaps. First, they investigate a case
+study and report only case-specific findings. In this paper, we present analyti-
+cal insights on including co-movements. Second, [32] do not explain or outline
+the intuition behind the results. This is important because we find that their case
+study contains some unintuitive results, as we discuss later in Sect. 5. By con-
+trast, we explain all findings according to intuition and analytical insights. Third,
+the modeling of the co-movements by a correlation coefficient estimated using a
+fixed Pearson correlation coefficient is simplistic. Our work, on the other hand,
+introduces a sophisticated price process to consider the dependency between
+price and inflow that vary over the year. Contrary to [32], we find no evidence of
+a substantial impact on expected revenues.
+
+   In this work, we first characterize the impact of co-movements on the policy in
+a two-stage setting. From there, we develop a stochastic model with co-dynamics
+between price and inflow to reservoirs, so we can investigate the effect in a multi-
+stage setting. We formulate a Markov Decision process (MDP) of the medium-term
+hydropower planning problem and solve it using stochastic dual dynamic program-
+ming (SDDP), the state-of-the-art algorithm for seasonal hydropower scheduling
+[37, 39]. Thus we can analyze numerically the effect of co-movements between
+exogenous factors on the optimal policy.
+
+   Our work contributes to the extensive literature that studies the hydropower
+scheduling problem [20, 25, 28, 41]. In a broader perspective, we also contribute
+to research on general insights regarding correlations in stochastic optimization [7,
+24]. An example of such work is [1], which uses a distributionally robust approach
+to analyze losses associated with ignoring correlations. Also related are studies
+that analyze the effect of correlation between hydro and wind [4, 9, 29, 36, 43] and
+between electricity prices and wind [34, 36], and between electricity demand and
+fuel prices [15]. Our specific contribution is to characterize the impact of co-move-
+ments on the policy of the hydropower scheduling problem in a two-stage setting.
+
+   The joint model for price and inflow is also a specific contribution to models for
+commodity pricing. We develop an additive three-factor stochastic model where
+the term structure of electricity prices is partly explained by inflow to reservoirs in
+the system, partly by a latent factor representing long-term dynamics, and partly by
+another latent factor for short-term deviations that cannot be explained by inflow to
+reservoirs. Our model can be interpreted as an additive discrete-time extension of
+the two-factor model by [40] with two latent factors and one factor that represents
+some physical phenomena explaining prices. Furthermore, we develop a risk-neutral
+version that can valuate hydropower cashflows. Our model allows for a linear and
+seasonal dependence structure between stochastic variables, and we present a cali-
+bration procedure for how to estimate the joint dynamics under a risk-neutral meas-
+ure when futures contracts only exist for the calibration of a subset of the stochastic
+factors.
+
+   By applying our stochastic model to a hydropower case study, we find that at a
+given time and state, producers are more willing to postpone production and tolerate
+a higher probability of spillage if they incorporate co-movements when establishing
+their production policy. If a high-inflow state realizes in the next stage, a low-price state
+is more likely, which makes the expected revenue in the high-inflow state less when
+
+                                                           13
+                                                                                                              A. Kleiven et al.
+
+incorporating correlations. Therefore, since the reservoir capacities are limited, the pro-
+ducer is more willing to spill the incoming water and keep the reservoir at a higher
+level. Despite theoretical differences, our result suggests that the impact is modest on
+practical applications. Using industry data from a Norwegian hydropower plant, we
+find that the expected revenue decreases between 0.17% and 0.3% for different set-ups,
+including different parameter estimates of the stochastic model, and different reser-
+voir and production capacities. Nevertheless, this is valuable information for reservoir
+operators. They can continue their current practices with more evidence backing their
+assumption of independent price and inflows does not incur large costs.
+
+   The rest of the paper is structured as follows. In Sect. 2, we formulate the hydro-
+power scheduling problem as a Markov decision process. We characterize the optimal
+policy and present a simple example that illustrates the added value of correlations in
+a two-stage setting. Section 3 briefly discusses the SDDP algorithm, before we present
+the stochastic model with joint dynamics of prices and inflows to reservoirs in Sect. 4.
+Section 5 presents a case study, including calibration of the stochastic model, Markov-
+chain discretization, and numerical results. Concluding remarks are provided in Sect. 6.
+
+2Hydropower scheduling as a Markov decision process
+
+Hydropower planning is a sequential decision problem under uncertainty. Endogenous
+states include the amount of water in the reservoirs, and exogenous states include price
+and inflow. Given the current state and an action of the producer, the state transition
+is independent of previous actions and states. State transitions therefore satisfy the
+Markov property, and the problem can be formulated as a Markov decision process
+(MDP). We denote as policy, s as endogenous states, as exogenous random vari-
+ables, Xt maps the next state when following policy at time t, and st is the state
+reached at time t when following policy . The problem can be formulated as
+
+                                          
+         V1 (s0,  1)        =  max             tr(Xt (st , t), t)  1, s1 ,
+                                                                                                (1)
+                                          tT
+
+where the expected value at t = 1 is the expected reward, r, from following policy
+
+ , where  is the feasible set of policies. Representation (1) uses discrete time
+where the planner makes decisions at every t  T . The set T = {1, ... , T} contains
+
+the stages of the MDP. The endogenous state, st, includes the amount of water in the
+                                                  t = ( tO,        C
+reservoir at time t. The exogenous state vector                    t  )  consists  of  factors  that
+
+determines immediate rewards, tO, and components that impact the feasible stage
+t action set, tC. Superscripts O and C denote objective uncertainty and constraint
+                                                                C        O
+uncertainty, respectively. Superscript            denotes that  t  and   t  are  correlated.    We
+adopt the notation V10(s0,             0
+                            1) and     1  (s1  ,  1) as the value function and continuation
+
+function assuming independent       C  and        Ot , respectively. Using Bellman's principle
+                                    t
+
+of optimality, we can reformulate problem (1) recursively as a stochastic dynamic
+
+program
+
+13
+Comovements between forward prices and resource availability...
+
+                Vt (st-1,   t)  =        max                C     r(xt  ,     Ot ) +  t+1(st, t),         (2)
+                                                            t
+                                   (xt ,st ,vt )Xt (st-1 ,     )
+
+                t+1(st, t) = Vt+1(st, t+1)  t ,                                       t = 1, ... , T,     (3)
+
+with  T+1(sT ,  T ) = 0. The set Xt(st-1,      C            )  defines        the  solution  space.  The  continu-
+                                               t
+
+ation, or the expected profit-to-go, function t+1 provides the expected value at time
+t by following the optimal policy from time t + 1 to T. We want to investigate the
+                                                               O              tC, i.e., Cov(Ot , tC) < 0, on the
+effect of a negative relationship between                      t  and
+
+optimal policy of Problem (1). This correlation represents the influence that inflows,
+tC, have on prices, Ot .
+
+A producer's reward is simply the revenue from selling produced energy, xt, at
+price Ot :
+
+                                        r(xt,  O  )         =     tO xt .                                 (4)
+                                               t
+
+Constraints (5a) to (5f) define the decision space. State st is the volume of water in
+the reservoir and (5a) defines the transition from an incoming state st-1 to an outgo-
+ing state st. It depends on production, xt, spillage, vt, and inflow, tC. There is no
+penalty for spillage except the opportunity cost of lost sales. Restriction (5b) ensures
+that the state is within the bounds of the reservoir, where R denotes the maximum
+capacity. Production is either limited by the reservoir contents, (5c), or the maximum
+production capacity, (5d), where G denotes maximum production capacity. Finally,
+(5e) and (5f) ensure that production and spillage cannot be negative, respectively.
+
+                Xt (st-1 ,  C  )  =  {
+                            t
+                                                                                                          (5a)
+                                               st + xt + vt = st-1 +                  C      (z1)
+                                                                                      t
+
+                            - xt - vt  R - st-1 -                          C  (z2)                        (5b)
+                                                                           t
+
+                                        xt  st-1 +             C        (z3)                              (5c)
+                                                               t
+
+                                        xt  G (z4)                                                        (5d)
+
+                                        xt  0 (z5)                                                        (5e)
+
+                                          vt  0 (z6)                                                      (5f)
+                                        }.
+
+   Proposition 2.1 states the properties of the value function Vt and continuation
+function t . These properties make it possible to characterize the optimal policy
+for the hydropower scheduling problem defined by (2) to (3) in Proposition 2.2.
+
+                                                                                                       13
+                                                                                                                 A. Kleiven et al.
+
+Proposition 2.1 For a given (t,                Ot ,  C  )    T  ×         ×   +,   the  value             function   Vt  (,  t)
+                                                     t
+
+and continuation function                 t+1(, t) are concave,               and  the    marginal               water   value,
+t+1 (,     )                              endogenous state st.
+   st   t     is  decreasing   in    the
+           ,
+
+ProofSee A.1.                                                                                                                
+
+Proposition 2.2 The optimal generation policy of Problem 2­3 is given by
+
+                                                                          if  tO  <    t+ 1(,t)
+                                     0                                    if  Ot  >    t+ 1s(t,t) st-1+tC
+                  xt(st-1, t)  =                           + Ct }                                                            (6)
+                                      min{G, K, st-1
+                                                                                           st             st-1 +tC
+
+where
+
+                  K = st-1 +                C  -     arg min    |||||  O  -   t+1(,       t) |||st |||||
+                                            t                          t         st
+                                                          st
+
+ProofSee A.2.                                                                                                                
+
+2.1Covariance in twostage hydropower scheduling
+
+To study the effect of covariance on the optimal MDP policy, we consider reservoir
+management in two stages where the producer must determine whether to produce
+now or later. In other words, the producer faces problem (2) to (3) with T = 2. Prop-
+osition 2.3 states that a decision-maker underestimates the marginal water value if it
+ignores the negative correlation between objective uncertainty (price) and constraint
+uncertainty (inflow).
+
+Proposition 2.3If T =          2,    G=     R     (0, ),     Cov(O2 , C2 )         <  0,  and             s0  +  C1  <  R,  then
+|| > 2(,1)                     ||s0  +C1 .
+                   20 (,1 )
+   s1 s0+C1          s1
+
+ProofSee A.3.                                                                                                                
+
+   Proposition 2.2 combined with Proposition 2.3 implies x1  x10 and v2  v20
+in a two-stage setting. A producer will therefore produce the same or less today at
+optimum if it considers correlations. Hence, correlations provide an incentive to
+postpone production. If a high inflow realizes, prices tend to be low, and the incom-
+ing water is not as valuable compared to an independent stochastic model. This is
+because the reservoir capacity is limited. Example 2.1 illustrates the phenomenon.
+
+Example 2.1 Added value of including correlations under policy computation
+
+   This example demonstrates the impact of ignoring correlations on the optimal
+production schedule and profit losses. We consider problem (2) to (3) when T = 2
+
+13
+Comovements between forward prices and resource availability...
+
+and maximum production drains the whole reservoir, G = R. Let the process for the
+stochastic variables be
+
+                                             O  =  t+        O         (7)
+                                             t
+
+                                             C  =  t+     C            (8)
+                                             t
+
+                                       t=       O t-1 +      OO        (9)
+                                                                 t
+
+                                       t=       C t-1 +      CC        (10)
+                                                                 t
+
+where
+
+                              (  O  ,  C  )    N   0      ,     1
+                                 t     t           0              1
+
+with numerical values and nomenclature outlined in Table 1.
+   Figure 1 displays the value of the continuation function and its derivative over
+
+different states. We observe that at maximum reservoir, the continuation function
+must be the same, since any potential new inflow cannot be stored. At low reser-
+voirs, we observe that the continuation value differs. The independent policy sees
+higher value in the future, since negative correlation is ignored. When there is zero
+spillage risk, the difference in value is equal to the covariance between price and
+inflow. This is illustrated in the lower right window in Fig. 1, which shows the value
+at level 60 where spillage risk is close to zero. As a result, the slope of the curve
+based on the independent policy must decay at a lower rate. This is illustrated in
+Fig. 1b, which shows the marginal water value. Hence, the first stage generation
+decision differs with and without correlation.
+
+Table1Numerical values and       Parameter         Value         Unit
+nomenclature for Example 2.1                                     /MWh
+                                   O               20            MWh
+                                   1               20            /MWh  Initial price
+                                   C               30            MWh   Initial inflow
+                                   1               20                  Price mean
+                                   O               0.9           /MWh  Inflow mean
+                                                   0.5           MWh   Memory coefficient price
+                                   C               10                  Memory coefficient inflow
+                                                   6             MWh   Price volatility
+                                   O               - 0.5         MWh   Inflow volatility
+                                                   85            MWh   Correlation coefficient
+                                   C               100                 Initial reservoir
+                                                   100                 Maximum reservoir
+                                   O                                   Maximum generation
+
+                                   C
+
+                                 s0 +     C
+                                          1
+
+                                 R
+
+                                 G
+
+                                                                       13
+                                                                                                                                   A. Kleiven et al.
+
+Continuation value                                                  Marginal water value  10 15 20
+    1700 1800 1900 2000 2100
+                                                                                          5
+
+                                                                                          0
+
+                              60  70  80                90     100                                  60    70        80             90  100
+
+                                      Reservoir volume                                                           Reservoir volume
+
+                                  (a) Continuation value.                                                 (b) Marginal water value.
+
+Fig.1Continuation value 2i (, 1) and derivative of the continuation value                                        i  (,  t)       as a function of res-
+                                                                                                                 2
+
+                                                                                                                    st
+
+ervoir volume st, with (black) and without (red) correlation, i  {0, }. We observe the continuation
+value with and without correlations as parallel lines with an offset of Cov(wO, wC) when the reservoir is
+
+low. The two values get closer as the reservoir level increases. The marginal water value is higher when
+
+co-movements are accounted for. This is valid for high reservoir levels, when there is spillage risk. It
+
+leads, in principle, to delayed production releases for high reservoir levels (color figure online)
+
+   From Proposition 2.2, when G > st + Ct > K, the optimal first stage generation
+decision is
+
+                                      K = st-1 +        C   -  arg min                    |||||     O  -  t+1(,  t) ||st |||||.        (11)
+                                                        t                                           t        st
+                                                                    st
+
+Table 2 outlines the optimal solution with zero and -0.5 correlation. The second row
+
+shows the spill probability in the last stage at optimum. An optimal policy based
+on the joint distribution with correlation -0.5 delays some production and tolerates
+
+a higher spill probability compared to the policy based on prices and inflow being
+
+independent. Table 3 show the expected revenue, where the upper left entry is the
+
+optimal policy value of the independent model relative to the optimal value of the
+joint model with = -0.5. An independent policy overestimates the expected rev-
+enue by 1.3%. Simulating the policy on the joint model with = -0.5 leads to an
+expected loss of 0.03%, compared to the optimal policy for the joint model, which is
+
+to produce less in the first stage.
+
+   The state space provides a clearer comprehension of the situations where cor-
+relations matter. Figure 2a shows the difference in policy performance as a function
+
+Table2Optimal policies for                                                                i=0             i=
+Example 2.1
+                                                  x0,i                                           15.0     13.2                   First-stage decision
+13                                                P(v1,i > 0)                                    6.8%     9.2%                   Spill probability
+
+                                                  The first and second columns show the solution under zero and -0.5
+                                                  correlation, respectively
+Comovements between forward prices and resource availability...
+
+Table3Difference in expected     Policy computation                                                                                                          Policy simulation
+                                                                                                                                                               =0
+revenue of policies relative to
+
+V    (s0,                1)                                                                                                                                                     = -0.5
+
+  1
+
+                                 =0                                                                                                                          1.3%               - 0.03%
+                                 = -0.5                                                                                                                      ­                  0%
+
+                                 The first column displays the correlation coefficient used under pol-
+                                 icy computation, and the last two column headers display the cor-
+                                 relation coefficient used when simulating respective policies. The
+                                 entry policy computation = -0.5 and policy simulation = 0 is
+                                 left open since this case is not relevant
+
+Reservoir volume                                                                                                              0.0   Reservoir volume                                                                                                              6e-04
+     50 60 70 80 90 100                                                                                                                  50 60 70 80 90 100                                                                                                       5e-04
+                                                                                                                              -0.5                                                                                                                                4e-04
+                                                                                                                                                                                                                                                                  3e-04
+                                                                                                                              -1.0                                                                                                                                2e-04
+                                                                                                                                                                                                                                                                  1e-04
+                                                                                                                              -1.5                                                                                                                                0e+00
+
+                                                                                                                              -2.0                                15 20 25 30 35 40 45
+                                                                                                                                                                                         Price
+                              15 20 25 30 35 40 45
+                                                     Price                                                                                                 (b) Percentage difference in policy values.
+
+                       (a) Difference in first-stage generation
+                       decision.
+
+Reservoir volume                                                                                                         0.15       Reservoir volume                                                                                                         0.15
+     50 60 70 80 90 100                                                                                                                  50 60 70 80 90 100
+                                                                                                                         0.10                                                                                                                                0.10
+
+                                                                                                                         0.05                                                                                                                                0.05
+
+                                                                                                                         0.00                                                                                                                                0.00
+
+                           15 20 25 30 35 40 45                                                                                                               15 20 25 30 35 40 45
+                                                  Price                                                                                                                               Price
+
+                       (c) Spill probability (zero correlation).                                                                                           (d) Spill probability (-0.5 correlation).
+
+Fig.2Comparing policies assuming = 0 and = -0.5. Upper left is difference in first-stage decision.
+Upper right is difference in policy values when evaluated on the joint distribution. The lower panel com-
+pares spill probabilities
+
+of the current reservoir volume and the current price. The policies are the same for
+a current price above 30. This is because (22|1O > 30) < 1O, and it is optimal
+to produce at maximum, which means that correlations are irrelevant. Correlations
+matter when 1O < 30 and P(v2,i > 0) > 0. Here, the current water has a higher value
+in the future if we consider correlations. It is therefore optimal to produce less today.
+
+If the spillage probability is sufficiently small in the second stage, i.e., the reservoir
+level is low, and O1 < 30, it is optimal to store water because (O2 |1O < 30) > O1
+according to the price model. In this case, the first-stage decision is approximately
+
+equivalent with and without correlation, as seen in Fig. 2a. We emphasize that the
+
+figures are based on simulations and hence there is zero spillage probability in this
+
+region. Although, in theory, there will be a spillage probability since the inflow
+
+                                                                                                                                                                                13
+                                                                                                              A. Kleiven et al.
+
+domain is all real numbers, and the correlated policy will produce slightly less also
+in this region of the state space.
+
+   Figure 2 outlines the policies, where Fig. 2b displays the potential for additional
+expected revenue from including correlations under policy computation. For exam-
+ple, if the price is around 15 EUR/MWh and the reservoir volume at 75 MWh, the
+policy with correlation gets around 0.06% higher expected revenue. Figures 2c to
+2d compare spillage in the second stage with and without correlation. A policy with
+correlation has a higher spill probability in the region where the correlated policy
+delays production.
+
+3Solution approach
+
+Unlike the two-stage application in Example 2.1, hydropower producers may have
+reservoirs that can hold water months or years into the future. Medium-term hydro-
+power operations, for instance, plan 1­2 years into the future with time discretized
+into weeks [20]. This becomes a multistage stochastic problem. The hydropower
+scheduling problem (2) to (3) suffers from the curses of dimensionality. A particular
+challenge is that the state and decision variables are continuous and consequently
+provide infinite combinations. Although we can discretize them, the problem
+becomes computationally intractable before the granularity becomes representa-
+tive for an actual hydropower application. Instead, the industry standard is to solve
+the problem using SDDP, introduced by [37], which approximates the continua-
+tion function by a piecewise linear function defined by Benders cuts. The MDP can
+therefore have continuous states and actions. SDDP creates a valid outer approxima-
+tion of the expected future value function under certain assumptions [13]:
+
+A1. The value function Vt(, t) is concave (for maximization) with respect to st for
+      all stages t  T for a fixed t.
+
+A2. The uncertainty sample space t is finite for all stages t  T .
+A3. The feasible region, Xt(, t), is non-empty and an optimal solution exists for
+
+      every obtainable incoming state variable st-1 and sample t for all stages t  T .
+A4. Realizations of uncertainty are independent of other stages, i.e.,
+
+      ( t  t| t-1) = ( t  t), for all stages t  T . This is commonly referred
+      to as stage-wise independence in the SDDP literature.
+
+Proposition 2.1 proves that the value function Vt(, t) is concave, and hence it satisfies
+A1. We ensure that our scenario generation procedure makes a finite sample space for
+all stages and hence satisfies A2. Moreover, we select parameters so the feasible region
+satisfies assumption A3. Our application is a liberalized electricity market where prices
+are stage-wise dependent random variables, which violate assumption A4. SDDP can
+circumvent this issue by either including a state variable that follows an autoregres-
+sive time series (TS-SDDP) or discretize the random data process to a Markov chain
+(MC-SDDP) [25]. Because the objective multiplies price with a decision variable,
+making price a state variable, as required by TS-SDDP, introduces a bilinear term in
+
+13
+Comovements between forward prices and resource availability...
+
+the objective that violates assumption A1. A hybrid approach, which acts as a wrapper
+around the SDDP algorithm, can ensure a concave value function [20]. There are also
+extensions of the algorithm that can handle the bilinear term in the objective where
+the value function is a saddle function [11]. The main drawback of MC-SDDP is that
+a fixed uncertainty partition is required, which may lead to bad performance on some
+scenarios. However, the MC-SDDP implementation is less complex, it converges faster,
+and it has been shown to provide policies that perform well when applied to hydro-
+power planning [25]. Therefore, we argue that MC-SDDP is suitable for analyzing the
+effect of correlation between price and inflow on hydropower operations policies.
+
+   Because the continuation function is concave, SDDP replaces it with the variable
+ t, defined by the hyperplanes or cuts
+
+                                 t          k    +  k  st  .                                  (12)
+                                            t       t
+
+Parameters  k  and  k  are  the  intercept  and  slope  of       the  hyperplanes,  where  k  indexes
+            t       t
+
+iterations. SDDP solves (2) to (3) multiple times in an iterative fashion, where each
+                                                 k            tk. Let K denote the current itera-
+iteration generates a cut, i.e., parameters      t  and
+
+tion. As K increases, the outer approximation of the continuation function receives
+
+more hyperplanes which improves the approximation of the concave continuation
+
+function and has convergence guarantees [19, 39]. Problem (2) to (3) is a subprob-
+lem that exists for each stage t  T . The iterative scheme to solve the multistage
+
+stochastic problem by SDDP includes a forward simulation and a backward pass.
+
+The former starts at t = 1 with a pre-determined initial state variable. It samples t,
+
+solves (2) to (3), and saves the resulting state variable, st. The algorithm proceeds to
+
+the next stage, t + 1, samples t+1, and solves (2) to (3) again. The process continues
+
+until the terminal stage, T, where the algorithm has a list of simulated values of st
+for all t  T . The backward pass starts at t = T - 1 and moves backwards through
+
+the list. At stage t we solve (2) to (3) for all t+1 with fixed st and obtain objective
+value V t+1,t+1 and subgradient t+1,t+1 of the objective function with respect to st.
+Cut parameters at iteration K is then calculated according to (13) and (14). These
+
+cuts are included in the next forward simulation at iteration K + 1 and provide a
+
+more detailed approximation of the continuation function.
+
+                                 iK+1 = [Kt+1,t+1 ]                                           (13)
+
+                            iK+1 = [V tK+1,t+1 ] - iK+1st                                     (14)
+
+Note that we use average cuts, which explains the expectation operator in (13) and
+(14). Multi-cut options, which include all the cuts, i.e., removes the expectation
+operator in (13) and (14), are also possible but increase the subproblem's size. The
+SDDP algorithm terminates when new cuts add negligible reductions to the esti-
+mated upper bound, reaches an iteration limit, or satisfies a statistical bounds crite-
+rion. When SDDP terminates, it has approximated the continuation function for each
+stage t  T . The policy is simply the arguments that maximize (2) at stage t with the
+continuation function approximation. Because the contribution of our work is in the
+
+                                                                                    13
+                                                                                                              A. Kleiven et al.
+
+price process we use, and not the SDDP method itself, we refer to for instance [37,
+13], or [25] for more information on SDDP and pseudocode.
+
+4Stochastic modelling
+
+This section presents a model of spot prices with connection to the hydrological system
+state and local inflow. Local inflow often possesses strong seasonal variations. There-
+fore, similar to [20], we normalize inflow to reservoirs and impose an autoregressive
+model of order one, AR-1, to the seasonality-adjusted inflow series. This model is often
+used by practitioners. However, inflow generally has positive asymmetry, which moti-
+vates the use of skewed distributions, e.g. the lognormal distribution [42]. A compari-
+son of the model fit for our Gaussian inflow model and its lognormal counterpart is
+provided in Appendix B. Motivated by the empirical fit, we specify a Gaussian model
+for inflow, but emphasize that our joint model allows for general inflow models. We let
+t denote the historical average of local inflow and t the historical standard deviation
+of local inflow at week t, while t denotes the residuals of normalized inflows. Local
+inflow is still tC, and it is given by
+
+                         tC = t + tt                                                                                              (15)
+
+                         t = 9 t-1 + 4 4,t,                                                                                       (16)
+
+where 9 is a measure for inflow deviation autocorrelation, and 4,t is normally dis-
+tributed with zero mean and unit variance. The local hydrological state, htloc, indi-
+cates the degree to which the plant has more or less resources available than normal.
+This captures whether the plant is located in an area with drought or excess of water
+recently. We define the local hydrological state as the exponentially smoothed inflow
+deviations from the mean:
+
+                         htloc = 8htlo-c1 + (1 - 8)tt,                                                                            (17)
+
+where 8 is the smoothing coefficient. The lower 8 the higher weight is given to
+
+recent inflow deviations. A dry period for some time locally often indicates a dry
+
+period in the system, and vice versa. We propose a linear regression model with
+an AR-1 error structure for the system hydrological state, hstys. The relevant local
+                         tahelarpgreordugceeorg'sralpohciactaiol na,rehatlo,ch, tsiyss.aOnuerxmploantiavtaotrioynvaforiratbhlies
+hydrological  state  at                                                                                                           for the
+hydrological  state  in                                                                                                           model
+
+is the fact that the system hydrological state is an aggregation of local hydrological
+
+states. An unobservable factor with AR-1 structure, t, captures the rest of the sys-
+
+tem hydrological state:
+
+                         htsys = 6htloc + t                                                                                       (18)
+
+                         t = 7 t-1 + 3 3,t.                                                                                       (19)
+
+13
+Comovements between forward prices and resource availability...
+
+The parameter 6 measures the effect of local hydrological state on the system state,
+ 7 measures the autocorrelation of system state deviations that are not explained by
+
+the local hydro system that is being modelled, and 3,t is normally distributed with
+zero mean and unit variance. The system hydrological state enters the spot price
+model as an independent factor. In other respects, the price model is equivalent to an
+additive and discrete time version of the two-factor model in [40]:
+
+                  O  =  1 cos (t +      2)  2   +    3hstys + t + t                                                                 (20)
+                  t                         52
+
+                        t = 4 t-1 + 1 1,t                                                                                           (21)
+
+                        t = + t-1 + 2 2,t.                                                                                          (22)
+
+The first term captures price seasonality. The parameter 1 determines the ampli-
+
+tude of seasonal  variations, and       2 determines when        the peak   is. The next term is
+the hydrological  system state, hstys,  which captures the       effect of  resource availability
+
+on price, determined by the parameter 3. Note that the hydrological system state
+
+is again explained by another factor, namely, local inflow deviation from the local
+mean, and influences htsys through (15)­(17). The equilibrium price level, t, cap-
+
+tures long-term price behavior, and evolves as a discrete-time arithmetic Brown-
+
+ian motion (ABM) with drift . Short-term deviations that are not explained by the
+
+hydrological state, t, evolves as an AR-1 process, where 4 measures the autocor-
+
+relation in short-term price deviations that are not explained by inflow deviations.
+
+The perameters 1 and 2 is the standard deviation of short-term price deviations
+
+and the equilibrium price, respectively, and 1 and 2 are normally distributed with
+
+zero mean and unit variance. Overall, our model consists of four stochastic factors
+         ht,ydtr)o. lNoogtyehtsthyas tislodcearlivheydddroeltoegrmy ihntliosctiicsadlleyrifvreodmdhelttoecramnidnistt.ically
+( t, t,                                                                                                                       from  t, and
+system
+
+4.1Riskneutral process
+
+We develop a risk-neutral version of the stochastic model in the previous section.
+Futures contracts can then be used to calibrate the model. Given a risk-neutral price
+process, cashflows can be discounted at the risk-free rate [14]. The stochastic model
+in (15)­(22) are additive Gaussian. The transformation to an equivalent martingale
+measure for this type of underlying processes can be done by making assumptions
+regarding the risk premium [27] or convenience yield [2]. We follow the latter and
+obtain the following risk-neutral version:
+
+                  O  =  1 cos (t +      2)  2   +    3htsys + t + t                                                                 (23)
+                  t                         52
+
+                                        tC = t + tt                                                                                 (24)
+
+                                                                                                                              13
+                                                                                   A. Kleiven et al.
+
+                                    t=           t-1 +                             (25)
+                                              4         1 1,t
+
+                                    t=           t-1 +                             (26)
+                                              5         2 2,t
+
+                                    hstys = 6hltoc + t                             (27)
+                                                                                   (28)
+                                    t=           t-1 +     
+                                              7         3 3,t
+
+                             htloc = 8hlto-c1 + (1 - 8) Ct - t                     (29)
+
+                                    t=           t-1 +                             (30)
+                                              9         4 4,t
+
+                                                 N(0,   )                          (31)
+                                         i,t
+
+Here,       has  mean  zero  under  the  equivalent     martingale  measure.  See  Appendix  C
+       i,t
+
+for derivations. In the next section, we present how to calibrate this model using for-
+
+ward and hydrological data.
+
+5Mediumterm hydropower scheduling: a case study
+
+In this section, we present a case study of a hydropower plant located in the west-
+ern part of Norway. Its operator provided inflow data and plant characteristics. [31]
+provides system price data, while we retrieved data for system resource availability,
+in terms of reservoir content, from [33]. NVE represents the resource availability
+data series as a deviation from an estimated normal situation at any time of the year.
+We first present a description of the interconnected system and the aggregation into
+an energy equivalent reservoir (EER). Then, we present the calibration procedure.
+Finally, we present the numerical results.
+
+5.1Energy equivalent reservoir and head variations
+
+The watercourse we study consists of multiple interconnected reservoirs. We aggre-
+gate the reservoirs into one energy equivalent reservoir (EER). The composite rep-
+resentation of the interconnected multireservoir system was originally proposed by
+[3], and has been applied in practice [16, 28]. Note that SDDP efficiently handles
+the situation of multiple interconnected reservoirs, but since our focus is to study
+the effect of covariance on the optimal MDP policy, we instead study an EER for
+comparison and consistency between our analytical two-stage results and numeri-
+cal multi-stage results. The aggregation simplifies the modeling of uncertainties and
+allows us to study general insights of the effect of covariance on the optimal MDP
+policy. For the same reasons, we assume a constant reservoir-specific volume-energy
+
+13
+Comovements between forward prices and resource availability...
+
+transformation coefficient. In theory, this transformation depends on the discharge
+xt, where the amount of discharge influences the energy efficiency. Piece-wise lin-
+ear efficiency curves can approximate this behavior. Head variations, which depend
+on st, also influence the volume-energy transformation but require non-convex
+subproblems.
+
+   When aggregating reservoirs, the problem size is small enough to be solved with
+a standard stochastic dynamic progamming approach (SDP). However, since SDDP
+is state-of-the art in hydropower planning, and the model easily can be extended
+to a multi-reservoir setting, we demonstrate our model using SDDP. The multi-res-
+ervoir setting could potentially lead to computational difficulties, as several inflow
+processes must be discretized. A way to avoid this is to reduce the number of inflow
+factors, which often is reasonable in a limited geographical area where inflow often
+is highly correlated.
+
+5.2Calibration of the stochastic model
+
+We use electricity futures data with time to maturity 1­5 years from 2011 to 2018,
+
+local inflow data from 2009 to 2018, and data for the system hydrological state from
+
+the same period when calibrating our model. Pricing models are commonly cali-
+
+brated using Kalman filtering and maximum likelihood estimation, where observed
+
+futures prices are assessed against model predictions. Joint calibration is unattain-
+
+able because future contracts for inflow do not exist. We therefore apply a two-step
+
+process. First, we employ maximum likelihood estimation with historical data for
+
+inflow and system hydrological state. We then use (18) and (19) to predict future
+
+hydrological states and extract the effect on futures prices. Afterwards we apply
+
+standard Kalman filtering and maximum likelihood estimation. We must calibrate
+                                                  O             hst ys
+both the joint model and a benchmark model where  t  and                are  independent.
+
+D outlines how we calibrate the benchmark model, while the following six steps
+
+explain our estimation approach for the joint model in detail.
+
+Step 1: Computing smooth electricity forward curves and de-seasonalized
+
+prices. We decompose the forward curve into a seasonal component and an adjust-
+
+ment function that accounts for deviations from seasonality. The seasonal compo-
+
+nent has the same form as in the pricing model from the previous section, while
+
+the adjustment function is defined based on arbitrage arguments and the maximum
+
+smoothness criterion. See [5, 10, 18] for procedures for computing smooth synthetic
+
+forward curves. We estimate coefficients of the seasonal component by regression
+
+using front month forward contracts. Figure 3 illustrates examples of smooth syn-
+
+thetic forward curves computed using this procedure. Figure 4a displays synthetic
+
+forward curves for the entire electricity forward contract data set. After having esti-
+
+mated the seasonality in step 1, we de-seasonalize forward prices and continue the
+
+estimation procedure with forward prices adjusted for seasonality. Figure 4b outlines
+
+the de-seasonalized forward curves.
+
+Step 2: Calibration of the local inflow model. We first normalize weekly inflow
+
+data based on weekly mean and standard deviation, similarly as in Gjelsvik et al. (2010)
+
+[20], before we fit an AR-1 process to account for serial correlations. Figure 5a displays
+
+                                                                             13
+                                                                                                                                              A. Kleiven et al.
+
+Fig.3Examples of smoothed                                           80
+futures curves by applying the                                                                                                                               Smooth futures curve
+method by Benth et al. [5].
+Futures prices are obtained from                                    70                                                                   Average-based contracts
+[31]. The upper was observed
+on 3 January 2011 and the lower                    Price (EUR/MWh)  60
+was observed on 27 May 2015
+                                                                    50
+
+                                                                    40
+
+                                                                    30
+
+                                                                    20
+
+                                                                    10
+
+                                                                    0   0  0.5                                1  1.5   2     2.5   3     3.5  4     4.5
+
+                                                                                                                       Maturity (years)
+
+               (a) Historical futures curves.                                                                 (b) Seasonality-adjusted futures curves.
+Fig.4Smoothed futures curves for the entire data set
+
+Inflow (MWh)                                                               System hydrology (TWh)  0 5 10 15                                        5000                           Local hydrology (MWh)
+     0 40000 80000 120000
+                                                                                                                                                    0
+
+                                                                                                   -20 -10                                          -5000
+
+                           2012  2014        2016  2018                                                          2012  2014        2016       2018
+
+                                       Time                                                                                  Time
+
+(a) Local inflow from an area in the West-                                                         (b) Smoothed local inflow (dashed line)
+ern part of Norway. The solid line is the                                                          and hydrological system state (solid line).
+                                                                                                   NVE (2022) provides data for the system
+weekly mean µ¯t and the dashed line is one
+standard deviation ¯t.                                                                             state.
+
+Fig.5Hydrological data from 2009 to 2018
+
+the local inflow. We assume that inflow risk is unrelated to the world economy and
+therefore diversifiable, commanding no risk premium.
+
+   Step 3: Constructing a time series of local hydrology. We use the exponentially
+weighted inflow series as the hydrological state
+
+13
+Comovements between forward prices and resource availability...
+
+hltoc = 8(tC - t) + (1 - 8)hlto-c1
+
+= 8(Ct - t) + 8(1 - 8)(Ct-1 - t-1) + (1 - 8)2htlo-c2
+
+= 8(tC - t) + 8(1 - 8)(Ct-1 - t-1)
+
+  + 8(1 - 8)2(Ct-2 - t-2) + (1 - 8)3hlto-c3                                                                                      (32)
+
+
+
+      K
+= 8 (1 - 8)k(Ct-k - t-k) + (1 - 8)K hlto-cK ,
+
+         k=0
+
+where K denotes the number of time periods. This time series captures the situa-
+tion of a local producer having either less or more resources available than normal,
+depending on how inflow has deviated from its mean for a longer period. This may
+partly explain water supply in the system. Figure 5b displays the time series for the
+local hydrology in red together with system hydrology in black.
+
+   Step 4: Calibration of the local and system hydrology model. The system hydrol-
+ogy model is a linear regression model with an AR-1 error structure. It uses local
+hydrology as an explanatory variable, which again is driven by local inflow. We con-
+sider parameters of the inflow model fixed, and jointly estimate parameters of the local
+and system hydrology model. We enforce 8 = 7, which ensures that the local hydrol-
+ogy mean reverts at the same speed as the AR-1 process. We consider this reasonable
+because system hydrology is an aggregation all reservoirs in the system. This restriction
+is necessary to get reasonable hydrology predictions in the next step. When estimating
+the parameters, we iterate over 6 and 8, or equivalently 7, and study the likelihood
+surface of the linear regression model with AR-1 structure in (18) and (19). Figure 6
+displays the likelihood surface of 8 = 7 and 6 with a mark at optimum.
+
+   Step 5: Estimating the effect of hydrology on prices and using the inflow-
+
+hydrology model to predict and extract the impact on futures prices. Given the
+model parameters = ( 1, 2, 3, 4, 5, 6, 7, 8, 9), futures prices at any given
+time t with maturity can be expressed by our model as follows:
+
+                             F t, (t, t, htloc, t, t;) = (O )                                                                    (33)
+
+= 1 cos                      (t  +  2  )  2                                   + 3h st,ys + 4 -tt + 5 -tt                         (34)
+                                          52
+
+Fig.6Likelihood surface for               Hydrology memory coefficient  0.99
+estimation of 8 = 7 and 6
+
+                                                                        0.97
+
+                                                                        0.95
+
+                                                                        0.93
+
+                                                                        0.0010  0.0015  0.0020  0.0025    0.0030
+
+                                                                                Effect from local hydrology on system hydrology
+
+                                                                                                          13
+                                                             A. Kleiven et al.
+
+where
+
+       h st,ys = 6(8-t + htloc + 9 -t(1 - 8) t) + 7 -tt.     (35)
+
+We estimate 3 by regressing front month futures contracts on htsys. Afterwards, we
+adjust the effect of hydrology by using model predictions and create a new data set
+of smooth synthetic forward curves from step 1, adjusted for hydrology. Figure 7a
+displays the hydrology predictions and Fig. 7b shows hydrology adjusted futures
+contracts, Ft, - 3hts,ys. By comparing Figs. 4b and 7b, we observe less variabil-
+ity in futures contracts after accounting for hydrology. Forward curves adjusted for
+hydrology are then used in the next step.
+
+   Step 6: Calibrating the long- and short-term factors to futures residuals. In
+the final step, we run the Kalman filter together with maximum likelihood under the
+restriction of zero correlation between hstys and t. This is motivated by the fact that
+the price component that explains hydrology cannot be correlated by the price com-
+ponent explaining everything but hydrology. See [40] and [21] for more information
+on the calibration of geometric models of latent factors t and t. We modify the
+likelihood function to calibrate our additive model. Appendix E provides nomencla-
+ture and parameter estimates.
+
+5.3Numerical results
+
+We implement the Markov chain SDDP in Julia [6] using the SDDP package [12]
+and the Gurobi solver. We compute policies on the dependent and independent
+Markov chain based on data from a Norwegian hydropower producer. The procedure
+for estimating the parameters of the stochastic process is explained in Sect. 5.2, and
+parameter estimates are provided in Table 5 (Appendix E). When discretizing the
+stochastic processes we focus on preserving the mean and variance of prices and
+inflow, and the cross-moment. The discretization procedure is described in Appen-
+dix F. We use a 2% annual discount rate, reflecting the risk-free rate of return. Rev-
+enues are from 2 years of operations to ensure both policies have the same amount
+of inflow to allocate. However, policies in time periods close to the terminal stage
+
+(a) Red points are same as black line     (b) Prices adjusted for hydrology, Ft, -
+in Figure 5b. Black points are hydrology  3 h^ st,ys .
+predictions.
+
+Fig.7Hydrology prediction and prices adjusted for hydrology
+
+13
+Comovements between forward prices and resource availability...
+
+Fig.8Mean and 10th to             Percentage of maximum reservoir capacity               Mean dep.
+90th percentiles of reservoir         0.0 0.2 0.4 0.6 0.8 1.0                            Mean indep.
+trajectories for independent and                                                         10-90 percentile dep.
+dependent Markov chains                                                                  10-90 percentile ind.
+
+                                                                                      0  10           20              30  40  50
+
+                                                                                                                Week
+
+Fig.9Mean of spillage for inde-   Mean spillage relative to weekly inflow volatility     Independent
+pendent and dependent Markov          0.00 0.05 0.10 0.15 0.20 0.25                      Dependent
+chains relative to weekly inflow
+volatility
+
+                                                                                      0  10           20              30  40  50
+
+                                                                                                                Week
+
+experience end of horizon effects because they want to efficiently use all resources
+and thus drain the reservoir. This does not happen in practice, so the policy insights
+we present are only from the first year of operation where end-of-horizon effects
+have negligible impact.
+
+   Figure 8 displays the reservoir trajectories under optimal policies. While both
+policies drain their reservoirs to capitalize on high winter prices, a period with tra-
+ditionally high demand and prices, their decisions start to diverge in the late spring.
+We observe that the reservoir mean is slightly higher during the autumn (from
+around week 25 to 40) for the policy computed on the dependent Markov chain.
+Prices usually increase in this period because we move toward higher winter prices.
+If prices correlate with inflows to the reservoir, the producer favors a slightly higher
+mean reservoir if it accounts for a negative correlation. This is because if a high-
+inflow state occurs in the next stage, the price tends to be low. From a current view-
+point, since reservoirs are limited, this makes current inflow less valuable than if
+prices and inflows were uncorrelated. As a result, the producer tolerates a higher
+amount of spillage in this period, as shown in Fig. 9. Figure 8 also shows that con-
+sidering correlations reduces the reservoir trajectory variability. We observe from
+the 10th percentile that a policy based on the dependent Markov chain has fewer
+low-reservoir trajectories during the autumn, compared to the independent Markov
+chain. This is the period where the covariance is highest according to our estimated
+model parameters and where prices are expected to increase. The policies differ less
+
+                                                           13
+                                                                                                      A. Kleiven et al.
+
+Fig.10Mean and 10th to           Percentage of maximum generation capacity
+90th percentiles of generation       0.0 0.2 0.4 0.6 0.8 1.0
+decisions for independent and
+dependent Markov chains
+
+                                                                                                      Mean dep.
+                                                                                                      Mean indep.
+                                                                                                      10-90 percentile dep.
+                                                                                                      10-90 percentile ind.
+
+                                                                            0  10  20     30          40       50
+
+                                                                                          Week
+
+Table4Difference in expected     Policy computation                                Policy simulation
+
+revenue of policies relative to
+
+V    (s0,  1)                                                                      Independent MC     Dependent MC
+
+  1
+
+                                 Independent MC                                    2.55%              - 0.17%
+                                 Dependent MC                                      ­                  0%
+
+                                 The first column tells which Markov chain that is used under policy
+                                 computation, and the last two column headers tell which Markov
+                                 chain that is used when simulating respective policies
+
+in the other parts of the year. Figure 10, which displays the production, reinforces
+the observations of the reservoir trajectories. We observe that the producer generates
+less on average until around week 30.
+
+   Table 4 outlines the expected revenues for 2 years. The first column states which
+Markov chain is used when computing the policy, and the two rightmost columns
+state which Markov chain the policy is evaluated on. The numbers are percentage
+differences relative to the value of the optimal policy of the dependent Markov
+chain, V1 (s0, 1). We observe that the optimal value of the independent Markov
+chain policy overestimates the value by 2.55%. However, when simulating the policy
+from the independent Markov chain, we find approximately 0.17% loss incurred by
+ignoring correlations under policy computation. The policy computed on the inde-
+pendent Markov chain has a slight disadvantage because the simulations are from
+the dependent Markov chain, which may have a slight discrepancy in the values of
+the independent Markov chain's nodes despite similar first and second moments.
+Therefore, our results indicate that although there is a strong relationship between
+inflows to reservoirs and prices, the producer does not necessarily gain much by
+incorporating co-movements when establishing the seasonal operational policy.
+
+   Figures 11a, b show scenarios for the 100 lower and 100 upper revenues, respec-
+tively, out of 1000 scenarios. The black line is optimized revenue for the dependent
+Markov chain, and the red dashed line is revenue that the policy based on the inde-
+pendence assumption attains on the dependent Markov chain. The black solid line
+in Fig. 11a, b lies slightly above the dashed red line, which illustrates that the pro-
+ducer can slightly increase revenue in both low and high scenarios by accounting for
+
+13
+Comovements between forward prices and resource availability...6e+07         1.6e+08
+
+                                                                                                                                   Indep policy, indep MC
+                                                                                                                                   Indep. policy, dep. MC
+                                                                                                                                   Dep. policy, dep. MC
+
+Revenue                                                             Revenue  1.4e+08
+
+      4e+07
+
+2e+07                                  Indep policy, indep MC                1.2e+08
+                                       Indep. policy, dep. MC
+                                       Dep. policy, dep. MC
+
+             0  20  40             60  80                      100                    900  920  940                                                        960  980  1000
+
+                    Lower revenue scenarios                                                     Upper revenue scenarios
+
+                (a) Revenue in the lower 100 scenarios.                               (b) Revenue in the upper 100 scenarios.
+
+Fig.11Revenues in upper and lower 100 scenarios out of 1000
+
+co-movements between prices and inflows when establishing the operational policy.
+Moreover, we observe from Fig. 11a, b that the blue dotted line, which is optimized
+revenue for the independent Markov chain, mostly lies below the black line in the
+lower 100 scenarios and above the black line in the upper 100 scenarios. An expla-
+nation for this is that the negative correlation between prices and inflow creates a
+natural hedge in the lower 100 scenarios. Revenues are therefore underestimated if
+correlations are ignored. In the upper 100 scenarios, however, revenues are overesti-
+mated because both high price and high inflow realizations are less likely to happen
+if co-movements are accounted for.
+
+   Figure 12 displays a scatter plot of the revenues from 1000 simulations obtained
+when the policy is optimized based on the independence assumption, but evaluated
+on the dependent Markov chain. The black line illustrates the one-to-one mapping of
+optimized revenue for the dependent Markov chain. We observe that scenarios with
+low revenue obtained by the independent policy correspond to low revenue scenar-
+ios when following the dependent policy. This further accentuates that the producer
+cannot gain much by accounting for the negative relationship between prices and
+inflows to reservoirs when establishing the operational policy.
+
+   To test how sensitive our numerical results are to parameter estimates of the
+stochastic process and plant characteristics, we conduct two additional numeri-
+cal experiments. The analytical results from Sect. 2.1 find that a stronger degree
+of co-movements between prices and inflows to reservoirs can increase the oppor-
+tunity value from accounting for these co-movements when computing the policy.
+
+Fig.12Scatter plot of revenues.                                     Indep. policy, dep. MC
+Red points show revenues when                                       Dep. policy, dep. MC
+assuming zero co-movements
+when both optimizing and                     Revenue  1.0e+08
+evaluating the policy. Red points
+show revenues when assum-                             4.0e+07
+ing zero co-movements when
+optimizing and evaluated on the
+dependent Markov chain (color
+figure online)
+
+                                                                    4.0e+07                8.0e+07                                                         1.2e+08
+                                                                                               Revenue
+
+                                                                                                                                                                    13
+                                                                                                              A. Kleiven et al.
+
+Moreover, a smaller reservoir capacity relative to inflow measures and more produc-
+tion capacity could also enhance revenue, as the opportunity value stems from spill-
+age risk. Results from such case studies are provided in Appendix G. A summary
+of the results is that reservoir trajectories and policy values are highly case-specific,
+as expected. In line with intuition, both experiments find that the expected revenue
+decreases. Nonetheless, the reductions are a modest 0.24% for stronger degree of co-
+movements and 0.3% for smaller reservoir capacity and increased production capac-
+ity. The revenue variances have a similar behavior as the base case. The moderate
+changes reinforce the evidence for just modest relative gains from considering co-
+movements in price and inflow when establishing an operational policy.
+
+   Our findings diverge from [32], who report 2.5% and 3.1% reduced expected rev-
+enue on a case study of another Norwegian hydropower plant. We apply our model
+to different case studies, and we have different assumptions regarding the evolution
+of uncertainties and co-movements, which may explain the differences in results.
+We also note that there is no clear relationship between reservoir trajectories and
+correlation coefficient in their results. This is different from our findings, which
+indicate that the producer tolerates slightly more spillage if correlations are taken
+into account and does therefore prefer a slightly higher average reservoir trajectory.
+
+6Conclusions
+
+Hydro-dominated systems in liberalized electricity markets have a clear relationship
+between prices and inflows to the system's reservoirs. Full reservoirs mean abundant
+supply and even risk of spillage, which depress prices. Low reservoirs, on the other
+hand, may indicate a drought and thus high prices. Nevertheless, common industry
+practice is to consider price and inflow as independent stochastic processes when
+optimizing release decisions. This paper investigate the impact of this assumption.
+
+   In order to study the co-movements between electricity prices and inflows to
+reservoirs in hydro-dominated electricity markets, we develop a novel stochastic
+model that captures the relationship between system prices and supply. Hydro-
+logical states at the producer's location and in the system as a whole represent
+the latter. The local state indicates the resource availability of the producer. This
+state partly explains the supply in a larger geographical area, which again partly
+explains prices. We provide general insights about the effect of such co-move-
+ments on the optimal policy of a production scheduling problem in a two-stage
+setting. We apply the stochastic model in a multistage setting by studying the
+medium-term hydropower scheduling problem on industry data. Policies that con-
+sider co-movements prefer a slightly higher average reservoir trajectory during
+periods of high correlations. Moreover, the reservoir trajectory variance reduces,
+and the producer tolerates a slightly higher spillage probability when prices are
+expected to increase in the near future. From case studies using industry data,
+we find that a policy that ignores correlations only incurs 0.17% to 0.30% loss
+in expected revenues for different reservoir and production capacities and inflow
+behavior. This is valuable information for reservoir operators, who receive
+
+13
+Comovements between forward prices and resource availability...
+
+evidence indicating that the theoretical differences only amount to modest eco-
+nomic losses in practice.
+
+Proof of Propositions
+This section presents the proofs of propositions.
+
+Proof of Proposition 2.1
+
+ProofThe proof requires finiteness. No production results in zero value, hence
+Vt(st-1, t)  0, which implies t+1(st, t)  0. An upper bound is provided by max-
+
+imum production at every stage:
+
+                             t+1(st, t) = (Vt+1(st, t+1)| t)                                                 (36)
+
+                                          T             O| O                                                 (37)
+                                 G
+                                                        it
+                                             i=t+1
+
+Furthermore,
+
+                                 Vt     O  G  +     t+1 (st ,       t).                                      (38)
+                                        t
+
+Hence, the value function and continuation function are finite. We proceed by show-
+ing that the terminal value is concave in st for a fixed t at stage T. For a given T,
+we have
+
+                             VT (sT-1,  T)  =           max     C        TOxT                                (39)
+                                                                T
+                                                    xT X(sT-1,      )
+
+                                        T+1(sT , T ) = 0                                                     (40)
+
+This is a  lTCin).eaFrropmrogsrtaamndawrhdelrieneRa-r psrTo-g1r-ammTCinisgthreesuupltpse, rVbTo(suTn-d1  of  the feasible set
+X(sT-1,                                                                                                  ,   T ) is piecewise
+
+linear concave in sT-1. The continuation function is zero and is therefore also piece-
+
+wise linear concave.
+
+  By finiteness of the continuation function and the induction hypothesis, it is easy
+
+to verify that t+1(, t) is piecewise linear concave in st. Hence, for a feasible stage t
+action set X(st-1,  C                                                    tC, a linear reward function
+                    t  )  which  is  bounded        by  R-      st  -
+
+  Ot xt, and  a   concave    continuation function, it follows                 that the value function
+Vt(st-1, t)   is  piecewise  linear concave. This implies that                 t+1 (,  t) is decreasing in st.
+                                                                                  st
+
+                                                                                                             
+
+                                                                                                             13
+                                                                                                            A. Kleiven et al.
+
+Proof of Proposition 2.2
+
+Proof The Lagrangian is given by
+
+             L(xt, vt, st) = tOxt +          t+1 (st ,      t) + z1(st-1 +          C   -   st  -  xt  -    vt)
+                                                                                    t
+
+                              + z2(R - st-1 -               C  +  xt  +  vt)
+                                                            t
+
+                              + z3(st-1 +         C  -  xt)    +   z4(G     -  xt)  +   z5xt    +  z6 vt .
+                                                  t
+
+This yields optimality conditions
+
+                           L(xt, vt, st) =   O    -     z1  +  z2  -  z3    -  z4  +    z5  =   0
+                                xt           t
+
+                           L(xt, vt, st)  =  -z1   +    z2  + z6      =  0
+                                vt
+
+                           L(xt, vt, st) =   t+1 (st ,         t) - z1 = 0,
+                                st              st
+
+where we have set = 1 for ease of notation. Rearranging,
+
+                                 t+1 (st ,   t) =       O   +  z2  -  z3    -  z4  +    z5                            (41)
+                                    st                  t
+
+                                             t+1 (st ,  t) = z6 + z2                                                  (42)
+                                                st
+
+In the trivial case, if       O    0  the    optimal        decision     is   xt (st )  =   0.  Moreover,        the  mar-
+                              t
+
+ginal water value is always non-negative, since if the price is negative, the producer
+
+can spill the water at zero cost. Therefore, this trivial situation is covered by the
+
+upper case in Proposition 2.2. Below, we prove each of the two cases, assuming
+Ot > 0.
+   Case  1:  t+1 (st ,t )  >  tO.
+                  st
+
+   Since tO > 0, we can in this case safely assume st-1 + Ct - xt < R, since the
+marginal water value cannot be positive if the reservoir plus incoming inflow is
+
+larger than the reservoir plus generation capacity. From (41) we get
+
+                                             z2 + z5 > z3 + z4.                                                       (43)
+
+Because st-1 + Ct < R, this constraint is not binding and thus z2 = 0. This means
+
+that z5 must be positive for the condition to hold. Hence, in this case it is optimal to
+produce nothing, i.e., xt = 0. This proves the first case.
+
+Case     2:  t+1 (st ,t )  <  tO.
+                  st
+
+From (41) we get
+
+                                             z2 + z5 < z3 + z4                                                        (44)
+
+13
+Comovements between forward prices and resource availability...
+
+Either z3 or z4 must be positive, which means z5 = 0 since both the maximum and
+
+minimum generation constraint cannot be binding at the same time. Since either z3
+or z4 is positive, the optimal generation quantity is xt = min{G, st +                                                      C
+                                                                                                                            t    }  if
+
+(st+1 ,t )  <  Ot    for  all  st.   However,          since            t+1 (st ,  t)  is  decreasing in st,     see Proposition
+    st                                                                     st
+
+2.1, it is optimal to produce until the price and derivative of the continuation func-
+                                                                                       = t+1(st, t)     tO. For an illustration,
+tion, or the marginal water value, are equal, i.e.
+                                                                                          st
+
+see Fig.          C  -1bar.gsmt inTh|||istO            means        ||st|||that(0,       in         a      situation         where
+K = st-1 +        t                                                                    min          st     C                optimal
+                                                 -        t+1(, t)                            {G,       +  t  }),     the
+                                                             st
+
+generation quantity is K. Therefore, in total, the optimal generation quantity is
+xt = min{G, K, st +               C
+                                  t  }.  This    proves       the    second            case.                                        
+
+Proof of Proposition 2.3
+
+Proof In stage 2 it is optimal to produce at maximum, and since G = R, the optimal
+production quantity is x2 = min{s1 +                              C
+                                                                  2  ,  R}.        Inserting    this    into  the  expression       for
+
+2(s1, 1) gives
+
+2 =  (2O min{s1 + C2 , R})
+
+= O2 (s1 + 2C)1{2CR-s1} + R1{2C>R-s1})
+
+= (O2 2C) + (O2 )s1 P(2C  R - s1) + R (2O)P(C2 > R - s1)
+
+= (O2 ) (2C) + Cov(2O, 2C) + (2O)s1 P(2C  R - s1) + R (2O)P(2C > R - s1)
+
+= 20 + Cov(O2 , C2 )P(C2  R - s1)
+
+                                                                                                                                 (45)
+
+The term Cov( 2O,              C  )  is  negative          and    P(    C          R   -   s1)  is  positive     and  greater    than
+                               2                                        2
+zero if s1 < R, hence 2 < 20 when s1 < R. Note that P(
+                                                                                                    C      R  -  s1)  is  monotoni-
+                                                                                                    2
+                                                                0   -
+cally increasing in s1. Hence,                                  2       2          is      a   decreasing        function        from
+Cov( O2 ,      C       C
+               2  )P(  2       R)    at  s1  =      0  to  0  at   s1   =  R.      For     an  illustration,     see  Fig.  1a.  This
+
+means  that     2 (s1 ,1 )  >     20     (s1 ,1  )                                                                                  
+                   s1                    s1
+                                                 .
+
+Assessment of the inflow model
+See Fig. 13.
+
+                                                                                                                          13
+                                                                                                 A. Kleiven et al.
+
+Fig.13Inflow data, and one-                   100 150 200     Data
+step ahead predictions under                                  Prediction Gaussian
+the Gaussian model and the                                    Prediction lognormal
+lognormal counterpart
+
+                                         GWh
+
+                                              50
+
+                                              0
+
+                                                           0  100  200              300          400  500
+
+                                                                                    Week number
+
+Derivation of the riskneutral process
+
+We first derive the continuous-time risk-neutral version and then derive the discre-
+tized version. The general dynamic of prices is
+
+                              dSt = (St, t)dt + (St, t)dz,                                            (46)
+
+and the following deterministic convenience yield process is
+
+                               dCt = (St, t)dt.                                                       (47)
+
+The discounted gains process of owning a derivative or asset on St must be a martin-
+gale and is given by
+
+                               dGt = d(e-rtSt) + e-rtdCt                                              (48)
+
+                              = -re-rtStdt + e-rtdSt + e-rtdCt                                        (49)
+
+    = e-rt -rSt + (St, t) + (St, t) dt + (St, t)dz                                                    (50)
+
+                              = e-rt (St, t)( (St, t)dt + dz)                                         (51)
+
+                               = e-rt (St, t)dz,                                                      (52)
+
+where r denotes the risk-free rate, and where the risk premium is
+
+                              (St, t) =       (St, t) + (St, t) - rSt .                               (53)
+                                                       (St, t)
+
+By Girsanov's theorem, the new process dz is a standard Brownian motion [35].
+The risk-neutral dynamics can now be written as
+
+                              dSt = (rSt - (St, t))dt + (St, t)dz,                                    (54)
+
+by rearranging (49) and (52).
+
+13
+Comovements between forward prices and resource availability...
+
+   We now move to our specific stochastic model for prices, and start with the
+equilibrium price level, t. If we let ( t, t) = and ( t, t) = , the underlying is
+
+an arithmetic Brownian motion (ABM), which can be written in discrete time as
+
+in (22). Following Alexander et al. (2012) [2], we impose the long-term con-
+venience yield ( t, t) = t. Note that since t can be positive and negative, con-
+
+venience yield is negative if t is negative. The risk premium is then given by
+ 2 ( t, t) = - (r - ) t, which inserted into (54) leads to the following risk-neu-
+
+tral dynamics:
+
+                              d t = (r - ) tdt + dz.                          (55)
+
+This process has geometric expected growth and additive noise. It can be discounted
+by the risk-free rate for getting the value today of an asset on t. Rearranging, a
+discrete-time version risk-neutral process can be written as
+
+                                       t=     t-1 +     2 2,                  (56)
+                                           5
+
+where     =  e(r-  )t and  2  =      1  )  2(1 - e(r- )t).
+       5                   2     2(r-
+
+For the short-term deviations, t, we let ( t, t) = - t and ( t, t) = . The
+
+underlying is then an additive Ornstein-Uhlenbeck process, which can be seen by
+
+inserting into (46). This can be written as an AR-1 process in discrete time, as in
+
+(21). Imposing the short-term convenience yield ( t, t) = t entails short-term
+
+risk premium        ( t, t) = - t - (r - ) t. Inserting convenience yield into
+
+(54) gives
+
+                              d t = (r - ) tdt + dz.                          (57)
+
+Rearranging, a discrete-time version risk-neutral process for the short-term devia-
+tions can be written as
+
+                                       t=        t-1 +  1 1,                  (58)
+                                           4
+
+where     =  e(r-  )t and  2  =      1  )  2 (1 - e(r-  )t). For the stochastic processes  t
+       4                   2     2(r-
+
+and t in (16) and (19) the derivations are similar to the derivations for t.
+
+Calibration   with  !O     and  htsys   being    independent
+
+                       t
+
+For the case study in Sect. 5, we need to benchmark our stochastic model against a
+model where price is not affected by inflows to reservoirs. This can be obtained by
+setting the coefficient of htsys to zero and let the short-term price factor t capture all
+price deviations from the long-term price level, including price deviations related
+to hydrology. We then need to re-estimate parameters of the short-term factor, such
+that mean-reversion speed and variance are approximately equivalent to the model
+where hydrology enters as an explicit factor. Therefore, we let
+
+                                              I  =  0                         (59)
+                                              3
+
+                                                                              13
+                                                A. Kleiven et al.
+
+                   I  =  0                      (60)
+                   6
+
+       ,I       =  1(    6+    4 )              (61)
+       4           2                            (62)
+
+,I  =      1 +  ,I 2     2  +  1+   ,I 2  2  ,
+4          1+   4        1          4     3
+                               1+
+                2                   2
+                4                   6
+
+where 3 is re-estimated to system hydrological data when 6 is set to zero, and
+superscript I indicates independent. By defining parameters this way we can closely
+resemble conditional means and long-term variance in our joint model and a model
+with no connection between prices and inflows to reservoirs.
+
+Nomenclature and parameter estimates
+
+Table 5 provides the parameters used in the case study in Sect. 5. The last columns
+provide parameter estimates from the joint model (J) and the independent model (I).
+Section 5.2 explains the procedure for calibrating the joint model, while Appendix
+D presents a possible procedure for calibrating the independent model.
+
+Discretization of the stochastic model
+
+We consider a producer planning its hydropower operation for the next 2 years.
+It thus considers 104 weekly stages. We construct Markov chains according to
+Algorithm 1 from 50,000 weekly Monte Carlo simulations of prices and inflows
+to reservoirs from expressions (23) to (31). Since inflow is normally distributed
+in our model, it can simulate negative inflow values that we set to zero. Negative
+inflow is a challenge in SDDP and could alternatively be addressed by penaliza-
+tion [20]. Each week has a price and inflow pair, and we use the k-means method
+to cluster. Transition probabilities are estimated as the number of scenarios that
+travel from one cluster to the next, divided by the total number of scenarios mov-
+ing through the previous cluster. A joint clustering on price and inflow pairs cre-
+ated a Markov chain that did not capture the variance, mean, and covariance of
+the underlying stochastic model. Instead, we only cluster on prices and map the
+corresponding inflows to each price cluster. These inflows must transform into a
+representative inflow to the price cluster. Importantly, they must retain the prop-
+erties of the underlying stochastic model. The average value of the inflows man-
+ages to capture the covariance and mean, but not the variance. On the other hand,
+a random sample of the inflows captures the variance but not the covariance and
+mean values. A compromise is the mean of a limited number of samples, which
+manages to provide representative covariances, variances, and means (experi-
+ments on our application find five samples to be representative). The variance has
+
+13
+Comovements between forward prices and resource availability...
+
+Table5Parameters for case study
+
+                            Description                                        (J)      (I)
+
+State variables             Reservoir volume
+                            Price deviation from long-term price level
+rt [MWh]                    Long-term price level
+xt [/MWh]                   Unexplained system deviation state
+yt [/MWh]                   De-seasonalized and normalized inflow
+ t [TWh]                    Smoothed local inflow deviations (standardized)
+ t [MWh/week]
+htloc [MWh/week]            Production
+Decision variables          Spillage
+
+gt [MWh/week]               Discount factor
+wt [MWh/week]               Minimum reservoir volume
+Parameters                  Maximum reservoir volume
+                            Minimum production
+R [MWh]                     Maximum production                                 0.02
+                            Price seasonality parameter, amplitude             0
+R [MWh]                     Price seasonality parameter, shift                 334,989
+G [MWh/week]                Effect from htsys on pt
+                            Short-term price AR-1-coef                         0
+G [MWh/week]                Long-term drift                                    39,439
+                            Effect on from hltoc on hstys
+1 [/MWh]                    Unexplained system deviation AR-1-coef             4.421
+                            Smoothing coefficient for local inflow             2.792
+2 [/MWh]                    Local inflow deviations AR-1-coef                  - 0.820
+                            Volatility short term price                        0.978
+3 [/(MWh TWh)]              Volatility long-term price                         0.999    0
+                            Standard dev. of unexplained system deviation      0.002    0.977
+   [1]                      Standard deviation inflow                          0.978    0
+4                           Weekly historical local inflow mean                0.978    0.978
+                            Weekly historical local inflow standard deviation  0.356
+   [1]                                                                         1.872    2.292
+5                           Local inflow                                       0.554    1.323
+                            Spot price                                         0.940
+6 [1]                       System reservoir volume, deviation from the mean   0.905
+
+   [1]
+7
+
+8 [1]
+
+   [1]
+9
+
+1 [/MWh]
+
+2 [/MWh]
+
+3 [TWh]
+
+4 [MWh]
+
+t, t = 1, ... , 52 [MWh]
+
+t, t = 1, ... , 52 [MWh]
+
+Values derived from states
+
+C  [MWh]
+t
+
+O  [/MWh]
+t
+
+htsys [TWh]
+
+the same shape as the continuous process' variance, but has a lower magnitude
+that decreases with the number of samples. However, an appropriate factor can
+scale the variance to the magnitude of the underlying stochastic model. Before
+scaling, we need to subtract the mean of all the associated inflows in a cluster and
+add it back afterwards, in order to not scale the mean as well. Algorithm 1 shows
+
+                                                           13
+                                                                                                                  A. Kleiven et al.
+
+pseudocode for this operation. We use a Markov chain with five price and inflow
+pair nodes. Simulations verify that it is representative of the continuous price and
+inflow processes.
+
+Algorithm 1 Pseudocode to build Markov chains
+
+1: Initialize parameters in Table 5 and decide inflow sample size Nsample and
+
+     scaler .
+
+2: Simulate random variables , , , and  using equations (25), (26), (28),
+
+     and (30), drawing random samples according to (31).
+
+3: Calculate hsys according to (27).
+4: Calculate prices tC according to (24).
+5: Calculate inflows tO according to (23) and set negative values to 0.
+6: Standardize prices tC .
+7: Use k-means algorithm to get price centroids.
+
+8: Identify which price (and inflow) scenario belongs to which centroid.
+
+9: for t in all stages do
+
+10: if first stage then
+
+11:  Calculate transition probability at first stage as number of scenarios
+
+     in a centroid divided by the total number of scenarios.
+
+12: else
+
+13:  Count what centroid each scenario comes from and to what scenario
+
+     it moves to. Calculate transition probabilities by dividing by number of
+
+     scenarios that came from each centroid.
+
+14:  Convert prices to original values by removing standardization.
+
+15:  for c in all centroids do
+
+16:            Make list Ic of all inflows that belong to centroid c.
+
+17:            CMaalkceulnaetewmliestanI^cµbIcy  of Ic.              µoIfcsifzreomNsianmfloplwe sfrionmIcI.^c  .
+18:            Calculate the mean                subtracting mean
+19:                                              µI^c from a sample
+
+20:            Multiply µI^c with scaler  and then add µIc to get the centroid's
+
+     inflow. Set value to 0 if negative.
+
+21:  end for
+
+22: end if
+
+23: end for
+
+24: Return transition probabilities and centroids with price and inflow pairs.
+
+Additional case studies
+
+This section contains results for different parameters to investigate the sensitivity of
+the findings. We first change parameters of the stochastic process to test stronger co-
+movements and higher seasonal price variations. Afterwards, we test different plant
+characteristics by reducing reservoir capacity and increasing generation capacity.
+
+Extreme effect from hydrology on prices and higher seasonal price variations
+
+To study the effect when seasonal price variations are higher and co-movements are
+stronger, we increase 1 to -1.5 and 3 to 10. This also introduces a higher price
+variance. All other model parameters remain as they were. Figure 14a displays the
+reservoir trajectories under optimal policies. The behavior of the mean reservoir is
+similar to the base case. It shows that the producer favors a higher mean reservoir
+from around week 25 and is therefore more willing to risk spillage in this period.
+The 10th to 90th percentiles are narrower throughout the year in both the depend-
+ent and independent Markov chain compared to the base case. This is a result of
+increased seasonal price variations. Figure 14b shows a scatter plot of revenue. As in
+
+13
+Comovements between forward prices and resource availability...
+
+Percentage of maximum reservoir capacity     Mean dep.                                                                                    Indep. policy, dep. MC
+      0.0 0.2 0.4 0.6 0.8 1.0                Mean indep.                                                                                  Dep. policy, dep. MC
+                                                                                         Revenue10-90 percentile dep.
+                                                                                                                 5.0e+07 1.0e+08 1.5e+0810-90 percentile ind.
+
+                                          0  10  20                   30  40  50                                                          5.0e+07  1.0e+08                 1.5e+08
+
+                                                                    Week                                                                                          Revenue
+
+                                             (a) Reservoir trajectories.                                                                           (b) Revenues.
+
+Fig.14Revenues and reservoir trajectories for the extreme case
+
+Table6Difference in expected                                              Policy computation                                              Policy simulation
+                                                                                                                                          Independent MC
+revenue of policies relative to
+
+V    (s0,                                    1) for the extreme case                                                                                                       Dependent MC
+
+  1
+
+                                                                          Independent MC                                                  0.68%                            - 0.24%
+                                                                          Dependent MC                                                    ­                                0%
+
+                                                                          The first column tells which Markov chain that is used under policy
+                                                                          computation, and the last two column headers tell which Markov
+                                                                          chain that is used when simulating respective policies
+
+the base case, the producer only slightly increases revenue in most scenarios when
+accounting for co-movements when establishing the operational policy. Table 6 out-
+lines the percentage expected opportunity loss in the extreme case.
+
+Changing plant characteristics: higher production capacity and lower reservoir
+capacity
+
+The next case study keeps the stochastic model parameter estimates as the base case
+but changes the plant characteristics to R = G = 106, 382 MWh. Both the genera-
+tion capacity and reservoir capacity are equal to the average inflow of four weeks.
+The reservoir capacity is 32% and generation capacity is 270% of that of the base
+
+Percentage of maximum reservoir capacity     Mean dep.                                             1.4e+08                                Indep. policy, dep. MC
+      0.0 0.2 0.4 0.6 0.8 1.0                Mean indep.                                                                                  Dep. policy, dep. MC
+                                             10-90 percentile dep.
+                                             10-90 percentile ind.
+
+                                                                                          Revenue  8.0e+07
+
+                                          0  10  20                   30  40  50                   2.0e+07                                4.0e+07  8.0e+07                 1.2e+08  1.6e+08
+
+                                                                    Week                                                                                          Revenue
+
+                                             (a) Reservoir trajectories.                                                                           (b) Revenues.
+
+Fig.15Revenues and reservoir trajectories for case with different plant characteristics
+
+                                                                                                                                                                                    13
+                                                                           A. Kleiven et al.
+
+Table7Difference in                 Policy computation  Policy simulation
+
+expected revenue of policies
+
+relative  to  V    (s0  ,  1) with                      Independent MC     Dependent MC
+
+                1
+
+different plant characteristics                                            - 0.30%
+                                                                           0%
+R = G = 106, 382 MWh                Independent MC      2.94%
+                                    Dependent MC        ­
+
+                                    The first column tells which Markov chain that is used under policy
+                                    computation, and the last two column headers tell which Markov
+                                    chain that is used when simulating respective policies
+
+case. Figures 15a, b show reservoir trajectories and revenues. The producer drains
+the reservoir already in the first week, because it can now produce the entire res-
+ervoir at any point in time, and the price seasonality trends downwards in January.
+Figure 15b demonstrates that the sample path revenues behave as in the other cases.
+Table 7 shows that the revenue improves by 0.30% in expectation.
+
+Acknowledgements The authors would like to thank Selvaprabu Nadarajah for valuable discussions and
+inputs. We thank Eviny for case data. The first and third author gratefully acknowledge support from the
+research center HydroCen, RCN No. 257588.
+
+FundingOpen access funding provided by NTNU Norwegian University of Science and Technology
+(incl St. Olavs Hospital - Trondheim University Hospital).
+
+Data availability Price data is available from commercial database providers; we are grateful to Montel
+for providing time series of futures price data. The system balance data is published by NVE (www.nve.
+no). Inflow and power plant data was graciously provided by Eviny, a hydropower producer.
+
+Declarations
+
+Conflict of interest Author Fleten is a guest editor and an associate editor with this journal. He has not
+been handling this paper in any editorial role.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long as
+you give appropriate credit to the original author(s) and the source, provide a link to the Creative Com-
+mons licence, and indicate if changes were made. The images or other third party material in this article
+are included in the article's Creative Commons licence, unless indicated otherwise in a credit line to the
+material. If material is not included in the article's Creative Commons licence and your intended use is
+not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit http://creativecommons.o rg/l icen
+ses/b y/4.0/.
+
+References
+
+ 1. Agrawal, S., Ding, Y., Saberi, A., et al.: Price of correlations in stochastic optimization. Oper. Res.
+      60(1), 150­162 (2012). https://doi.org/10.1 287/o pre.1110.1 011
+
+ 2. Alexander, D.R., Mo, M., Stent, A.F.: Arithmetic Brownian motion and real options. Eur. J. Oper.
+      Res. 219(1), 114­122 (2012). https://doi.org/10.1016/j.ejor.2 011.12.023
+
+13
+Comovements between forward prices and resource availability...
+
+ 3. Arvanitidits, N.V., Rosing, J.: Composite representation of a multireservoir hydroelectric power sys-
+      tem. IEEE Trans. Power Appar. Syst. PAS 89(2), 319­326 (1970). https://doi.org/1 0.1 109/TPAS.
+      1970.2 92595
+
+ 4. Ávila, L., Mine, M.R., Kaviski, E., et al.: Evaluation of hydro-wind complementarity in the
+      medium-term planning of electrical power systems by joint simulation of periodic streamflow and
+      wind speed time series: A Brazilian case study. Renew. Energy 167, 685­699 (2021). https://d oi.o rg/
+      10.1 016/j.r enene.2 020.11.1 41
+
+ 5. Benth, F.E., Koekkebakker, S., Ollmar, F.: Extracting and applying smooth forward curves from
+      average-based commodity contracts with seasonal variation. J. Deriv. 15(1), 52­66 (2007). https://
+      doi.o rg/1 0.3905/jod.2 007.694791
+
+ 6. Bezanson, J., Edelman, A., Karpinski, S., et al.: Julia: a fresh approach to numerical computing.
+      SIAM Rev. 59(1), 65­98 (2017). https://d oi.org/10.1137/141000671
+
+ 7. Chopra, V.K., Ziemba, W.T.: The effect of errors in means, variances, and covariances on optimal
+      portfolio choice. J. Portfolio Manag. 19(2), 6­11 (1993). https://d oi.o rg/10.3905/jpm.1993.4 09440
+
+ 8. De Ladurantaye, D., Gendreau, M., Potvin, J.Y.: Optimizing profits from hydroelectricity produc-
+      tion. Comput. Oper. Res. 36(2), 499­529 (2009). https://doi.org/10.1 016/j.cor.2 007.1 0.012
+
+ 9. Denault, M., Dupuis, D., Couture-Cardinal, S.: Complementarity of hydro and wind power: improv-
+      ing the risk profile of energy inflows. Energy Policy 37(12), 5376­5384 (2009). https://doi.o rg/10.
+      1016/j.enpol.2 009.07.0 64
+
+10. Dietze, M., Chavarry, I., Freire, A.C., et al.: A novel semiparametric structural model for electric-
+      ity forward curves. IEEE Trans. Power Syst. 38(4), 3268­3278 (2022). https://doi.org/1 0.1109/
+      TPWRS.2022.3197982
+
+11. Downward, A., Dowson, O., Baucke, R.: Stochastic dual dynamic programming with stagewise-
+      dependent objective uncertainty. Oper. Res. Lett. 48(1), 33­39 (2020). https://doi.o rg/10.1 016/j.orl.
+      2019.11.0 02
+
+12. Dowson, O., Kapelevich, L.: SDDP.jl: a Julia package for stochastic dual dynamic programming.
+      Inf. J. Comput. 33(1), 27­33 (2021). https://d oi.o rg/1 0.1287/ijoc.2020.0 987
+
+13. Dowson, O.: Applying stochastic optimisation to the New Zealand dairy industry. PhD thesis, Uni-
+      versity of Auckland (2018)
+
+14. Duffie, D.: Dynamic Asset Pricing Theory. Princeton University Press, Princeton (2010)
+15. Feng, Y., Ryan, S.M.: Scenario construction and reduction applied to stochastic power generation
+
+      expansion planning. Comput. Oper. Res. 40(1), 9­23 (2013)
+16. Flatabø, N., Haugstad, A., Mo, B., et al.: Short-term and medium-term generation scheduling in the
+
+      Norwegian hydro system under a competitive power market structure. In: EPSOM'98 (International
+      Conference on Electrical Power System Operation and Management), Switzerland (1998)
+17. Fleten, S.E., Kristoffersen, T.K.: Short-term hydropower production planning by stochastic pro-
+      gramming. Comput. Oper. Res. 35(8), 2656­2671 (2008)
+18. Fleten, S.E., Lemming, J.: Constructing forward price curves in electricity markets. Energy Econ.
+      25(5), 409­424 (2003)
+19. Girardeau, P., Leclere, V., Philpott, A.B.: On the convergence of decomposition methods for multi-
+      stage stochastic convex programs. Math. Oper. Res. 40(1), 130­145 (2015). https://d oi.o rg/1 0.1 287/
+      moor.2 014.0 664
+20. Gjelsvik, A., Mo, B., Haugstad, A.: Long- and medium-term operations planning and stochastic
+      modelling in hydro-dominated power systems based on stochastic dual dynamic programming.
+      In: Handbook of Power Systems. Springer, Berlin, pp. 33­55. https://doi.o rg/1 0.1007/978-3-6 42-
+      02493-1_2 (2010)
+21. Goodwin, D.: Schwartz-Smith 2-factor model--parameter estimation (2020). https://w ww.mathw
+      orks.com/matlabcentral/fileexchange/43352-schwartz-smith-2-factor-model-parameter-estimation.
+      Accessed 23 June 2021
+22. Labadie, J.W.: Optimal operation of multireservoir systems: State-of-the-art review. J. Water Resour.
+      Plan. Manag. 130(2), 93­111 (2004)
+23. Lima, R.M., Conejo, A.J., Langodan, S., et al.: Risk-averse formulations and methods for a virtual
+      power plant. Comput. Oper. Res. 96, 350­373 (2018)
+24. Lium, A.G., Crainic, T.G., Wallace, S.W.: Correlations in stochastic programming: a case from sto-
+      chastic service network design. Asia-Pac. J. Oper. Res. 24(02), 161­179 (2007)
+25. Löhndorf, N., Shapiro, A.: Modeling time-dependent randomness in stochastic dual dynamic pro-
+      gramming. Eur. J. Oper. Res. 273(2), 650­661 (2019). https://d oi.o rg/10.1016/j.ejor.2 018.0 8.0 01
+
+                                                           13
+                                                                                                              A. Kleiven et al.
+
+26. Löhndorf, N., Wozabal, D., Minner, S.: Optimizing trading decisions for hydro storage systems
+      using approximate dual dynamic programming. Oper. Res. 61(4), 810­823 (2013). https://doi.org/
+      10.1 287/o pre.2013.1182
+
+27. Lucia, J.J., Schwartz, E.S.: Electricity prices and power derivatives: evidence from the Nordic power
+      exchange. Rev. Deriv. Res. 5(1), 5­50 (2002). https://doi.o rg/10.1 023/A:10138466317 85
+
+28. Maceira, M.E.P., Duarte, V., Penna, D., et al.: Ten years of application of stochastic dual dynamic
+      programming in official and agent studies in Brazil: description of the NEWAVE program. In: 16th
+      PSCC, Glasgow, Scotland, pp. 14­18 (2008)
+
+29. Maceira, M.E., Melo A., Pessanha J.F, et al.: An approach to representing wind uncertainties in the
+      long-term operation planning of systems with hydropower predominance. Tech. rep., EGU General
+      Assembly, Vienna, Austria, 23­27 May 2022, EGU22-8993 (2022). https://d oi.org/10.5 194/e gusp
+      here-e gu22-8993
+
+30. Mo, B., Gjelsvik, A., Grundt, A.: Integrated risk management of hydro power scheduling and contract
+      management. IEEE Trans. Power Syst. 16(2), 216­221 (2001). https://doi.org/10.1109/59.918289
+
+31. Montel Market data Nordic power (2021). https://w ww.m ontel news.c om/e n/. Accessed 23 June 2021
+32. Nersten, S., Dimoski, J., Fleten, S.E., et al.: Hydropower reservoir management using multi-factor
+
+      price model and correlation between price and local inflow. In: 2018 IAEE International Conference
+      (2018). http://w ww.iaee.o rg/procee dings/a rticle/1 5183
+33. NVE.: Norwegian Water Resources and Energy Directorate (2022). https://www.nve.no/e nergi/analy
+      ser-o g-s tatistikk/h ydrol ogisk e-data-t il-k raftsituas jonsrappor ten/. Accessed 20 Feb 2022
+34. Obersteiner, C., Saguan, M.: Parameters influencing the market value of wind power--a model-based
+      analysis of the Central European power market. Eur. Trans. Electr. Power 21(6), 1856­1868 (2011).
+      https://doi.o rg/1 0.1002/e tep.430
+35. Øksendal, B.: Stochastic differential equations. In: Stochastic Differential Equations: An Introduction
+      with Applications. Springer, Berlin, pp. 65­84 (2003). https://doi.org/1 0.1007/9 78-3-642-14394-6_5
+36. Passos, A.C., Street, A., Barroso, L.A.: A dynamic real option-based investment model for renew-
+      able energy portfolios. IEEE Trans. Power Syst. 32(2), 883­895 (2016)
+37. Pereira, M.V., Pinto, L.M.: Multi-stage stochastic optimization applied to energy planning. Math.
+      Program. 52(1), 359­375 (1991). https://d oi.org/1 0.1 007/B F0158 2895
+38. Pérez-Díaz, J.I., Guisández, I., Chazarra, M., et al.: Medium-term scheduling of a hydropower plant
+      participating as a price-maker in the automatic frequency restoration reserve market. Electr. Power
+      Syst. Res. 185(106), 399 (2020). https://doi.org/1 0.1016/j.epsr.2020.1 06399
+39. Philpott, A., Guan, Z.: On the convergence of stochastic dual dynamic programming and related
+      methods. Oper. Res. Lett. 36(4), 450­455 (2008). https://d oi.org/10.1016/j.orl.2 008.0 1.0 13
+40. Schwartz, E., Smith, J.E.: Short-term variations and long-term dynamics in commodity prices. Man-
+      age. Sci. 46(7), 893­911 (2000). https://d oi.org/10.1287/m nsc.46.7.8 93.12034
+41. Shapiro, A., Tekaya, W., da Costa, J.P., et al.: Risk neutral and risk averse stochastic dual dynamic
+      programming method. Eur. J. Oper. Res. 224(2), 375­391 (2013). https://doi.o rg/10.1016/j.e jor.
+      2012.08.0 22
+42. Stedinger, J.R.: Fitting log normal distributions to hydrologic data. Water Resour. Res. 16(3), 481­
+      490 (1980). https://doi.org/1 0.1029/W R016i003p00481
+43. Suomalainen, K., Pritchard, G., Sharp, B., et al.: Correlation analysis on wind and hydro resources
+      with electricity demand and prices in New Zealand. Appl. Energy 137, 445­462 (2015). https://doi.
+      org/1 0.1 016/j.apener gy.2 014.1 0.015
+44. Wallace, S.W., Fleten, S.E.: Stochastic programming models in energy. In: Ruszczynski, A., Sha-
+      piro, A., (eds) Stochastic Programming. Vol. 10 of Handbooks in Operations Research and Man-
+      agement Science. Elsevier Science, pp 637­677 (2003). https://doi.o rg/10.1 016/S 0927-0507(03)
+      10010-2
+45. Wolfgang, O., Haugstad, A., Mo, B., et al.: Hydro reservoir handling in Norway before and after
+      deregulation. Energy 34(10), 1642­1651 (2009). https://d oi.o rg/10.1016/j.e nergy.2 009.07.0 25
+
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+13
+

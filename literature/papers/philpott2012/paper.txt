@@ -1,0 +1,1156 @@
+      Dynamic sampling algorithms for multi-stage
+          stochastic programs with risk aversion
+
+                           A.B. Philpotty and V.L. de Matosz
+
+                                      February 9, 2011
+
+                                                          Abstract
+
+            We consider the incorporation of a time-consistent coherent risk measure into a
+        multi-stage stochastic programming model, so that the model can be solved using a
+        SDDP-type algorithm. We describe the implementation of this algorithm, and study
+        the solutions it gives for an application of hydro-thermal scheduling in the New Zealand
+        electricity system. The performance of policies using this risk measure at di¤erent levels
+        of risk aversion is compared with the risk-neutral policy.
+
+1 Introduction
+
+Multi-stage stochastic linear programming models have been solved using decomposition
+for over thirty years, originating with the seminal work of [2], but there are still very few
+implementations of these models in commercial settings. The classical version of this model
+constructs a scenario tree that branches at each stage. Even with a small number of outcomes
+per stage, the size of the scenario tree grows exponentially with the number of stages. In two-
+stage problems with many scenarios, the sample average approximation approach enables
+large-scale problems to be solved to within reasonable error bounds [10]. However, as argued
+by [21], the exponential growth of the scenario tree makes all but the smallest instances of
+multi-stage problems intractable for sample average approximation.
+
+    One area in which multi-stage stochastic linear programming models are widely applied
+is in the long-term scheduling of water resources, in particular in hydro-thermal electricity
+systems. This problem involves determining a policy of releasing water from reservoirs for
+hydro-electricity generation and generating from thermal plant over some planning horizon of
+
+     This research was carried out during a visit by the second author to the Electric Power Optimization
+Centre. Grant support from CAPES and Tractebel Energia GDF Suez - P&D ANEEL (PE-0403-0108/2009)
+and the New Zealand Marsden Fund under contract UOA719WIP is gratefully acknowledged.
+
+    yElectric Power Optimization Centre, University of Auckland, New Zealand: a.philpott@auckland.ac.nz
+    zLaboratório de Planejamento de Sistemas de Energia Elétrica, Universidade Federal de Santa Catarina:
+vitor@labplan.ufsc.br
+
+                                                          1
+months or years so as to meet the future demand for electricity at lowest expected fuel cost.
+The ...rst models (dating back to [13],[11]) for these problems used dynamic programming,
+a tool that was con...ned to systems with one or two reservoirs, unless reservoir aggregation
+heuristics (see e.g. [23]) are used.
+
+    An e¤ort to model systems with multiple reservoirs led to the development in the 1980s
+and 1990s of various multi-stage stochastic linear programming models (see e.g. [9]) using
+scenario trees. Stochastic Dual Dynamic Programming (SDDP) [15] was developed as a
+response to the problem of dealing with a rapidly growing scenario tree. This method
+approximates the future cost function of dynamic programming using a piecewise linear
+outer approximation, de...ned by cutting planes or cuts computed by solving linear programs.
+This avoids the curse of dimensionality that arises from discretizing the state variables.
+The intractability arising from a branching scenario tree is avoided by essentially assuming
+stagewise independent uncertainty. This allows cuts to be shared between di¤erent states,
+e¤ectively collapsing the scenario tree.
+
+    The ability to share cuts under some speci...c forms of stagewise dependency as discussed
+by Infanger and Morton [8] is now included in most commercial implementations of the
+SDDP algorithm. Monte Carlo sampling is also used in estimating bounds. These features
+make SDDP look more like an approximate dynamic programming method than a multi-
+stage stochastic linear programming algorithm. Commercial implementations of SDDP are in
+widespread use around the world, and are used to schedule hydro-electric plant in a number
+of South American countries including Brazil and Chile.
+
+    The standard implementations of SDDP are risk neutral, in that they seek policies that
+minimize expected cost. In hydro-thermal systems this cost comes about from thermal
+fuel and penalty costs, such as shortages. A cost-minimizing system operator would accept
+occasional shortages in electricity if this made the long-run cost of fuel a minimum. In
+practice, shortages do not occur very often, but when they do, they are so disruptive that
+politicians and system operators would wish to avoid them. It therefore makes sense to
+compute hydro-thermal scheduling policies that are risk averse. In some circumstances it is
+possible to have a signi...cantly less risky policy with a modest increase in expected cost.
+
+    In this paper we describe a version of SDDP that models risk. Our work is based on
+the recent paper by Shapiro [22], but draws also on work by [19] and [20]. Our measure
+of risk in each stage is a convex combination of expectation and conditional value at risk
+[17], [18]. This makes it coherent as de...ned by [1]. The risk measure we use also satis...es
+a dynamic programming recursion, and so it is time-consistent in the sense de...ned by [19].
+The recursive nature of its de...nition, and its convexity also admits approximation using
+cutting planes, and so we can modify SDDP to accommodate this.
+
+    Several other authors have developed SDDP implementations that account for risk. In
+[7], Iliadis et al describe a hydro-thermal scheduling model that accounts for the conditional
+value at risk of accumulated revenue shortfall at the end of the planning horizon, however
+there are few details in this paper about its implementation in the SDDP method. Guigues
+and Sagastizabal [5] study a rolling horizon model that repeatedly solves and implements
+the solution to a single stage problem with chance constraints. Guigues and Romisch [4]
+
+                                                          2
+present a general framework for extended polyhedral risk measures in the context of SDDP.
+The general risk measure they use makes use of a state space augmented by a vector of costs
+representing a possible history up to the current time. In contrast the model proposed by
+Shapiro [22] uses one extra state variable in each stage and so is more straightforward to
+compute. As we shall see, even in this case the algorithm takes some time to converge to a
+good solution.
+
+    Our aim in this paper is to demonstrate that risk-averse policies for this class of large-
+scale stochastic programming problems can be computed reasonably easily using SDDP-type
+methods. Moreover, by simulating these policies on a representation of a real hydro-thermal
+system, we are able to draw some conclusions about the value of these models as decision
+tools.
+
+    The paper is laid out as follows. In the next section, for completeness, we describe the
+risk-neutral SDDP algorithm, and describe a version of this model using a Markov chain to
+represent stagewise dependence in our model. This section can be skipped by readers who
+are familar with this class of algorithms. In section 3, we de...ne conditional value at risk and
+describe how this is implemented in a multi-stage context in section 4. We describe this in
+some detail, starting with a two-stage model to build the reader's intuition. The ...nal model
+that we discuss in this section uses a Markov chain with states that can be used to adapt
+the level of risk aversion to depend on expectations of future events. In section 5 and 6 we
+describe a model of the New Zealand electricity system and some computational results of
+experiments where this approach is applied to this system, respectively. Section 7 concludes
+the paper.
+
+2 Multi-stage stochastic linear programming
+
+In this section we review the Stochastic Dual Dynamic Programming (SDDP) algorithm
+proposed by [15] as a solution strategy for risk neutral multi-stage stochastic linear pro-
+gramming. As mentioned in the Introduction, instead of solving all possible scenarios of the
+multi-stage scenario tree, SDDP attacks a small sample of the scenarios to build a policy
+that is de...ned by a piecewise linear outer approximation of the future cost for each stage.
+This function is constructed using cutting planes called Benders cuts, or just cuts. In the
+SDDP algorithm the scenario tree is decoupled by node, in which the ...rst stage problem is
+assumed to be deterministic and can be denoted by
+
+            z = min c>1 x1 + E[Q2(x1; !2)]
+
+            s.t. A1x1 = b1;                  (1)
+
+            x1 0:
+
+where x1 2 Rn is the ...rst stage decision and c1 2 Rn a cost vector, A1 is a m n matrix, and
+b1 2 Rm. We denote by Q2(x1; !2) the second stage costs associated with decision x1 and
+
+realization !2 2 2. Since the scenario tree is ...nite, the support t for all stages t = 2; 3; :::; T
+
+is also ...nite. The problem to be solved in each stage t , state xt 1, and realization !t can be
+
+written as
+
+            3
+                  Qt(xt 1; !t) = min ct>xt + E[Qt+1(xt; !t+1)]
+
+                                     s.t. Atxt = bt(!t) Etxt 1; [ t(!t)]               (2)
+
+                                               xt 0;
+
+where xt 2 Rn is the decision in stage t and ct its cost, At and Et denote m n matrices. The
+random vector bt(!t) 2 Rm depends on the realization !t. In the last stage we assume either
+that E[QT +1(xT ; !T +1)] = 0, or that there is a convex function that de...nes the expected
+
+future cost after stage T .
+
+In the SDDP algorithm E[Qt+1(xt; !t+1)] is replaced by t+1 which is de...ned by a set of
+
+cuts given by
+
+                       t+1 +  >      Et+1xt    gt+1;k        for k = 1; 2; :::K:       (3)
+                              t+1;k
+
+where K is the number of cuts. Here t+1;k = E[ t+1(!t+1)], which de...nes the gradient
+>
+t+1;k  Et+1  and  the  intercept  gt+1;k  for  cut  k  in  stage  t,  where
+
+                             gt+1;k = E[Qt+1(xkt ; !t+1)] +       >      Et+1xkt  .
+                                                                  t+1;k
+
+    The SDDP algorithm performs a sequence of major iterations known as the forward pass
+and the backward pass to build an approximately optimal policy, de...ned by cuts. In each
+forward pass, a set of N scenarios is sampled from the scenario tree and decisions are taken
+for each node of those N scenarios, starting in the ...rst stage and moving forward up to the
+last stage. In this step the ...nal volumes in the reservoirs and the costs of each node in all
+scenarios are saved.
+
+    At the end of the forward pass, a convergence criterion is tested, and if it is satis...ed then
+the algorithm is stopped, otherwise it starts the backward pass, which is de...ned below. In
+the standard version of SDDP, convergence is achieved when the estimate of a lower bound
+on expected cost at the ...rst stage (called the Lower Bound), which is the sum of the present
+cost (c>1 x1) and estimated future cost (operation policy), is statistically close to an estimate
+of the expected total operation cost obtained by evaluating the policy de...ned by the cuts
+over several scenarios (called the Upper Bound). The total operation cost for each scenario
+is the sum of the present cost (c>t xt) in all stages.
+
+    If the convergence test fails, SDDP improves the policy using a backward pass that adds
+a cut to each stage problem, starting at the last stage and working backwards to the ...rst. In
+each stage t we solve the next stage problems for all possible realizations ( t+1). The values
+of the objective functions and dual variables at optimality are averaged over all realizations
+to de...ne a cut that is added to all problems at stage t. In summary, the SDDP algorithm
+performs the following three steps repeatedly until a convergence criterion is satis...ed.
+
+1. Forward Pass
+         For t = 1 solve (1) and save x1 and z;
+         For t = 2; :::; T and s = 1; :::; N ,
+               Solve (2), where !t is de...ned by s, and save xt(s) and Qt(xt 1; !t).
+
+                                                    4
+2. Convergence Test
+
+Calculate the Upper Bound:  zu  =  c1>x1  +  1  PS     PT  ct>xt(s)
+                                             S
+                                                s=1 t=2
+                                   r
+                                      ( ) c1>x1+PTt=2 c>t xt(s) 2 zu2
+                            u=                    ; S
+
+Calculate the Lower Bound: zl = z;
+
+Assuming a 90% con...dence interval and S 30, stop if
+
+                            zu     1p:96  u  <  zl  <  zu  +  1p:96  u,
+                                      S                          S
+
+otherwise go to the Backward Pass.
+
+3. Backward Pass
+         For t = T; :::; 2, and s = 1; :::; N ,
+               For !t 2 t, solve (2) using xt 1(s) and save t(!t) and Qt(xt 1; !t);
+               Calculate a cut (3) and add it to all nodes in stage t 1.
+
+    In our implementation of the algorithm above we choose N = 1. This has been shown
+by [3] to give better results than the standard choice (N = 200). In our experiments we also
+choose to run the SDDP algorithm for a ...xed number of iterations, rather than using the
+above stopping criterion. This test, which was proposed by [15], can be misleading (see e.g.
+[6],[22]).
+
+2.1 Markov process in the SDDP algorithm
+
+The algorithm described above assumes that the random variables are stage-wise indepen-
+dent. In many settings this is not a suitable model, and there is some correlation over time.
+A popular approach to dealing with this is to model the random variables as an autoregres-
+sive process with independent errors (see e.g. [12]). In this paper we describe a di¤erent
+approach in which the random variables have a probability distribution that depends on an
+underlying state which follows a Markov process. This state becomes another state dimen-
+sion of the dynamic program. When the state is continuous (as in an autoregressive process)
+we require that the future cost function is convex as a function of this state. When the state
+is discrete (as in a ...nite Markov chain), we must enumerate a future cost function for each
+value that the state may take. For each state variable there is a set of possible realizations
+at each stage. During the course of the algorithm, when cuts are added, we record a set of
+cuts for each state in the Markov chain instead of just one for the stage. A similar approach
+has been described by [14] in the context of modelling uncertainty in the objective function
+(e.g. from electricity prices) as well as in the constraint right-hand sides.
+
+    This construction is best illustrated with an example. Suppose that the Markov chain
+has two states, 1 and 2, which are shown in Figure 1 with the transition probabilities q,
+
+                                   5
+Figure 1: Example of state transitions.
+
+       Figure 2: Markov process states.
+
+1 q, and p, 1 p. Here and henceforth we will colour nodes in state 1 black and nodes in
+state 2 white.
+
+    We augment the state space with a new state variable which takes values 1 and 2. Sup-
+pose that the random realizations in each stage can take only four values, a, b, c, d, and
+that these can be classi...ed into two states as shown in Figure 2.
+
+    For a three-stage problem, this corresponds to a scenario tree as shown in Figure 3, in
+which the black nodes correspond to state 1 and the white nodes represent state 2. From
+Figure 3 it is possible to see that the set of descendent nodes is the same for any given
+stage, but they may have di¤erent probabilities depending on the value of the current state.
+Therefore, cuts cannot be shared directly. However as the dual solutions in one node are
+valid for all nodes with the same realization in that stage, one can use the solutions to
+compute a cut for each state by using the appropriated probabilities.
+
+    There are two possible approaches to deal with this situation. In the ...rst one we calculate
+in each iteration a partial cut for each state and both are used in all states, which means
+that in the case of Figure 3 the third stage problems would generate the following pair of
+cuts for the second stage:
+
+3ab +  E x 3a+ 3b  + Q( 3a)+Q( 3b)  3a +  3b E3x2:
+3cd +  2  32                           2
+                             2
+       E x 3c+ 3d                   3c +  3d E3x2:
+       2  32       + Q( 3c)+Q( 3d)     2
+
+                            2
+
+                   6
+                         Figure 3: Scenario tree with the Markov Process.
+
+In this multi-cut approach the future cost at stage 2 is represented by
+
+                                     31 = q 3ab + (1 q) 3cd
+
+when the node corresponds to state 1 (black) and by
+
+                                     32 = (1 p) 3ab + (p) 3cd
+
+when the node corresponds to state 2 (white).
+
+Alternatively, the single-cut approach constructs the conditional expectation of each cut
+
+with the appropriate transition probabilities and stores a single extra cut in each state at
+
+stage 2. This gives
+
+         3a +            q) 3c+ 3d         h  q Q(   3a)+Q(  3b )         q) Q( 3c)+Q( 3d)   i
+            2                                            2
+31 +  q        3b  + (1           2  E3x2                          +  (1                2
+
+                                           +h     q  3a +  3b + (1        q) 3c+ 3d   E3x2: i   for state 1
+                                                        2                                       for state 2
+                                                                                   2
+
+32 + (1  p) + p 3a+ 3b   3c+ 3d      E3x2     (1     p) + p Q( 3a)+Q( 3b)  Q( 3c)+Q( 3d)
+                            2                                                       2
+                  2                                                2
+
+                                           + (1      p) + p 3a+ 3b        3c+ 3d      E3x2:
+                                                                             2
+                                                              2
+
+    In both cases it is necessary to maintain two sets of cuts at each stage. In the ...rst case,
+each node's problem will use both set of cuts, so the stage optimization problems will be
+larger, whilst in the second case each node will use only one set of cuts. Although, the size
+of each stage problem grows more quickly in the ...rst case, the multi-cut strategy is expected
+to require fewer iterations to achieve convergence.
+
+3 Risk measures
+
+In this section we begin our discussion of how to make the policies generated by SDDP risk
+averse in the sense that they penalize large losses, without compromising the expected cost
+
+                                                          7
+too much. One common approach to measure the risk of a loss distribution of a given random
+variable Z is the 1 value at risk, VaR1 [Z], that is de...ned by [18] as
+
+                 VaR1 [Z] = inffu : Pr(Z u)g 1 ;
+
+                                            u
+
+where is typically chosen to be some small probability e.g. 0.05. This means that VaR1 [Z]
+is the left-side (1 )th percentile of the loss distribution. It is well known that even when
+
+Z is a convex function of a decision x, the function VaR1 [Z] is not guaranteed to be convex
+in x, which makes optimization di¢ cult in general, and impossible in SDDP. The tightest
+
+convex safe approximation of VaR1 [Z] is called the conditional value at risk. This can be
+
+written [18] as
+
+                 CVaR1  [Z] = inffu +   1E[Z  u]+g;
+
+                                     u
+
+where we write [a]+ for maxfa; 0g.
+    In this paper we study a combination of the expected total cost and the conditional value
+
+at risk, as suggested by Shapiro [22]. Therefore, we use a risk measure
+
+                 (Z) = E[Z] + CVaR1 [Z];                                  (4)
+
+where and are nonnegative. In practice it makes sense to choose > 0 since CVaR1 [Z]
+on its own will disregard the e¤ect of decisions on expected outcomes, which might result in
+expensive policies on average that we would wish to avoid if cheaper ones were possible with
+the same level of CVaR.
+
+    Conditional value at risk is an example of a coherent risk measure. According to [1] a
+function : Rn ! R is a coherent risk measure if satis...es the following axioms for Z1 and
+Z2 2 Rn.
+
+Convexity: ( Z1 + (1 )Z2)  (Z1) + (1 ) (Z2), for 2 [0; 1];
+
+Monotonicity: If Z1 Z2, then (Z1) (Z2);
+
+Positive homogeneity: If U 2 R and U > 0, then (U Z1) = U (Z1);
+
+Translation equivariance: If U 2 R, then (IU + Z1) = U + (Z1).
+
+    The risk measure de...ned in (4) satis...es the ...rst three axioms, and in order to satisfy
+the fourth (translation equivariance), we have
+
+                           U + (Z1) = (IU + Z1)
+                                          = E[IU + Z1] + CVaR1 [IU + Z1]
+                                          = U + E[Z1] + U + CVaR1 [Z1]
+                                          = ( + )U + E[Z1] + CVaR1 [Z1]
+                                          = ( + )U + (Z1):
+
+so + = 1. Therefore, we replace and by (1 ) and , respectively to give
+
+                 (Z) = (1 )E[Z] + CVaR1 [Z]                               (5)
+
+                           8
+yielding
+
+                            (Z) = (1 )E[Z] + inffu + 1E[Z u]+g:
+
+                                                                          u
+
+    The risk measure (Z) is equivalent to the mean deviation from quantile proposed by
+Miller and Ruszczynski [20], bearing in mind that in our setting we are minimizing Z. In
+this setting, the mean deviation from quantile measure is
+
+                               X N                 1                                   (6)
+                   d(Z) = E[Z] + min pi max                (zi ); zi
+
+                               i=1
+
+in which N is the number of realizations of the discrete random variable Z. We have
+
+          max(  1  (zi ); zi) = ( zi) + max             1  (zi ) ( zi); 0
+
+and
+
+          1                 1                                                1
+                (zi ) ( zi) = [(zi ) (zi ) + (zi )] = (zi ):
+
+So,
+
+                   max(  1                                          1                  (7)
+                            (zi ); zi) = ( zi) + max (zi ); 0
+
+     Therefore, by replacing (7) in (6) we obtain
+
+                               X N                                  1        ); 0
+                d(Z) = E[Z] + min pi ( zi) + max (zi                           ); 0 )
+
+                               i=1
+
+                                                   X N                 1
+                   = E[Z] E[Z] + min( + pi max (zi
+
+                                                   i=1
+
+                   = (Z)
+
+    The measure as de...ned is a single period measure, which is extended in [22] to a
+
+dynamic risk measure t;T over t = 1; 2; : : : ; T following the general theory of [19]. To help
+the reader interpret the computational results it is worthwhile presenting a brief summary
+
+of this general construction. Given a probability space ( ; F; P ), a dynamic risk measure
+applies to a situation in which we have a random sequence of costs (Z1; Z2; : : : ; ZT ) which
+is adapted to some ...ltration f0; g = F1 F2 : : : FT F of -...elds, where Z1 is
+assumed to be deterministic. A dynamic risk measure is then de...ned to be a sequence of
+
+conditional risk measures f t;T g, t = 1; 2; : : : ; T . Given a dynamic risk measure, we can
+derive a corresponding single-period risk measure using
+
+                            t(Zt+1) = t;T (0; Zt+1; 0; : : : ; 0).
+
+                                    9
+By [19, Theorem 1], any time-consistent dynamic risk measure can then be constructed in
+terms of single-period risk measures t by the formula
+
+t;T (Zt; Zt+1; : : : ; ZT ) = Zt + t(Zt+1 + t+1(Zt+2 + : : : + T 2(ZT 1 + T 1(ZT )) : : :))):
+
+In the next section we describe this construction in the special case in which we choose the
+single-period risk measure
+
+t(Z) = (1  t)E[Z j Ft] + t inffu + 1E[Z u j Ft]+g:
+
+                                           u
+
+4 Implementing a CVaR risk measure in SDDP
+
+In this section we present the modelling strategy to optimize the coherent risk measure
+discussed in Section 3. This can be considered to be one of the main contributions of this
+paper, because although our approach is similar to the ones shown in [22] and [20], there
+are some important di¤erences related to our solution strategy. In this section we omit a
+description of the basic SDDP algorithm, because the algorithm is exactly the same as the
+one presented in Section 2 except for the problems to be solved and the cut calculations.
+
+    To help understand how the stage problems are a¤ected by our risk measure, we ...rst
+consider a two-stage linear problem that aims to minimize the ...rst stage cost plus the risk
+measure applied to the second stage costs. Here the ...rst stage is deterministic and the
+second stage random variable has ...nite support 2. In this paper the stochastic process
+is going to be modelled by random variables only in the constraint right-hand side. This
+problem can be written as follows:
+
+SP: min c1>x1 + (1 )E[c>2 x2] + u2 + 1E[c2>x2 u2]+
+
+s.t. A1x1 = b1;
+
+A2x2(!) + E2x1 = b2(!); for all ! 2 2;
+
+x1 0; x2(!) 0;                               for all ! 2 2:
+
+We then replace [c>2 x2 u2]+ by v2(!) where
+
+v2(!)            c>2 x2(!) u2;               for all ! 2 2;
+v2(!)
+                 0;                          for all ! 2 2:
+
+As a consequence, the new 2-stage problem can be written as the following linear program:
+
+SP: min c1>x1 + (1 )E[c>2 x2] + u2 + 1E[v2]
+
+s.t. A1x1 = b1;
+
+A2x2(!) + E2x1 = b2(!); for all ! 2 2;
+
+v2(!) c>2 x2(!) u2;                          for all ! 2 2;
+
+x1 0; x2(!) 0; v2(!) 0;                                      for all ! 2 2:
+
+                     10
+Observe in SP that there are two ...rst-stage decisions to be made, x1, and the level u2 that
+attains infufu + 1E[c>2 x2 u]+g. Given choices of x1 and u2 the second-stage problem
+becomes:
+
+         SP(x1; u2): min       (1 )E[c>2 x2] + 1E[v2]  for all ! 2 2;
+                         s.t.  A2x2(!) = b2(!) E2x1;   for all ! 2 2;
+                               v2(!) c2>x2(!) u2;
+                               x2(!) 0; v2(!) 0;         for all ! 2 2:
+
+This decouples by nodes to give:
+
+         Q(x1; u2; !) = min          (1 )c>2 x2 + 1v2
+                             s.t.
+                                     A2x2 = b2 E2x1;   [ 2(!)]
+                                                       [ 2(!)]
+                                     v2 c>2 x2  u2;
+
+                                     x2 0; v2 0:
+
+The optimal dual multipliers are shown in brackets on the right. By strong duality the
+optimal solution satis...es
+
+                     Q(x1; u2; !) = 2(!)>(b2 E2x1) 2(!)u2.
+
+so SP can now be represented by
+
+                     SP: min c1>x1 + u2 + E[Q(x1; u2; !)]
+                           s.t. A1x1 = b1;
+
+                                  x1 0:
+
+Benders decomposition can be used to compute the solution to SP, which we now repre-
+
+sent by
+
+         MP: min c1>x1 + u2 + 2                 g2k; k = 1; 2; : : : ; K
+                 s.t. A1x1 = b1;
+                        2k + >2kE2x1 + 2ku2
+                       x1 0:
+
+where k counts the cuts that are added to the Benders master problem and
+
+                                 2k = E[ 2k];
+                                 2k = E[ 2k];
+                                g2k = E[Q2(x1k; u2k)] + 2kE2x1k + 2ku2k:
+
+    We can generalize this method to a T -stage problem, which we illustrate using notation
+for a three stage problem. In this case, SP can be written as follows:
+
+SP: min  c>1 x1 + (1 2)E[c2>x2 + (1  3)E[c>3 x3] + 3u3 + 3 3 1E[c>3 x3 u3]+] + 2u2
+s.t.     + 2 2 1E[c>2 x2 + 3u3 + (1  3)E[c>3 x3] + 3u3 + 3 3 1E[c>3 x3 u3]+ u2]+
+
+         A1x1 = b1;
+
+         A2x2(!2) + E2x1 = b2(!2); for all !2 2 2;
+
+         A3x3(!3) + E3x2(a(!3)) = b3(!3); for all !3 2 3;
+
+         x1 0; x2(!2) 0; x3(!3) 0;              for all !2 2 2 and !3 2 3:
+
+                                                                            (8)
+
+                                     11
+where, a(!t) denotes the ancestor of node !t: The last stage (third) can be decoupled from
+problem above and by nodes to give:
+
+            Q3(x2; u3; !3) = min        (1 3)c3>x3 + 3 3 1v3
+                                  s.t.
+                                        A3x3 = b3 E3x2;       [ 3(!3)]
+                                                              [ 3(!3)]
+                                        v3 c3>x3    u3;
+
+                                        x3 0; v3 0:
+
+    Assuming that Q3(x2; u3) = E[Q3(x2; u3; !3)] and replacing it in (8) we can write SP as
+follows:
+
+SP: min     c>1 x1 + (1 2)E[c>2 x2 + 3u3 + Q3(x2; u3)] + 2u2
+      s.t.  + 2 1E[c>2 x2 + 3u3 + Q3(x2; u3) u2]+
+
+            A1x1 = b1;
+
+            A2x2(!2) + E2x1 = b2(!2); for all !2 2 2;
+
+            x1 0; x2(!2) 0;                         for all !2 2 2:
+
+We then replace [c2>x2 + 3u3 + Q3(x2; u3) u2]+ by v2(!2) where
+
+v2(!2)      c>2 x2 + 3u3 + Q3(x2; u3) u2                   for all !2 2 2;
+v2(!2)
+            0                           for all !2 2 2:
+
+As a consequence, the new 2-stage problem can be written:
+
+SP: min     c1>x1 + (1 2)E[c2>x2 + 3u3 + Q3(x2; u3)] + 2u2 + 2 1E[v2]
+      s.t.
+            A1x1 = b1;
+
+            A2x2(!2) + E2x1 = b2(!2); for all !2 2 2;
+
+            v2(!2) c>2 x2 + 3u3 + Q3(x2; u3) u2;              for all !2 2 2;
+
+            x1 0; x2(!2) 0; v2(!2) 0;                         for all !2 2 2:
+
+Given choices of x1 and u2 the problem SP becomes:
+
+SP(x1; u2): min (1 2)E[c>2 x2 + 3u3 + Q3(x2; u3)] + 2 1E[v2]
+
+s.t. A2x2(!2) = b2(!2) E2x1; for all !2 2 2;
+
+            v2(!2) c2>x2 3u3(!2) Q3(x2; u3)                   u2;    for all !2 2 2;
+
+            x2(!2) 0; v2(!2) 0;                     for all !2 2 2:
+
+This decouples by node to give:
+
+Q2(x1; u2; !2) = min        (1 2)(c>2 x2 + 3u3 + Q3(x2; u3)) + 2     1v2
+                      s.t.                                                 [ 2(!2)]
+                            A2x2 = b2(!) E2x1;                             [ 2(!2)]
+
+                            v2 c>2 x2 3u3 Q3(x2; u3)          u2;
+
+                            x2 0; v2 0:
+
+                                        12
+Now if Q3(x2; u3) can be represented by K3 cuts we obtain
+
+Q2(x1; u2; !2) = min         (1 2)(c>2 x2 + 3u3 + 3) + 2                 1v2
+                      s.t.                                                     [ 2(!2)]
+                             A2x2 = b2 E2x1;                                   [ 2(!2)]
+                                                                               k = 1; 2; : : : ; K3;
+                             v2 c2>x2      3u3          3  u2;
+
+                             3 + >3kE3x2 + 3ku3 g3k;
+
+                             x2 0; v2 0:
+
+In general the tth stage of SP can be represented by
+
+Qt(xt 1; ut; !t) = min       (1 t)(ct>xt + t+1ut+1 + t+1) + t 1vt
+                       s.t.
+                             Atxt = bt(!) Etxt 1;                             [ t(!t)]
+                                                                              [ t(!t)]
+                             vt (c>t xt + t+1ut+1 + t+1)            ut;       k = 1; 2; : : : ; Kt+1;
+
+                             t+1 +  >      Et+1  xt  +  t+1;k ut+1  gt+1;k ;                         (9)
+                                    t+1;k
+
+                             xt 0; vt 0:
+
+where k counts the cuts that are added to the tth-stage Benders master problem and
+
+ t+1;k = E[ t+1;k];                                     t+1;kEt+1xtk +   t+1;k ut+1;k :
+ t+1;k = E[ t+1;k];
+gt+1;k = E[Qt+1(xtk; ut+1;k)] +
+
+    Since each stage model is a linear program with uncertainty appearing on the right-hand
+side, we can apply the standard form of SDDP to solve the risk-averse model. Moreover the
+algorithm satis...es all the conditions in [16], and so it converges almost surely to the optimal
+policy, under mild conditions on the sampling process (e.g. independence).
+
+    One practical di¢ culty is obtaining reliable estimates of the upper bound on the cost of
+an optimal policy. The multi-stage setting with CVaR requires a conditional sampling process
+to estimate the cost of any policy, which would be prohibitively expensive for problems with
+many stages.
+
+    The absence of a good upper-bound estimate makes it di¢ cult to check the convergence
+of the method. One possible approach is to stop the algorithm if the lower bound has not
+changed signi...cantly for some iterations, but this does not guarantee that the current policy
+is close to optimal, even if one is interested only in the ...rst stage action. Our approach is
+to run the algorithm until the risk-neutral version of the code has converged, and then use
+the same number of iterations for the risk-averse model.
+
+4.1 Risk aversion with Markov Chain uncertainty
+
+In Section 2.1 we discussed how to integrate a Markov chain model into the SDDP algorithm
+to solve a risk-neutral problem in which the uncertain data have some stagewise dependence.
+In our risk-averse model, the Markov chain can be implemented in exactly the same way,
+whereby we calculate one set of cuts for each Markov state, in each of which the u variable
+acts as an additional state variable like the reservoir levels.
+
+                                                         13
+    Using Markov states to represent stagewise dependence in the uncertain parameters pro-
+vides an opportunity to make the risk measure depend on the state of the Markov chain as
+discussed in [19]. In our setting, a simple dependence would retain the convex combination
+of expectation and conditional value at risk, and would choose t to depend on the observed
+state in stage t. Unfortunately choosing t to be dependent on the state in stage t is not
+possible in our model, because as one can see from (9) t appears in the formulation of the
+problem to be solved in stage t 1, when we are uncertain about the realization of the state
+in stage t.
+
+    In some circumstances we can approximate this form of state dependence by making t
+depend on the observed state in the previous stage t 1. For example, if the state in stage
+t 1 leads to high costs in the future then we might choose t close to 1 when this state
+is realized, and t close to 0 when the opposite state is realized. This method relies on a
+Markov chain that has a certain amount of state persistence, so a realization of the expensive
+state in stage t 1 is likely to persist into stage t. In the case of the previous example,
+a persistent model would have p > 0:5 and q > 0:5. If, on the other hand, the process is
+stagewise independent, then this choice of t would not make sense as there would be no
+reason to change our risk attitude at stage t, based on the realization of the state at the
+previous stage.
+
+    As discussed in Section 2.1, when t does not depend on the observed state in stage t 1,
+the set of possible realizations and the formulation are the same for all states. Therefore,
+the stage t solutions in the backward pass are used to generate one cut for each state in
+stage t 1 by using the appropriate transition probabilities. On the other hand, when t
+depends on the observed state in stage t 1, the formulation of problem (9) will depend on
+the observed state in stage t 1 because of t. This dependence means that we can compute
+cuts only for the states that are visited in the sampled scenarios, which means that the cut
+calculated in a speci...c scenario can only be added to the observed state. As a consequence,
+by assuming that t depends on the observed state in stage t 1 incurs some additional
+computational cost when compared to the independent t.
+
+    As an illustration of the model with dependence, consider the example presented in
+Section 2.1, and let us assume that one would like to be less risk averse when the previous
+stage was in state 1. For example, we might choose t = 0:25, when the realization at stage
+t 1 belongs to State 1 and t = 0:75, when the realization at stage t 1 belongs to State
+2. Figure 4 shows the scenario tree with the Markov Chain and the value for each stage
+and state, assuming that we start in a state 2 realization.
+
+5 Application: Long-Term Hydrothermal Scheduling
+
+In this section we describe the application of the risk-averse SDDP algorithm to a hydro-
+electric scheduling model developed for the New Zealand electricity system. The model
+consists of 33 hydro plants (5400 MW) and 12 thermal plants (2800 MW). We use a simpli...ed
+transmission network N comprising three buses: one for the South Island (South), one for
+the lower North Island (Hay) and one for the upper North Island (North) as shown in Figure
+
+                                                         14
+Figure 4: Risk-averse Markov process tree with risk aversion dependent on state in previous
+stage.
+
+5. We model storage in eight hydro reservoirs in the South Island, and a single reservoir at
+the head of the Waikato chain of eight stations in the North Island. All other hydro stations
+are assumed to be run-of-river. All thermal plants are located in the upper North Island.
+
+    The formulation we solve is a stochastic dynamic programming problem in which at each
+stage t = 1; 2; : : : ; T , the Bellman equation is approximated by a linear program. We ...rst
+describe the general model (10) and then describe how the data specializes to the particular
+instance we solve1. The description shown in this section is for the risk-neutral problem.
+
+    The objective of the model is to minimize the cost to meet the demand Dit in stage t at
+each bus i 2 N plus the future cost t+1 that is approximated by cuts
+
+t+1 +  k    vt+1  gtk+1
+       t=1
+
+as discussed in Section 2. We discriminate between thermal generation fpt, at thermal plant
+p 2 T (i) (that has capacity ap and incurs a fuel cost p), and hydro generation mhmt, at
+hydro station m 2 H(i) (that has capacity bm, and is essentially free). We also assume that
+load shedding is modelled as thermal generation with higher marginal costs than the most
+
+    1Details of the New Zealand hydro-thermal system used in this model can be found at
+http://www.epoc.org.nz.
+
+       15
+Figure 5: Representation of the New Zealand hydro-thermal scheduling model.
+                                                 16
+expensive thermal unit. This gives the following formulation at stage t:
+
+               PP
+zt(!) = min i2N p2T (i) pfpt + t+1
+
+s.t.   P          P
+
+wi(yt) + p2T (i) fpt + m2H(i) mhmt = Dit; i 2 N ;
+
+vt+1 = vt A(qt + st) + t;
+
+0 fpt ap, p 2 T (i), i 2 N ,                                              (10)
+
+0 qmt bm, 0 smt cm, m 2 H(i),
+
+0 vmt rm, m 2 H(i), i 2 N , y 2 Y ,
+
+t+1 +  k    vt+1  gtk+1, k 2 C(t + 1).
+       t=1
+
+    The components of the vector y measure the ow of power in each transmission line. We
+denote the ow in the directed line from i to k by yik, where by convention we assume i < k.
+A negative value of yik denotes ow in the direction from k to i. In general we require that
+this vector lies in some convex set Y , which may model DC-load ow constraints arising from
+Kirchho¤'s laws and thermal ow limits. The concave function wi(y) de...nes the amount of
+power arriving at node i for a given choice of y thus allowing one to model line losses.
+
+    The water balance constraints are represented by
+
+            vt+1 = vt A(qt + st) + t
+
+where vt is the reservoir storage at the start of period t, st denotes spill in period t, and t is
+the uncontrolled inow into the reservoir in period t. Storage, release and spill variables are
+subject to capacity constraints. The parameter m, which varies by generating station m,
+converts the ow of water qmt into electric power. The node-arc incidence matrix A represents
+all river-valley networks, and aggregates controlled ows that leave from each reservoir by
+spilling or generating or enter a reservoir by spilling or generating electricity upstream. In
+other words row i of A(qt + st) gives the total controlled ow out of the reservoir (or river
+junction) represented by row i, this being the sum of any release and spill of reservoir i minus
+the release and spill of any immediately upstream reservoir.
+
+    In the New Zealand model with three buses there are no loops, so Y represents line
+capacities only. We also assume that there are no line losses which gives
+
+                      X          X
+            wi(y) = yki              yik .
+
+                            k<i  k>i
+
+    The time horizon of our model is one year with weekly time steps, so T = 52. We are
+using data from the calendar year 2006 and assume that in each stage the set of possible
+inows is given by the historical inows from 1987 to 2006, inclusive. As a consequence,
+
+                  17
+Markov State  North Island  South Island
+     WW            Wet           Wet
+      DW           Dry           Wet
+      WD           Wet           Dry
+      DD           Dry           Dry
+
+Table 1: Markov states for the New Zealand LTHS problem.
+
+in our problem we have a scenario tree that has 20 random realizations per stage (called
+openings) and 52 stages given a total of more than 2:25 1066 scenarios.
+
+    The inows were modelled by estimating transitions between four states of a Markov
+chain as follows. First, historical inows were aggregated into two groups corresponding to
+the South Island and North Island. We classi...ed two possible states (wet and dry2) for each
+island, to give a total of four states as shown in Table 1. After grouping the outcomes into
+four sets corresponding to each state, the transition probabilities are estimated from the
+historical inow sequence from 1987 to 2006, inclusive.
+
+    An inow sequence is simulated by constructing a random sequence of 52 states, and then
+randomly sampling a weekly inow record from the group of historical outcomes representing
+the simulated state in each week. To test the performance of candidate policies on a common
+benchmark, we assume throughout this paper that the Markov chain we construct in this
+way represents the true stochastic process of inows. ( It is certainly interesting to test how
+di¤erent approximations of the real inow process a¤ect the policies being computed, but
+we see this as a di¤erent modelling exercise to be explored in a separate study.)
+
+    As mentioned above, we assume that nine reservoirs (with a total capacity of 7.5 billion
+cubic metres) can store water from week to week, and the remaining reservoirs are treated
+as run-of-river plant with limited intra-week exibility. In some cases we also have minimum
+or maximum ow constraints that are imposed by environmental resource consents. When
+this is the case total discharge limits are added to the model, and deviations of ows outside
+these limits are penalized in the objective function. Weekly demand is aggregated from
+historical records, and represented by a load duration curve with three blocks representing
+peak, o¤-peak, and shoulder periods.
+
+6 Computational Experiments
+
+In this section we present the results of computational experiments to evaluate the per-
+formance of the models discussed throughout this paper. In all experiments where t is
+independent of the state at stage t 1, we choose t to be a ...xed constant L for all stages
+t. Additionally, we assume = 0 for all cases in stage 1 and T + 1. We denote by "4 Ls"
+
+    2A historical outcome is considered to be a dry state if the sum of all inows in the island is smaller than
+the historical average of the sum of all inows. Otherwise, it is considered to be wet.
+
+              18
+    Case               t  Markov Chain
+    L=0                          no
+   L = 0.5        0              no
+   L = 0.9       0.5             no
+ L = 0 (M)       0.9             yes
+L = 0.5 (M)       0              yes
+L = 0.9 (M)      0.5             yes
+     4 Ls        0.9             yes
+             0, 0.5, 0.9
+
+             Table 2: Cases.
+
+State in t       1t
+     WW               0
+      DW             0.5
+      WD             0.5
+      DD             0.9
+
+Table 3: Lambda for each Markov state in case 4 Ls.
+
+the model where t can take di¤erent values depending on which of the four inow states
+is realized in the previous stage. We use L = 0 , 0:5, and 0:9 to represent risk neutrality,
+mild risk aversion, and strong risk aversion respectively. This gives seven models as shown
+in Table 2.
+
+    In the ...rst three models we construct a candidate policy using SDDP under the assump-
+tion that inows are stage-wise independent. In the second set of three models (denoted
+"(M)") the policy is constructed using four Markov states. In the case "4 Ls", t takes three
+values as shown in Table 3.
+
+    In all cases we use the Markov chain inow model to simulate the performance of the
+policy.
+
+    To validate our code, we ...rst applied the seven risk settings to a model with T = 4
+and 4 openings, giving a scenario tree with 64 scenarios. This allowed us to compare the
+lower bounds obtained with SDDP and the solution obtained from solving the deterministic
+equivalent linear program directly using CPLEX 11.0. The results, shown in Table 4, indicate
+that the algorithm performs as expected on small problems.
+
+    We now present the results of applying SDDP to the New Zealand problem for one year
+horizon with weekly time steps. In our implementation of SDDP, we use one scenario per
+iteration as discussed in Section 2). For each experiment we run SDDP for a maximum of
+4000 iterations, except for case 7 where it is run for 16000 iterations so that each state has
+approximately 4000 cuts. As discussed above, when t depends on the observed state in
+stage t 1, we require more iterations to have similar number of cuts in each stage. Figure
+6 depicts the lower bound for the ...rst 4000 iterations of all cases 1-6 and 16000 iterations
+of case 7, which indicates that assuming convergence after having 4000 cuts seems to be
+reasonable.
+
+             19
+    Case     DLP Optimal Solution(106 $)  Lower Bound (106 $)
+    L=0                6.5689816843          6.568981684267
+   L = 0.5             11.950358776         11.950358775737
+   L = 0.9             16.683566128         16.683566127608
+ L = 0 (M)             6.5604147645          6.560414764476
+L = 0.5 (M)            11.937104988         11.937104987936
+L = 0.9 (M)            16.708486732         16.708486731945
+     4 Ls              14.768832334         14.768832334269
+
+             Table 4: Validation of the implementation.
+
+             Figure 6: Lower Bound for all cases.
+                                   20
+    Case     Expected Total Operation Cost(106 $)  Increase in Cost from Case 4 (106 $)
+    L=0                          407.071                               1.272
+   L = 0.5                       409.991                               4.193
+   L = 0.9                       418.557                              12.759
+ L = 0 (M)                       405.798                                  -
+L = 0.5 (M)                      409.538                               3.740
+L = 0.9 (M)                      418.833                              13.035
+     4 Ls                        418.618                              12.820
+
+             Table 5: Expected total operation cost.
+
+                 Case     Total Operation Cost(106 $)
+                 L=0                   823.822
+                L = 0.5                643.570
+                L = 0.9                630.791
+              L = 0 (M)                631.020
+             L = 0.5 (M)               627.750
+             L = 0.9 (M)               628.265
+                  4 Ls                 628.273
+
+             Table 6: Most expensive scenario.
+
+    In order to compare the policies obtained in each case, we sampled 4000 inow scenarios
+using the Markov chain, and tested the policies in each scenario. The results are presented in
+Table 5. Here the expected total operating cost measures fuel cost, shortage cost, and penal-
+ties for violating river ow constraints, in other words the risk-neutral objective function.
+Since case 4 (the risk-neutral Markov chain model) produces the smallest expected total
+operation cost, we list the increases in expected total operating cost of the other policies in
+the third column.
+
+    These numbers show several things. First of all, there is a small increase in expected cost
+($1.27M) from assuming stagewise independent inows, when they are really Markovian.
+The SDDP model that assumes Markovian inows should perform better in a benchmark
+simulation of these inow sequences than a model that ignores this feature. The numbers
+also show the tradeo¤s in expected cost that are incurred by an increase in risk aversion. As
+a percentage of the total cost, these numbers appear to be quite modest.
+
+    To investigate the potential bene...ts of the risk-averse models, we focus on some of the
+extreme scenarios that give large costs for the risk-neutral model. Table 6 gives the total
+operation cost in the worst case scenario for each policy. Case L = 0 (which is risk neutral
+and assumes independence) is substantially more expensive. It is interesting to see that a
+policy computed using Markov states, performs creditably in this worst case.
+
+    We can extend this examination to the 200 worst scenarios in each case represented by
+
+                                                         21
+                        Figure 7: Most expensive scenarios in the simulation.
+
+the distributions of total cost shown in Figure 7. These plots represent the cumulative dis-
+tribution functions of total cost under each policy, where the scenario counter references
+di¤erent scenarios for each plot, so they should not be interpreted as one policy uniformly
+dominating another over all scenarios. Nevertheless it is easy to see that the risk-neutral
+stage-wise independent model is stochastically dominated to ...rst order by the other poli-
+cies, at least over the 200 worst outcomes. The other policies seem to produce comparable
+distributions of total cost.
+
+    It is worth remarking that our multi-period risk measure is not designed to control for
+total cost incurred over the year, and so the plots we show of total cost outcomes might
+mislead us. The exact interpretation of (with > 0) is less obvious, but at any stage it
+controls high values of cost in the future, so the policy focuses on avoiding high future costs
+that might be incurred in the next few periods, whether they come from imminent shortages
+or the accumulated risk of a future shortage or constraint violation. This is arguably di¤erent
+from focusing on the distribution of total annual cost, and controlling the extent of its upper
+tail.
+
+    In addition to the most expensive cases of total cost we can examine the least expensive
+cases (corresponding to high inows). Figure 8 depicts the least expensive total cost scenarios
+for each policy, in which one can notice that more risk averse policies incur higher costs when
+inows are plentiful. This is reected in Figure 9, which shows the expected national reservoir
+levels in terms of stored energy. Here one can observe that the risk averse policies save more
+water in the ...rst half of the year to protect against low inows later in the year. As a
+consequence, the risk averse models tend to use more thermal generation in the ...rst half
+when might not be necessary and ...nish the year with reservoirs at higher levels than their
+
+                                                         22
+                        Figure 8: Least expensive scenarios in the simulation.
+
+risk-neutral counterparts.
+    Many practical implementations of the LTHS problem make use of a reservoir danger zone
+
+or minzone. This is a trajectory of (possibly aggregate) reservoir storage that represents a
+minimum level for security of supply. Such a zone can be computed using simulation over
+future inow sequences, and choosing a reservoir level that avoids shortages in a given high
+percentage of these sequences, assuming full commitment of all thermal plant. Once a
+minzone has been determined, penalty terms can be added to SDDP to discourage policies
+from allowing reservoir storage to enter the minzone.
+
+    Since we have chosen to ignore the New Zealand minzone in our model, it is interesting
+to see to what extent our model of risk aversion can prevent trajectories from passing into
+it. Figure 10 shows the number of scenarios that the national storage level was below the
+minzone in each stage. Both risk-neutral models were unable to avoid breaching the minzone
+in a large number of outcomes. The risk-averse models were more conservative, with only
+the L = 0:5 independent model showing some violation of the minzone.
+
+    We ...nish this section by studing the e¤ect of risk aversion on load shedding (disconnecting
+consumers in times of shortage). Table 7 presents the probability of load shedding for each
+model, and its expected contribution to the cost. Both of these are very low in the risk-
+neutral cases, and zero for all risk averse cases, although these ...gures are computed assuming
+a Markov inow model, and may be substantially higher if inows have a higher degree of
+stagewise dependence.
+
+                                                         23
+                   Figure 9: Expected national storage level in terms of energy.
+
+Figure 10: Number of scenarios where the national storage level was below the minimum
+level.
+
+                                                         24
+    Case     Risk of Load Shedding (%)  Expected Cost of Load Shedding (106 $)
+    L=0                    0.085                              0.421
+   L = 0.5                   0                                   0
+   L = 0.9                   0                                   0
+ L = 0 (M)                 0.025                              0.0005
+L = 0.5 (M)                  0                                   0
+L = 0.9 (M)                  0                                   0
+     4 Ls                    0                                   0
+
+             Table 7: Risk and Expected cost of Load Shedding.
+
+7 Conclusions
+
+It appears from our limited experiments that risk aversion can be incorporated into multi-
+stage models with surprising ease. Given an appropriate level of risk aversion it is possible
+to reduce the probability of bad outcomes with only mild degradation in overall cost. In
+our experiments we chose t to take the same value L throughout the year. Varying t
+throughout the year to be low at times when inows and reservoir levels are typically high,
+and high otherwise is likely to yield improvements in performance, but we have not attempted
+this here, as these choices are problem dependent, and settings obtained for the New Zealand
+system would be unlikely to apply generally.
+
+    The risk-averse methodology we have described provides a promising alternative to the
+use of minzones for controlling risk. In SDDP it is impossible to impose minzones as hard
+constraints, because that will violate the assumption of relatively complete recourse. For this
+reason soft constraints with violation penalties are preferred. However it is often not obvious
+what penalties one should place on minzone violations to give appropriate safeguards. When
+a real constraint is actually violated (for example when load must be shed) the costs incurred
+are also real, rather than penalties used to control risk, and so they are easier to justify even
+though they may be challenging to estimate. Moreover, since each stage problem can be
+a relatively large linear program, naive choices of these penalties can give counterintuitive
+results. For example, one would not want to shed load in order to meet a minzone constraint,
+which might happen with a poor choice of penalties. Our results show that with appropriate
+choices of t, a dynamic risk measure can meet constraints with very high probability with
+a modest increase in expected operation cost.
+
+    A potential weakness with our approach is the di¢ culty in estimating the value of a
+candidate policy. This value can be interpreted as an equivalent payment we would make in
+any state to avoid incurring future costs. However, even without this estimate, we can still
+estimate parameters for the distributions of parameters of interest. We see that risk-averse
+models are performing as expected, by saving more water in the reservoirs, reducing the
+costs in the most expensive scenarios and reducing the risk of load shedding. As expected,
+the system has to pay a price for the risk aversion, which is a function of the risk aversion
+level.
+
+             25
+References
+
+ [1] P. Artzner, F. Delbaen, J.-M. Eber, and D. Heath. Coherent measures of risk. Mathe-
+      matical Finance, 9:203­228, 1999.
+
+ [2] J.R. Birge. Decomposition and partitioning methods for multi-stage stochastic linear
+      programs. Operations Research, 33(5):989­1007, 1985.
+
+ [3] V. De Matos, A.B. Philpott, E.C. Finardi, and Z. Guan. Solving long-term hydro-
+      thermal scheduling problems. Technical report, Electric Power Optimization Centre,
+      University of Auckland, 2010.
+
+ [4] V. Guigues and W. Romisch. Sampling-based decomposition methods for risk-averse
+      multistage stochastic programs. Optimization Online, 2010.
+
+ [5] V. Guigues and C. Sagastizabal. The value of rolling horizon policies for risk-averse
+      hydro-thermal planning. Optimization Online, 2010.
+
+ [6] T. Homem-de Mello, V. De Matos, and E.C. Finardi. Quasi-Monte Carlo methods for
+      a multi-stage stochastic programming model in the long-term hydrothermal schedul-
+      ing. Technical report, Laboratório de Planejamento de Sistemas de Energia Elétrica,
+      Universidade Federal de Santa Catarina, 2010.
+
+ [7] N.A. Iliadis, M.V.F. Pereira, S. Granville, R.M. Chabar, and L.-A. Barroso. Portfolio
+      optimization of hydroelectric assets subject to ...nancial indicators. In Power Engineering
+      Society General Meeting, 2007. IEEE, pages 1 ­8, June 2007.
+
+ [8] G. Infanger and D.P. Morton. Cut sharing for multistage stochastic linear programs
+      with interstage dependency. Mathematical Programming, 75:241­256, 1996.
+
+ [9] J. Jacobs, G. Freeman, J. Grygier, D. Morton, G. Schultz, K. Staschus, and J. Stedinger.
+      SOCRATES: A system for scheduling hydroelectric generation under uncertainty. An-
+      nals of Operations Research, 59:99­133, 1995.
+
+[10] J. Linderoth, A. Shapiro, and S. Wright. The empirical behavior of sampling methods
+      for stochastic programming. Annals of Operations Research, 142:215­241, 2006.
+
+[11] J.D.C. Little. The use of storage water in a hydroelectric system. J. of the Operations
+      Research Society of America, 3(2):187­197, 1955.
+
+[12] M. E. P. Maceira and J. M. Damázio. Use of the PAR(p) model in the stochastic
+      dual dynamic programming optimization scheme used in the operation planning of the
+      Brazilian hydropower system. Probab. Eng. Inf. Sci., 20(1):143­156, 2006.
+
+[13] P. Masse. Les réserves et la régulation de l'avenir dans la vie économique. Hermann,
+      Paris, 1946.
+
+                                                         26
+[14] B. Mo, A. Gjelsvik, and A. Grundt. Integrated risk management of hydro power schedul-
+      ing and contract management. Power Systems, IEEE Transactions on, 16(2):216 ­221,
+      May 2001.
+
+[15] M. V. F. Pereira and L. M. V. G. Pinto. Multi-stage stochastic optimization applied to
+      energy planning. Mathematical Programming, 52:359­375, 1991.
+
+[16] A.B. Philpott and Z. Guan. On the convergence of stochastic dual dynamic program-
+      ming and other methods. Operations Research Letters, 36:450­455, 2008.
+
+[17] R.T. Rockafellar and S. Uryasev. Optimization of conditional value at risk. The Journal
+      of Risk, 2:21­41, 2000.
+
+[18] R.T. Rockafellar and S. Uryasev. Conditional value-at-risk for general loss distributions.
+      Journal of Banking and Finance, 26:1443­1471, 2002.
+
+[19] A. Ruszczy´nski. Risk-averse dynamic programming for Markov decision processes.
+      Mathematical Programming Series B, 125:235­261, 2010.
+
+[20] A. Ruszczy´nski and N. Miller. Risk-averse two-stage stochastic linear programming:
+      modeling and decomposition. Optimization Online, 2009.
+
+[21] A. Shapiro. On complexity of multistage stochastic programs. Operations Research
+      Letters, 34(1):1 ­8, 2006.
+
+[22] A. Shapiro. Analysis of stochastic dual dynamic programming method. European Jour-
+      nal of Operational Research, In Press, Corrected Proof, 2010.
+
+[23] A. Turgeon. Optimal operation of multireservoir power systems with stochastic inows.
+      Water Resources Research, 16(2):275­283, 1980.
+
+                                                         27
+

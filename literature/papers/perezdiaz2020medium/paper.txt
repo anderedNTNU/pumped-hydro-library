@@ -1,0 +1,721 @@
+                                            Electric Power Systems Research 185 (2020) 106399
+                                                  Contents lists available at ScienceDirect
+
+                                      Electric Power Systems Research
+
+                                      journal homepage: www.elsevier.com/locate/epsr
+
+Medium-term scheduling of a hydropower plant participating as a price-
+
+                                                                                                                                              T
+
+maker in the automatic frequency restoration reserve market
+
+Juan I. Pérez-Díaza,, Ignacio Guisándeza, Manuel Chazarraa, Arild Helsethb
+
+a Universidad Politécnica de Madrid, Department of Hydraulic, Energy and Environmental Engineering, c/ Profesor Aranguren 3, 28040 Madrid, Spain
+b SINTEF Energy Research, Sem Saelands vei 11, 7465 Trondheim, Norway
+
+ARTICLE INFO                          ABSTRACT
+
+Keywords:                             This paper presents a novel optimization model for the calculation of the water value of a hydropower plant. The
+Hydroelectric power generation        model has a time horizon of 1 year with 1-day decision stages, considers sales of both energy and frequency
+Water value                           restoration reserves (FRR) and is solved by stochastic dynamic programming. The novelty of the model is that it
+Frequency restoration reserve market  considers the producer's price-making ability in the FRR market. The proposed model is used to obtain the water
+Price-maker producer                  values of an existing hydropower plant. The water values are then used to simulate the day-ahead scheduling of
+Mixed integer quadratic programming   the hydropower plant in a 100-year scenario. The results are compared to those obtained without considering
+Stochastic dynamic programming        the producer's price-making ability in the FRR market. The profit increase is modest compared to the uncertainty
+                                      existing in the day-ahead scheduling in all analysed cases. However, the water spillage is significantly lower if
+                                      the producer's price-making ability in the FRR market is considered when computing the water value. This last
+                                      result may have important implications for the plant's operation, especially when the reservoir is also used for
+                                      the purpose of flood control, as the one used as case study in the paper, and many others all over the world.
+
+1. Introduction                                                            [6,7]. As a consequence of the deregulation, the operational decisions
+                                                                           of power plants are no longer made by a centralized operator but by
+    Traditionally, operational decisions of hydropower plants were         generation companies. The goal of generation companies is not any-
+made by a centralized operator who sought to minimize the power            more meeting the electricity demand at minimum cost but to maximize
+system operation cost while meeting the electricity demand [1]. The        their profit. In deregulated electricity markets the water value re-
+process by which such centralized operator made operational decisions      presents the tradeoff between the immediate gain due to the immediate
+of both hydro and thermal power plants is a multistage decision process    use of the available water and the expectation of the future gain due to
+[2] which has often been decomposed into several decision processes,       the storage and later use of the water [8].
+each with a different planning horizon (short-, medium- and long-
+term), degree of detail and treatment of uncertainty to make it nu-            Even though the structure of the existing deregulated electricity
+merically tractable [3]. The coordination between the medium- and          markets is country-specific, most of them are organised around a day-
+short-term generation scheduling in centralized electricity markets has    ahead wholesale electricity market (EM), where generation companies
+usually been realised by means of future cost functions that express the   submit bids for selling energy in the following day [9]. Generation
+expected power supply cost as a function of the system's state at the end  companies can correct forecast errors or unforeseen events close to real-
+of the short-term scheduling horizon. The first derivative of the future   time in the so-called intraday electricity markets [10], and can help the
+cost function with respect to the volume of water stored in the system     Transmission System Operator (TSO) ensure the power system relia-
+gives information about the opportunity cost of water, also known as       bility by providing the so-called ancillary services [11].
+the water value [4]. The water value represents the tradeoff between the
+immediate cost savings due to the immediate use of the available water         The first attempts to compute the water value in a deregulated
+and the expectation of the future cost savings due to the storage and      electricity market considered only the sales of electricity in the EM were
+later use of the water [5].                                                [12,13]. To the best of our knowledge, the work presented in [14] was
+                                                                           the first one considering other markets different from the day-ahead
+    Since the beginning of the nineties, electricity markets all over the  electricity market in the medium-term generation scheduling of a hy-
+world have gradually experienced a continuous process of deregulation      dropower plant. The authors of [14] considered the secondary load-
+                                                                           frequency control (or automatic frequency restoration reserve) market
+
+   Corresponding author.
+    E-mail address: ji.perez@upm.es (J.I. Pérez-Díaz).
+
+https://doi.org/10.1016/j.epsr.2020.106399
+Received 1 August 2019; Received in revised form 24 April 2020; Accepted 27 April 2020
+Available online 16 May 2020
+0378-7796/ © 2020 Elsevier B.V. All rights reserved.
+J.I. Pérez-Díaz, et al.                                                                        Electric Power Systems Research 185 (2020) 106399
+
+Nomenclature                                                           Vmax     Maximum water storage [Mm3].
+                                                                       Vmin     Minimum water storage [Mm3].
+EM      day-ahead electricity market.              reserve             Vmin     Minimum water storage [Mm3].
+RM      day-ahead automatic frequency restoration                      Vsp
+        market.                                                                 Volume of water stored in the reservoir when it is full up
+LP      linear programming.                                            Ye       to the spillway level [Mm3].
+MILP    mixed integer linear programming.
+MIQP    mixed-integer quadratic programming.                                    Slope of the e-th interval of the plant aggregate power-
+RDC     residual demand curve.                                                  discharge curve [MW/(m3/s)].
+SDP     stochastic dynamic programming.                                
+SDDP    stochastic dual dynamic programming.                           tem      Wear-and-tear cost of the hydro units due to interhourly
+TSO     Transmission System Operator.                                  trtr,dw  variations in the generated power [/MW].
+                                                                                Shut-down and start-up cost of the hydro units [].
+Indexes/Sets                                                           trtr,up  EM price in hour t [/MWh].
+
+                                                                                Price in hour t of the net reserve used in real-time when it
+                                                                                is downward [/MWh].
+                                                                                Price in hour t of the net reserve used in real-time when it
+                                                                                is upward [/MWh].
+
+dD      Daily decision stage (1,...,dmax).                             Binary variables
+eE      Intervals of the plant aggregate power-discharge curve (1,
+        ...,emax).                                                     aspt     = 1 if the stored volume at the end of hour t is above Vsp.
+e  Eu   Intervals of the plant aggregate power-discharge curve in
+                                                                       bfut     = 1 if there is more upward reserve used in real-time than
+tT      which units 1,2,...,u are on.
+uU      Hour within the day (1,...,24).                                         downward one in hour t.
+        Hydro unit of the plant (1,...,umax).
+                                                                       offtu    = 1 if the u-th hydro unit is shut-down at the beginning of
+
+                                                                                hour t.
+
+Constants/Parameters                                                   oltu     = 1 if the u-th hydro unit is on-line in hour t.
+
+                                                                       ontu     = 1 if the u-th hydro unit is started-up at the beginning of
+
+CF      Conversion factor from m3/s to Mm3/h [0.0036 (Mm3/h)/                   hour t.
+        (m3/s)].
+EV      Rate of hourly evaporated water volume per flooded area        Non-negative variables
+Gmax    [Mm3/km2].
+Gmin                                                                   efp      expected future profit [].
+It      Maximum plant power generation [MW].                           rtup     Upward reserve in hour t [MW].
+                                                                       rtdw     Downward reserve in hour t [MW].
+K1bo    Minimum plant power generation [MW].                           gt       Power generated in hour t [MWh].
+K2bo                                                                   gtdec    Decrease in the generated power between hour t-1 and t
+K1ev    Intercept of the linear approximation of the residual de-               [MW].
+K2ev                                                                   gtinc    Increase in the generated power between hour t-1 and t
+Ksp     mand curve in the day-ahead automatic frequency re-                     [MW].
+        storation reserve market in hour t [/MW]                       pd       Profit in the d-th decision stage [].
+PERtdw  Coefficient of the linear approximation of the storage-        qtbo     Flow released through the bottom outlets in hour t [m3/s].
+PERtup  maximum bottom outlet flow curve [(m3/s)/Mm3].                 qthp     Flow released through the hydro units in hour t [m3/s].
+Qmin    Coefficient of the linear approximation of the storage-        qtsp     Flow released through the spillway in hour t [m3/s].
+Qmax    maximum bottom outlet flow curve [m3/s].                       qite     Flow released through the hydro units in hour t in the e-th
+Qtwi    Coefficient of the linear approximation of the storage-                 interval of the plant aggregate power-discharge curve
+QIe     flooded area curve [km2/Mm3].                                  svden    [m3/s].
+QONu    Coefficient of the linear approximation of the storage-                 Endogenous state variables at the beginning of the d-th
+Rt      flooded area curve [km2].                                      svdex    decision stage.
+St                                                                              Exogenous state variables at the beginning of the d-th
+        Conversion factor between the volume of water stored           urtdw    decision stage.
+        above the spillway level and the maximum flow through          urtup    Net reserve used in real-time when it is downward [MWh].
+        the spillway [(m3/s)/Mm3].                                     vt       Net reserve used in real-time when it is upward [MWh].
+        Fraction of the committed downward reserve used in real-                Volume of water stored in the reservoir at the end of hour t
+                                                                       vtasp    [Mm3].
+        time [p.u.].                                                            Volume of water stored above the spillway level at the end
+                                                                       vtbsp    of hour t [Mm3].
+        Fraction of the committed upward reserve used in real-                  Volume of water stored below the spillway level at the end
+                                                                       vtev     of hour t [Mm3].
+        time [p.u.].                                                   v¯T, vT  Volume of water evaporated in hour t [Mm3].
+        Minimum flow that can be released through the hydro                     Discrete values of the initial storage closest to vT from
+        units [m3/s].                                                  z~d      above and below, respectively.
+        Maximum flow that can be released through the hydro                     Optimal cumulative expected profit from the beginning of
+        units [m3/s].                                                           the d-th decision stage to the end of the planning period
+        Water inflow to the reservoir in hour t [m3/s].                         [].
+
+        Length of the e-th interval of the plant aggregate power-
+        discharge curve [m3/s].
+        Plant flow above which the u-th unit is started-up [m3/s].
+
+        Ratio between the upward and total reserve that the re-
+        serve offers must fulfil in hour t.
+
+        Slope of the linear approximation of the residual demand
+
+        curve in the day-ahead automatic frequency restoration
+        reserve market in hour t [/MW/MW].
+
+                                                                    2
+J.I. Pérez-Díaz, et al.                                                        Electric Power Systems Research 185 (2020) 106399
+
+operated by the Swiss TSO Swissgrid in the medium-term generation              know, there are no papers considering the ability of the hydropower
+scheduling of a large open-loop pumped-storage power plant. Ac-                producer to alter the clearing prices of the reserve market in medium-
+cording to the results obtained in [14], considering the secondary load-       term hydropower scheduling. This research gap is the main motivation
+frequency control market operated by Swissgrid for the computation of          of this paper.
+the water value would have a minor impact on the power plant profit.
+The secondary load-frequency market of Swissgrid was later considered              The influence of a power producer on the clearing prices in different
+in [15,16] to compute the water value of a small hydropower system             markets depends on the producer's size relative to each market's de-
+with pumping capacity.                                                         mand [28]. Taking as a reference the criterion used in [29], the as-
+                                                                               sumption that the reserve bids of a hydropower producer do not alter
+    The spinning reserve markets operated by the Norwegian TSO                 the clearing price of the reserve market is not very realistic. Just as an
+Statnett were considered when computing the water value in [17,18].            example, on 17 April/18 July 2018 43/40 electricity producers sub-
+The medium-term generation scheduling models used in [17,18] are               mitted reserve bids to the day-ahead automatic frequency restoration
+both based on stochastic dynamic programming (SDP) and stochastic              reserve market (hereinafter referred to as RM) operated by the Spanish
+dual dynamic programming (SDDP), as proposed in [13]. A scheduling             TSO (REE), respectively, and only 4/10 of them would be considered as
+horizon of 1 and 2 years was used in [17,18], respectively, with weekly        price-taker according to the criterion used in [29]. The gate closure
+decision stages in both cases. The decomposed weekly decision problem          time of the RM is 4 pm. The hourly marginal prices and reserves allo-
+is formulated as a linear programming (LP) problem in both [17,18]             cated to each participant are known by 4:30 pm. The allocated reserves
+and do not therefore consider binary decisions regarding the start-up or       are all paid at the market's marginal price. The allocated reserves can be
+shut-down of the hydro units. As discussed in [17], this might lead to         no, partly or wholly used in real-time. The real-time use of the reserves
+overestimate the ability of the hydropower system to sell spinning re-         is paid at the marginal price of the manual frequency restoration re-
+serves. A set of linear constraints was added in [19] to the decomposed        serves (known as tertiary regulation reserves in the Spanish power
+weekly decision problem in order to cope with the above-mentioned              system).
+issue. The added constraints had previously been used to model the
+start-up costs of generating units and pumps in the medium-term gen-               The objective and contribution of this paper is twofold: a) to present
+eration scheduling of the Icelandic power system in [20], and were first       a novel medium-term generation scheduling model for the computation
+proposed in [21]. The authors of [19] found that in periods with low           of the water value of a hydropower plant participating as a price-taker
+energy prices and high reserve prices the SDP/SDDP model tended to             in the EM operated by OMIE and as a price-maker in the RM; b) to
+operate the power station below the minimum output. A detailed short-          assess how the producer's price-making ability in the RM impacts it's
+term generation scheduling model based on mixed integer linear pro-            expected profit.
+gramming (MILP) is used in [19] to quantify the approximation errors
+of the SDP/SDDP model used to compute the water value. The water                   The proposed medium-term scheduling model has been used to
+value obtained by the SDP/SDDP model (represented by cuts) were                obtain the water values (policy) of a hydropower plant in an offline
+used in the short-term scheduling model to calculate the profit of the         optimization process solved by SDP. Subsequently, the water values
+hydropower system under study in all the scenarios sampled in the last         were used to simulate the day-ahead scheduling of the plant in a 100-
+forward pass of the SDP/SDDP model. The average profit obtained with           year synthetic scenario. The simulation is performed by running a day-
+the MILP model turned out to be around 1 % lower than the one ob-              ahead scheduling model on a rolling horizon basis. The water values
+tained by the SDP/SDDP model.                                                  obtained by the medium-term scheduling model are used as input to the
+                                                                               day-ahead scheduling model, and are not updated during the simula-
+    Similar constraints were added in [18] to discourage the model from        tions. Simulations were also performed using water values obtained
+operating below the station's minimum output. The results obtained in          from two other medium-term scheduling models: one assuming parti-
+[18] are quantitatively similar to those presented in [14]: the con-           cipation only in the EM as a price-taker, and the other assuming par-
+sideration of the spinning reserve sales in the medium-term generation         ticipation as a price-taker in both markets. The results of the simula-
+scheduling has a minor impact (1 %) on the hydropower system's                 tions have been duly compared to each other in terms of the plant's
+profit.                                                                        profit and water spillage. The scheduling model is formulated in the
+                                                                               context of the Spanish electricity market but can be easily adapted to be
+    A simplified version of the decomposed weekly problem formulated           used in other electricity markets where both energy and reserves are
+in [18] was used in [22], without the above-mentioned discouraging             allocated in day-ahead auctions. In order to make the second con-
+linear constraints, to derive an analytical expression for the water value     tribution of the paper applicable to other reserve markets, we have
+of a single hydropower reservoir in the same market context as in [18].        performed the above-mentioned comparison in some additional cases.
+A few interesting conclusions about the influence of the spinning re-
+serve capacity sales on the water value were drawn from the analytical             The rest of the paper is organized as follows. Section II describes the
+expression and verified in a case study.                                       proposed medium-term generation scheduling model. Section III pre-
+                                                                               sents the main data of the case study. The results of the paper are
+    The consideration of start-up or shut-down decisions in [17,18] and        discussed in section IV and the conclusions are duly drawn in section V.
+[22] would make the expected future revenue function (also referred to
+as profit-to-go [14] or cost-to-go function in centralized market con-         2. Medium-term scheduling model
+texts [23]) non-concave, and would therefore be necessary to "con-
+cavisate" it [24]. Instead, the authors of [25] chose to use an SDP-based          The model has a scheduling horizon of 1 year with 1-day decision
+medium-term generation scheduling model to compute the water value             stages d. The objective of the model is to maximise the expected profit
+of a single hydropower reservoir, in the same market context as in [18],       of the hydropower plant for the entire scheduling horizon. The hy-
+and to formulate the decomposed weekly decision problem as a mixed             dropower producer is assumed to be risk-neutral and to participate as a
+integer linear programming (MILP) problem, considering the status              price-taker in the EM and as a price-maker in the RM. The EM and the
+(on/off) of the hydro generators as binary decisions. The results ob-          RM are assumed to be simultaneously cleared. The daily decision stages
+tained in [25] are quantitatively similar to those obtained in [14,18].        d are divided into hourly periods t, consistently with the programming
+                                                                               periods of the EM and RM. Information about the EM and RM can be
+    All the above-mentioned articles where the water value is computed         found in the websites of the OMIE and REE.
+in a multi-market context assume that the hydropower producer acts as
+a price-taker in both the energy and reserve markets. Some articles have           In Spain there are 1,228 hydropower units distributed in a few
+dealt with the medium-term generation scheduling of hydropower                 hundred reservoirs with a storage capacity ranging from .25 to almost
+producers whose bids may alter the clearing price of the day-ahead             3,000 Mm3. 51 companies submit selling bids in the EM on behalf of
+[24,26] and intraday electricity markets [27]. However, as far as we           their own or others' hydropower plants. Each company has its own
+
+                                                                            3
+J.I. Pérez-Díaz, et al.                                                                                                                     Electric Power Systems Research 185 (2020) 106399
+
+planning/decision models and these are confidential. Around 50 % of                                         vtev = EV ·(K1ev ·vt + K 2ev);  t  T                (5)
+the Spanish hydropower reservoirs are classified by the system's TSO as
+"annual regime reservoirs". These reservoirs have a seasonal storage                                        qtbo  K1bo·vt + K 2bo;  t  T                        (6)
+capacity, i.e. they're able to store the natural water inflows for a period
+of several months. The use of a scheduling horizon of one year is sui-                                      qtsp  K sp·vtasp;  t  T                             (7)
+table for these reservoirs.
+                                                                                                            vt = vtasp + vtbsp;  t  T                           (8)
+    The model is solved by means of an SDP approach similar to the one
+used in [25]. This allows straightforward consideration of non-con-                                         vtasp  (V max - V sp)·aspt ;  t  T                  (9)
+vexities, such as generator start-stop decisions. Moreover, the results
+obtained with the proposed model can help evaluate the importance of                                        V sp·aspt  vtbsp  V sp;  t  T                       (10)
+price-maker effects in the medium-term scheduling.                                                                                                              (11)
+                                                                                                                                               umax             (12)
+    Three exogenous stochastic state variables svdex are considered in the
+model: the daily water inflow volume, the daily average EM price and                                        qthp  QON1·olt1 +  [(QON u - QON u-1)·oltu];  t  T
+the daily average residual demand curve (RDC) of the RM. The hydro
+storage volume is a state variable endogenous to the optimisation                                                                              u=2
+problem. The daily water inflow volume has been modelled as a dis-
+crete Markov chain, whereas the other exogenous stochastic state                                                                                umax -1
+variables have been modelled in two different ways. The rationale for
+this is explained in section III.2. The average RDCs have been modelled                                     qthp  QON 2·olt1 +  [(QON u+1 - QON u)·oltu]
+as linear monotonic decreasing functions defined each by an intercept
+and a slope, as in [30]. According to [31], the RDCs of the RM can be                                                                             u=2
+linearly approximated with an acceptable approximation error. There
+exist other approaches which might be useful to consider the compe-                                                 + (Qmax - QON umax)·oltumax;  t  T
+tition between producers in the RM, such as agent-based modelling or
+game theory techniques. However, these approaches are out of the                                            oltu  oltu+1;  u  U | u< umax   t  T                (13)
+scope of the paper.                                                                                         ontu - offtu = oltu - oltu-1;  u  U   t  T          (14)
+                                                                                                            ontu + offtu  1;  u  U   t  T                       (15)
+    The future expected profit at the beginning of decision stage d for a
+certain system state {svden, svdex} is given by the well-known Bellman                                      qthp = QON1·olt1 +  qite;  t  T                     (16)
+Eq. (1), where xd represent the set of decision variables in decision stage
+d, and can be recursively calculated by decomposing the problem into                                                                           eE
+daily subproblems.
+                                                                                                            qite  QIe·oltu+1;  e  Eu   u < umax   t  T          (17)
+                                                                                                            qite  QIe·oltu;  e  Eu   u  U   t  T                (18)
+
+                                                                                                            gt = Gmin·olt1 +  (Y e·qite);  t  T                 (19)
+
+                                                                                                                                         eE
+
+z~d (svden, svdex) = max{pd (xd, svden, svdex) + [z~d+1 (svde+n 1, svde+x 1) svdex]}                (1)     gtinc - gtdec = gt - gt-1;  t  T
+
+    The decomposed daily decision problem has been formulated as a                                            Gmax                                              (20)
+mixed-integer quadratic programming (MIQP) problem described by                                               umax                                              (21)
+(2­23). For this problem, the realisation of the exogenous stochastic                                        rtup   ·      oltu  -  gt ;    tT
+state variables is assumed to be known for the first stage d. This is one of
+the two reasons why we have chosen to use daily decision stages instead                                                uU
+of weekly ones (see the second reason in section III.1). Assuming a
+perfect foresight of the RM prices 1-week ahead is too optimistic. The                                       rtdw  gt - Gmin·    oltu;  t  T                    (22)
+initial state is defined by the initial storage v0 (which is the only en-
+dogenous state variable svden) and the above-mentioned exogenous sto-                                                      uU
+chastic state variables svdex. The initial storage is discretised in Nen va-
+lues. The exogenous stochastic state variables are discretised in Nex                                       rtup = Rt·(rtdw + rtup);  t  T                      (23)
+nodes, each containing information of the three variables. Note that the
+day index has been omitted in the formulation, except to indicate                                               The objective function (2) maximizes the income obtained from the
+change of day in a few equations. The decision variables (unknowns) xd                                      energy and reserve sold in the EM and RM minus the start-up, shut-
+of the decomposed daily decision problem are: the power generated,                                          down and wear and tear cost of the hydro units, plus the future ex-
+upward and downward reserve, hydro units' status (on/off), start-ups                                        pected profit, which is given by the last summation term of (2). Tra-
+and shut-downs, flow released through the hydro units, the spillway                                         ditional ramp up/down constraints and minimum up/down times are
+and the bottom outlets, the volume of water evaporated in hour t, the                                       not considered in the paper. Instead, we consider in the objective
+volume of water stored in the reservoir, above and below the spillway                                       function the wear and tear cost of interhourly power variations, as well
+level at the end of hour t, and the increase/decrease in the generated                                      the hydro units' start-up and shut-down costs. Parameters  and  were
+power between hour t-1 and hour t.                                                                          estimated from [32] and [33], respectively. z~d+1 is modelled by means
+                                                                                                            of a piecewise linear function similar to the one used in [25] Eqs. (4­(6)
+z~d (v0,  svdex )  =  max          tT  tem·gt  +  (It  +  St  ·rtup)·  rtup  -  ·(gtdec  +  gtinc)          in that paper). This piecewise approximation is equivalent to a linear
+                                                                       Rt                                   interpolation. It should be noted that vT is a decision variable of the
+                                                                                                            problem. In general, this variable does not take any of the Nen values
+                   -· uU (offtu + ontu)] + svdex+1Nex [ (svde+x 1 svdex)                                    into which the initial storage has been discretized. Thus, for a given
+                                                                                                            vT, z~(d+1) (vT, sv(edx+1) ) is linearly interpolated from z~d+1 (v¯T, svde+x 1) and
+·z~d+1 (vT,        svde+x 1)  ]                                                                             z~d+1 (vT, svde+x 1). Eq. (3) represents the water mass balance. The storage
+                                                                                                            is limited by Eq. (4). The evaporation volume is estimated by Eq. (5) as
+                                                                                                            a function of the flooded area. The maximum flow that can be released
+                                                                                                    (2)     through the bottom outlets is limited by Eq. (6). The maximum flow
+                                                                                                            that can be released through the spillway is limited by Eqs. (7)­(10).
+vt = vt-1 - vtev + CF·(Qtwi - qthp - qtbo - qtsp);  t  T                                            (3)     Eqs. (11)­(19) are used to model the plant's aggregate generation
+                                                                                                            characteristic and to calculate the status of the hydro units. A piecewise
+V min  vt  V max;  t  T                                                                             (4)     linear power-discharge curve is used in each decomposed daily decision
+                                                                                                            problem to model the plant aggregate generation characteristic. The
+                                                                                                            curve is selected as a function of the initial storage v0 and is therefore
+
+                                                                                                         4
+J.I. Pérez-Díaz, et al.                                                        Electric Power Systems Research 185 (2020) 106399
+
+known a priori. The curve is defined from the following parameters:            discrete values of the Markov chain have been obtained from the above-
+Gmin, Gmax, QIe, Qmax, QONu and Ye. These parameters vary as a function        mentioned 43-year historical series. The lowest and highest historical
+of the initial storage. We have not explicitly included this dependence        values were used as the lowest and highest discrete states of the Markov
+in the formulation for the sake of brevity. The variation in head be-          chain and supposed to represent the lowest and highest 2-th percentiles
+tween days is therefore considered through the proper selection of the         of the historical series. The central part of the historical series was di-
+piecewise linear power-discharge curve. Intraday head effects are ne-          vided into three groups each with an equal frequency [36]. The mean
+glected in the paper, accordingly to [34]. Eqs. (11) and (12) are used to      values of the three groups were used as central discrete values of the
+calculate the maximum and minimum flow that can be released through            Markov chain. The motivation to consider the highest and lowest 2-th
+the on-line hydro units. Eq. (13) guarantees that the hydro units are          percentiles of the historical series was to make the model as robust as
+brought on-line in the proper order. Eq. (14) and (15) are used to cal-        possible [37]. The reservoir volume has been discretised into 9 equi-
+culate the number of start-up and shut-down manoeuvres of each unit.           distant values from previous experiences of the authors with this hy-
+Eqs. (16)­(18) are used to calculate the flow released through the on-         dropower plant [34].
+line hydro units. Eq. (19) is used to calculate the power generated by
+the on-line hydro units. The interhourly variation of power output is          4. Energy and reserve markets data
+calculated in Eq. (20). Eqs. (21) and (22) are used to limit the reserve
+capacity, as a function of the on-line hydro units. Eq. (23) is used to            The historical data of the EM and RM were taken from the website
+meet the ratio between the upward and total reserves set by the TSO.           of OMIE (www.omie.es) and from the REE's information system
+                                                                               (https://www.esios.ree.es/es), respectively. In the period 2010-2015,
+    The SDP solution procedure is summarised in the following pseu-            the lag-1 autocorrelation of the daily average energy and reserve prices
+docode, where the index j refers to the iteration step of the procedure.       were 0.77 and 0.66, respectively, whereas the cross-correlation be-
+                                                                               tween the two variables was -0.43. From these values, we chose to
+1) j  0; z~dj (v0, svdex)  0;                                                  model the daily average energy price and the daily average RDC of the
+2) while  >  do                                                                RM in two different ways, namely: each as an independent lag-1
+                                                                               Markov chain, and as a single lag-one joint Markov chain. The GARCH-
+3) j  j + 1                                                                    ARIMAX and SARIMA models presented, respectively, in [30] and [38]
+                                                                               have been used to generate a set of 200-year synthetic series of both the
+4) for d = dmax, ..., 1 do                                                     daily average EM price and the daily average RDC of the RM. The
+                                                                               discrete states of the Markov chain of the daily average EM price were
+5) for v0 = v01, v02, ..., v0Nen do              (QON1, ..., QON umax;         obtained from the above-mentioned synthetic series, by following an
+                                                                               approach similar to the one used to build the Markov chain of the daily
+6) Select                power-discharge  curve                                average water inflow. The discrete states of the Markov chain of the
+                                                                               daily average RDC of the RM and the joint Markov chain of the daily
+QI1, ..., QI emax; Qmax; Gmax; Gmin)                                           average EM price and RDC of the RM have been obtained from the
+                                                                               above-mentioned synthetic series, by applying the well-known kmeans
+7) for svdex  Nex (tem, It, St, Rt) do                                         clustering algorithm, in a similar way to [18]; both Markov chains have
+                                                                               3 discrete states. The above-mentioned SARIMA model has been used to
+8) Solve (2­23)                                                                generate a set of two-variable (intercept and slope of the daily average
+                                                                               RDC of the RM) samples for each day of the scheduling horizon of the
+9) end for                                                                     medium-term scheduling model (365 days). We have used the kmeans
+                                                                               algorithm to determine 3 two-variable centroids (cluster centers), each
+10) end for                                                                    representing approximately 1/3 of the samples, for each day of the
+                                                                               scheduling horizon. Since the initialization of the kmeans algorithm in
+11) end for                                                                    Matlab is by default random, we have run it a few hundred times and
+12)   max {(z~dj (v0, svdex) - z~dj-1 (v0, svdex))/z~dj-1 (v0, svdex)}         have selected the set of centroids representing quasi-equally distributed
+                                                                               clusters that is provided by the kmeans algorithm more often. The dis-
+13) end while                                                                  crete values of the Markov chain of the daily average RDC of the RM are
+14) z~d (v0, svdex)  z~dj (v0, svdex)                                          the two-variable samples closest to the centroids of the set. This process
+                                                                               has been performed every day in the scheduling horizon of the medium-
+    Once the SDP algorithm has converged, the water values of the              term scheduling model (365 days). We have proceeded in a similar way
+hydropower plant are computed by a discrete differentiation of the last        to determine 3 three-variable (daily average EM price, intercept and
+summation term of (2) with respect to svde+n 1. A similar pseudocode is        slope of the daily average RDC of the RM) centroids for each day of the
+used in [25]. The theoretical background on which this recursion so-
+
+lution procedure is based is explained in detail in [35].
+
+3. Case study
+
+3.1. Power plant data
+
+    The most important data of the hydropower plant used as case study         Table 1                                  644.6
+are included in Table 1. The hydropower plant is located in the                Hydropower plant data.                   71.0
+Northwest of Spain, sells energy in the EM, and is considering the                                                      329.5
+possibility of selling reserves in the RM. As can be seen in Table 1, each       Maximum reservoir water content (Mm3)  270.0
+of the three power plant's units has a spinning reserve capacity of 81.9         Minimum reservoir water content (Mm3)  198.0
+MW (104.2-22.3). The plant's spinning reserve capacity when the three            Maximum water elevation (masl)         3
+units are running is equivalent to 27/35% of the maximum hourly re-              Minimum water elevation (masl)         Francis
+quirement for upward/downward reserve (900/700 MW) in the RM.                    Tailwater elevation (masl)             3
+The second reason (the first reason is explained in section II) why we           Number of hydro units                  279 (3 × 93)
+have chosen to use daily decision stages, instead of weekly ones, is the         Type of hydro units                    40
+relatively short period necessary to empty the reservoir at maximum              Number of penstocks                    312.6 (3 × 104.2)
+flow (approximately 3.5 weeks).                                                  Maximum flow (m3/s)                    22.3
+                                                                                 Minimum flow (m3/s)
+    The historical series of daily water inflows were taken from the web         Maximum power (MW)
+page of the "Centro de Experimentación y Obras Públicas" (CEDEX)                 Minimum power (MW)
+(http://ceh-flumen64.cedex.es) and correspond to the years 1963-
+2005. Lag-1 autocorrelation of the daily average water inflow is 0.80,
+which can be considered a notable autocorrelation, and for this reason,
+it was modelled as a lag-1 Markov chain with 5 discrete states, each
+representing a different "type" of daily average water inflow, namely:
+extraordinarily low, low, medium, high, extraordinarily high. The
+
+                                                                            5
+J.I. Pérez-Díaz, et al.                                                                                                          Electric Power Systems Research 185 (2020) 106399
+
+scheduling horizon and then select the discrete values of the joint                          negative (downward). The reserve used in real-time has an impact on
+Markov chain of the daily average EM price and RDC of the RM. In the                         the hourly flow released through the hydro units, and on the wear and
+period 2010-2015, the correlation between the daily average EM/RM                            tear cost of the hydro units. In order to consider such an impact
+prices and the daily average water inflow was -0.34/0.14, and has                            (urtup - urtdw) has been added to gt in Eqs. (19) and (20). Note that the
+therefore been ignored in the paper.                                                         activation of reserves was not considered in the medium-term sche-
+                                                                                             duling model presented in Section II. We chose to consider the real-time
+    In summary, a total number of 9 initial volumes x 5 water inflows x                      use of the committed reserve in the short-term scheduling in order to
+3 pairs of EM price-RM RDC (9 initial volumes x 5 water inflows x 3 EM                       obtain a (to the possible extent) feasible operation schedule. Its con-
+prices x 3 RM RDC) decomposed daily subproblems are solved at each                           sideration in the medium-term scheduling is a potential future line of
+daily decision stage d when the cross correlation between the daily                          research.
+average EM price and the daily average RDC of the RM is (is not)
+considered.                                                                                      z~d+1 is used in the last summation term of (24) to compute the ex-
+                                                                                             pected future profit as a function of the final storage volume. z~d+1 is the
+5. Simulations by short-term model                                                           link between the medium- and short-term scheduling. It is obtained in
+                                                                                             the last iteration of the SDP solution procedure described in section II),
+    The day-ahead generation and reserve scheduling of the hydro-                            and is modelled by means of a piecewise linear function similar to the
+power plant has been simulated in a 100-year synthetic scenario using                        one used in [25]. A piecewise linear approximation similar to the one
+the short-term MIQP model described by (3­27). The objective function                        used in [25] (Eqs. (4)­(6) in that paper) is applied to the discrete values
+of the model is given by Eq. (24). The model has a 24-h scheduling                           of z~d+1 and considered in the short-term MIQP model. Four different
+horizon and is aimed at maximizing the profit of the hydropower plant                        medium-term scheduling models have been used to compute z~d+1,
+in the EM and RM, and from the real-time use of the reserves committed                       namely:
+in the RM, assuming the hydropower plant participates as a price-taker
+in the EM and as a price-maker in the RM, and taking into account the                         ­ Model 1: considers that the hydropower plant participates only in
+start-up, shut-down and wear and tear cost of the hydro units, as well as                        the EM as a price-taker.
+the expected future profit, which is given by the last summation term of
+(24).                                                                                         ­ Model 2: considers that the hydropower plant participates as a price-
+                                                                                                 taker in both the EM and RM.
+max tT  tem gt           +  (It     +  St  rtup)  rtup  +  trtr,up urtup   -  trtr,dw
+                                                  Rt                                          ­ Model 3: the one proposed in the paper without considering the
+                                                                                                 cross-correlation between the daily average prices of the EM and the
+urtdw -  (gtdec + gtinc)                                                                         RDCs of the RM. It considers that the hydropower plant participates
+                                                                                                 as a price-taker in the EM and as a price-maker in the RM.
+        - uU (offtu + ontu))
+                                                                                              ­ Model 4: the one proposed in the paper considering the cross-cor-
++ svdex+1Nex [           (svde+x 1  svdex)·z~d+1 (v24,     svde+x 1)  ]                          relation between the daily average prices of the EM and the RDCs of
+                                                                                                 the RM. It considers that the hydropower plant participates as a
+                                                                                       (24)      price-taker in the EM and as a price-maker in the RM.
+
+urtup - urtdw = PERtup rtup - PERtdw rtdw  t  T                                        (25)      The procedure to obtain z~d+1 is analogous across the four models. Of
+urtup  Gmax·bfut;  t  T                                                                (26)  course, z~d+1 is weighted in (2) consistently with the transition prob-
+                                                                                             abilities of the Markov chains of the exogenous stochastic state vari-
+urtdw  Gmax·(1 - bfut);  t  T                                                          (27)  ables considered by each model. The exogenous stochastic state vari-
+                                                                                             ables of Model 1 are the daily water inflow volume and the daily
+    The simulations have been performed assuming a perfect forecast of                       average EM price. The exogenous state stochastic variables of Model 2
+                                                                                             are the daily water inflow volume, the daily average EM price and the
+the next day water inflow, and of all market random variables, namely:                       daily average RM price. The exogenous stochastic state variables of
+hourly prices of the EM (tem), hourly RDCs of the RM (It, St), hourly                        Model 3 and 4 are those described in section II. The objective function
+prices of the reserve used in real-time (trtr,up, trtr,dw), and the percen-                  and constraints of Models 3 and 4 are identical (2)-(23). The objective
+tage of the committed upward and downward reserve requested by REE                           function and constraints of Models 1 and 2 are not included in the paper
+in real-time (PERtup, PERtdw). The reserve committed in the RM can be                        for the sake of conciseness. Fig. 1 summarizes the procedure used to
+no, fully or partially requested in real-time by the TSO, both upward                        obtain the results presented in the next section of the paper.
+
+and downward (25­27). The hydropower producer receives an addi-                                  The GARCH-ARIMAX and SARIMA models presented, respectively,
+                                                                                             in [30] and [38] have been used to generate the 100-year synthetic
+tional income from the net reserve used in real-time when it is positive
+
+(upward) and has to pay for the net reserve used in real-time when it is
+
+                                                                              Fig. 1. Procedure followed to obtain the results.
+                                                                                                                 6
+J.I. Pérez-Díaz, et al.                                                                                    Electric Power Systems Research 185 (2020) 106399
+
+series of both the daily average EM price and the daily average RDC of        Table 2
+the RM. The 100-year synthetic series of the daily average water inflow       CPU time, iterations, equations and variables of Models 1­4.
+has been generated from the Markov chain used to model this variable
+for the computation of the plant's water value.                                        CPU time (s) Number of           Number of  Total      Number of
+                                                                                                            iterations  equations  number of  integer
+6. Discussion of results                                                                                                           variables  variables
+
+    The formulation of the decomposed daily decision problems of              Model 1 52.047    3                       1391       794        360
+Model 3 and Model 4 (2)-(23) is an MIQP formulation where the ob-
+jective function is quadratic and all constraints are linear. The for-        Model 2 240.768   3                       1463       842        360
+mulation of the decomposed daily decision problems of Model 1 and
+Model 2 is an MILP formulation. We have used CPLEXTM v12.2 to solve           Model 3 391.975   4                       1463       842        360
+both MIQP and MILP problems. CPLEXTM uses a branch and cut algo-
+rithm to solve problems with integer variables and dual simplex to solve      Model 4 56.649    3                       1463       842        360
+the LP/QP problems of the branch and cut tree of MILP/MIQP pro-
+blems.                                                                        Table 3
+                                                                              Results of the simulations.
+    Table 2 summarizes the CPU time and number of iterations neces-
+sary for Models 1-4 to converge, as well as the number of constraints,        Medium-term       EM (M) RM (M) Operational cost                Profit (M)
+variables and integer variables of the decomposed daily decision pro-         scheduling model                                  (M)
+blems of each Model.                                                                                                                          5590.42
+                                                                              Model 1           4337.85                 1361.20  -108.63      5840.49
+    The profit obtained by the hydropower plant throughout the entire         Model 2           4482.26                 1480.22  -122.00      5847.68
+simulation period is shown in the last column [Profit (M)] of Table 3.        Model 3           4487.62                 1478.71  -118.66      5842.32
+The water volume at the end of the simulation period when using the           Model 4           4482.33                 1479.05  -119.06
+water value provided by Model 1/2/3/4 is 404.28/543.95/482.05/
+480.87 Mm3. In order to make a fair profit comparison, we have cal-                 Fig. 2. Trajectories of the reservoir volume in the simulation period.
+culated the future revenue the plant would get from the extra volume
+obtained with respect to the lowest volume (404.28) and have added            automatic frequency restoration purposes in the Spanish power system
+this revenue to the profit obtained in the simulations when using the         is usually a small fraction of the total committed reserve (e.g. in the first
+water value provided by Models 2-4. In order to calculate this extra          semester of 2017 it was 6.6 %).
+revenue, it's necessary to attribute a monetary value to the extra volume
+with a unique criterion. We have used as valuation criterion the water            Fig. 2 also shows the total volume of water spillage throughout the
+value provided by Model 3 (i.e. the slopes of the profit-to-go-function).     entire simulation. As can be seen in the Figure, even though the profit
+The profit shown in the last column of Table 3 includes this extra            increase is moderate, the cases where the water value was computed
+revenue. The results shown in Table 3 seem to indicate that considering       with Model 3 and 4 have a total water spillage 29% lower than the case
+the producer's price-making behaviour in the RM to compute the plant's        where the water value was computed with Model 2. The extra spillage
+water value brings a moderate additional profit of 0.09-0.12 % to the         obtained with the water values provided by Model 2 is 5.85e3 Mm3
+hydropower producer with respect to the case in which the water value         (compared to the one obtained with the water values provided by
+is computed neglecting such an influence (Model 2).                           Model 3)1. Again, the reason for this extra spillage is that Model 2
+                                                                              overestimates of the plant's water value. The water value provided by
+    As can be seen in Fig. 2, the frequency curves of the reservoir vo-       Model 2 is higher than that provided by Models 3 or 4, because the
+lume corresponding to the cases where the water value was computed            former does not take into account the impact of the reserve offers on the
+with Model 1, which may be considered as the standard approach fol-           RM prices. It should be noted that the total volume discharged through
+lowed nowadays by most hydropower producers, are by far the lowest            the turbines in the cases where the water value was computed with
+ones. Each curve in Fig. 2 shows the percentage of hours (in per unit         Model 2/Model 3 is 264708 Mm3/270765 Mm3 and that the average
+values) in the 100-year simulation period during which the reservoir          reservoir volume in these cases is 558/495 Mm3. This difference in
+volume given by the y-ordinate is exceeded. By contrast, those corre-         volume is equivalent to around 4 meters of gross head, and has an
+sponding to the cases where the water value is computed with Model 2          impact on the power production in terms of the MWh/Mm3 rate of 9
+are by far the highest. The "extreme" behaviour of both the models is         MWh/Mm3. These values explain why using the water value computed
+due to the modelling inconsistencies existing between the short-term          with Model 2 yields a profit close to the one obtained with the water
+scheduling and the medium-term one, as discussed in [39] and [40].            values computed with Model 3 (see Table 3), with a higher water
+Model 1/Model 2 tends to underestimate/overestimate the plant's water         spillage and a lower volume of water discharged through the turbines.
+value [25], and for this reason, the short-term scheduling model tends
+to keep a lower/higher reservoir volume than in the cases where the               This last result may have important implications for the hydropower
+water value was computed with Model 3 and Model 4, which are                  plant's operation. This hydropower plant, as many others in Spain and
+consistent with the power plant's operation strategy. The low reservoir       other countries all over the world, is also used for flood control pur-
+volume obtained as a result of the short-term scheduling when using the       poses. In these type of hydropower plants, flood control has usually a
+water value provided by Model 1 has an impact on the available head
+and therefore limits power generation. This is the reason for the               1 The average annual spilled volume is 58.5 Mm3/year, which is approxi-
+counterintuitive result that the revenue in the EM obtained when using        mately 2 % of the annual average water inflow (2876 Mm3).
+the water value provide by Model 1 is lower than the one obtained with
+the water value provided by Model 2, even though Model 1 only con-
+siders sales of energy in the EM.
+
+    The only inconsistency between the short- and medium-term sche-
+duling in the cases where the water value is computed with Model 3 and
+Model 4 is that the real-time use of the committed FRR has been only
+considered in the short-term scheduling. The reason for this is that the
+average hourly net energy (upward-downward) used in real-time for
+
+                                                                           7
+J.I. Pérez-Díaz, et al.                                                                           Electric Power Systems Research 185 (2020) 106399
+
+higher priority than other water usages, such as hydropower produc-              value in these other reserve markets has been computed using only
+tion, for obvious reasons. If we understand flood control as the set of          Model 2 and Model 3. Table 4 shows the results obtained in these ad-
+control actions that are taken so as to avoid damages in the area                ditional cases (along with those corresponding to =1). As expected,
+downstream of the reservoir (river bed, river bank, floodplain), mini-           the power plant's profit decreases as the slope of the RDCs becomes
+mizing the amount of uncontrolled water spillage will always be ben-             more pronounced (i.e.  increases) and as the intercept of the RDCs
+eficial. The extra spillage obtained in the case where the water value           decreases. The second/fourth last column of Table 4 shows the spillage/
+was computed neglecting the producer's price-making ability in the RM            profit difference, expressed in percentage, when the water value is
+can be unacceptable from the point of view of the flood control.                 computed considering the influence of the hydropower producer on the
+                                                                                 clearing price of the RM. As can be seen in the Table, the profit increase
+    Fig. 2 may make the reader think that participating in the RM will           is modest in all cases, even negative in some of them (from -0.27% to
+contribute to increase the water spillage. In order to be able to say so, it     0.32%), compared to the uncertainty existing in the day-ahead sche-
+would be necessary to repeat the simulations using a short-term model            duling, whereas the spillage decrease is significant in all cases (from
+consistent with Model 1, i.e. not considering the participation of the           19.63% to 35.54%). In the day-ahead generation scheduling of a hy-
+hydropower producer in the RM.                                                   dropower plant that participates in the EM as price-taker and in the RM
+                                                                                 as price-maker, there are 3 main sources of uncertainty, namely: the
+    The following conclusions can be drawn from the results shown in             water inflow to the reservoir, the EM price and the RDC of the RM. The
+Table 3 and Fig. 2: a) considering the participation of the hydropower           uncertainty in the water inflow forecast is usually moderate, and given
+plant in the RM when computing the plant's water values may con-                 the size of the reservoir used in the case study, it is not expected to have
+tribute to increase the power plant's profit by 4.47-4.60 %, which is            an appreciable impact on the plant's generation schedule or revenue.
+appreciably higher than the values reported for the reserve markets in           According to [30], the uncertainty in the EM price forecast, measured
+Norway [18, 25] and Switzerland [14]; b) considering the influence of            as the mean absolute percentage forecast error, is between 15 % and 20
+the hydropower producer on the clearing price of the RM when com-                %. According to [38], the uncertainty in the RM RDC forecast, mea-
+puting the plant's water value may contribute to further increase the            sured also as the mean absolute percentage forecast error, is between 20
+power plant's profit by only 0.12 %, which can be considered modest              % and 25 %.
+compared to the uncertainty existing in the day-ahead scheduling, and
+to reduce the water spillage by 29 %; c) the cross-correlation between               The economic results are to some extent expected. High values of
+the hourly prices of the EM and RM is not significant enough to be               the RDC's slope imply a more pronounced decrease of the reserve price
+considered when computing the plant's water values; d) if the producer           as a function of the producer's reserve offers, and therefore a lower
+does not consider him/herself a price-maker in the RM, his/her water             profit in the RM, whereas higher values of the intercept imply a higher
+values can be significantly overestimated. This does not have a large            reserve price, and therefore a higher profit in the RM. This is clearly
+impact on the plants' profit, but for practical purposes it is not sa-           observed in the last column of the Table where the ratio between the
+tisfactory to operate with wrong water values.                                   profit obtained in the RM and the EM is shown.
+
+    For the sake of completion, we want to note that the daily head              7. Conclusion
+variation obtained as a result of the simulations turned out to be lower
+than or equal to 2.24/1.38/1.69/1.71% of the plant's maximum gross                   A novel optimization model for the calculation of the water value of
+head in 99 % of the days of the 100-year synthetic series. This supports         a hydropower plant has been presented in this paper. The model con-
+our choice of not considering the intraday head variation in the plant's         siders sales of both energy and reserve. The novelty of the model lies in
+aggregate generation characteristic in the medium- or short-term                 that it considers the influence of the hydropower producer on the
+scheduling models.                                                               clearing price of the reserve market. The model has been used to ana-
+                                                                                 lyse the impact of the price-making behaviour on the overall econom-
+    In order to test the sensitivity of the representation of the RM             ical and scheduling results of an existing hydropower plant, which is
+market on the results we have analysed 8 additional cases. We have               currently operating in the Spanish electricity market. The results ob-
+created 4/4 synthetic series of the slope/intercept of the RM by mul-            tained in the paper indicate that the plant's profit might increase by up
+tiplying the slope/intercept of the historical RDCs of the RM by a factor        to 0.12 % if the plant's water values were computed considering the
+ equal to 0.5, 0.75, 1.25 and 1.5. We have then proceeded as if these
+synthetic series corresponded to other reserve markets in which the
+impact of the plant's reserve offers has a different magnitude. The water
+
+Table 4
+Results of the additional cases.
+
+ Intercept  Slope Medium-term scheduling DM (M) RM (M) Operational cost (M Profit (M) Profit (%) Spilled volume  Spilled volume RM/DM (%)
+                                                                                                                 (%)
+                         model                      )                                             (Mm3)
+
+1     0.5                Model 2  4435.00  1735.62  -113.31                      6057.31          19192.07                39.13%
+1                                 4425.77  1733.36  -110.86                      6048.27          15423.87                39.17%
+1     0.5                Model 3  4461.83  1594.94  -117.64                      5939.14  -0.15%  19598.74       -19.63%  35.75%
+1                                 4459.78  1593.81  -115.06                      5938.53  -0.01%  14691.37       -25.04%  35.74%
+1     0.75 Model 2                4482.26  1480.22  -122.00                      5840.49  0.12%   19953.74       -29.30%  33.02%
+1                                 4487.62  1478.71  -118.66                      5847.68  0.22%   14106.58       -32.63%  32.95%
+1     0.75 Model 3                4499.98  1385.77  -125.60                      5760.15  0.32%   20220.53       -35.54%  30.80%
+1                                 4511.36  1383.40  -121.73                      5773.03  -0.27%  13622.31       -20.29%  30.66%
+1     1                  Model 2  4512.04  1306.52  -128.15                      5690.41  -0.13%  20506.63       -26.22%  28.96%
+1                                 4529.92  1302.45  -124.03                      5708.34  0.18%   13219.59       -29.33%  28.75%
+0.5   1                  Model 3  4803.53  478.80   -97.69                       5184.64  0.25%   15744.14       -29.51%  9.97%
+0.5                               4790.33  476.36   -95.93                       5170.76          12549.33                9.94%
+0.75  1.25 Model 2                4645.65  939.58   -110.98                      5474.26          17784.67                20.23%
+0.75                              4639.49  936.20   -108.34                      5467.35          13121.52                20.18%
+1.25  1.25 Model 3                4340.68  2061.19  -130.48                      6271.38          21682.81                47.49%
+1.25                              4350.03  2059.31  -126.71                      6282.63          15322.78                47.34%
+1.5   1.5                Model 2  4219.25  2662.41  -136.79                      6744.87          23199.08                63.10%
+1.5                               4234.64  2659.52  -132.42                      6761.75          16353.95                62.80%
+      1.5                Model 3
+
+      1                  Model 2
+
+      1                  Model 3
+
+      1                  Model 2
+
+      1                  Model 3
+
+      1                  Model 2
+
+      1                  Model 3
+
+      1                  Model 2
+
+      1                  Model 3
+
+                                                                              8
+J.I. Pérez-Díaz, et al.                                                                        Electric Power Systems Research 185 (2020) 106399
+
+producer's price-making ability in the reserve market. This increase is                               generation scheduling in the norwegian hydro system under a competitive power
+modest compared to the uncertainty existing in the day-ahead sche-                                    market structure, Proc. VIII SEPOPE, Brazil, 2002.
+duling. However, the results also indicate that the water spillage sig-                        [13] A. Gjelsvik, M.M. Belsnes, A. Haugstad, An algorithm for stochastic medium-term
+nificantly decreases if the producer's price making ability in the reserve                            hydrothermal scheduling under spot price uncertainty, Proc. 13th PSCC, Trondheim,
+market is considered to compute the plant's water value. This last result                             Norway, 1999.
+may have important implications for the plant's operation, especially                          [14] H. Abgottspon, G. Andersson, Approach of integrating ancillary services into a
+when the reservoir is also used for the purpose of flood control, as the                              medium-term hydro optimization, Proc. XII SEPOPE, Rio de Janeiro, Brazil, 2012.
+one used as case study in the paper.                                                           [15] H. Abgottspon, G. Andersson, Medium-term optimization of pumped hydro storage
+                                                                                                      with stochastic intrastage subproblems, Proc. 18th PSCC, Wroclaw, Poland, 2014.
+    The results obtained in the paper assuming the participation of the                        [16] H. Abgottspon, K. Njálsson, M.A. Bucher, G. Andersson, Risk-averse medium-term
+same hydropower plant in other synthetically generated reserve mar-                                   hydro optimization considering provision of spinning reserves, Proc. 13th PMAPS,
+kets are analogous to those obtained for the Spanish reserve market.                                  Durham, UK, 2014.
+The profit increase is modest in all cases, compared to the uncertainty                        [17] A. Helseth, B. Mo, M. Fodstad, Co-optimizing sales of energy and capacity in a
+existing in the day-ahead scheduling, and becomes even negative when                                  hydropower scheduling model, Proc. IEEE PowerTech, Eindhoven, The
+the slope of the residual demand curve or the price of the reserve                                    Netherlands, 2015.
+market decreases. However, the water spillage is always significantly                          [18] A. Helseth, M. Fodstad, B. Mo, Optimal medium-term hydropower scheduling
+lower when the producer's price-making ability in the reserve market is                               considering energy and reserve capacity markets, IEEE Trans. Sustain. Energy 7 (3)
+considered to compute the plant's water value.                                                        (2016) 934­942.
+                                                                                               [19] M.N. Hjelmeland, A. Helseth, M. Korpås, A case study on medium-term hydropower
+    We believe that the presented model is well suited for detailed                                   scheduling with sales of capacity, Energy Proc. 87 (2016) 124­131.
+multi-market studies of hydropower systems with one or a few re-                               [20] A. Helseth, A. Gjelsvik, B. Mo, U. Linnet, A model for optimal scheduling of hydro
+servoirs and with inherit non-convexities in the model formulation.                                   thermal systems including pumped-storage and wind power, IET Generat.
+Moreover, it can be used to benchmark the scheduling policies from                                    Transmission Distrib. 7 (12) (2013) 1­9.
+state-of-the-art linear models, and to quantify the approximation errors                       [21] P.B. Eriksen, H.F. Ravn, J. Pedersen, A. Johannesen, A. Haugstad, Hydrothermal
+in those. The results presented in the paper can be useful for hydro-                                 scheduling; computational approaches for optimal scheduling of mixed hydro
+power companies to evaluate whether or not to upgrade the optimi-                                     thermal systems, Proc. Hydropower into the next century, Barcelona, Spain, 1995.
+zation tools used to compute the water value. The formulation pre-                             [22] A. Helseth, B. Mo, M. Fodstad, Water Values in Future Power Markets, Proc. IEEE
+sented in the paper might be helpful to undertake such an upgrade.                                    PowerTech, Manchester, UK, 2017.
+                                                                                               [23] M.V.F. Pereira, L.M.V.G. Pinto, Multi-stage stochastic optimization applied to en-
+    Finally, we propose as future lines of research the consideration of                              ergy planning, Math. Programm. 52 (1991) 359­375.
+risk-aversion constraints for the computation of the water value, as well                      [24] B.C. Flach, L.A. Barroso, M.V.F. Pereira, Long-term optimal allocation of hydro
+as other energy and ancillary services markets, such as the auction in-                               generation for a price-maker competitive market: latest developments and a sto-
+traday markets and the manual FRR market of the Spanish power                                         chastic dual dynamic programming approach, IET Generat. Transm. Distrib. 4 (2)
+system, and the comparison to other approaches not based on the                                       (2010) 299­314.
+classical splitting between the medium- and short-term generation                              [25] A. Helseth, M. Fodstad, M. Auskeland, B. Mo, O.B. Nilsen, J.I. Pérez-Díaz,
+scheduling as the one suggested in [41] and [42].                                                     M. Chazarra, I. Guisández, Assessing hydropower operational profitability con-
+                                                                                                      sidering energy and reserve markets, IET Renew. Power Gen. 11 (13) (2017)
+Declaration of Competing Interest                                                                     1640­1647.
+                                                                                               [26] C.G. Baslis, A.G. Bakirtzis, Mid-term stochastic scheduling of a price-maker hydro
+    None                                                                                              producer with pumped-storage, IEEE Trans. Power Syst. 26 (4) (2011) 1856­1865.
+                                                                                               [27] N. Löhndorf, D. Wozabal, S. Minner, Optimizing trading decisions for hydro storage
+Acknowledgement                                                                                       systems using approximate dual dynamic programming, Oper. Res. 61 (4) (2013)
+                                                                                                      810­823.
+    This work has been partially funded by the Research Council of                             [28] S. de la Torre, A.J. Conejo, J. Contreras, Simulating oligopolistic pool-based elec-
+Norway under the project "Integrating balancing markets in hydro-                                     tricity markets: a multiperiod approach, IEEE Trans. Power Syst 18 (4) (2003)
+power scheduling methods" (Grant no. 228731/E20).                                                     1547­1555.
+                                                                                               [29] H.M.I. Pousinho, J. Contreras, J.P.S. Catalao, Short-term optimal scheduling of a
+References                                                                                            price-maker hydro producer in a pool-based day-ahead market, IET Gen. Transm.
+                                                                                                      Distrib. 6 (12) (2012) 1243­1251.
+ [1] W.G. Chandler, P.L. Dandeno, A.F. Glimn, L.K. Kirchmayer, Short-range economic            [30] M. Chazarra, J.I. Pérez-Díaz, J. García-González, Value of perfect information of
+       operation of a combined thermal and hydroelectric system, AIEE Trans.­ Pt. III                 spot prices in the joint energy and reserve hourly scheduling of pumped storage
+       (Power Apparatus Syst.) 72 (5) (1953) 1057­1055.                                               plants, Electr. Pow. Syst. Res. 148 (2017) 303­310.
+                                                                                               [31] A.R. Marulanda, J.L. Martínez, A. Gómez, A comparison of residual demand models
+ [2] J. Lindqvist, Operation of a hydrothermal electric system: a multistage decision                 for oligopolistic markets, Proc. PSCC, Liege, Belgium, 2005.
+       process, AIEE Trans.­ pt. III (Power Apparatus Syst.) 81 (3) (1962) 1­6.                [32] M.A. Hosko, C. Vansant, Hydropower technology roundup report: accommodating
+                                                                                                      wear and tear effects on hydroelectric facilities operating to provide ancillary ser-
+ [3] M.V.F. Pereira, L.M.V.G. Pinto, "A decomposition approach to the economic dis-                   vices: TR-113584-V4, Tech. rep., EPRI, Palo Alto, USA, 2001.
+       patch of hydrothermal systems,", IEEE Trans. Power App. Syst. PAS-101 (10) (1982)       [33] O. Nilsson, D. Sjelvgren, Hydro unit start-up costs and their impact on the short
+       3851­3860.                                                                                     term scheduling strategies of Swedish power producers, IEEE Trans. Power Syst. 12
+                                                                                                      (1) (1997) 38­43.
+ [4] P. Massé, Application des probabilités en chaîne à l'hydrologie statistique et au jeu     [34] I. Guisández, J.I. Pérez-Díaz, Evaluating approaches for estimating the water value
+       des reservoirs, J. de la societé statistique de Paris (1944) 204­219 tome 85.                  of a hydropower plant in the day-ahead electricity market, in: A. Helseth (Ed.),
+                                                                                                      Proceedings of the 6th International Workshop on Hydro Scheduling in Competitive
+ [5] S. Soares, C. Lyra, H. Tavares, Optimal generation scheduling of hydrothermal                    Electricity Markets. HSCM, 2018, Springer, Cham, 2019.
+       power systems, IEEE Trans. Power App. Syst. PAS-99 (3) (1980) 1107­1118.                [35] K.D.W. Nandalal, J.J. Bogardi, Dynamic programming based operation of re-
+                                                                                                      servoirs, Applicability and Limits. Cambridge University Press, 2007.
+ [6] P.L. Joskow, Electricity sectors in transition, Energy J. 19 (2) (1998) 25­52.            [36] D. Haguma, R. Leconte, P. Côté, Evaluating transition probabilities for a stochastic
+ [7] A. Al-Sunaidy, R. Green, Electricity deregulation in OECD (Organization for                      dynamic programming model used in water system optimization, J. Water Res.
+                                                                                                      Plan. Man. 144 (2) (2018).
+       Economic Cooperation and Development) countries, Energy 31 (6-7) (2006)                 [37] B. Mo, A. Gjelsvik, A. Grundt, K. Kåresen, Optimisation of hydropower operation in
+       769­787.                                                                                       a liberalised market with focus on price modelling, Proc. IEEE PowerTech, Porto,
+ [8] J. Reneses, J. Barquín, J. García-González, E. Centeno, Water value in electricity               Portugal, 2001.
+       markets, Int. Trans. Electr. Energ. Syst. 26 (3) (2015) 655­670.                        [38] M. Chazarra, J.I. Pérez-Díaz, J. García-González, A. Helseth, Economic effects of
+ [9] M. Ventosa, A. Baíllo, A. Ramos, M. Rivier, "Electricity market modeling trends,                 forecasting inaccuracies in the automatic frequency restoration service for the day-
+       Energy Policy 33 (7) (2005) 897­913.                                                           ahead energy and reserve scheduling of pumped-storage plants, Electr. Pow. Syst.
+[10] C. Weber, Adequate intraday market design to enable the integration of wind en-                  Res. 174 (2019).
+       ergy into the European power systems, Energ. Policy 38 (7) (2010) 3155­3163.            [39] A. Brigatto, A. Street, D.M. Valladão, Assessing the Cost of time-inconsistent op-
+[11] Z. Zhou, T. Levin, G. Conzelmann, Survey of US ancillary services markets, Argonne               eration policies in hydrothermal power systems, IEEE Trans. Power Syst 32 (6)
+       National Laboratory, IL, 2016, June [Online]. Available: https://publications.anl.             (2017) 4541­4550.
+       gov/anlpubs/2016/01/124217.pdf.                                                         [40] L. Bernardinelli, L.S.A. Martins, Equilibrium approach to the single solution of
+[12] N. Flatabø, A. Haugstad, B. Mo, O.B. Fosso, Short-term and medium-term                           longer- and shorter-term hydro-thermal scheduling problems, Proc. ICCEP, Santa
+                                                                                                      Margherita Ligure, Italy, 2017.
+                                                                                               [41] S.-E. Fleten, T.-K. Kristoffersen, Stochastic programming for optimizing bidding
+                                                                                                      strategies of a Nordic hydropower producer, Eur. J. Oper. Res. 181 (2) (2007)
+                                                                                                      916­928.
+                                                                                               [42] S.-E. Fleten, D. Haugstvedt, J.A. Steinsbø, M.-M. Belsnes and F. Fleichsmann,
+                                                                                                      Bidding hydropower generation: Integrating short- and long-term scheduling, in
+                                                                                                      Proc. 2011 Power Systems Computation Conference.
+
+                                                                                            9
+

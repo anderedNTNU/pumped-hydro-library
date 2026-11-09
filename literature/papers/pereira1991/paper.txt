@@ -1,0 +1,856 @@
+Mathematical Programming52 (1991) 359-375        359
+
+North-Holland
+
+Multi-stage stochastic optimization applied
+to energy planning
+
+M.V.F. Pereira and L.M.V.G. Pinto
+
+Electric Engineering Department, Catholic University of Rio de Janeiro, P.O. Box 38063,
+Gavea, 22452 Rio ,de Janeiro, RJ, Brazil
+
+Received October 1988
+Revised manuscript received December 1989
+
+This paper presents a methodologyfor the solutionof multistage stochasticoptimizationproblems,based
+on the approximation of the expected-cost-to-gofunctions of stochastic dynamic programming by
+piecewise linear functions. No state discretization is necessary, and the combinatorial "explosion" with
+the number of states (the well known "curse of dimensionality" of dynamicprogramming)is avoided.
+The piecewisefunctionsare obtained from the dual solutionsof the optimizationproblem at each stage
+and correspond to Benders cuts in a stochastic, multistage decompositionframework.A case study of
+optimal stochastic scheduling for a 39-reservoir system is presented and discussed.
+
+1. Introduction
+
+This technical note describes an algorithm for the solution of multistage stochastic
+optimization problems. The solution approach, called stochastic dual dynamic pro-
+gramming (SDDP), is based on the approximation of the expected-cost-to-go func-
+tions of stochastic dynamic programming by piecewise linear functions. These
+approximate functions are obtained from the dual solutions of the optimization
+problem at each stage and can be interpreted as Benders cuts in a stochastic,
+multistage decomposition algorithm. No state discretization is necessary, and the
+combinatorial "'explosion" with the number of states (the well known "curse of
+dimensionality" of dynamic programming) is avoided. The algorithm is also suitable
+for implementation in parallel processors. The application of the algorithm is
+illustrated in a case study of optimal stochastic scheduling for a 39-reservoir system.
+
+2. Dual dynamic programming- deterministic case
+
+The concepts of dual dynamic programming will be illustrated with the following
+linear programming problem:
+
+Min            ClXl + c2x2
+
+subject to Alxl>t bl,                            (1)
+
+               ElXl + A2x2 ~ b2.
+360  M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning
+
+Problem (1) can be interpreted as a two-stage decision process. In the first stage, we
+decide on a trial feasible value for x~ (i.e. such that A~Xl >!bl). Given the trial value,
+~, we find the optimal solution of the second stage function:
+
+     Min  e2x2
+
+     subject to A2X2 >t b2 _ E1x1.                                                   (2)
+
+Note that 2~ is a known value in the second-stage problem (2), and goes to the
+right-hand side of the constraints. The objective is to minimize the sum of the
+first-stage and second-stage cost functions. Figure 1 illustrates the decision process.
+
+                     first-stage problem  ] qx, ~ min
+
+                     IX                   I
+
+                   second-stage problem   [  C2X2
+
+                   Fig. 1. Two-stage decision process.
+
+   Dynamic programming (DP) algorithms can be used to solve sequential decision
+processes such as problem (1). In the DP approach, a first-stage problem would be
+defined as
+
+     Min  ClX 1 Jr- o/1(x1)                                                          (3)
+
+     subject to A~xl >1bl.
+
+In D P terminology, ClXl represents the " i m m e d i a t e cost" and aa(x~) represents the
+"future cost" of decision xl, i.e. the consequences of this decision for the second-
+stage problem. The future cost function o~(x~) is defined as
+
+     al(xl) = Min            C2X 2
+
+          subject to A2x2>!b2- E~x~.                                                 (4)
+
+The future cost function (4) "translates" the second-stage costs as a function of the
+first-stage decisions x~, also called state variables. I f this function is available, the
+two-stage problem (1) can be solved as the one-stage problem (3).
+
+   The DP algorithm constructs the future cost function a~(Xl) by discretizing xa into
+a set of trial values {~i, i = 1 , . . . , n} and solving problem (4) for each of the trial
+values. Intermediate values of a~(xx) are obtained by interpolation from the neigh-
+boring discretized states. Once this function is constructed, the first-stage problem
+(3) can be solved. Figure 2 illustrates the calculation of the future cost function
+al(X0 for a set of discretized values.
+
+   The DP approach has many attractive features: it can be easily extended to
+multistage problems; can be extended to stochastic cases; can accommodate discrete
+M. V.F. Pereira,L.M.V.G. Pinto / Stochastic optimization and energyplanning      361
+
+future cost
+
+.
+
+  )'"",- .
+               ! "'7,.
+                     i "'-,
+
+                                                                  ~-- state (x)
+
+                             Fig. 2. State discretization in DP.
+
+values, nonlinearities etc. Its main drawback is the need to discretize the decisions
+(state variables) in order to construct the future cost functions. It is easy to see that
+this may lead to a very large number of combinations even for a modest number
+of variables. For example, if the vector xl has ten components, and if each component
+is discretized into four values, there will be 4 l�, i.e. over one million possible discrete
+values of Xl. This "curse of dimensionality" limits the applicability of DP algorithms
+to problems with a small number of variables (typically three or four, in the case
+of stochastic DP problems).
+
+   One possible way of avoiding the dimensionality problem is to approximate the
+future cost function by analytical functions rather than a set of discrete values. For
+example, one c,ould calculate the future cost values ~1(Xl) for a sample of states,
+and then adjust a polynomial (e.g. a quadratic or cubic function of xl) to these
+values. The polynomial would then be used in the previous stage to supply future
+cost values for any trial decision xl (see, for example, Gal, 1989). The algorithm
+proposed in this note is based on a similar idea. We will show that the future cost
+function can be represented exactly as a pieeewise linearfunction, and use a relaxation
+of this piecewise function as our approximation.
+
+   The structure of the future cost function can be characterized by taking the dual
+of the second-stage problem (4):
+
+c~l(xl ) = Max               1r(b2-El&)
+
+             subject to ~'Az <~c2                                                (5)
+
+where 7r is the (row) vector of dual variables. It is known from LP theory that the
+optimal solutions of the dual problem (5) and of the original problem (4) coincide.
+362  M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning
+
+Therefore, both (4) and (5) represent the future cost function al(Xl). Note, however,
+that the decision variable Xl is in the objective function of (5), and not in the
+right-hand side of the constraint set as in the original problem (4). This means that
+the set of possible solutions to problem (5), which correspond to the vertices of the
+constraint set erA2~ c2, can be characterized before knowing the decision xl.
+
+   Let H = {줿1, ~.2,..., ~.~} represent the set of all vertices of the constraint set.
+Because the optimal solution belongs to this set, problem (5) can in principle be
+solved by enumeration:
+
+     al(x~) --- Max{cri(b2-ElXl) for all i = 1 , . . . , v}.                         (6)
+
+Problem (6) can also be rewritten as a linear programming problem:
+
+     al(X1) = Min  a
+
+                  subject to a ~ 7r1(b2- Eixl) ,
+                                                                                                 (7)
+
+                                                    a >1 7 r V ( b 2 - E i x 1 ) ,
+
+where a is a scalar variable. The equivalence of (7) and (6) can be easily established
+by observing that a/> 7ri(b2-E1x1) for all i = 1,..., v in problem (7) implies that
+
+  ~>Max{~-;(b2-ElXl)}. Because the objective is to minimize a, we can conclude
+that the constraint will be met in the equality as required in problem (6).
+
+   Problem (7) has an interesting geometrical interpretation. It indicates that the
+future cost function al(Xl) is a piecewise linear function of the decision variable xl,
+as illustrated in Figure 3. The components of this piecewise function are the
+
+     future cost
+
+                                                              ~ state (x)
+
+                  Fig. 3. Piecewise linear approximation.
+M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning  363
+
+h y p e r p l a n e s defined by each 줿i(b2- EIx1). This implies that the future cost function
+
+can be characterized without discretizing the values xl ; it is sufficient to know the
+coefficients {~-i} of the supporting hyperplanes.
+
+   Naturally, the calculation of all vertices {~-~}in set H may be a very difficult task.
+Our basic approach will be to calculate a subset of these vertices and to construct
+an approximation to the future cost function. We will initially show that these
+vertices can be calculated as dual variables of the second-stage problem (4),
+reproduced below:
+
+O/l(Xl i) = Min  c2x 2                         dual                             (8)
+
+               subject to A2x2 >t b 2 - ElSie  var ~.i,
+
+where ~lJ is a trial value. Let ~-i be the simplex multiplier vector associated to the
+constraints of problem (8). It is known from LP theory that this vector is one of
+the vertices of the solution set//in the dual problem. Therefore, it can be used to
+construct one of the supporting hyperplanes of the future cost function al(xO.
+
+   In other words, given a set of n trial decisions {Xl~, i = 1 , . . . , n}, we can calculate
+the set of associated multipliers {~i, i= 1 , . . . , n} by solving problem (8) for each
+of the trial va][ues. An approximation to the future cost function can then be
+constructed as:
+
+~(x,) = Min      a
+
+                                                                                                  (9)
+
+               subject to a ~ ,l'ri(b2- EIX1) for i = 1 , . . . , n.
+
+It is easy to see that the approximate function c~l(xl) is a lower bound to the future
+cost function a~(xl), because problem (9) has only a subset of the constraints of
+problem (7). The approximate future cost function can then be used to solve the
+first-stage problem as in the DP formulation:
+
+z = Min          clxl+3q(xl)
+
+                                                                                (10)
+
+subject to A1x1>l bl .
+
+Note that problem (10) is actually a LP problem. Substituting (9) into (10), we get:
+
+z = Min          ClX 1-~-ol
+
+subject to A l x 1>i bl,                                                        (11)
+
+                 a - ,rri(b2- E l x l ) >i 0 for i = 1 , . . . , n.
+
+Because ~ ( x l ) is an approximation to the future cost function, we cannot guarantee
+that the solution of problem (10) is the optimal solution of the two-stage problem
+(1). However, because ~1(Xl) is a lower bound to the future cost function, we know
+that the optimal solution value of (10) is a lower bound z to the true optimal cost.
+In other words,
+
+_z= c ~ , + ~                                                                   (12)
+364  M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning
+
+where ~1 and ~ are the optimal solutions of the approximate problem (10). In turn,
+
+an upper bound z can be obtained by solving the second-stage problem (4) for ~l :
+
+     = Cl; 1+ O/1(;1).                                                               (13)
+
+The difference between upper and lower bounds ~-z can be used to verify the
+
+accuracy of the approximate future cost function. Initially, we note that the term
+
+ca~l is cancelled, because it belongs to both upper and lower bound expressions.
+
+Thus, we can see that ~-_z measures the difference between the predicted future
+cost (given by k) and the actual future cost (given by a1(~1)) of the current optimal
+
+solution ~l. If this difference is greater than a given tolerance, the problem is solved.
+
+Otherwise, a new set of trial decisions must be used to determine additional vertices
+zri. The process described so far can be summarized in the following algorithm:
+
+  Step (a). Select a set of n trial decisions {)~li, i = 1 , . . . , n}.
+  Step (b). For each trial decision, solve the second-stage problem, and calculate
+
+the associated multipliers ~.i as in (8).
+
+  Step (c). Use the multipliers {~r~} to construct the approximate future cost
+
+function as in (9); solve the approximate first-stage problem (10).
+
+  Step (d). Calculate upper and lower bounds as in (12) and (13); if 2-_z are
+
+within a given tolerance e, stop; otherwise, go to Step (a).
+
+   One important point remains to be discussed, which is the selection of trial
+decisions {Xli} in Step (a). At each iteration of the algorithm, we will use as an
+additional trial decision the optimal solution ~1 of Step (b) (the approximate first
+
+stage problem) at the previous iteration. This ensures that we will be building
+
+approximations to the future cost function in the neighborhood of "interesting"
+points, i.e. points which are good candidates to the optimal solution.
+
+  The two-stage dual dynamic programming (DDP) algorithm is then composed of
+
+the following steps:
+
+  Step (a). Initialize: approximate future cost function ~ ( x ~ ) = 0 ; upper bound
+
+  = az; number of vertices n = 0.
+
+  Step (b). Solve the approximate first stage problem (10); let ~1 be the optimal
+
+solution.
+
+  Step (c). Calculate the lower bound z as in (12); if ~-z<~ e, stop; otherwise,
+
+go to Step (d).
+
+  Step (d). Solve the second stage problem (8), i.e. calculate a(xl); update ~ as
+
+in (13).
+
+  Step (e). Increment the number of vertices n <--n + 1; let the multiplier associated
+
+to the optimal solution of Step (d) be ~.n; construct the approximate cost function
+~1(Xl) as in (9), using the n vertices.
+
+  Step (f). Go to Step (b).
+           M. V.F. Pereira, L.M. V.G. Pinto/Stochastic optimization and energy planning  365
+
+   The DDP algorithm described above has several attractive features: no state
+discretization is required; upper and lower bounds are provided at each iteration;
+the previous optimal solution of the approximate optimization problem (10) of step
+(b) can be used as an initial solution in the next iteration (note that the only
+difference between two successive problems is one additional linear constraint
+associated to the new vertex ~.n).
+
+   It should be observed that the two-stage version of the DDP algorithm outlined
+above is equivalent to a Benders decomposition algorithm (Benders, 1962), in which
+both master and subproblem are LP problems. The extensions of the DDP algorithm
+to the multistage and stochastic cases can also be interpreted as extensions of the
+Benders decomposition scheme (see, for example, Birge, 1980; Wets, 1988).
+
+   The multistage DDP algorithm is composed of the following steps:
+
+  Step (a). Let T be the planning horizon; initialize 3~t(x,)= 0 for t = 1 , . . . , T;
+
+~ = cx3.
+
+   Step (b). Solve the approximate first stage problem (10); let ~1 be the optimal
+solution.
+
+   Step (c). Calculate the lower bound _z as in (12); if ff-_z~< e, stop; otherwise,
+go to Step (d).
+
+   Step (d). Repeat for t = 2,..., T (forward simulation).
+                    Solve the optimization problem for stage t, trial decision xt-1 :
+
+           Min  c,x, + k,(x,)
+
+                                                                                         (15)
+
+           subject to A,x, >i b, - E,-a~t-1.
+
+                 Store the optimal solution as 9~,.
+Step (e). Calculate the upper bound
+
+            T
+
+                                                                                                  (16)
+
+           t=l
+
+Step (f). Repeat for t = T, T - 1 , . . . , 2 (backward recursion).
+
+                 Solve the optimization problem for stage t, trial decision )2t_a:
+
+           Min  c,x, + ~t(x~)
+
+                                                                                         (17)
+
+           subject to A,x, >1b , - Et-l~,-~.
+
+Step (g).    Let ~0-t_1 be the multiplier associated to the constraints of problem
+             (17) at the optimal solution; use this multiplier to construct an
+             additional supporting hyperplane for the approximate future cost
+             function in the previous stage, ~,-1(x,-1).
+           Go to Step (b).
+366  M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning
+
+3. Stochastic dual dynamic programming
+
+As mentioned previously, one attractive feature of DP algorithms is their capability
+of handling stochastic problems� The DDP approach described in the previous
+section can also be extended to the stochastic case� This will be illustrated with the
+following two-stage problem:
+
+     Min       ClXl + Pl c2x21 + P2c2x22 +" � �+ p,.c2x2,.
+
+     subject to A~x~>- ba,
+
+               EIX 1q-A2x21 i> b21,                                                  (18)
+
+               EIX 1              + A2X22~ b22,
+
+               ElX 1                             q- Aex2m >1 b2m.
+
+Problem (18) can be interpreted as follows: in the first stage, a decision Xl is taken;
+given the trial decision xl, there will be m second stage subproblems:
+
+     alj(Xl) = Min                c2x2j                                              (19)
+
+               subject to A2x2j <~b2j - E,Xl
+
+for all j = 1 , . . . , rn. The objective is to minimize the sum of the first-stage costs ClX1
+plus the expected value of the second-stage costs (Y~mj=Ipjc2x2j), where pj represents
+the probability of each subproblem (naturally, ~jm=~ p: = 1). Figure 4 illustrates the
+
+decision process.
+   As in the deterministic case of Section 2, the two-stage problem (18) can in
+
+principle be solved by a stochastic DP recursion. Given a trial decision Xl, one can
+
+build the expected future cost function 6~(Xl) as
+
+     8,(xl) = ~ pjaa:(xl)                                                            (20)
+
+          j=l
+
+where oqj(x0 is defined in (19).
+
+               first-stage problem                   ~ min
+
+               ~-~                subproblem1 ~ - -
+
+                                  subproblem 2
+
+                  I J u p,o ,oom I
+
+               Fig. 4. Two-stagedecision process (stochastic case).
+           M.V.F. Pereira, L.M.V..G. Pinto / Stochastic optimization and energyplanning   367
+
+The first-stage problem in the DP recursion becomes
+
+Min        Cl X 1 -1- ~ l ( X l )
+
+                                                                                          (21)
+
+subject to AIX 1>Ib~
+
+where ClX1represents the immediate cost, and all(X1) represents the future (expected)
+consequences of decision x~. The derivations leading to the dual DP algorithm are
+similar to the deterministic case (the future cost function is piecewise etc.).
+
+   In order to present the multistage stochastic DDP algorithm we assume, without
+loss of generality, that the right-hand side vectors {b,, t = 1, . . . , T} are independ-
+ent random variables, and that each b, is discretized into m values, or scenarios
+{btj,j = 1 , . . . , m} with probabilities {Ptj,j = 1 , . . . , m}. The algorithm is implemented
+as follows:
+
+Step (a). Define a set of trial decisions {~, for i = 1 , . . . , n, t = 1 , . . . , T}.
+Step @. Repeat for t = T, T - 1 , . . . , 2 (backward recursion).
+
+                 Repeat for each trial decision xt~, i = 1 , . . . , n.
+                    Repeat for each scenario btj, j = 1 , . . . , m.
+                        Solve the optimization problem for t, Xt-l~, and btj:
+
+           Min        ctx, + d,(x,)
+
+                                                                                          (22)
+
+           subject to A~xr >! b~j - E~-l~,-m
+
+Step (c).           Let 7rt-aij be the multiplier associated to the constraints of
+
+                    problem (22) at the optimal solution.
+                 Calculate the expected vertex value "T'l't_li = ~jm=l Ptj'JTt--lij' and con-
+                 struct one supporting hyperplane of the approximate expected
+                 future cost function for stage t-1, dt-l(xt-1).
+           Go to Step (a).
+
+   As in the deterministic case, one important aspect in the algorithm is the determina-
+tion of the trial decisions {Sti}. Ideally, we should carry out a forward simulation
+(see Step (d) of the multistage deterministic DDP algorithm) for every combination
+of scenarios {btfl. Note, however, that the combinations increase exponentially with
+the number of stages. Our proposal is to carry out a Monte Carlo forward simulation
+for a sample of the scenarios as follows:
+
+   Step (a). Solve the first-stage problem (21); let xl be the optimal solution;
+initialize xli = ~1 for i = 1 , . . . , n.
+368        M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning
+
+Step (b).       Repeat for t = 2 , . . . , T.
+                  Repeat for i = 1, . . . , n.
+                     Sample a vector b, from the set {btj, j = 1 , . . . , m}.
+                     Solve the optimization problem for stage t, sample i:
+
+                     Min        etxt + ~(xt)
+
+                     subject to Atx, ~ b,- Et_l)~t_li.                                     (23)
+
+                     Store the optimal solution as ~,.
+
+   As in the deterministic case, the objective of the above simulation is to determine
+"good" trial decisions at each stage, i.e. around which one should try to approximate
+the future cost function.
+
+   One aspect remains to be discussed, which is the calculation of lower and upper
+bounds. It can be seen that the lower bound _zis obtained from the solution of the
+first stage problem (21), as in the deterministic case. The upper bound 5, in turn,
+is estimated from the Monte Carlo simulation results for all stages and scenarios,
+that is,
+
+                     1n
+
+           = ClXl +-- Y. zi                                                                (24)
+                     ni=l
+
+where z~ is the total cost for one Monte Carlo run:
+
+                T
+
+          z, = Z c,~,.                                                                     (25)
+
+                t=l
+
+The uncertainty around the estimate of ff in expression (24) can be measured by
+the standard deviation of the estimator:
+
+          ~z =       ~ ( e - z i ) 2.                                                      (26)
+
+                     i=1
+
+For example, the 95% confidence interval for the "true" (population) value of 5 is
+
+given by
+
+          [if-2O-z, :~+ 2~rz].                                                             (27)
+
+It is interesting to observe that the uncertainty around the upper bound estimate
+can be used as a convergence criterion: for example, if the lower bound z is in the
+interval (27), the algorithm is stopped. This criterion introduces a relationship
+between the acceptable accuracy of the simulation (given by the sample size n) and
+the accuracy of the optimal policy calculated by the stochastic DDP algorithm.
+
+4. Computational aspects and other extensions of the algorithm
+
+4.1. Solution strategies
+The solution strategy presented in the previous sections (forward simulation of the
+sequential decisions process; backward recursion to update the future cost functions)
+M.V.F. Pereira,L M.V.G. Pinto/Stochastic optimization and energyplanning  369
+
+allows many variations. For example, it is possible to iterate between the forward
+and backward steps in two or more stages without necessarily going back to the
+first stage.
+
+4.2. Parallel processing
+
+The forward simulation of the sequential decisions process (23) can be carried out
+independently for each sample. It is also possible to calculate the backward recur-
+sions (22) as a set of independent problems. This allows the implementation of the
+algorithm in computers with several processors operating concurrently. We conjec-
+ture that the convergence process itself can be asynchronous (some processors
+involved in the forward simulation; others calculating the backward recursion results
+in various stages etc.).
+
+4.3. Nonlinear functions
+
+The algorithm can be extended to the nonlinear case. Natually, convergence to the
+global optimum can only be ensured under the usual convexity conditions for
+nonlinear problems.
+
+5. Applications
+
+The application of the algorithm will be illustrated for the problem of optimal
+scheduling of a hydrothermal generating system.
+
+5.1. Introduction
+
+The objective of the optimal operation of a hydrothermal system is to determine
+an operation strategy which, for each stage of the planning period, given the system
+state, produces generation targets for each plant. This strategy should minimize the
+expected value of the operation cost along the period, composed of fuel costs plus
+penalties for failure in load supply. The availability of limited amounts of hydroelec-
+tric energy, in the form of stored water in the system reservoirs, makes the optimal
+operation problem very complex, because it creates a link between an operating
+decision in a given stage and the future consequences of this decision. In other
+words, if we deplete the stocks of hydroelectric energy, and low inflow volumes
+occur, it may be necessary to use very expensive thermal generation in the future
+or even fail to supply the load. On the other hand, if we keep the reservoir levels
+high through a more intensive use of thermal generation and high inflow volumes
+occur, there may be a spillage in the system, which means a waste of energy and,
+consequently, higher operating costs.
+
+   Because it is impossible to have perfect forecasts of the future inflow sequences,
+the operation problem is essentially stochastic. The existence of multiple interconnec-
+ted reservoirs and the need for multiperiod optimization characterize the problem
+as large scale. The objective function is nonlinear, due not only to nonlinear thermal
+370         M. V..F. Pereira, L.M. V.G. Pinto/Stochastic optimization and energy planning
+
+costs, but also to the product of outflow and head in the expression of hydroelectric
+production. Finally, because the worth of energy generated in a hydro plant cannot
+be measured directly as a function of the plant state alone, but rather in terms of
+expected fuel savings from avoided thermal generation, the objective function is
+also nonseparable.
+
+5.2. Problem formulation (Pereira and Pinto, 1985)
+
+If the inflow volumes are known at the beginning of each stage, the operation
+planning problem can be represented as a stochastic dynamic programming (SDP)
+recursion:
+
+     at(xt) = E /Min c,(u,)+ /3at+l(Xt+l)}                                                 (28a)
+
+                  a,lx, t. u,
+
+subject to
+
+     X,+l =f ( x , , a,, u,),                                                              (28b)
+
+     gt+l(Xt+l) >~O,                                                                       (28C)
+
+     h,(u,)>~O,                                                                            (28d)
+
+Vt = T, T - 1 , . . . , 1, Vx,, where:
+   t: indexes the stages (T planning horizon),
+   x,: state vector at the beginning of stage t,
+   at(x,): expected value of operation cost from state xt,
+   a, Ixt : probability distribution of inflow vector at conditioned by state x,,
+   E{. }: expected value,
+   u, : decision vector for the stage,
+   ct(" ): immediate cost associated to decision u,,
+   ]3: discount factor,
+   (28b): state transition equation,
+   (28c): constraints on the state vector,
+   (28d): constraints on the decision vector.
+
+5.3. State variables
+
+The system state xt should represent all information which can affect future operation
+costs. In the case of hydroelectric systems, at least two classes of state variables
+should be included: the reservoir storage level v, and information about the hydro-
+logic trend in the system. This information can be given, for example, by the lateral
+inflow volumes during the previous stages. Therefore,
+
+     xt = [vt, a,_,, at 2,-.-].                                                            (29)
+
+5.4. Decision variables
+
+The decision vector u, comprises the turbined outflow volumes q, and the spilled
+volumes s. In vector terms,
+
+     u, = [qt, st].                                                                        (30)
+            M. EF, Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning  371
+
+5.5. Immediate costs
+
+The immediate operation cost associated to decision vector ut --- [qt, s,] in (28a) is
+given by the thermal generation cost required to complement the energy supply.
+Penalties for failure in load supply are represented as dummy thermal plants.
+
+G(q,, s,) = Min �                    cj(go)                                                (31a)
+
+                          k~K de Tk
+
+subject to
+
+            Y~ p,q. + 2 go + Y~ (fak--f,k~) = dtk V k ~ K,                                 (31b)
+
+icHk        j~Tk          l~Ok
+
+g,~g,                                                                                      (31c)
+
+If~l~f,                                                                                    (31d)
+
+where:
+   k: indexes subsystems, or regions (K is the set of subsystems),
+  j: indexes thermal plants (Tk is the set of thermal plants in subsystem k),
+   i: indexes hydro plants (Hk is the set of plants in subsystem k),
+   g0: generation of thermal plant j in stage t,
+   cj : generation cost function o f plant j,
+   p~: production coefficient of plant i,
+   d,k: energy demand in subsystem k,
+   ~: vector of thermal generation capacities,
+  f~k~: energy interchange from system k to system l,
+  f: vector of interchange capacities,
+   g2k : set of subsystems directly connected to system k.
+   It should be noted that the production coefficient of a hydro plant is in fact a
+
+function of the initial volume, end volume and outflow:
+
+p~ = pi(v,, V,+l~,q,i, s,).                                                                (32)
+
+For ease of presentation, p will be assumed to be constant in the derivations that
+follow.
+
+5.6. Transition equation
+
+The transition equation (28b) corresponds to the reservoir water balance equations:
+
+v,+l = vt + at + M ( qt + s,)                                                              (33)
+
+where M is the incidence matrix of hydro plants.
+
+5. 7. Constraints on the state vector and decision variables
+
+The constraints on state vector (28c) correspond to bounds on storage:
+
+Dr+ 1 ~ /5                                                                                 (34)
+
+where 15is the vector of reservoir storage capacities.
+372  M. V.F. Pereira, L.M. V.G. Pinto/Stochastic optimization and energyplanning
+
+   The constraints on decision variables (28d) usually correspond to limits on
+turbined outflow and lower bounds on total outflow:
+
+     qt<-O,                                                                        (35)
+
+     qt + st/> _q,                                                                 (36)
+
+where c~ and _q represent respectively the u p p e r and lower bounds on outflow.
+
+5.8. The curse of dimensionality
+
+As discussed previously, the solution of SDP recursions usually requires the discretiz-
+ation of the state space, which leads to an exponential increase of the computational
+effort with the number of state variables. As an illustration, let xt = [vt, at-l] be the
+state vector for a system with n reservoirs, in which the hydrologic trend is represen-
+ted by the lateral inflow in the previous month. If each component of the state
+vector is discretized into m intervals, there will be m 2n discretized states in each
+stage. Supposing m = 20 intervals of discretization:
+
+     1 reservoir ~   202=400 states,
+     2 reservoirs ~
+     3 reservoirs ~  204= 160 thousand states,
+     4 reservoirs ~  206= 64 million states,
+     5 reservoirs ~
+                     20s=25 billion states,
+                     20 l�= 10 trillion states.
+
+Therefore, it becomes necessary to develop methods able to approximate the optimal
+operating policy at reasonable computational cost. The application of stochastic
+dual dynamic programming (SDDP) to the scheduling problem will be discussed
+next.
+
+5.9. Application of the SDDP algorithm
+
+The SDDP algorithm described in Section 3 was applied to a system composed of
+39 hydroelectric plants (22 with reservoirs and 17 run-of-the-river), derived from
+the southern-southeastern Brazilian power pool. The system characteristics can be
+found in Pereira and Pinto (1985). The initial stored volumes in the system reservoirs
+were set as 50% of the storage capacities. The other generation resource is an
+aggregate thermal unit, with m a x i m u m generation capacity of 10 000 MW. Thermal
+generation cost was set at a reference value of $1/MW.month (i.e. the energy
+corresponding to a continuous generation of 1 MW along one month). The cost of
+load curtailment was set at $10/MW.month. The energy demand for each stage was
+29 300 MW.month. The number of stages is 10.
+
+   Inflows were represented as independent random vectors, with two realizations
+per stage. The inflow vector in the first stage is assumed to be known. There are
+
+therefore 29-- 512 possible inflow sequences.
+
+   Each one-stage subproblem has 102 variables and 40 constraints (excluding upper
+and lower bounds on variables, and the linear constraints representing the future
+M. V.F. Pereira, L.M. V.G. Pinto / Stochastic optimization and energy planning                                                                           373
+
+cost function). Because there are 512 inflow sequences and 10 stages, the total
+number of one-stage subproblems would be 5120. The complete problem would
+then have 522 240 variables and 204 800 constraints. By avoiding duplications, we
+can reduce the total number of subproblems to 1023, corresponding to a complete
+problem with 104 346 variables / 40 920 constraints.
+
+   The one-stage subproblem (22) corresponds to a linear programming problem.
+Instead of a standard LP solution package, we have used a customized algorithm
+that takes advantage of the network flow characteristics of the hydrothermal schedul-
+ing problem (Kennington and Helgason, 1984). Looking at equations (33)-(36)
+(flow conservation, bounds on storage and bounds on outflow) we see that can be
+modelled as flows in a network, which allows the use of efficient solution techniques.
+The non-network-flow equations (power balance and the linear constraints corre-
+sponding to the future cost functions) are modelled as additional constraints to the
+network problem. The problem is then solved by a basis partitioning algorithm
+(Kennington and Helgason, 1984).
+
+   As shown in Section 3, we use a sample of the set of possible inflow sequences
+to calculate the new trial states {~,i} at each iteration (forward simulation step). The
+forward simulation is also used to obtain an upper bound to the optimal cost (see
+equation (20)). Finally, the uncertainty around the upper bound estimate, given by
+the standard deviation of the estimator (see equation (26)) is used as a convergence
+criterion. In this case study, a sample of 50 inflow sequences was used.
+
+   The optimal solution in this case was obtained in five iterations (one iteration
+consists of a forward simulation and a backward recursion). Figure 5 illustrates the
+
+expected operation cost                                                                                                                                  upper bound
+       30000                                                                                                                                             lower bound
+
+       25000
+
+20000              /
+15000             ,:"
+10000
+ 5000          /:
+
+            /
+          ,,"
+          /'
+
+       [.'
+                                                                                                                                                      I
+
+       1               2  3  4       5
+
+               number of iterations
+
+               Fig. 5. Convergenceof SDDP algorithm.
+374        M.V.F. Pereira, L.M.V.G. Pinto / Stochastic optimization and energy planning
+
+           gap
+
+     8000
+
+                                                                              - - gap
+
+                                                                              ........... t o l e r a n c e
+
+     6000
+
+     4000
+
+     2000
+
+                   ......................
+
+     0          I  I                       I  I                            I
+
+                1  2                       3  4                            5
+
+                   number of iterations
+
+                                           Fig. 6. Convergence criterion.
+
+evolution of lower and upper bounds. Figure 6 shows the evolution of the gap
+(difference between upper and lower bound) and the standard deviation of the
+upper bound estimate, which served as a convergence criterion. Total CPU time
+was 37 minutes in a VAX 11/780 (a 1 MIP computer, comparable to a 20 MHz
+386-based personal computer with floating point coprocessor). This is roughly
+equivalent to 1.5 CPU minutes on an IBM 3090 (25 MIPS).
+
+Acknowledgements
+
+The work described in this paper was carried out under contracts with the Generation
+Department and the Operations Department of Eletrobras, the Brazilian holding
+company for power. The contributions of B.G. Gorenstin, J.P. Costa and N.M.
+Campodonico of Cepel, the Brazilian electric power research center, have been
+essential for the development of methodology and related software. The comments
+and suggestions of J. Stedinger (Cornell University) and of two anonymous referees
+are gratefully acknowledged.
+
+References
+
+J.F. Benders, "Partitioning procedures for solvingmixed variables programmingproblems," Numerische
+  Mathematik 4 (1962) 238-252.
+M.V.F. Pereira, L.M.V.G. Pinto / Stochastic optimization and energy planning  375
+
+J.R. Birge, "Solution methods for stochastic dynamic linear programs," Report 80/29, Systems Optimiz-
+   ation Laboratory, Department of Operations Research, Stanford University (Stanford, CA, 1980).
+
+S. Gal, "Parameter iteration dynamic programming", Management Science (1989).
+J.L. Kennington and R.V. Helgason, Algorithms for Network Programming (Wiley, New York, 1984).
+M.V.F. Pereira and L.M.V.G. Pinto, "Stochastic optimization of a multireservoir hydroelectric system - - a
+
+   decomposition approach", Water Resources Research 21(6) (1985).
+R. J.-B. Wets, "Large scale linear programming techniques," in: Y. Ermoliev and R. Wets, eds., Numerical
+
+   Methods for Stochastic Optimization (Springer, Berlin, 1988) Chapter 3.
+

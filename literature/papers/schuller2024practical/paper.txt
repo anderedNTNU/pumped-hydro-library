@@ -1,0 +1,426 @@
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+   Practical Experiences from Application of a
+ Comprehensive Simulator for Pumped Storage
+   Hydropower Investment Decisions on a Real
+
+                    Investment Case
+
+                        Kristine Schu¨ller, Per Aaslid, Kaspar Vereide, and Hans Ivar Skjelbred,
+
+       Email: kristine.schuller@sintef.no, per.aaslid@sintef.no, kaspar.vereide@sirakvina.no, hansivar.skjelbred@sintef.no
+          Energy systems, SINTEF Energy Research, Trondheim, Norway, Sira-Kvina kraftselskap, Tonstad, Norway,
+
+Department of Civil and Environmental Engineering, Norwegian University of Science and Technology, Trondheim, Norway
+
+   Abstract--The future electricity system is expected to include  to include many of these physical limitations in an investment
+a higher share of production from renewable energy sources.        analysis building on the simulation framework described in
+This will lead to increased price volatility and thus a higher     [2], [3].
+demand for short-term balancing by hydropower systems, which
+will have to operate closer to their maximum flexibility limits.      The Sira-Kvina hydropower system, located in the south-
+In order to perform an investment analysis it is thus important    western part of Norway, consists of two river systems with
+to model physical characteristics and limitations of hydropower    a total of 8 hydropower plants. The river systems combine at
+systems as close to reality as possible. A simulator based on      Tonstad, the power plant with the highest annual production in
+medium- and short-term hydropower modelling is used to carry       Norway. With its location in the connection point of a subsea
+out an investment analysis for a Norwegian hydropower producer.    DC cable to the European continent and proximity to the North
+The results demonstrate how detailed modelling can provide new     Sea, it has a strategic beneficial location for balancing variable
+insight into the implications of short-term effects in pumped      renewable power production. Increasing both pumping capac-
+storage hydropower investment decisions.                           ity and flexibility in the system is thus of direct importance
+                                                                   to the integration and balancing of new renewable production
+   Index Terms--Hydropower Scheduling, Investment Analysis,        and the European shift towards a fossil-free electricity supply.
+Optimization, Pumped Storage                                       However, the watercourse is complex to operate due to the high
+                                                                   inflow to Tonstad, whose upstream reservoirs are relatively
+                          I. INTRODUCTION                          small. The watercourse is also significantly restricted by weirs
+                                                                   and transfer tunnels, as well as rigorous pressure restrictions
+   The increasing share of production from variable renew-         in the headrace tunnel of Tonstad [4]. Thus, the production
+able energy sources that are currently being deployed in the       at Tonstad must be carefully coordinated with the upstream
+electricity system, primarily solar- and wind power, is causing    plants to maintain high production capacity while keeping the
+increased price volatility [1]. The hydropower producers ben-      risk of overflow low.
+efit from this development due to their capability of rapidly
+adjusting production and reversing turbines at low prices to          The simulator uses an MTM based on stochastic dual
+store the energy for later use. A consequence of the new           dynamic programming (SDDP) [5]. SDDP is state of the art
+production patterns is more start-stop and production near the     for solving multi-stage stochastic problems with a high number
+maximum capacity where the physical limitations in the wa-         of states, and is widely used for the hydropower scheduling
+tercourse are limiting the production. Hydropower producers        problem. The method requires a convex problem formulation,
+are typically using short term models (STMs) with a relatively     where purely linear formulations are preferred due to com-
+high level of detail for scheduling the daily operation, while     putational benefits. Several methods for including non-convex
+medium term models (MTMs) are used for strategic decisions         relations in SDDP have been proposed, such as convexification
+and investment analyses due to their ability to analyse longer     of bi-linear terms using McCormix envelopes [6], including
+time horizons under different uncertainties such as inflow and     integer variables through alternative decomposition methods
+price. However, state dependent relationships are to a lesser      [7], and stochastic dynamic programming for including price
+extent included in MTMs due to mathematical limitations.           uncertainties [8]. Alternatively, additional details can be added
+Examples of such relationships that must be considered in the      in final simulations that are performed for specific scenarios
+daily operation are head dependent discharge capacity, weir        after convergence [9]. However, global optimality cannot be
+flows and tunnel flows. The main motivation of this work is        guaranteed for the simulations since the model formulation
+                                                                   deviates from the one used for finding the strategy.
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+   The idea behind this simulator is to use a detailed state-                                  Fig. 1. Simulator framework.
+of-the-art STM in the simulation phase. The STM SHOP is
+used for the simulation and the MTM ProdRisk is used for          A. Medium term model
+the strategy as described in [3]. The STM uses a combination
+of mixed-integer linear programming (MILP) and successive            The MTM formulates a linear multi-stage stochastic pro-
+linear programming for managing non-linearities and non-          gram that is solved using SDDP, where inflow and power
+convexities in the problem formulation, see [10]­[12] for         price are stochastic variables. It is usually run with weekly
+details. The MTM provides an operating strategy through           stages, where each week is represented by a decision problem
+water values depending on reservoir storage, inflow and price,    formulated as a linear programming problem. See [17] for
+so-called cuts, that are used as input to the STM. Both models    further description of the method. The strategy from the MTM
+consider risk neutral price takers, the STM being deterministic   is inherited by the STM through water-value cuts. The MTM
+and the MTM with stochastic price and inflow. Both models         uses a less detailed model description compared to the STM,
+are in operational use by a significant number of producers       where e.g. generators in a plant are aggregated into one unit.
+in Nordic and central European countries, and a similar setup     It is run with a time resolution of three hours.
+has been used to benchmark historical operation [13].
+                                                                  B. Short term model
+   The investment analysis using the proposed simulator on the
+Sira-Kvina hydropower system has revealed several challenges         The STM used for detailed evaluation of the strategy is
+that must be addressed carefully when combining two separate      a deterministic short-term hydropower optimization program
+models with varying aggregation level that are solved with        based on successive MILP, see [10], [18]. With the STM, more
+different methods. For example, the MTM uses an aggregated        details about the system can be provided, such as modelling
+plant description through a piece-wise linear relation between    each individual generating unit. The STM captures more
+discharge and production, while the STM models each individ-      details with respect to plant efficiency and production capacity
+ual turbine with detailed efficiency curves for both generator    [12], flows in tunnel networks and pressure limitations [19],
+and turbine. Moreover, the MTM uses an aggregated reservoir       and physical flow in rivers and over weirs. Experience from
+description, while the STM divides into multiple reservoirs       daily operation shows that these are becoming important
+with physical flow descriptions between them.                     limiting factors due to the increased price volatility, and they
+                                                                  should therefore be considered in investment decisions. The
+   The contributions of this paper are: a) practical experiences  STM is run with hourly resolution.
+from running a comprehensive simulator with an aggregated
+MTM and a detailed STM, b) methods for ensuring consis-                   III. THE SIRA-KVINA HYDROPOWER SYSTEM
+tency between the STM and the MTM model description, and
+c) numerical results of the performed investment analysis.           The Sira-Kvina hydropower system, shown in Fig. 3 in
+                                                                  the Appendix, includes 7 plants, 18 turbines and has a total
+                   II. SIMULATOR FRAMEWORK                        installed capacity of 1 770 MW. The annual production is
+                                                                  around 6 800 GWh, covering around 5% of the total demand
+   The simulator is implemented in Python and distributed as a    in Norway. The system comprises two river systems, Sira
+Python package [14]. Both the MTM ProdRisk and the STM            and Kvina, that meet at Tonstad. There is currently pumping
+SHOP have their own Python interfaces, namely pyprodrisk          capability at Duge, and adding pumps at Tjørhom is under
+[15] and pyshop [16]. These are used to build and modify the      consideration.
+respective models and to acquire the optimization results.
+                                                                     One of the main challenges of the system is that Tonstad,
+   The simulation framework requires a system description as      the largest plant with 960 MW capacity, has very small intake
+well as price and inflow scenarios. The simulator first runs      reservoirs and several complex physical factors limiting its
+the MTM to determine a strategy formulated as linear cutting      production capacity. The tunnels from the two intake reser-
+planes for each individual week. The planning horizon for         voirs, Ousdalsvann and Homstølvann, meet above Tonstad as
+the optimization is typically 104-208 weeks [3], depending        illustrated in Fig. 2. The tunnel to Ousdalsvann is about twice
+on the size of the largest reservoir. Once the strategy from the  as long as the tunnel to Homstølvann, and thus it has a higher
+MTM is known, the STM is used to run forward simulations to       head loss. When Tonstad is producing near maximum capacity,
+get a detailed evaluation of the proposed strategy and system.    the head difference between the reservoirs can be several
+The STM is run sequentially week by week and scenario             meters despite them being hydraulically coupled. Therefore, in
+by scenario using the cuts from the MTM as illustrated in
+Fig. 1. The initial value for the very first STM simulation is
+taken from the MTM. The end reservoir volume from a STM
+simulation is used as initial condition for the next run. The
+total number of sequential simulations with the STM is 52
+weeks times the number of scenarios.
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+situations with high inflow, a high head level in Homstølvann                and draught for longer periods. The water in the reservoirs
+can easily cause spillage at Ousdalsvann.                                    above Tonstad, that are relatively small and inflexible, is
+                                                                             therefore valuated relatively low. However, the water still has a
+Fig. 2. Detailed topology of the Tonstad intake reservoirs and proposed new  strategic value for two reasons that are not properly described
+investment at Tjørhom.                                                       in the MTM: a) High reservoir levels increase the plant's net
+                                                                             head which means more power out of each unit of water.
+   Tjørhom and Solhom, that discharge into Ousdalsvann and                   b) The pressure restriction above Tonstad limits the maximum
+Homstølvann, have lower discharge capacity than Tonstad.                     production capacity when the reservoir level is low, which in
+Due to this, in situations with lasting high prices, Tonstad                 turn can lead to a situation where the opportunity to produce at
+tends to empty the intake reservoirs. If the pressure into                   a high price is lost. Therefore, higher reservoir levels increases
+Tonstad becomes too low, the discharge capacity is limited                   the maximum production capacity. As a consequence, the
+due to the risk of air pockets in the tunnel system. Therefore,              water value at Tonstad is often underestimated and thus the
+the production into Ousdalsvann and Homstølvann must be                      reservoirs are often emptied towards the end of the STM
+coordinated accurately to ensure high production capacity                    optimization horizon. To counteract this effect, the STM time
+available and Tonstad when the price is high. Moreover,                      horizon has been extended from 7 to 10 days and the initial
+the tunnel system above Tonstad has multiple creek intakes                   values for each STM simulation are taken from the end of day
+that affect the pressure and production capacity. The plant                  7 in the previous simulation. This leads to smoother transitions
+Tjørhom discharges into the reservoir Tjørhomvann, where the                 for the small reservoirs in the sequential STM simulations.
+water further flows to Handeland over a crest before a tunnel
+connects Handeland to Ousdalsvann. The flow between these                    B. Reservoir aggregation
+reservoirs is also a limiting factor that must be considered in
+the operation of Tonstad.                                                       Between the plants Duge and Tjørhom, there are four lakes
+                                                                             that have merged into one due to artificial dams. The flow
+   The challenges at Tonstad described above can be reduced                  between these lakes is restricted by natural crests, and is
+by installing new generation capacity at Tjørhom, with pump-                 highly state dependent. The same applies for Tjørhomvann and
+ing capability and a new outlet tunnel directly to Ousdalsvann.              Handeland, while Handeland and Ousdalvann are connected
+Increased generation capacity discharging directly to Ous-                   with a tunnel. Since the flow between the reservoirs is state
+dalsvann should make it easier to supply Tonstad with enough                 dependent and difficult to approximate with linear relaxations,
+water when the price is high. Additionaly, in high inflow                    it is not included in the MTM. It is possible to model these
+periods, spillage can be avoided by using the pump. This work                individual lakes as separate reservoirs where the flows between
+has focused on using the extensive simulation framework to                   them are decision variables in the MTM. However, an un-
+evaluate this investment option.                                             wanted side effect from this is that the hydraulically connected
+                                                                             reservoirs may get different water values from the MTM.
+                  IV. PRACTICAL EXPERIENCES                                  Therefore, reservoirs that are connected with tunnels and
+   The main idea with the simulation framework is to embed                   channels where the flow can not be controlled are modelled
+the operation strategy from the MTM with the STM in order                    as one in the MTM, while the STM models each reservoir
+to precisely evaluate the performance of different investment                individually. The relation between head and volume for the
+options considering both long term strategic decisions and op-               detailed STM description is automatically aggregated by the
+erational limitations due to state-dependent short-term effects.             simulation framework and applied to the MTM.
+This section will visit some of the differences between the
+models and explain some of the practical challenges that have                C. Consistent production and discharge capacities
+been managed during the development of the simulator.
+A. Water values for small reservoirs                                            The STM describes each generating unit individually, and
+   The water in larger reservoirs is typically valuated higher               constructs a curve describing the relation between production
+than for small reservoirs since they can withstand high inflow               and discharge, a so-called production-discharge (PQ)-curve,
+                                                                             based on head dependent turbine efficiency curves and gener-
+                                                                             ator efficiency curves for each individual unit and time-step.
+                                                                             The maximum discharge capacity of each plant is a detrimental
+                                                                             factor for the MTM strategy, and thus consistent description
+                                                                             of the PQ-curves between the models is important.
+
+                                                                                The PQ-curves for the MTM are found in the following way:
+                                                                             Each plant is optimized using the STM for a fixed head for
+                                                                             different predetermined discharge levels spanning the whole
+                                                                             operating range of the plant such that the corresponding pro-
+                                                                             duction values are calculated. The resulting set of PQ-points is
+                                                                             then convexified, meaning points breaking the convexity of the
+                                                                             curve are removed, and the resulting curve is given as input
+                                                                             to the MTM. An equivalent method is applied for pumps.
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+   For several plants, the discharge capacity is reduced for        at those levels at the end of the final scenario. Therefore,
+low head. Head dependent discharge capacity is currently not        when all 30 scenarios have been run, the change in reservoir
+included in the MTM, but is accounted for in the STM by head        levels from the beginning to the end of the simulation period
+dependent efficiency curves with individual discharge limits.       should be zero. However, when comparing results with fewer
+                                                                    scenarios, the difference between start and end reservoir levels
+D. Bypass costs                                                     can be significant, due to some years being dry and others wet.
+                                                                    To compensate for this, it is assumed that the residual volume
+   Since the discharge capacities of Tjørhom and Solhom are         between the beginning of the first scenario and the end of the
+undersized compared to Tonstad, it can in situations with           final scenario are valuated based on the the average obtained
+lasting high price be profitable to bypass water from Nesjen        price for the respective reservoirs. This additional value/cost
+and Gravann to maintain high production at Tonstad. In reality,     is distributed between all evaluated scenarios.
+this is unwanted and is therefore penalized using bypass costs
+in both models, so that bypass is limited to situations where                                     V. RESULTS
+it is highly necessary.
+
+E. Model robustness                                                    The simulator has been used to evaluate the base case
+                                                                    and the investment option tjørhom, the latter including a new
+   A severe challenge when running a high number of se-             90 MW plant with pumping capabilities as described earlier.
+quential simulations, in this case 1560, is that if the STM         The investment option has been evaluated using 30 historical
+fails in one of the simulations it will impact the results          weather scenarios from 1986 to 2015, together with a price
+of all consecutive simulations. A significant effort has been       prognosis based on these weather scenarios for the expected
+put into creating an STM that is robust for all the different       power system in 2035 delivered by Volue Insight [20]. The
+numerical combinations of inputs. Several state dependent           price prognosis can not be published in this paper.
+restrictions have been implemented using MILP formulations,
+such as head dependent minimum pump height and head                    The simulations were performed on a server running Ubuntu
+dependent minimum production height at Duge, as well as             with an AMD Ryzen Threadripper 3990X 64-Core Processor.
+state dependent weir flow between Tjørhom and Ousdalsvann.          Up to four cases were run in parallel, with each case assigned
+                                                                    to 16 cores. Due to recently updated information, the chal-
+   Several of the constraints in the STM are soft, meaning          lenges with model robustness, and time constraints there was
+that penalty variables are used to avoid infeasible problems.       not enough time to finish running through all scenarios at the
+For example, if a reservoir runs empty, artificial water can be     time of writing. The final simulation included 11 out of 30
+used at a very high cost. It is easier to debug the case when       scenarios. The MTM takes around 4 hours to finish and the
+an invalid solution is penalized instead of being infeasible. If    STM takes around 3-5 minutes to run each case, meaning
+large penalties are observed for an STM run, this can be a          running all 30 scenarios takes around 5 days.
+consequence of lacking convergence, which sometimes can be
+solved by running additional iterations.                               Table I summarizes the results of the investment analysis
+                                                                    with the tjørhom case relative to the base case for the analysed
+   MILP models are typically solved within a predefined             period of 11 scenarios, together with the MTM results for
+tolerance, which in this case was 2000 C. Situations where the      all 30 scenarios. The net income refers to the total income
+model can not be solved within a reasonable time limit can          minus the total expense for all plants. The corrected net
+occur, and the consequent solutions may include significant         income is corrected for differences in water consumption, as
+penalty costs due to violations of physical restrictions. In        described earlier. The estimated value of the total difference
+these situations, the step length of the optimization model is      in water volume as a percentage of the net income was for
+increased by a factor 2, which reduces the number of variables      the STM 1.34% for base and 0.57% for tjørhom, and for
+with 50%. This is repeated until a solution is achieved within      the MTM 0.64% for base and 0.13% for tjørhom. Both the
+the solver's time-limit. Although some precision is lost, these     MTM and the STM showed an increase in net income for the
+solutions are preferred over solutions that are not within          tjørhom investment case. The MTM showed an increase in
+the acceptable tolerance and thus not good enough to give           net income corrected for change in reservoir levels of 2.9%,
+reasonable initial state for the next simulation.                   while the STM showed a difference of 1.9% for the analysed
+                                                                    scenarios. For all scenarios the MTM showed an increase of
+   It is useful to be able to investigate the results before the    3.2%. The relative change in corrected net income is also
+whole simulation is done, to be able to detect issues as early      shown per plant. The pump investment led to significantly
+on as possible. The simulator saves the results from each           more income at Tjørhom, where the additional capacity was
+STM simulation continuously so that they can be accessed            installed. It also led to a slight increase at Tonstad, due to the
+immediately, including after a system crash. It is also possible    increased ability to sustain high production for longer time.
+to resume the STM simulations from any given point, which           Additionally, the tjørhom investment case has less bypass.
+can be useful in such situations.                                   Since bypassing water is generally not desirable, although it
+                                                                    might be profitable, this is an additional benefit that should be
+F. Comparison of results with few scenarios                         considered in the investment decision.
+
+   The MTM selects initial reservoir levels for the first scenario
+such that a sequential simulation of all 30 scenarios will arrive
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+                          TABLE I                                 volume shows that the results are useful even though only 11
+SUMMARY OF RESULTS, RELATIVE TO BASE CASE                         scenarios were included.
+
+Net Income corrected  STM [%]   MTM [%]   MTM all [%]                Sometimes, the optimal solution found by the simulator
+Net Income                                                        deviates from the desired behaviour, e.g. bypassing water to
+Net Production            2.02      3.01        3.16              maintain high production at Tonstad at high prices. However,
+Bypass                    1.22      2.48        3.16              often when the simulator is forced to avoid these solutions
+                       -1.80     -0.83        -0.20               through artificial penalty costs, other issues will appear. Fig. 4
+Net income per plant  -18.32        2.73    -12.77                in the Appendix illustrates an example of this. A high penalty
+   Tjørhom                                                        was set to avoid bypassing water from Gravann to Tonstad.
+   Tonstad              15.33     20.62       21.79               With high inflow and price, tjørhom is able to keep the
+   Solhom                 0.51      1.20        1.48              Gravann reservoir level down and thus produce at maximum
+   Kvinen                 0.44      0.67        1.52              capacity at Duge. Meanwhile, in the STM, Gravann is over-
+   Roskrepp               0.10      0.24        1.62              flowing due to limited discharge capacity at Tjørhom hence
+   Duge                             1.75                          base has to reduce the production at Duge to limit the overflow
+                       -0.36        4.49      -1.24               at Gravann. Duge cannot pump when the downstream head is
+                          3.70                  0.11              below 651 or 655 masl (depending on the time of year) due to
+                                                                  license regulations. These limitations are not accounted for in
+               VI. DISCUSSION AND CONCLUSION                      the MTM. When later the inflow is reduced while the prices
+                                                                  remain high, base has more water left at Svartevann and is
+   The final simulation with the STM ensures that the strategy    thus able to maintain production at high effect to exploit the
+from the MTM is applicable to shorter time horizons and           high pricing, while tjørhom has to produce at a lower effect,
+increased short-term variations. With the shift towards more      a disadvantage that is not considered in the MTM strategy. In
+renewable energy sources, short-term effects are important        summary, base is forced to risk overflow at Gravann, which
+to take into account when performing investment analyses.         in this case happened to be profitable due to the production
+The simulator is thus a highly relevant tool for investigating    limitations at Duge. This can partly explain why the profit
+how suited different investment options are for the future        from the STM is less than from the MTM. It might be more
+energy system. Since the STM model formulation used in the        reasonable to avoid penalizing the bypass since it can lead to
+simulation deviates from the MTM model used for finding the       unexpected side effects, and rather see the bypass as additional
+strategy, global optimality can not be guaranteed. However,       information to the income results.
+the STM supplements the MTM results and provides more
+information than the MTM would on its own.                        A. Further work
+
+   Throughout the development of the simulator, several prac-        Running the simulator on the model setup with more
+tical challenges had to be managed. Due to the complexity         extreme price scenarios might prove the final STM simulation
+of the Sira-Kvina system, the main challenge was to ensure        to be even more important. This is highly relevant for the
+sufficient robustness of the model. This was accomplished         investment analysis as the future energy market will see
+by imposing state-dependent restrictions for the STM, using       increased price volatility.
+soft constraints and penalty variables, and re-solving cases
+with increased time step length if needed. Continuous saving         It would be interesting to investigate how the level of detail
+of results allowed for early detection of issues during the       in the STM affects the simulation time versus how much it
+development of the simulator. Additional adaptions include        affects the final results. Perhaps the STM model description
+adjusting bypass costs and overlapping STM runs to ensure         could be simplified or the time resolution could be reduced
+smooth transitions between runs for small reservoirs.             to allow for shorter computation time while still providing
+                                                                  sufficient accuracy.
+   To ensure consistency between the MTM and the STM,
+hydraulically coupled reservoirs were modelled as one in the                              ACKNOWLEDGMENT
+MTM and the STM was used to generate PQ curves for
+the MTM. The results demonstrate an adequate consistency             The authors thank Sira-Kvina for the permission to share
+between the STM and the MTM, in particular for the largest        experiences and results from the project. Special thanks go to
+reservoirs, which is an indicator of reasonable results that are  Sigurd Netlandsnes at Sira-Kvina for constructive discussions.
+applicable to both shorter and longer time horizons. The goal is
+not identical results between the models, but the MTM should                                   REFERENCES
+provide a long term target for the STM such that the MTM
+decisions can be refined.                                          [1] L. E. Scha¨ffer and I. Graabak, Power Price Scenarios - Results from
+                                                                        the Reference scenario and the Low Emission scenario. Norwegian
+   The differences between base and tjørhom were fairly                 Research Centre for Hydropower Technology, 2019.
+similar for the MTM and the STM, but with a larger difference
+in income from the MTM. This could be due to more detailed         [2] B. Mo and H. O. Ha°genvik, Applying the ProdRisk- SHOP simulator
+restrictions in the STM. The results from the MTM were fairly           for investment decisions. Norwegian Research Centre for Hydropower
+similar for the 11 scenarios and the full run, which together           Technology, 2020.
+with the small estimated value of the total difference in water
+                                                                   [3] H. O. Hagenvik, S. Mathisen, A. Helseth, and B. Mo, "A Comprehensive
+                                                                        Simulator for Hydropower Investment Decisions," in 2022 17th Interna-
+                                                                        tional Conference on Probabilistic Methods Applied to Power Systems
+                                                                        (PMAPS). Manchester, United Kingdom: IEEE, Jun. 2022, pp. 1­6.
+                                          Author Accepted Manuscript version of the paper by Kristine Schüller et al.
+in 2024 20th International Conference on the European Energy Market - EEM (2024) http://dx.doi.org/10.1109/EEM60825.2024.10608922
+
+                                  Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+[4] F. B. Dorn, H. Farahmand, H. I. Skjelbred, and M. M. Belsnes, "Mod-        1 100                                Svartevatn                                                                        Roskreppfjorden             1 100
+     elling Minimum Pressure Height in Short-term Hydropower Production        1 000                                 899­780                                                                               929­890                1 000
+     Planning," Energy Procedia, vol. 87, pp. 69­76, Jan. 2016.                                                                                                                                                                   900
+                                                                                 900                                                                                                          Øyarvatn                            800
+                                                                                 800                                                                                                          837­820                             700
+                                                                                 700                                                                                                                                              600
+                                                                                 600                                            Gravatn-Valevatn-Kilen                                Nesjen                   ROSKREPP           500
+                                                                                 500                                                     660­625                                     715­677                                      400
+                                                                                 400                                                                                               SOLHOM                                         300
+[5] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic              300                          DUGE                                                    Homstølvatn             KVINEN                              200
+     optimization applied to energy planning," Mathematical Programming,         200                                                                                   497,6­471                                                  100
+     vol. 52, no. 1, pp. 359­375, May 1991.                                      100                                                                                                                                              0
+                                                                                                                                     TJØRHOM             Ousdalsvatn
+                                                                                    0                         Siravassdraget                Tjørhomvatn   497,6­482                           Kvinavassdraget
+                                                                                                                                            497,6­492
+
+[6] S. Cerisola, J. M. Latorre, and A. Ramos, "Stochastic dual dynamic                                             ÅNA-SIRA                                           TONSTAD
+     programming applied to nonconvex hydrothermal models," European                                    NORDSJØEN
+     Journal of Operational Research, vol. 218, no. 3, pp. 687­697, May                                                                                                                       Vannveisystemet med HRV og LRV
+     2012.
+                                                                                                                              Lundevatn    Sirdalsvatn
+                                                                                                                              48,5­44,0    49,5­47,5
+
+[7] J. Zou, S. Ahmed, and X. A. Sun, "Multistage Stochastic Unit Com-          Fig. 3. The Sira-Kvina hydropower system. Power plants are represented by
+     mitment Using Stochastic Dual Dynamic Integer Programming," IEEE          yellow squares. Figure obtained with permission from Sira-Kvina Kraftselskap
+     Transactions on Power Systems, 2018.                                      (2024).
+
+[8] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for                                                                         VII. APPENDIX
+     stochastic medium-term hydrothermal scheduling under spot price uncer-
+     tainty." in Proceedings. 13th Power Systems Computation Conference,
+     1999, Vol.2, 1999, pp. 1079­1085.
+
+[9] M. N. Hjelmeland, M. Korpas, and A. Helseth, "Combined SDDP and                                     200
+     simulator model for hydropower scheduling with sales of capacity," in
+     2016 13th International Conference on the European Energy Market          Duge Production [MW]     100
+     (EEM). Porto, Portugal: IEEE, Jun. 2016, pp. 1­5.
+
+[10] O. Fosso and M. Belsnes, "Short-term hydro scheduling in a liberalized                             0
+      power system," in 2004 International Conference on Power System
+      Technology, 2004., vol. 2, Nov. 2004, pp. 1321­1326 Vol.2.                                        100
+
+[11] M. M. Belsnes, O. Wolfgang, T. Follestad, and E. K. Aasga°rd, "Applying                             200
+      successive linear programming for stochastic short-term hydropower                                1200
+      optimization," Electric Power Systems Research, vol. 130, pp. 167­180,
+      Jan. 2016.                                                               Svartevatn Volume [Mm3]  1000
+
+                                                                                                        800                   MTM base
+                                                                                                                              STM base
+[12] H. I. Skjelbred, J. Kong, and O. B. Fosso, "Dynamic incorporation of                               600
+      nonlinearity into MILP formulation for short-term hydro scheduling,"
+      International Journal of Electrical Power & Energy Systems, vol. 116,                             400                   MTM tjorhom
+      p. 105530, Mar. 2020.                                                                                                   STM tjorhom
+                                                                                                        200                   Price
+
+                                                                                                        0
+
+[13] B. Mo, S. Martino, C. Naversen, G. Aronsen, and O. Rismark, "Bench-                                350
+      marking Hydro Operation by Use of a Simulator," in Proceedings of
+      the 6th International Workshop on Hydro Scheduling in Competitive        Gravatn Volume [Mm3]     300
+      Electricity Markets, A. Helseth, Ed. Cham: Springer International
+      Publishing, 2019, pp. 41­51.                                                                      250
+
+                                                                                                        200
+
+[14] "Prodrisk-SHOP Simulator," Jan. 2024. [Online]. Available:                                         150
+      https://gitlab.sintef.no/energy/prodrisk-shop-simulator
+                                                                                                        100
+
+                                                                                                                              11           12                         01           02                 03                      04
+                                                                                                                                                         Time [month]
+[15] "pyprodrisk,"  Feb.  2024.              [Online].  Available:
+
+https://gitlab.sintef.no/energy/prodrisk/pyprodrisk
+
+[16] "pyshop,"      Jan.  2024.              [Online].  Available:             Fig. 4. Selected results from scenarios 8 and 9. The upper subplot shows the
+                                                                               price together with the production at Duge for the STM and the MTM for
+https://gitlab.sintef.no/energy/shop/pyshop                                    base and tjørhom. The middle subplot shows the respective reservoir volumes
+                                                                               at Svartevann, while the lower subplot show the reservoir volumes at Gravann.
+
+[17] A. Gjelsvik, B. Mo, and A. Haugstad, "Long- and Medium-term
+      Operations Planning and Stochastic Modelling in Hydro-dominated
+      Power Systems Based on Stochastic Dual Dynamic Programming," in
+      Handbook of Power Systems I, ser. Energy Systems, P. M. Pardalos,
+      S. Rebennack, M. V. F. Pereira, and N. A. Iliadis, Eds. Berlin,
+      Heidelberg: Springer, 2010, pp. 33­55.
+
+[18] H. I. Skjelbred, "Unit-based Short-term Hydro Scheduling in Com-
+      petitive Electricity Markets," Doctoral thesis, Norwegian University of
+      Science and Technology, 2019.
+
+[19] P. Aaslid, H. I. Skjelbred, and S. S. Bale, "Modelling Tunnel Net-
+      work Flow and Minimum Pressure Height in Short-Term Hydropower
+      Scheduling," in Proceedings of the 6th International Workshop on Hydro
+      Scheduling in Competitive Electricity Markets, A. Helseth, Ed. Cham:
+      Springer International Publishing, 2019, pp. 62­68.
+
+[20] "Nordic and Central European Long Term Reports." [Online]. Available:
+      https://www.volue.com/products-and-services/long-term-reports
+

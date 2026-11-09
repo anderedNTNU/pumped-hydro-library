@@ -1,0 +1,2416 @@
+           A Planner-Trader Decomposition for
+              Multi-Market Hydro Scheduling
+
+                                                      Kilian Schindler
+
+                    Risk Analytics and Optimization Chair, E´cole Polytechnique F´ed´erale de Lausanne, Switzerland
+                                                                        kilian.schindler@epfl.ch
+
+                                                 Napat Rujeerapaiboon
+
+          Department of Industrial Systems Engineering and Management, National University of Singapore, Singapore
+                                                                 napat.rujeerapaiboon@nus.edu.sg
+
+                                                        Daniel Kuhn
+
+                    Risk Analytics and Optimization Chair, E´cole Polytechnique F´ed´erale de Lausanne, Switzerland
+                                                                           daniel.kuhn@epfl.ch
+
+                                                  Wolfram Wiesemann
+
+                                  Imperial College Business School, Imperial College London, United Kingdom
+                                                                           ww@imperial.ac.uk
+
+      Peak/off-peak spreads on European electricity forward and spot markets are eroding due to the ongoing
+      nuclear phaseout in Germany and the steady growth in photovoltaic capacity. The reduced profitability of
+      peak/off-peak arbitrage forces hydropower producers to recover part of their original profitability on the
+      reserve markets. We propose a bi-layer stochastic programming framework for the optimal operation of a
+      fleet of interconnected hydropower plants that sells energy on both the spot and the reserve markets. The
+      outer layer (the planner's problem) optimizes end-of-day reservoir filling levels over one year, whereas the
+      inner layer (the trader's problem) selects optimal hourly market bids within each day. Using an information
+      restriction whereby the planner prescribes the end-of-day reservoir targets one day in advance, we prove that
+      the trader's problem simplifies from an infinite-dimensional stochastic program with 25 stages to a finite
+      two-stage stochastic program with only two scenarios. Substituting this reformulation back into the outer
+      layer and approximating the reservoir targets by affine decision rules allows us to simplify the planner's
+      problem from an infinite-dimensional stochastic program with 365 stages to a two-stage stochastic program
+      that can conveniently be solved via the sample average approximation. Numerical experiments based on a
+      cascade in the Salzburg region of Austria demonstrate the effectiveness of the suggested framework.
+
+      Key words : Hydro Scheduling; Reserve Markets; Planner-Trader Decomposition; Stochastic Programming.
+
+1. Introduction
+
+For many decades, hydropower plants have offered a flexible source of emission-free electricity at low
+running costs. With a world-wide output of 4,246.4 TWh, hydropower accounted for 60.4% of all
+renewable generation in 2019 (IEA 2020a), and several new hydropower plants are currently being
+
+                                                                                        1
+2  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+   A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+taken into service in China, Lao People's Democratic Republic, Portugal and Turkey (IEA 2020b).
+Pumped-storage plants, which can flexibly transfer water both downstream (through generators,
+thereby producing energy) and upstream (through pumps, thus consuming energy), account for
+approximately 95% of the world-wide grid energy storage (DOE 2020).
+
+   Traditionally, pumped-storage hydropower plants benefit from releasing the water downstream
+for electricity generation at peak times and by pumping the water upstream during off-peak periods
+for future generation (thus adopting a `buy low and sell high' strategy). In doing so, the generation
+companies can exploit the gaps between peak and off-peak electricity prices to make immediate
+profits. However, these price spreads have been eroding in several European markets since 2008 for
+two reasons (Mayer 2014): (i) the phaseout of nuclear power plants in Germany has increased base
+load electricity prices, and (ii) the rapid growth in photovoltaic capacity, whose supply significantly
+overlaps with the daytime peak hours on weekdays, has reduced the peak electricity prices (Morris
+and Pehnt 2015, Wirth 2016). As a result, hydropower producers have increasingly turned towards
+the reserve markets to maintain their profitability.
+
+   Electricity is traded at multiple time frames. Besides the forward markets, which trade electricity
+weeks or months ahead of time, the majority of electricity supply and demand is settled day-
+ahead on spot markets. In practice, however, this cannot be achieved without forecasting errors:
+unpredicted changes in residential and industrial electricity consumption, failures of power plants,
+transformers and transmission lines as well as the intermittency of renewable energy sources (such as
+wind and solar power) all imply that market participants may at times be unable to implement their
+original plans. These errors are resolved on intra-day markets, which are similar to the spot market
+but operate with shorter lead times, as well as the reserve markets. While the details differ slightly
+by country, reserve markets are usually divided into primary (frequency containment reserve),
+secondary and tertiary (both frequency restoration) reserves. Both the primary reserve, which
+is typically activated within 30 seconds, and the secondary reserve, which is typically activated
+within 5 minutes, consider time spans of about 15 minutes and are activated automatically. The
+tertiary reserve, on the other hand, is activated manually within 15 minutes, and it considers time
+spans of up to one (or, in exceptional cases, several) hour(s). Primary reserves are used to swiftly
+restore minor grid frequency deviations. Larger deviations are managed via the secondary reserve,
+and--in the case of major, persistent disruptions and only when the secondary reserves fail to
+restore the balance between demand and supply--the tertiary reserve. We refer to Aasg°ard et al.
+(2019), European Commission (2020) and Ferna´ndez-Mun~oz et al. (2020) for further details on the
+different energy markets.
+
+   Generation companies benefit from trading in the reserve markets in two ways. First, depending
+on the market, they may receive capacity fees regardless of whether the reserve capacities are
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        3
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+activated. Second, they earn money proportional to the increase or decrease in their production
+levels when the reserves are activated. Although most thermal plants can provide all three types of
+reserve when they are online, their ability to do so is limited by their current power output (which
+must be below capacity to offer upward corrections and above the minimum stable operation limit
+to offer downward corrections in the energy output) as well as their ramp rate. Gas turbines are
+the only thermal plants that can offer tertiary reserve when they are offline. With a start-up time
+of a few minutes and high ramp rates, on the other hand, hydropower plants are an ideal source for
+any type of reserve, and they can provide secondary and tertiary reserve even when they are offline.
+Participation on the reserve markets should ease the pressure on the hydropower plant operators,
+who are struggling to recover their capital costs as well as their original profitability on the forward
+and spot markets because of the eroding peak/off-peak spreads.
+
+   In this paper, we develop a stochastic program that maximizes the revenues earned by a
+hydropower producer from simultaneously trading in both the spot and the reserve markets. The
+resulting optimization problem is computationally challenging for at least three reasons. First,
+the problem involves a large number of decision stages. Indeed, a planning horizon of one year is
+required to account for the seasonality of rainfall and electricity prices, while generation and pump-
+ing decisions need to be taken on an hourly basis. Second, the problem is affected by significant
+uncertainty in the electricity prices, the timing and amount of the water inflows (i.e., rainfall and
+snowmelt) as well as the reserve activations. Finally, the problem has random recourse since the
+water flows between the reservoirs not only depend on the bidding decisions in the spot and reserve
+markets, but they also depend on the reserve activations by the transmission system operator.
+
+   To obtain a tractable solution scheme, we equivalently express the stochastic program of the
+hydropower producer as a bi-layer problem where the outer layer planner's problem is a 365-stage
+stochastic program with daily resolution that determines end-of-day water levels for all reservoirs,
+and the inner layer trader's problem is a 25-stage stochastic program with hourly resolution that
+uses the target water levels to determine optimal bids for the spot and reserve markets. Using an
+information restriction whereby the planner prescribes the target water levels one day in advance,
+we prove that the trader's problem can equivalently be reduced to a two-stage stochastic program
+with only two scenarios. By substituting this reduced trader's problem back into the planner's
+problem, applying an exact perfect information relaxation to all hourly bidding decisions and
+conservatively approximating the daily water level targets via linear decision rules, we obtain a
+two-stage stochastic program that can be solved efficiently via the sample average approximation.
+
+   The main contributions of this paper may be summarized as follows.
+ (i) We propose a stochastic program that maximizes the revenues of a hydropower producer who
+
+      simultaneously trades in the spot and reserve markets and whose fleet of plants can have an
+4  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+   A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+      arbitrary topology. Our model faithfully accounts for uncertainty in the electricity prices, the
+      water inflows as well as the reserve activations. To our best knowledge, we propose the first
+      model that accounts for the stochasticity of the reserve activations at an hourly granularity.
+(ii) Under the assumption that the end-of-day water levels are chosen one day in advance, we
+      develop a novel planner-trader decomposition that allows us to separately study the reservoir
+      management and trading problems. We equivalently reformulate the trader's problem as a
+      tractable linear program, and we approximate the planner's problem through a combination
+      of sample average approximation and linear decision rules. The resulting model can be readily
+      solved within a few minutes on standard hardware, which is in stark contrast to the vast
+      majority of stochastic hydropower models that account for reserve market participation.
+(iii) We report initial numerical results for a cascade of three connected reservoirs operating in the
+      control area of the Austrian Power Grid AG. Our results suggest that significant revenues can
+      be earned on the reserve markets if the stochastic reserve activations are modeled faithfully.
+   The detailed modeling of uncertainty, which is essential to faithfully model the stochasticity of
+reserve activations, requires us to make a number of simplifying assumptions. First, we assume
+that the hydropower producer only participates in the spot and the secondary reserve market.
+While we envision that the inclusion of the intra-day market and the primary and tertiary reserve
+markets is principally possible, they would result in larger optimization models that likely demand
+substantially longer solution times. The inclusion of a forward market, on the other hand, appears
+to be fundamentally more difficult as it would require the consideration of different time scales.
+Second, we simplify the bidding process in both the spot and the reserve markets. Instead of
+directly modeling the possibility to bid at multiple price levels, we study a single-bid strategy that
+is finetuned out-of-sample by two hyperparameters. Third, we omit a number of technical aspects,
+such as the discrete (on/off) nature of equipment operations, head effects and water flow delays.
+Such considerations often lead to the inclusion of integer variables and/or non-linear relationships
+between variables, which would significantly complicate the solution of the stochastic program.
+   The liberalization of energy markets world-wide has sparked significant academic interest in the
+optimal management of hydropower plants. Early works focus on participation in the spot markets,
+and they include scenario tree approaches (Andrieu et al. 2010, Carpentier et al. 2013, Aasg°ard
+et al. 2014), stochastic dynamic programming (Pritchard et al. 2005) and stochastic dual dynamic
+programming approaches (Pereira and Pinto 1991, Gjelsvik et al. 2010, Philpott and de Matos
+2012, Shapiro et al. 2013, de Matos et al. 2015, Philpott et al. 2018) as well as robust and stochastic
+programs using affine decision rules (Pan et al. 2015, Lorca et al. 2016, Gauvin et al. 2017, 2018).
+   In departure from the aforementioned single-market studies, Lo¨hndorf et al. (2013) consider a
+fleet of hydropower plants that participates in both the spot and the intra-day market. The problem
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        5
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+comprises uncertain water inflows and electricity prices. The time horizon of one year is subdivided
+into inter-day reservoir management problems (at a daily resolution) as well as intra-day bidding
+problems (at an hourly resolution). The authors solve the problem by a combination of stochastic
+dual dynamic programming and approximate dynamic programming. The runtimes are reported
+to range between 4 and 40 hours.
+
+   The recent shift of the hydropower producers' attention towards the reserve markets has led to
+a number of multi-market models that consider both the spot and the reserve markets. Below,
+we distinguish between deterministic models and stochastic models using scenario trees, stochastic
+dynamic programming as well as stochastic dual dynamic programming.
+
+   In return for disregarding the stochasticity of the problem data, deterministic hydropower models
+typically offer a superior representation of the physical details of a hydropower plant, such as
+the consideration of discrete operation modes, head effects as well as a distinction between fixed-
+speed and variable-speed units. Chazarra et al. (2014, 2018) propose daily mixed-integer programs
+for pumped-storage hydropower plants in Spain that model the hourly bidding on the spot and
+secondary reserve markets. Schillinger et al. (2017) apply a yearly linear programming reservoir
+management problem with weekly nonlinear bidding subproblems that comprise the spot, intra-day
+as well as primary, secondary and tertiary reserve markets to a hydropower plant in Switzerland.
+Fodstad et al. (2018) propose a determinstic linear program with a one year time horizon that
+determines the optimal hourly bidding on the day-ahead, intra-day and reserve markets for a
+hydropower plant in Norway. Since deterministic models neglect the uncertainty in the water
+inflows, electricity prices and reserve activations, they adopt a perfect information relaxation that
+may lead to overly optimistic estimates of the revenues achievable by a hydropower plant.
+
+   Chazarra et al. (2016) develop a two-stage stochastic program for the short-term scheduling of
+a fleet of hydropower plants that participates in the spot and the reserve markets. The model
+comprises a time horizon of one week, where the decisions of the first day are taken in the first stage
+and the decisions of the remaining six days are taken in the second stage, respectively. Chazarra
+et al. (2018) propose a single-stage stochastic program for a hydropower plant that participates
+in the spot and secondary reserve market. The authors subdivide the planning horizon into daily
+problems with hourly resolution. The daily problems optimize the conditional value-at-risk of the
+revenues over 100 scenarios, subject to uncertainty in the spot and reserve prices. The runtime
+of the daily model varies between 3 and 17 minutes. Klæboe et al. (2019), finally, consider a
+three-stage stochastic program where the hydropower producer submits the spot and reserve bids
+in the first and third stage, respectively, while the spot market prices and reserve market prices
+are observed in the second and third stage, respectively. The authors report computation times
+between 2 and 7 hours. While scenario-tree based stochastic programs allow to capture complex
+6  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+   A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+relationships between the uncertain problem parameters, the scenario discretization typically fails
+to provide an implementable policy, and the problem size tends to grow exponentially with the
+considered time horizon. As a result, most studies consider a small number of stages and model
+the stochastic price and reserve activation processes at a coarser (e.g., daily) granularity.
+
+   Abgottspon and Andersson (2012) propose a stochastic dynamic program for a hydropower
+plant with a single reservoir that participates in the spot and secondary reserve markets. The
+authors consider a yearly problem whose weekly time stages are connected through a single state
+variable describing the water level of the reservoir. Each weekly problem is modelled as a two-stage
+stochastic program whose first stage decides upon the reserve market offering under uncertain prices
+and whose second stage manages the water flows. The authors report that the entire model can
+be solved within 20 minutes via large-scale parallelization. Similar to Abgottspon and Andersson
+(2012), Helseth et al. (2017) study a hydropower plant with a single reservoir that participates in
+the spot and secondary reserve markets. The authors also consider a yearly problem with weekly
+time periods, however the state variables now comprise the weekly average energy prices in addition
+to the reservoir level. The authors report computation times of 24 to 40 hours. While stochastic
+dynamic programs allow to model complex non-convex phenomena in the weekly subproblems, the
+curse of dimensionality implies that the runtimes increase quickly with the dimension of the state
+space, which makes the stochastic dynamic programs primarily suited for small fleets of plants
+with a coarse description of the involved stochastic processes. Moreover, the need to discretize the
+water levels can introduce numerical inaccuracies.
+
+   Abgottspon et al. (2014) compare the performance of a stochastic dynamic and a stochastic
+dual dynamic program that both manage a hydropower plant with a seasonal and a daily reservoir
+over a yearly time horizon with weekly time periods. The weekly subproblems are modeled as
+two-stage stochastic programs that decide upon the spot and reserve market participation in an
+hourly resolution under uncertain water inflows and energy prices. The overall models record the
+water level of the seasonal reservoir in the state variable and optimize a nested conditional value-at-
+risk. Computation times are not reported. Helseth et al. (2015) propose a stochastic dual dynamic
+program that manages a multi-reservoir fleet of hydro plants over the course of one year in weekly
+time stages. The state variables of the problem record the weekly water levels of the reservoirs
+as well as the spot prices, while the weekly subproblems manage the commitments on the spot
+and the primary reserve markets. The overall problem is solved in 42 hours. In a follow-up paper,
+Helseth et al. (2016) modify the stochastic dual dynamic program of Helseth et al. (2015) to
+incorporate stochastic reserve prices. The resulting model can be solved within 55-60 hours. While
+stochastic dual dynamic programs scale better than stochastic dynamic programs, they too tend
+to be limited to small and medium-sized fleets that are managed over coarse (typically weekly)
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                     7
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+time intervals with relatively crude approximations of the involved stochastic processes. This is
+particularly critical for the reserve market activations in small (e.g., daily) reservoirs, where a daily
+or weekly time granularity may be too coarse to ensure an implementable (hourly) policy.
+
+   The remainder of the paper unfolds as follows. Section 2 models the overall bidding problem of
+the hydropower producer. Section 3 transforms this formulation to an equivalent bi-layer stochastic
+program. Section 4 reformulates the inner layer of this stochastic program as a tractable linear
+program. Section 5 presents a tractable approximation for the outer layer of the stochastic program
+as well as a rolling horizon solution framework. Section 6 applies our method to a hydropower
+cascade in Austria. Auxiliary results and all proofs, finally, are relegated to the appendix.
+Notation. We denote by 0 and 1 the appropriately sized vectors of all zeros and all ones, respec-
+tively. The Hadamard product is denoted by "  " and refers to the element-wise vector multiplica-
+tion. For any x  R, we set x+ = max{x, 0} and x- = max{-x, 0} such that x = x+ - x-. All random
+objects are defined on a probability space (, F, P) consisting of a sample space , a -algebra
+F  2 of events and a probability measure P on F. For a -algebra G  F, we denote by Lk(G)
+the set of all integrable, G-measurable functions g :   Rk, and if k = 1, we simply write L(G).
+
+2. Bidding Model
+
+   We consider a hydropower generation company that operates a cascade of reservoirs over a time
+horizon spanning at least one year to account for the seasonality of electricity prices and water
+inflows. We partition the planning horizon into days indexed by d  D := {1, . . . , D}, as well as
+into hours indexed by t  T := {1, . . . , T }. To simplify the exposition, we assume that T is divisible
+by D, that is, the planning horizon accommodates an integral number of days. We further denote
+by H = T /D the number of hours per day, but we emphasize that all subsequent results remain
+valid for any H  N, e.g., if we partition each day into 15 minute intervals. The present time is
+modeled by a fictitious hour t = 0 on day d = 0. It is followed by hour t = 1 on day d = 1, that is,
+the first hour of the planning horizon. No decisions are taken at time t = 0; its inclusion merely
+serves to unify our exposition so that decisions and constraints at time t = 1 can be expressed
+similar to those in any other time period. For any t, t  {0}  T with t  t, we denote the set of
+hours between and including t and t as [t, t] = {t, t + 1, . . . , t}. Note in particular that [t, t] = {t}.
+Furthermore, we denote by d(t) the day containing hour t and by T (d) the set of all hours in day
+d. Finally, we introduce the following functions of d  D and t  T :
+
+ (d) = last hour of day d,                   (t) = last hour of day d(t),
+
+ (d) = first hour of day d,                  (t) = first hour of day d(t),
+
+ (d) = last hour of day d - 1,               (t) = last hour of day d(t) - 1.
+8  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+   A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+By slight abuse of notation, the operators  (·),  (·) and  (·) are defined both on D and T . The
+correct interpretation of these operators will always be clear from the context. Observe also that
+the two  (·) operators are not strictly needed because they can be expressed in terms of  (·) via
+the identities  (d) =  (d - 1) and  (t) =  (d(t) - 1). However, they are useful to simplify notation.
+
+   We represent the topology of the interconnected reservoirs by a directed acyclic graph with a
+set of nodes R representing the reservoirs and a set of arcs A  R × R representing the hydraulic
+connections between the reservoirs. We denote the cardinalities of R and A by R and A, respec-
+tively. A tuple (r, r) is an arc in A if r is an upstream reservoir of r (and hence r is a downstream
+reservoir of r). Without loss of generality, we assume that each arc is equipped with a generator
+that converts kinetic energy of water flowing downstream into electric energy and with a pump
+that uses electric energy to lift water upstream. Note that some of these generators and pumps
+may have zero capacity, which models situations in which these devices are absent. Without loss
+of generality, we further assume that the node R is the unique sink of the graph. This dummy
+reservoir has infinite volume and models the discharge into a river at the end of the reservoir cas-
+cade. Accordingly, arcs discharging into this dummy reservoir may be equipped with generators,
+but not with pumps. In line with real hydropower plants, we assume that every reservoir (except
+the aforementioned dummy reservoir) has at least one outgoing arc along which water can be dis-
+charged whenever required. The topology of the cascade can be encoded conveniently through an
+R × A incidence matrix M, where for each (r, a)  R × A we have that
+
+                                                      -1 if arc a leaves reservoir r,
+                                                     
+                                                     
+                                [M]r,a = mr,a = +1 if arc a enters reservoir r,
+                                                     
+                                                      0 otherwise.
+
+   Each reservoir is characterized by--potentially time-dependent--lower and upper bounds on its
+filling level. The time dependence of these bounds may reflect changing safety margins that are
+imposed to account for the seasonality of inflows, scheduled maintenance work or environmental
+regulations. For each hour t  T , we collect the lower and upper reservoir bounds in the vectors
+wt  R+R [m3] and wt  (R+  {+})R [m3], respectively. The bounds for the dummy reservoir are
+wt,R = 0 and wt,R = +, that is, the river can absorb arbitrary amounts of water. The generators
+installed along the arcs of our cascade are characterized by the upper bounds gt  R+A [m3] on
+the hourly water flows and the generator efficiencies t  RA+ [MWh/m3]. Similarly, the pumps
+are described by the upper bounds pt  R+A [m3] on the hourly water flows and the inverse pump
+efficiencies t  RA+ [MWh/m3]. The laws of thermodynamics dictate that t < t for all t  T .
+
+   The decision problem of the hydropower generation company is affected by three types of risk
+factors with finite expectations, namely fluctuating market prices, uncertain reserve allocations
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        9
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+and reserve activations as well as natural inflows into the reservoirs caused by unpredictable mete-
+orological phenomena. Below, we first describe the uncertainties related to the different markets.
+
+   We assume that the hydropower pruducer participates in the spot market and in the secondary
+reserve markets for up- and down-regulation. In central Europe, allocations and prices on these
+markets are determined by separate auctions for the different hours of the day (consecutive hours
+could be merged to blocks). The spot market is mediated via a sealed-bid pay-as-clear auction,
+where demand and supply bids correspond to tuples comprising an energy quantity to be sold or
+bought and a price. Bids are accepted based on the spot price, which is found by matching demand
+and supply. The secondary reserve markets, on the other hand, are mediated via open pay-as-bid
+auctions, where bids correspond to tuples comprising an energy quantity offered as reserve capacity,
+a capacity price and an activation price. Bids are accepted in the order of their capacity prices until
+the regulation demand is covered. If grid imbalances require an intervention, the accepted bids are
+activated in the order of their energy prices until the imbalances are eliminated. This means that
+bids with low energy prices are more likely to be activated than bids with high energy prices.
+
+   A faithful representation of the different auction mechanisms would lead to an excessively compli-
+cated model. In order to obtain a realistic model that is amenable to numerical solution, we use the
+following approximations. First, we assume that the spot and reserve markets are infinitely liquid.
+Second, we model the spot price in any hour t as an exogenous random variable ts  R [$/MWh]
+that is revealed one day in advance at time  (t), and we assume that the energy quantities traded
+in hour t on the spot market may adapt to ts. This approximation is reasonable if the producer has
+no market power and places a continuum of bids corresponding to all possible spot price realiza-
+tions. Third, we model the capacity prices for up- and down-regulation in any hour t as exogenous
+random variables tu  R [$/MWh] and tv  R [$/MWh], respectively, which are revealed one day
+in advance at time  (t), and we assume that the energy quantities offered as reserve capacity
+in hour t may adapt to tu and tv. By slight abuse of terminology, we will sometimes refer to
+these energy quantities simply as `bids.' We also assume that the allocation of reserve capacity in
+hour t is random and can be modeled through exogenous Bernoulli random variables ut and tv
+with success probabilities ^ut = E[ut ] and ^vt = E[vt ], respectively, which are revealed at time  (t).
+The allocated reserve capacity for up- or down-regulation is then obtained by multiplying the
+offered reserve capacity with the corresponding Bernoulli random variable. This approximation is
+reasonable if the producer has no market power and places only one bid on the reserve-up market
+with capacity price tu and only one bid in the reserve-down market with capacity price tv. In
+reality, the prices tu and tv constitute decisions that have a diminishing impact on the allocation
+probabilities ^ut and ^tv, respectively. Treating these quantities as exogenous parameters amounts
+10                                                                         Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                                        A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+to prescribing a fixed trade-off between the probability that a given bid is accepted and the finan-
+
+cial compensation that is earned if the bid is accepted. In the model to be developed below we
+
+will optimize this trade-off via a procedure reminiscent of hyperparameter tuning. As the fourth
+
+and last approximation, we model the activation prices for up- and down-regulation as exogenous
+random variables tu  R [$/MWh] and tv  R [$/MWh], respectively, which are revealed in real
+time. In addition, we model the percentages of time in which the system operator activates up-
+and down-regulation in hour t as continuous random variables ut and tv with supports [0, ut ]
+and [0, vt ] and with mean values ^ut = E[tu] and ^vt = E[tv], respectively. The activations ut and vt
+are also revealed in real time. The amount of energy activated for up- and down-regulation in
+hour t is obtained by multiplying the allocated reserve capacity with tu and vt , respectively. This
+approximation is again reasonable if the producer has no market power and places only one bid on
+the reserve-up market with activation price tu and only one bid in the reserve-down market with
+activation price tv. In reality, tu and tv constitute decisions that have a diminishing impact on
+the expected activations ^tu and ^vt , respectively. Treating these quantities as exogenous parameters
+amounts to prescribing a fixed trade-off between the probability that an accepted reserve bid is
+
+activated and the financial compensation that is earned if the bid is activated. In the model to
+
+be developed below we will optimize this trade-off via a procedure reminiscent of hyperparameter
+
+tuning. Note that, as any bidding zone may either face an over-supply or an under-supply of energy
+but not both at the same time, the sum of ut and vt cannot exceed 1. Throughout the paper we
+thus assume that the pairs of reserve activations on the up- and down-regulation markets have
+support {(tu, vt )  [0, ut ] × [0, tv] : tu + tv  1}, where the upper bounds tu and vt can be set,
+for example, to quantiles of the historical hourly activation percentages. We also assume that the
+
+reserve activations are serially independent as well as independent of all other exogenous uncer-
+
+tainties. This assumption may only hold approximately in practice, and we discuss its validity in
+
+Appendix A.
+   Finally, we denote the natural inflows into the various reservoirs by the vector t  RR+ [m3], and
+
+we assume that they are revealed a day in advance at time  (t) thanks to an accurate forecast.
+
+From now on we gather all random variables that are revealed in hour t  {0}  T in the vector
+
+            ({(s    ,  u,  v     ,     )}H =1  )                           if t = 0,
+          
+
+          
+
+          
+
+            (tu  ,  tv  ,  ut ,  tv,   {(s  ,  u  ,  v  ,    )}t+=Ht+1  )  if t       T  ( ) \ {0},
+          
+          
+
+    t  =
+
+            (tu  ,  tv  ,  tu,   vt ,  {(u  ,  v  )}t+=Ht -1)              if t  T  ( ) ,
+          
+          
+
+          
+
+            (tu  ,  tv  ,  tu,   vt )                                      otherwise.
+          
+
+In other words, the spot and capacity prices as well as the inflows of day d  D are revealed in the
+
+last hour of the previous day, the reserve allocations of day d are revealed in the first hour of the
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                          11
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+current day, whereas the activation prices and actual activations are revealed hourly in real time.
+We gather all random variables whose values are revealed within the interval [t, t] in the vector
+[t,t] = (t, . . . , t). Furthermore, we capture the information revealed during this time interval
+by the -algebra F[t,t] = ([t,t]), i.e., the -algebra generated by [t,t]. For ease of notation, we
+abbreviate [0,t] and F[0,t] by [t] and F[t], respectively.
+
+   The hydropower generation company must decide each day how much energy to offer on the
+different markets in every hour of the following day. This in turn necessitates a strategy for oper-
+ating the reservoir system that is guaranteed to honor all market commitments. We denote the
+bids placed on the spot market, the reserve-up market and the reserve-down market by st, ut, vt 
+L(F[(t)]) [MWh], respectively. Our model involves the water flows along the arcs as well as the
+reservoir filling levels as real-time operational decisions. Specifically, we denote the generation flows,
+i.e., the amounts of water running through the turbines in each hour, by gt  LA(F[t]) [m3] and
+the consumption flows, i.e., the amounts of water running through the pumps in each hour, by
+pt  LA(F[t]) [m3]. Furthermore, we ignore concerns of flooding related to the dummy reservoir R
+and assume that one can spill unlimited amounts of water zt  LA(F[t]) [m3] along all arcs from
+the upstream reservoirs to the downstream reservoirs/rivers. The reservoir filling levels at the end
+of each hour are denoted by wt  LR(F[t]) [m3]. The initial filling levels w0  RR [m3] are deter-
+ministic input parameters of our model. We assume that the hydropower generation company is
+risk-neutral but aims to satisfy all constraints robustly--especially those related to reserve market
+commitments. This appears justified as non-compliance would incur high penalty fees or even lead
+to an exclusion from the reserve markets. Thus, the company maximizes the expected cumulative
+revenues across the entire planning horizon while maintaining its ability to respond to all possible
+call-offs on the reserve markets. The objective function thus takes the form
+
+                                     E tsst + tu(tu + tutu)ut + tv(tv + vt tv)vt ,
+
+                                                   tT
+
+and the non-anticipativity constraints to be respected are
+
+st, ut, vt  L(F[(t)]), gt, pt, zt  LA(F[t]), wt  LR(F[t]) t  T .
+
+While spot market bids have no sign restrictions (i.e., the company can both buy or sell electricity
+in the spot market), bids in the reserve markets as well as the operational flow decisions must be
+non-negative. Also, the flow decisions must obey the capacity limits of the respective generators
+and pumps, and the reservoir levels must stay within the respective bounds. Thus, we require
+
+0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt, wt  wt  wt t  T , P-a.s.
+12                                              Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                             A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+In addition, the hydropower company is obliged to produce and/or consume energy according to
+its market commitments. If the same system operator is responsible for both the spot and the
+reserve markets, then the market commitments are enforced through the following constraint
+
+             st + tuut ut - tvtvvt = tgt - tpt      t  T , P-a.s.
+
+Taking into account the natural inflows, the reservoir filling levels obey the dynamic equation
+
+             wt = wt-1 + t + M(gt - pt + zt) t  T , P-a.s.
+
+In summary, the company aims to solve the stochastic optimization problem
+
+    sup      E tsst + ut (tu + tutu)ut + tv(tv + tvtv)vt
+
+         tT
+
+    s.t. st, ut, vt  L(F[(t)]), gt, pt, zt  LA(F[t]), wt  LR(F[t]) t  T
+
+         0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt        t  T , P-a.s.                          (C)
+         st + ut ut ut - vt vt vt = tgt - tpt
+                                                          t  T , P-a.s.
+
+         wt = wt-1 + t + M(gt - pt + zt)                  t  T , P-a.s.
+
+         wt  wt  wt                                       t  T , P-a.s.
+
+3. Planner-Trader Decomposition
+
+In this section we will demonstrate that problem (C) can be decomposed into subproblems that
+lend themselves to further simplification. Specifically, we first express (C) as a bi-layer stochastic
+program, where the outer layer (the planner's problem) optimizes over the reservoir filling levels
+with a daily granularity, whereas the inner layer (the trader's problem) optimizes over the bidding
+decisions with an hourly granularity. To this end, recall that the decision variables {wt}tT in
+problem (C) represent the end-of-hour filling levels of the reservoirs. In order to reformulate (C),
+we will overload notation and denote by wd = w(d), wd = w(d) and wd = w(d) the end-of-day
+reservoir filling levels and their lower and upper bounds for day d  D, respectively. Next, we
+use the reservoir balance constraints to re-express all end-of-hour filling levels {wt}tT in terms
+of the end-of-day filling levels {wd}dD, the hourly flow decisions {gt, pt, zt}tT and the natural
+inflows {t}tT :
+
+                      t
+
+         wt = wd-1 +          + M(g - p + z )       d  D, t  T (d).
+
+                       =(d)
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                       13
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Using this relation, the bidding model (C) can be recast equivalently as
+
+sup      E [tsst + ut (tu + tutu)ut + vt (tv + vt tv)vt]
+
+     tT
+
+s.t. st, ut, vt  L(F[(t)]), gt, pt, zt  LA(F[t]), wd  LR(F[(d)]) d  D, t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt                    d  D, t  T (d), P-a.s.
+                                                                  d  D, t  T (d), P-a.s. (1)
+     st + ut ut ut - tvvt vt = tgt - tpt                          d  D, t  T (d), P-a.s.
+
+                  t                                               d  D, P-a.s.
+                                                                  d  D, P-a.s.,
+     wt  wd-1 +           + M(g - p + z )  wt
+
+                   =(d)
+
+     wd = wd-1 +           + M(g - p + z )
+
+                   T (d)
+
+     wd  wd  wd
+
+Note that the end-of-day reservoir bounds in the last line are implied by the end-of-hour reservoir
+bounds two lines above and are thus redundant. However, they will be instrumental for proving the
+tightness of a relaxation of problem (1) to be derived below. Next, we introduce another auxiliary
+problem that imposes the daily reservoir balance constraints as inequalities rather than equalities.
+
+sup      E [tsst + tu(tu + ut tu)ut + vt (tv + tvtv)vt]
+
+     tT
+
+s.t. st, ut, vt  L(F[(t)]), gt, pt, zt  LA(F[t]), wd  LR(F[(d)]) d  D, t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt                    d  D, t  T (d), P-a.s.
+                                                                  d  D, t  T (d), P-a.s. (2)
+     st + tuut ut - tvtvvt = tgt - tpt                            d  D, t  T (d), P-a.s.
+
+                  t                                               d  D, P-a.s.
+                                                                  d  D, P-a.s.
+     wt  wd-1 +           + M(g - p + z )  wt
+
+                   =(d)
+
+     wd  wd-1 +            + M(g - p + z )
+
+                   T (d)
+
+     wd  wd  wd
+
+The next proposition asserts that the optimization problems (1) and (2) are indeed equivalent.
+This proposition relies on the observation that any slacks between the left- and right-hand sides
+of the daily reservoir balance constraints can systematically be eliminated by suitable spillages,
+which are unrestricted in magnitude by our earlier assumptions.
+
+Proposition 1. The optimal values of problems (1) and (2) are equal.
+
+   We are now ready to decompose the bidding problem (C), which jointly maximizes over all
+hourly and daily decisions, into planning and trading subproblems that maximize only over the
+daily and the hourly decisions, respectively. The proposed decomposition assumes that a fictitious
+14                                                  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                             A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+planner and a fictitious trader collaborate to solve problem (C) in the following manner. The
+planner determines the end-of-day reservoir levels by solving the stochastic program
+
+                     sup     E d(wd-1, wd, [(d)])
+
+                                       dD         d  D                                 (CP)
+                                                  d  D, P-a.s.,
+                            s.t. wd  LR(F[(d)])
+
+                                   wd  wd  wd
+
+which maximizes the expected daily profits accrued over the entire planning horizon. Here, the
+function d(wd-1, wd, [(d)]) represents the expected profit earned by the trader on day d, condi-
+tional on the information [(d)] available at the beginning of the day and conditional on the initial
+and terminal reservoir levels wd-1 and wd, respectively, imposed by the planner. The function
+d(wd-1, wd, [(d)]) evaluates the optimal value of the stochastic program
+
+    sup  E tsst + tu(tu + ut tu)ut + vt (tv + vt tv)vt [(d)]
+
+               tT (d)                                         t  T (d)
+
+    s.t. st, ut, vt  R, gt, pt, zt  LA(F[(d),t])
+
+         0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt            t  T (d), P|[(d)] -a.s.
+                                                              t  T (d), P|[(d)] -a.s.
+         st + ut tuut - vt tvvt = tgt - tpt                   t  T (d), P|[(d)] -a.s.  (CT)
+
+                                        t                     P|[(d)] -a.s.
+
+         wt  wd-1 +          + M(g - p + z )  wt
+
+                      =(d)
+
+         wd  wd-1 +           + M(g - p + z )
+
+                      T (d)
+
+solved by the trader, where P|[(d)] denotes the probability measure P conditioned on [(d)], and
+E[·|[(d)]] denotes the expectation with respect to P|[(d)]. Note that the trader's problem (CT) may
+be infeasible for some reservoir targets wd-1 and wd, in which case d(wd-1, wd, [(d)]) evaluates
+to - and thus introduces implicit constraints in the planner's problem (CP). We also highlight
+that problem (CT) constitutes a stochastic program with contextual information (Ban and Rudin
+2019, Bertsimas and Kallus 2020), where the contextual covariates [(d)] impact the (conditional)
+distribution of the random variables in the objective and the constraints.
+
+   The next proposition asserts that the planner-trader decomposition incurs no loss of optimality.
+
+    Proposition 2. The optimal values of problems (2) and (CP) are equal.
+
+   In conclusion, we emphasize that the proposed planner-trader decomposition results in an exact
+reformulation of the underlying bidding model (C) and that they involve no approximations. This
+decomposition is useful because the trader's subproblem can be reduced to a tractable linear pro-
+gram under a mild information restriction.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        15
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+4. Reduction of the Trader's Problem
+
+The trader's problem (CT) constitutes an infinite-dimensional stochastic program because it opti-
+mizes over functional flow decisions. Such problems are known to be intractable in general (Dyer and
+Stougie 2006, Hanasusanto et al. 2016). In this section we will show, however, that the stochastic
+program (CT) is equivalent to a finite-dimensional linear program if the planner chooses the reser-
+voir filling levels one day ahead of time. Note that selecting wd at the end of day d - 1 rather than
+the end of day d amounts to an information restriction whereby the planner sacrifices potentially
+useful information revealed during day d and thus foregoes some of the achievable expected profit.
+In other words, requiring that the reservoir filling levels be pre-committed a day in advance leads
+to a conservative approximation of the planning problem (CP). For later reference, we formally
+state this approximation below.
+
+Approximation 1 (Information restriction) For every d  D, the end-of-day reservoir filling
+level wd is restricted to LR(F[(d-1)]) = LR(F[(d)])  LR(F[(d)]).
+
+   Under Approximation 1, wd becomes a measurable function of [(d)], which captures the infor-
+mation available to the trader at the beginning of day d. Similarly, the natural inflows {t}tT (d)
+of day d were assumed to be predictable at the beginning of the day and can therefore also be
+expressed as measurable functions of [(d)]. Finally, the coefficients
+
+~ts = E ts [(d)] , ~tu = E ut (tu + ut tu) [(d)] and ~tv = E tv(tv + tvtv) [(d)] t  T (d)
+
+of the (here-and-now) bidding decisions {(st, ut, vt)}tT (d) in the objective function of problem (CT)
+constitute measurable functions of [(d)] thanks to the properties of conditional expectations. We
+may thus conclude that, once a particular realization of [(d)] is fixed, the individual trader's
+problem (CT) reduces to a multistage stochastic program with H + 1 decision stages. Here, the
+reserve allocations {(ut , tv)}tT (d), which are revealed simultaneously at the beginning of hour 1,
+and the reserve activations {(tu, tv)}tT (d), which are revealed sequentially at the beginning of the
+respective hours, are the only exogenous uncertain parameters affecting the constraints, and the
+objective function is independent of the (wait-and-see) flow decisions {(gt, pt, zt)}tT (d).
+
+   Approximation 1 is crucial for our approach to solving the bidding problem (C), yet it is likely
+to sacrifice optimality. Indeed, selecting the water levels wd already at the end of day d - 1 implies
+that wd cannot adapt to the sequence of reserve allocations {(tu, tv)}tT (d) and reserve activations
+{(ut , vt )}tT (d) encountered during day d. Thus, the water levels wd need to be sufficiently low so
+as to accommodate for any possible allocation and activation sequence throughout day d, and any
+water saved due to the absence of reserve-up or the presence of reserve-down activations will not be
+16                                                Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                        A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+accounted for on subsequent days. While this may discourage bidding on the reserve markets, our
+case study in Section 6 will show that significant fractions of the overall revenues are nevertheless
+generated from participation on the reserve markets.
+
+   We will now show that the trader's problem (CT) collapses to a tractable linear program if
+the reservoir targets imposed by the planner are chosen a day in advance. We thus subject the
+planner's problem (CP) to the information restriction of Approximation 1, which reduces the
+achievable expected revenues but makes the feasible set of the trader's problem (CT) independent
+of all exogenous uncertainties except for the reserve allocations {(ut , vt )}tT (d) and the reserve
+activations {(ut , tv)}tT (d). As the objective function of (CT) depends only on the bidding decisions
+{(st, ut, vt)}tT (d), we may restrict the operational decisions {(gt, pt, zt)}tT (d) to depend only on
+the reserve activations without sacrificing optimality. Doing so results in the following variant of
+the trader's problem,
+
+    sup          ~tsst + ~tuut + ~tvvt
+
+         tT (d)
+
+    s.t. st, ut, vt  R, gt, pt, zt  LA(F[(d),t])  t  T (d)
+
+         0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt t  T (d), P|[(d)] -a.s.
+
+         st + tuut ut - vt vt vt = tgt - tpt      t  T (d), P|[(d)] -a.s.                    (3)
+
+                     t
+
+         wt  wd-1 +          + M(g - p + z )  wt t  T (d), P|[(d)] -a.s.
+
+                      =(d)
+
+         wd  wd-1 +           + M(g - p + z )     P|[(d)] -a.s.,
+
+                      T (d)
+
+where F[(d),t] = ({(u, v )}T (d), (u, v)}t =(d)) denotes the -algebra generated by all reserve
+allocations of day d as well as all reserve activations within the interval [ (d), t]. Even though (3)
+constitutes a restriction of the trader's problem (CT), their optimal values can be shown to coincide.
+
+    Proposition 3. Under Approximation 1, the optimal values of (CT) and (3) are equal.
+
+   Approximation 1 thus reduces the trader's problem (CT) to the stochastic program (3), which
+accommodates only H + 1 decision stages and whose wait-and-see decisions depend only on the
+reserve allocations and activations. However, (3) still constitutes an infinite-dimensional linear
+program. We will now show that problem (3) is indeed equivalent to an efficiently solvable linear
+program. As a first step towards this goal, we derive a family of valid inequalities that may be
+appended to problem (3) without affecting its feasible set.
+
+    Proposition 4. Any feasible solution of (3) satisfies st - tvvt  -tpt for all t  T (d).
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                 17
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+   The valid inequalities of Proposition 4 characterize the maximum bids on the reserve-down
+market (collectively across all arcs of the reservoir system) that can be honored under all possible
+realizations of the reserve activations. To see this, note that t,apt,a represents the maximum amount
+of energy that can be absorbed on arc a by pumping. In case of a call-off on the reserve-down market,
+the energy production on all arcs, combined, can therefore be reduced at most by st + aA t,apa.
+Appending these valid inequalities to problem (3) yields
+
+sup          ~tsst + ~tuut + ~tvvt
+
+     tT (d)
+
+s.t. st, ut, vt  R, gt, pt, zt  LA(F[(d),t])                      t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt t  T (d), P|[(d)] -a.s.
+
+     st + ut tuut - vt tvvt = tgt - tpt                           t  T (d), P|[(d)] -a.s.  (4)
+
+     st - vt vt  -tpt                                             t  T (d)
+
+                     t
+
+     wt  wd-1 +              + M(g - p + z )  wt t  T (d), P|[(d)] -a.s.
+
+                      =(d)
+
+     wd  wd-1 +               + M(g - p + z )                     P|[(d)] -a.s.,
+
+                      T (d)
+
+which is equivalent to problem (3) by Proposition 4.
+
+Next, we show that problem (4) is equivalent to the reduced stochastic program
+
+     sup             ~tsst + ~tuut + ~tvvt
+
+             tT (d)
+
+     s.t. st, ut, vt  R, gt, pt, zt  RA                           t  T (d)
+
+             0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt t  T (d)
+
+             st + ut ut = tgt - tpt                               t  T (d)                 (CTr)
+                                                                  t  T (d)
+             st - tvvt  -tpt                                      t  T (d)
+
+                             t
+
+             wt  wd-1 +                      + M(g - p + z )  wt
+
+                              =(d)
+
+             wd  wd-1 +                      + M(g - p + z ).
+
+                              T (d)
+
+Problem (CTr) involves only here-and-now decisions, and its constraints are deterministic condi-
+
+tional on [(d)]. In fact, it constitutes a linear program of size O(A · H).
+
+   Proposition 5. Under Approximation 1, the optimal value of problem (CTr) is non-inferior to
+that of problem (4).
+
+   Note that Proposition 5 does not prove the equivalence of the problems (CTr) and (4). Indeed,
+proving this equivalence directly appears to be difficult. Instead, Appendix C proves that under
+18                                           Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                              A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Approximation 1, problem (CT) is a restriction of problem (CTr). Since Propositions 3­5 also
+imply that (CTr) is a restriction of (CT), both problems indeed share the same optimal value. The
+relations between the different variants of the trader's problem are illustrated in Figure 1. Every
+arc encodes a relation A  B, where A and B represent the optimal values of the problems at the
+arc's tail and head, respectively. Dashed arcs indicate trivial relaxations, and solid arcs represent
+non-trivial implications proved in the referenced propositions. Interpreting Figure 1 as a directed
+graph, we note that Proposition 5 and Appendix C complete a counter-clockwise loop that visits
+each node, which implies that the optimal values of all optimization problems are in fact equal.
+
+          Proposition 3       Proposition 4         Proposition 5
+
+    (CT)                 (3)                 (4)                   (CTr)
+
+                                                               Appendix C
+
+Figure 1 Illustration of the relations between different variants of the trader's problem. Dashed arcs represent
+      trivial relaxations, and solid arcs represent non-trivial implications proved in the referenced propositions.
+
+    The results of Section 4 as visualized in Figure 1 culminate in the following main theorem.
+
+    Theorem 1. Under Approximation 1, the optimal values of (CT) and (CTr) are equal.
+
+   In the remainder of this section we leverage Theorem 1 to construct a restriction of the bidding
+model (C) that is susceptible to further approximations and numerical solution. To this end, note
+first that Approximation 1 restricts the planner's problem (CP) to
+
+          sup                 E d(wd-1, wd, [(d)])
+
+                     dD        d  D                                                    (CPr)
+                               d  D, P-a.s.
+          s.t. wd  LR(F[(d)])
+
+                 wd  wd  wd
+
+where the end-of-day reservoir levels wd are chosen one day in advance and thus adapt to informa-
+tion available at time  (d). Under this information restriction, Theorem 1 allows us to compute
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                19
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+the optimal value d(wd-1, wd, [(d)]) of the trader's problem (CT) by solving the linear pro-
+gram (CTr), which enables us to prove that the planner's reduced problem (CPr) is equivalent to
+
+sup      E [~ts st + ~tu ut + ~tv vt]
+
+     tT
+
+s.t. st, ut, vt  L(F[T ]), gt, pt, zt  LA(F[T ]), wd  LR(F[(d)]) d  D, t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt                    d  D, t  T (d), P-a.s.
+
+     st + ut ut = tgt - tpt, st - vt vt  -tpt                     d  D, t  T (d), P-a.s. (Cr)
+                                                                  d  D, t  T (d), P-a.s.
+                 t
+
+     wt  wd-1 +          + M(g - p + z )  wt
+
+                  =(d)
+
+     wd  wd-1 +           + M(g - p + z )                         d  D, P-a.s.
+
+                  T (d)
+
+     wd  wd  wd                                                   d  D, P-a.s.
+
+Problem (Cr) can be viewed as a reduction of the original bidding model (C).
+
+   Theorem 2. The optimal values of the problems (CPr) and (Cr) are equal, and they are smaller
+than or equal to the optimal value of problem (C).
+
+   The bidding model (C) and its reduction (Cr) differ in the following aspects.
+    In problem (C) the market decisions (st, ut, vt) are adapted to information that is available at
+
+      the beginning of day d(t), while the operational decisions (gt, pt, zt) are adapted to real-time
+      information. In contrast, in (Cr) these decisions are taken under perfect information.
+    Problem (C) has random recourse because the reserve market bids in the energy delivery
+      constraints are multiplied by the uncertain reserve activations. In contrast, problem (Cr) has
+      fixed recourse because all reserve activations were eliminated from the constraints.
+    Problem (Cr) accommodates the valid cuts derived in Proposition 4, which are absent in (C).
+   We highlight again that problem (Cr) was obtained from the original bidding model (C) by
+applying a single information restriction, whereby the end-of-day reservoir levels must be chosen one
+day in advance. No other approximations have been applied. Finally, the equivalence between (CPr)
+and (Cr) established in Theorem 2 is in terms of the problems' optimal values and not necessarily
+of their optimal solutions. In essence, the proof shows that the optimal market decisions st, ut and
+vt as well as the optimal operational decisions gt, pt and zt of problem (Cr), which may fail to be
+non-anticipative, can be converted to non-anticipative decisions
+
+                           st = E st|[(t)] , ut = E ut|[(t)] , vt = E vt|[(t)]
+                           gt = E gt|[(t)] , pt = E pt|[(t)] , zt = E zt|[(t)]
+by taking conditional expectations. Because the objective and constraint functions are all linear in
+these decision variables, the new solution remains feasible and--in fact--optimal in problem (Cr).
+This argument is only valid because Approximation 1 ensures that problem (Cr) has fixed recourse.
+20                                Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                     A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+5. Numerical Solution of the Reduced Bidding Model
+
+Although Approximation 1 is at the core of our reduction of the bidding model (C) to (Cr),
+it is not entirely innocent as it may discourage bidding on the reserve markets (cf. Section 4).
+Moreover, the reduced planner's problem (CPr) constitutes a large-scale stochastic program that is
+challenging to solve. To simultaneously alleviate both shortcomings, this section develops variants
+of the reduced planner's and trader's problems (CPr) and (CTr) with the following characteristics:
+(i) the reduced planner's problem employs an affine decision rule approximation to result in a
+two-stage stochastic program that can be solved efficiently using the well-known sample average
+approximation; (ii) the reduced trader's problem accounts not only for the worst possible reserve
+activation sequence but also for the nominal activation sequence; and (iii) the reduced trader's
+problem contains a valuation of the nominal end-of-day reservoir levels in the objective function.
+We also incorporate both problems into a rolling horizon framework that repeatedly solves the
+planner's and trader's problems and always only implements the decisions of the first day. Under
+these changes, the equivalences of Theorems 1 and 2 no longer hold, but we expect the resulting
+variants of problems (CPr) and (CTr) to perform better in actual case studies (cf. Section 6).
+
+   In the following, we first describe how to efficiently solve and extract water values from prob-
+lem (Cr). Afterwards, we discuss how these water values can be used to compute the first-day
+decisions by solving a variant of the trader's problem that accounts both for the water target levels
+and for valuations of the end-of-day water levels.
+
+   In order to compute water values, we consider an equivalent reformulation of the reduced plan-
+ner's problem (CPr) that contains the superfluous decision variables wd-, d  D, to denote the water
+levels at the beginning of day d  D:
+
+    sup      E d(wd-, wd, [(d)])
+
+         dD
+    s.t. wd-  LR(F[(d-1)]), wd  LR(F[(d)]) d  D
+                                                                              (5)
+
+         wd  wd  wd               d  D, P-a.s.
+
+         wd- = wd-1               d  D, P-a.s.
+
+The shadow prices of the newly introduced constraints wd- = wd-1 can be interpreted as water
+values at the end of day d - 1, and they will be used later on in our variant of the trader's problem.
+
+    While the reduced bidding model (5) has fixed recourse and takes all market bids and operational
+
+decisions under perfect information, it still constitutes an infinite-dimensional linear program over
+
+a space of measurable functions, and thus there is little hope to solve it exactly. To make this
+
+problem amenable to numerical solution, we further reduce it to a two-stage stochastic program
+
+by restricting the reservoir filling levels to parsimonious affine decision rules that depend on the
+
+observable random parameters only through a few judiciously chosen features.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                                       21
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Approximation 2 (Affine Decision Rule Restriction) For all d  D, the end-of-day reser-
+voir filling levels are representable as
+
+                   wd = d + d   T (d)  + d                        (d-1)     + µd   1     T (d) s
+                                                                   =1              H
+
+for some fixed vectors d, µd  RR and matrices d, d  RR×R.
+
+   In principle, the decision rule for wd can depend on any linear transformation of [(d)]. Generally,
+richer feature vectors lead to more adaptive (and hence better) decisions at a higher computational
+cost. We do not include as features the reserve allocations and activations since they are assumed
+to be serially independent as well as independent of all other exogenous uncertainties. Instead,
+Approximation 2 restricts the reservoir filling levels at the end of day d to affine functions of
+the following features: (i) the cumulative natural inflows into the reservoirs across day d, (ii) the
+cumulative natural inflows into the reservoirs across the planning horizon until the end of day d - 1
+and (iii) the average spot price on day d. The proposed affine decision rules are parsimonious as
+they compress the history of all observations into a few relevant features, but they are flexible
+enough to allow the planner to set different reservoir targets for wet and dry days, for wet and
+dry seasons as well as for high- and low-price days. All of the proposed features are observable
+at the beginning of day d, and therefore the non-anticipativity conditions wd  LR(F[(d)]), d  D,
+imposed by Approximation 1 are automatically satisfied. Affine decision rule approximations are
+routinely used in multistage robust optimization and stochastic programming problems; we refer
+to the reviews by Ben-Tal et al. (2009), Delage and Iancu (2015) and Yanikoglu et al. (2019).
+
+   Note that Approximation 2 restricts the functional form of the reservoir targets, and thus it
+results in a conservative lower bound on the optimal value of problem (Cr), which itself underes-
+timates the optimal value of the original bidding model (C) by virtue of Theorem 2. We further
+emphasize that Approximation 2 reduces problem (5) to a two-stage stochastic program with
+here-and-now decisions d, µd  RR and d, d  RR×R, d  D, which are chosen without any
+information about [T ], and with wait-and-see decisions st, ut, vt  L(F[T ]) and gt, pt, zt  LA(F[T ]),
+t  T , which are chosen under perfect information about [T]. The emerging two-stage stochastic
+program can then be solved with the popular sample average approximation (Shapiro et al. 2009).
+
+Approximation 3 (Sample Average Approximation) The original probability measure P is
+
+replaced  with  a  discrete  empirical  measure  P  =  1  N       (n)    ,  where  (n)  stands  for  the  Dirac  point
+                                                       N  n=1
+
+mass at (n), and where (n)  , n = 1, . . . , N , constitute independent samples from P.
+
+   The combination of affine decision rules and the sample average approximation is not new and
+has been explored, among others, by Vayanos et al. (2012) and Bodur and Luedtke (2022) in the
+22                                                Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                           A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+context of robust optimization and stochastic programming, respectively. We emphasize that, even
+though we use an empirical probability measure P when solving the decision rule approximation
+of problem (Cr), the conditional expectations ~ts, ~tu and ~tv in the objective function of (Cr) are
+pre-computed under the original measure P. We solve the linear program obtained by applying
+Approximations 2 and 3 to problem (5) and record, in addition to the water target levels w1, the
+water values 1  RR corresponding to the water preservation constraints w2- = w1. Note that these
+water values are deterministic since w1 and w2- are deterministic by virtue of Approximation 1,
+and that 1,R = 0 by the properties of the dummy reservoir R.
+
+   To compute the market bids {(st, ut, vt)}tT (1) for day d = 1, we solve the following variant of
+the trader's problem,
+
+    sup          ~tsst + ~tuut + ~tvvt + 1[t + M(g^t - p^t + z^t)]
+
+         tT (1)
+
+    s.t. st, ut, vt  R, gt, pt, zt  RA, g^t, p^t, z^t  RA           t  T (1)
+
+         0  ut, 0  vt, 0  gt, g^t  gt, 0  pt, p^t  pt, 0  zt, z^t t  T (1)
+
+         st + ut ut = tgt - tpt, st - vt vt  -tpt                   t  T (1)
+
+         st + ^tu^ut ut - ^tv^tvvt = tg^t - tp^t                    t  T (1)  (6)
+
+                   t
+
+         wt  w0 +          + M(g - p + z )  wt                      t  T (1)
+
+                    =(1)
+
+                   t
+
+         wt  w0 +          + M(g^ - p^ + z^ )  wt                   t  T (1)
+
+                    =(1)
+
+         w1  w0 +           + M(g - p + z ),
+
+                    T (1)
+
+where ^ut = E [ut ], ^tv = E [tv], ^ut = E [ut ] and ^vt = E [vt ] for all t  T (1). Problem (6) differs from the
+day-1 reduced trader's problem (CTr) of Section 4 in two aspects. Firstly, the operational decisions
+{(gt, pt, zt)}tT (1) guaranteeing the satisfaction of the reservoir bounds under any possible reserve
+activation sequence are complemented with the nominal operational decisions {(g^t, p^t, z^t)}tT (1)
+that account for the water dynamics under the expected scenario, where the products of the reserve
+allocations and activations are replaced with their means E[ut tu] = ^tu^tu and E[tvtv] = ^tv^tv for all
+t  T (1). Secondly, problem (6) incorporates both the water target level constraints and a valuation
+of the nominal end-of-day reservoir levels in the objective function. These changes alleviate the
+conservatism introduced by Approximation 1, but they imply that the equivalence of Theorem 1
+no longer holds for the revised trader's problem (6).
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                      23
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+   To obtain the operational decisions (g, p, z) for each hour   T (1) that are compatible with
+the market bids (st, ut, vt) and feasible in view of the revealed reserve market activations, finally,
+we solve the truncated problems
+
+                                            H
+
+sup 1 M g - p + z +                            (g^t - p^t + z^t)
+
+                                            t=+1
+
+s.t. gt, pt, zt  RA, g^t, p^t, z^t  RA                            t  [, H]
+
+0  gt, g^t  gt, 0  pt, p^t  pt, 0  zt, z^t                        t  [, H]
+
+s + uu u - vvv = g - p                                            t  [ + 1, H]
+                                                                  t  [ + 1, H]
+st + tuut = tgt - tpt,                                            t  [, H]
+                                                                  t  [, H]
+st + tu^tuut - vt ^tvvt = tg^t - tp^t
+
+                         t
+
+wt  w0 +  + M(g - p + z )  wt
+
+                       =1
+                         t
+
+wt  w0 +  + M(g^ - p^ + z^ )  wt
+
+                       =1
+
+w1  w0 +                                     + M(g - p + z ).
+
+           T (1)
+
+Each of these problems differs from problem (6) in two aspects. Firstly, the truncated problems
+disregard the impact of the (sunk) market bids {(st, ut, vt)}tT (1) on the objective function. Sec-
+ondly, the nominal reserve allocations and activations ^ut , ^tv, ^u and ^v in hour  are replaced with
+their actual realizations tu, vt , u and v, respectively, for all t  [ + 1, H].
+
+   Apart from reducing the conservatism introduced by Approximation 1, our rolling horizon imple-
+mentation enjoys several advantages: (i) The true state of the world  may differ from all dis-
+cretization points (n), n = 1, . . . , N , of the empirical measure P, and thus the sample average
+approximation does not provide any recourse decisions corresponding to . (ii) Problem (C) only
+models a finite time window of the perpetual operation of the reservoir system, which adversely
+affects the decisions towards the end of the planning horizon D. (iii) Resolving problem (C) on a
+daily basis ensures that the end-of-day reservoir targets adapt to all available information, and it
+reduces the conservatism of the affine decision rule approximation.
+
+6. Case Study: Gasteiner Tal Cascade
+
+We apply our planner-trader decomposition to a hydropower cascade located in the Gasteiner Tal,
+Austria. We describe the problem instance in Section 6.1, and we present our results in Section 6.2.
+24  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+    A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+6.1. Problem Parameters
+The Gasteiner Tal cascade comprises three reservoirs: the Bockhartsee annual reservoir with a
+capacity of 18,500,000 m3, the Nassfeld daily reservoir with a capacity of 230,000 m3 and the Rem-
+sach compensation reservoir with a capacity of 4,000 m3. The Bockhartsee reservoir is connected
+to the Nassfeld reservoir by the Nassfeld pumped-storage plant that has a generating capacity of
+40,600 m3/h and a generation efficiency of 6.68 × 10-4 MWh/m3, as well as a pumping capac-
+ity of 28,500 m3/h and an inverse pumping efficiency of 9.35 × 10-4 MWh/m3, respectively. The
+Nassfeld reservoir is connected to the Remsach reservoir by the B¨ockstein plant with a generating
+capacity of 41,400 m3/h and an efficiency of 10.3 × 10-4 MWh/m3, and the Remsach reservoir is
+connected to the Gasteiner Ache river by the Remsach plant with a generating capacity of 50,400
+m3/h and an efficiency of 5.41 × 10-4 MWh/m3. In total, the cascade produces up to 264,000
+MWh of electricity per year and covers the demand of approximately 75,000 households.1
+
+   We model the hourly natural inflows into the three reservoirs based on historical daily inflow
+data for the years 2002-2012. In absence of more detailed data, we make the simplifying assumption
+that each hourly inflow within a day amounts to 1/24-th of the corresponding daily inflow. We
+use the inflows of the years 2002-2011 as in-sample scenarios and the inflows of the year 2012 as
+out-of-sample scenarios, respectively.
+
+   For the spot and reserve prices, we use the Balancing Statistics dataset for the year 2020 that is
+publicly available on the website of the Austrian Power Grid AG.2 We use the hourly averages of the
+EXAA and EPEX spot prices as the out-of-sample spot prices, whereas our in-sample spot prices
+are generated from a linear regression model of the out-of-sample prices with indicator variables for
+the month of the year, the day of the week and the hour of the day. In contrast, the capacity fees and
+the activation prices on the secondary reserve markets are reported in four-hourly and 15-minute
+blocks, respectively. We use the four-hourly capacity fees for the secondary reserve-up and reserve-
+down market as the out-of-sample capacity fees, while our in-sample capacity fees are derived from
+a logarithmic regression model of the corresponding realized fees with indicator variables for the
+month of the year, the day of the week and the four-hour block of the day. Likewise, we use the
+realized activation prices on the reserve markets at 15-minute granularity as out-of-sample data,
+whereas the in-sample prices are generated from a linear regression model of the out-of-sample
+prices with indicator variables for the month of the year, the day of the week and the hour of the
+day. While our regression models appear to generally perform reasonably well, we note that the
+capacity fees appear to be challenging to predict to a high accuracy. We also note that despite the
+
+1 Further details of the cascade can be found online at https://www.salzburg-ag.at/content/dam/web18/doku-
+mente/unternehmen/erzeugung/Kraftwerke-GasteinerTal.pdf.
+
+2 Website: www.apg.at.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                        25
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+0.0  0.25                                                         0.5  0.75  1.0
+
+capacity (28.7%, 26.9%) (39.4%, 32.8%) (42.4%, 38.7%) (67.6%, 46.7%) (70.7%, 47.1%)
+
+energy (0.9%, 1.6%) (24.4%, 26.8%) (50.9%, 51.8%) (78.0%, 77.9%) (99.3%, 99.1%)
+
+Table 1 Rates at which capacity bids (first row) and energy price bids (second row) are accepted for different
+
+target probabilities (columns) on the reserve-up (first entry in each cell) and the reserve-down (second entry in
+
+                                            each cell) markets.
+
+availability of further historical prices, we decided to use the year 2020 as the basis for both the
+in-sample and the out-of-sample data as the energy prices exhibited significant non-stationarity in
+recent years due to the changing political climate. Note, however, that the in-sample prices differ
+from the out-of-sample prices due to our use of the aforementioned regression models.
+
+6.2. Results
+We now apply our decomposition scheme to the case study of Section 6.1. Our experiments comprise
+a planning horizon of one year (52 weeks × 7 days, resulting in D = 364 days). To alleviate end-of-
+horizon effects, we solve our master problem as a rolling-horizon problem where the in-sample and
+out-of-sample data is re-used in a circular fashion, that is, we re-use the data of year 2020 in lieu
+of the data for the subsequent year 2021. To account for the idiosyncracies of the energy market of
+our case study, we also incorporate constraints into our planner and trader problems that require
+the hourly capacity fee and activation price bids to be constant across 4-hour blocks. Our planner
+and trader problems are controlled by two hyper-parameters that specify the target probability
+with which our capacity bids are being accepted as well as the target frequency with which our
+energy price bids are being activated, respectively. The actual capacity bids and energy prices vary
+across the four-hour blocks, and they are constructed from the hyper-parameters using our regres-
+sion models for the capacity fees and activation prices, respectively. Below, we present results for
+the hyper-parameter combinations {0.0, 0.25, 0.5, 0.75, 1.0} × {0.0, 0.25, 0.5, 0.75, 1.0}. Our decom-
+position scheme was implemented in C++ using Gurobi 9.0.1 and run on an 3.2 GHz Intel Xeon
+processor in single-core mode. All planner problems were solved within less than two minutes, and
+the trader problems were all solved within fractions of a second. For the sake of exposition, all
+water levels and revenues are denominated in 1,000s of m3 and 1,000s of EUR, respectively. Our
+datasets and detailed results, together with the source codes of all algorithms, can be found online.3
+
+   We first consider the choice of the two hyper-parameters. To this end, Table 1 compares the
+target acceptance probabilities for our capacity bids with the actual acceptance frequencies (first
+row) as well as the target activation frequencies for our energy price bids with the actual activation
+frequencies (second row) on the reserve-up (first entry) and reserve-down (second entry) markets.
+
+3 Website: https://github.com/napat-rujeerapaiboon/hydro-scheduling.
+      26                                   Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+          0.0        0.25       0.5                               0.75       1.0
+
+ 0.0      10,755.29  10,761.46  10,769.91                         10,771.26  10,767.04
+0.25
+      (100.0%, 0.0%, 0.0%) (99.9%, 0.1%, 0.0%) (99.7%, 0.2%, 0.0%) (99.8%, 0.2%, 0.0%) (99.8%, 0.2%, 0.0%)
+ 0.5
+0.75      11,660.82  11,065.15  11,507.15                         11,256.31  10,842.81
+
+ 1.0  (99.3%, 0.0%, 0.6%) (94.6%, 1.5%, 3.9%) (94.0%, 3.1%, 2.9%) (95.2%, 4.0%, 0.8%) (103.3%, 2.0%, -5.2%)
+
+          10,479.21  10,722.82  11,800.98                         11,424.93  10,539.76
+
+      (97.7%, 0.4%, 1.8%) (95.2%, 0.0%, 4.8%) (87.4%, 9.4%, 3.2%) (89.8%, 10.6%, -0.4%) (95.5%, 10.7%, -6.2%)
+
+          10,932.94  12,237.71  12,836.11                         12,700.91  11,077.83
+
+      (96.9%, 0.4%, 2.7%) (83.1%, 11.9%, 5.0%) (74.5%, 22.6%, 2.9%) (63.9%, 38.0%, -1.9%) (67.2%, 41.9%, -9.1%)
+
+          12,717.43  12,130.75  13,396.20                         13,268.93  13,141.65
+
+      (97.6%, 0.5%, 2.0%) (79.2%, 16.0%, 4.7%) (53.0%, 44.8%, 2.2%) (93.9%, 6.5%, -0.4%) (67.2%, 40.8%, -8.0%)
+
+      Table 2 Revenues (top entry) and revenue contributions by market (bottom entry; from left to right: spot,
+
+      reserve-up and reserve-down market) for different combinations of target probabilities for the capacity bids (rows)
+
+                                and energy price bids (columns).
+
+      The table shows that while our predictions of the energy price activation frequencies are remarkably
+      accurate, the actual capacity bid acceptance frequencies can deviate quite significantly from the
+      target acceptance probabilities. We attribute this to the relatively poor fit of the underlying vanilla
+      regression models described in the previous section. Table 2 compares the out-of-sample revenues
+      generated by different combinations of both hyper-parameters over the course of the year, and
+      it also elucidates how the spot and the two reserve markets contribute towards those revenues.
+      The table reveals that overall, targeting a 100% probability of having the capacity bids accepted
+      (fifth row) and targeting for a 50% frequency of having the energy price bids accepted (third
+      row), respectively, performs best. Note that while almost half of the revenues generated under this
+      hyper-parameter combination stem from the reserve-up market, the reserve-down market appears
+      to contribute only a negligible fraction to the overall revenues. This turns out to be misleading,
+      however, as successful bids on the reserve-down market lead to water being pumped to higher
+      reservoirs, which implies further revenue uplifts at later times that we do not account for in this
+      calculation. This is further evidenced by separate numerical experiments (not reported here) which
+      reveal that the inclusion of either reserve market to a spot-only model leads to a revenue uplift
+      of 20%-25%, whereas the additional inclusion of the other reserve market only provides a further
+      uplift of 0.1%-5%, independent of the order in which the two reserve markets are added.
+
+         We now take a closer look at the best-performing strategy from Table 2. Figure 2 visualizes
+      the cumulative contributions of the spot and reserve markets towards the energy bids (left), the
+      energy provided (middle) and the revenues generated (right). The figure shows that while the spot
+      and the reserve-up market both generate about half of the overall revenues, the amounts of energy
+      exchanged on all three markets are of the same order of magnitude. Figures 3 and 4 present the
+      water levels and water values for the three reservoirs of our case study, respectively. The figures
+      show that our model correctly captures the different time scales of the reservoir dynamics. While
+      the filling level of the Bockhartsee annual reservoir changes slowly throughout the year, the Nassfeld
+                         Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                                                                                                                                                                       27
+
+                         A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+                                                       spot                                                                                                100  spot                                                                   7000  spot
+                                                                                                                                                                                                                                       6000  reserve up
+                                                  300  reserve up                                                                                               reserve up                                                                   reserve down
+                                                                                                                                                                reserve down
+                                                       reserve down                                                                                        90
+
+                                                  250                                                                   Cumulative Activated Bid (in GWh)  80                                       Cumulative Revenue (in 103 Euros)
+
+                         Cumulative Bid (in GWh)                                                                                                           70                                                                          5000
+
+                                                  200                                                                                                      60
+
+                                                                                                                                                                                                                                       4000
+
+                                                  150                                                                                                      50
+
+                                                                                                                                                                                                                                       3000
+
+                                                                                                                                                           40
+
+                                                  100                                                                                                      30                                                                          2000
+
+                                                                                                                                                           20
+
+                                                  50                                                                                                                                                                                   1000
+
+                                                                                                                                                           10
+
+                                                  0                                                                                                        0                                                                           0
+
+                                                  Jan  Mar         May  Jul  Sep  Nov                              Jan                                     Jan  Mar   May       Jul  Sep  Nov  Jan                                     Jan   Mar  May      Jul  Sep  Nov      Jan
+
+                                                                        Day                                                                                                     Day                                                                        Day
+
+                         Figure 2 Cumulative bids and revenue contributions of the spot and the reserve markets. From left to right, the
+
+                                                  graphs show the cumulative bids, the activated bids and the generated revenues on each of the three markets.
+
+                         18000                                                                                                                                                                                                         4
+
+                         16000                                                                                                                             200                                                                         3.5
+
+                         14000                                                                                                                                                                                                         3
+
+Water Levels (in 103m3)  12000                                                                                          Water Levels (in 103m3)            150                                      Water Levels (in 103m3)            2.5
+
+                         10000
+
+                                                                                                                                                                                                                                       2
+
+                         8000                                                                                                                              100
+
+                                                                                                                                                                                                                                       1.5
+
+                         6000
+
+                         4000                                                                                                                              50                                                                          1
+
+                         2000                                                                                                                                                                                                          0.5
+
+                                                  0                                                                                                        0                                                                           0
+
+                                                  Jan  Mar         May  Jul  Sep  Nov                              Jan                                     Jan  Mar   May       Jul  Sep  Nov  Jan                                     Jan   Mar  May      Jul  Sep  Nov      Jan
+
+                                                                        Day                                                                                                     Day                                                                        Day
+
+                                                       Figure 3 Out-of-sample reservoir levels for the Bockhartsee (left), Nassfeld (middle) and Remsach (right)
+
+                                                                                                                                                                      reservoirs.
+
+                                                                                                                                                                      Bockhartsee
+
+                                                                                                                                                                      Nassfeld
+
+                                                                                                             0.1                                                      Remsach
+
+                                                                                  Water Values (in Euro/m3)  0.08
+
+                                                                                                             0.06
+
+                                                                                                             0.04
+
+                                                                                                             0.02
+
+                                                                                                             0
+
+                                                                                                             Jan        Mar                                     May           Jul    Sep       Nov                                     Jan
+
+                                                                                                                                                                              Day
+
+                                                       Figure 4         Water values for the Bockhartsee (left), Nassfeld (middle) and Remsach (right) reservoirs.
+
+                         and Remsach reservoirs operate at a much faster pace. The seasonality of the water levels also
+                         implies a seasonality in the water values, which are highest ahead of the depletion phase of the
+                         top-level reservoir. Note that in our experiments, all lower reservoir bounds are set to zero. In
+28                                                                                                                                                                                Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                                                                             A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+    18000      realized                                                                                                                                               18000       realized
+    16000      predicted                                                                                                                                              16000       predicted
+    Predicted vs Realized Water Levels (in 103m3)
+                                                                                                                       Predicted vs Realized Water Levels (in 103m3)1400014000
+
+    12000                                                                                                                                                             12000
+
+    10000                                                                                                                                                             10000
+
+    8000                                                                                                                                                              8000
+
+    6000                                                                                                                                                              6000
+
+    4000                                                                                                                                                              4000
+
+    2000                                                                                                                                                              2000
+
+          0                                                                                                                                                           0
+
+          Jan  Mar        May                                 Jul    Sep  Nov       Jan                                                                               Jan         Mar        May  Jul  Sep  Nov  Jan
+
+                                                              Day                                                                                                                                 Day
+
+    Figure 5 Predictive accuracy of the planner's problem. The realized out-of-sample water levels of the
+
+    Bockhartsee reservoir are printed in bold, whereas the shaded regions illustrate the in-sample water level
+
+                          predictions on day 1 (left graph) and on day 182 (right graph).
+
+                          Cumulative Revenues (in 103 Euros)  12000  deterministic
+                                                              10000  stochastic w/o reserve
+                                                                     stochastic w reserve
+
+                                                              8000
+
+                                                              6000
+
+                                                              4000
+
+                                                              2000
+
+                                                              0
+
+                                                              Jan    Mar       May           Jul                                                                             Sep             Nov  Jan
+
+                                                                                             Day
+
+Figure 6       Cumulative revenues generated by the deterministic model, the stochastic model without reserve
+                               markets and the stochastic model including reserve markets.
+
+practice, one typically imposes strictly positive lower reservoir bounds to protect the aquatic life
+as well as to avoid a negative impact on tourism. Figure 5 investigates the predictive accuracy of
+our bidding model. It visualizes the out-of-sample water levels of the Bockhartsee reservoir across
+the time horizon, together with the in-sample prediction of these water levels on day 1 and day
+182. We observe that the out-of-sample water levels tend to stay close the predicted intervals for a
+while, but that our predictions become increasingly inaccurate as we look further into the future.
+We emphasize that the water level predictions are updated every day, rather than twice during the
+time horizon as shown in this figure.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        29
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+   In our final experiment, we compare our bidding problem with a variant of the problem that
+precludes participation on the reserve markets. We also compare our model against a determin-
+istic bidding formulation that replaces all stochastic parameters with their expected values. In
+particular, this formulation replaces the stochastic reserve market activations with deterministic
+fractional activations, which implies that the hydropower producer may not be able to honor her
+reserve market commitments out-of-sample. In such cases, we revert to a spot-only trading strategy
+for the affected days. We observe empirically that the cumulative out-of-sample revenues of the
+deterministic formulation are maximized when the total reserve market participation is restricted
+to not exceed the spot market participation in any given hour. This ad hoc restriction avoids overly
+aggressive reserve market participation that underperforms out-of-sample due to frequent switches
+to the aforementioned spot-only strategy. Note that by retrospectively switching to a spot-only
+strategy based on the observed out-of-sample reserve activations, the deterministic strategy has an
+advantage and is not implementable in reality. Figure 6 visualizes the cumulative out-of-sample rev-
+enues generated by the three models. The figure highlights the benefits of a stochastic strategy that
+participates in both the spot and the reserve markets: our strategy outperforms both the spot-only
+stochastic model and the deterministic model by about 25% in terms of cumulative revenues.
+
+Acknowledgments
+
+This publication is posthumously dedicated to the first author, Kilian Schindler (29.10.1989­
+16.5.2020), who has led the research in collaboration with the second author. We are grateful
+to Georg Ostermaier from Decision Trees GmbH and Dirk Lauinger for valuable discussions and
+advice, as well as the associate editor and the referees for their suggestions that significantly
+improved the manuscript. This research was supported by the Ministry of Education, Singapore,
+under its 2019 Academic Research Fund Tier 3 grant MOE-2019-T3-1-010 and the Swiss National
+Science Foundation grant BSCGI0 157733 as well as the EPSRC grant EP/R045518/1.
+
+References
+
+Aasg°ard, E., G. Andersen, S. Fleten, D. Haugstvedt. 2014. Evaluating a stochastic-programming-based
+       bidding model for a multireservoir system. IEEE Transactions on Power Systems 29(4) 1748­1757.
+
+Aasg°ard, E., S. Fleten, M. Kaut, K. Midthun, G. Perez-Valdes. 2019. Hydropower bidding in a multi-market
+       setting. Energy Systems 10 543­565.
+
+Abgottspon, H., G. Andersson. 2012. Approach of integrating ancillary services into a medium-term hydro
+       optimization. Proceedings of the 12th Symposium of Specialists in Electric Operational and Expansion
+       Planning. 1­10.
+
+Abgottspon, H., K. Nja´lsson, M. A. Bucher, G. Andersson. 2014. Risk-averse medium-term hydro optimiza-
+       tion considering provision of spinning reserves. Proceedings of the 2014 International Conference on
+       Probabilistic Methods Applied to Power Systems. 1­6.
+30  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+    A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Andrieu, L., R. Henrion, W. R¨omisch. 2010. A model for dynamic chance constraints in hydro power reservoir
+       management. European Journal of Operational Research 207(2) 579­589.
+
+Ban, G.-Y., C. Rudin. 2019. The big data newsvendor: Practical insights from machine learning. Operations
+       Research 67(1) 90­108.
+
+Ben-Tal, A., L. El Ghaoui, A. Nemirovski. 2009. Robust Optimization. Princeton University Press.
+
+Bertsimas, D., N. Kallus. 2020. From predictive to prescriptive analytics. Management Science 66(3) 1025­
+       1044.
+
+Bodur, M., J. R. Luedtke. 2022. Two-stage linear decision rules for multi-stage stochastic programming.
+       Mathematical Programming 191(1) 347­380.
+
+Carpentier, P.-L., M. Gendreau, F. Bastin. 2013. Long-term management of a hydroelectric multireservoir
+       system under uncertainty using the progressive hedging algorithm. Water Resources Research 49(5)
+       2812­2827.
+
+Chazarra, M., J. Garc´ia-Gonza´lez, J. P´erez-D´iaz, M. Arteseros. 2016. Stochastic optimization model for
+       the weekly scheduling of a hydropower system in day-ahead and secondary regulation reserve markets.
+       Electric Power Systems Research 130 67­77.
+
+Chazarra, M., J. I. P´erez-D´iaz, J. Garc´ia-Gonz´alez. 2018. Optimal joint energy and secondary regulation
+       reserve hourly scheduling of variable speed pumped storage hydropower plants. IEEE Transactions on
+       Power Systems 33(1) 103­115.
+
+Chazarra, M., J. I. P´erez-D´iaz, J. Garc´ia-Gonza´lez. 2014. Optimal operation of variable speed pumped
+       storage hydropower plants participating in secondary regulation reserve markets. Proceedings of the
+       11th International Conference on the European Energy Market (EEM14). 1­5.
+
+Chazarra, M., J. I. P´erez-D´iaz, J. Garc´ia-Gonza´lez, R. Praus. 2018. Economic viability of pumped-storage
+       power plants participating in the secondary regulation service. Applied Energy 216 224­233.
+
+de Matos, V., A. Philpott, E. Finardi. 2015. Improving the performance of stochastic dual dynamic pro-
+       gramming. Journal of Computational and Applied Mathematics 290 196­208.
+
+Delage, E., D. Iancu. 2015. Robust multistage decision making. INFORMS Tutorials in Operations Research
+       19­46.
+
+DOE. 2020. DOE OE global energy storage database. https://www.sandia.gov/ess-ssl/global-energy-
+       storage-database/. Accessed on 1st March 2021.
+
+Dyer, M., L. Stougie. 2006. Computational complexity of stochastic programming problems. Mathematical
+       Programming 106(3) 423­432.
+
+European Commission. 2020. European Commission METIS technical note T4: Overview of European
+       electricity markets. https://ec.europa.eu/energy/sites/default/files/documents/overview_
+       of_european_electricity_markets.pdf. Accessed on 1st March 2021.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        31
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Ferna´ndez-Mun~oz, D., J. I. P´erez-D´iaz, I. Guis´andez, M. Chazarra, A´ . Ferna´ndez-Espina. 2020. Fast fre-
+       quency control ancillary services: An international review. Renewable and Sustainable Energy Reviews
+       120 109662.
+
+Fodstad, M., M. Aarlott, K. Midthun. 2018. Value-creation potential from multi-market trading for a
+       hydropower producer. Energies 11(1) 1­15.
+
+Gauvin, C., E. Delage, M. Gendreau. 2017. Decision rule approximations for the risk averse reservoir man-
+       agement problem. European Journal of Operational Research 261(1) 317­336.
+
+Gauvin, C., E. Delage, M. Gendreau. 2018. A stochastic program with time series and affine decision rules
+       for the reservoir management problem. European Journal of Operational Research 267(2) 716­732.
+
+Gjelsvik, A., B. Mo, A. Haugstad. 2010. Long- and medium-term operations planning and stochastic mod-
+       elling in hydro-dominated power systems based on stochastic dual dynamic programming. P.. Pardalos,
+       S. Rebennack, M. Pereira, N. Iliadis, eds., Handbook of Power Systems I . Springer, 33­55.
+
+Hanasusanto, G., D. Kuhn, W. Wiesemann. 2016. A comment on "Computational complexity of stochastic
+       programming problems". Mathematical Programming 159 557­569.
+
+Helseth, A., M. Fodstad, M. Askeland, B. Mo, O. Bjarte Nilsen, J. I. P´erez-D´iaz, M. Chazarra, I. Guis´andez.
+       2017. Assessing hydropower operational profitability considering energy and reserve markets. IET
+       Renewable Power Generation 11(13) 1640­1647.
+
+Helseth, A., M. Fodstad, B. Mo. 2016. Optimal medium-term hydropower scheduling considering energy and
+       reserve capacity markets. IEEE Transactions on Sustainable Energy 7(3) 934­942.
+
+Helseth, A., B. Mo, M. Fodstad, M. Hjelmeland. 2015. Co-optimizing sales of energy and capacity in a
+       hydropower scheduling model. Proceedings of IEEE Eindhoven PowerTech. 1­6.
+
+IEA. 2020a. Renewables 2020 data explorer. https://www.iea.org/articles/renewables-2020-data-
+       explorer?mode=market&region=World&product=Hydro. Accessed on 1st March 2021.
+
+IEA. 2020b. Renewables 2020 fuel report. https://www.iea.org/reports/renewables-2020/hydropower-
+       bioenergy-csp-and-geothermal#hydropower. Accessed on 1st March 2021.
+
+Klæboe, G., J. Braathen, A. Eriksrud, S.-E. Fleten. 2019. Day-ahead market bidding taking the balancing
+       power market into account. Available on SSRN .
+
+L¨ohndorf, N., D. Wozabal, S. Minner. 2013. Optimizing trading decisions for hydro storage systems using
+       approximate dual dynamic programming. Operations Research 61(4) 810­823.
+
+Lorca, A., X. A. Sun, E. Litvinov, T. Zheng. 2016. Multistage adaptive robust optimization for the unit
+       commitment problem. Operations Research 64(1) 32­51.
+
+Mayer, J. 2014. Electricity production and spot-prices in Germany 2014. Fraunhofer Institute for Solar
+       Energy Systems.
+
+Morris, C., M. Pehnt. 2015. Energy transition: The German Energiewende. Heinrich B¨oll Foundation.
+32  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+    A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Pan, L., M. Housh, P. Liu, X. Cai, X. Chen. 2015. Robust stochastic optimization for reservoir operation.
+       Water Resources Research 51(1) 409­429.
+
+Pereira, M., L. Pinto. 1991. Multi-stage stochastic optimization applied to energy planning. Mathematical
+       Programming 52 359­375.
+
+Philpott, A., V. de Matos. 2012. Dynamic sampling algorithms for multi-stage stochastic programs with risk
+       aversion. European Journal of Operational Research 218(2) 470­483.
+
+Philpott, A., V. de Matos, L. Kapelevich. 2018. Distributionally robust SDDP. Computational Management
+       Science 15 431­454.
+
+Press, W., S. Teukolsky, W. Vetterling, B. Flannery. 2007. Numerical Recipes 3rd Edition: The Art of
+       Scientific Computing. Cambridge University Press.
+
+Pritchard, G., A. Philpott, P. Neame. 2005. Hydroelectric reservoir optimization in a pool market. Mathe-
+       matical Programming 103(3) 445­461.
+
+Rockafellar, R. T., Roger J.-B. Wets. 2010. Variational Analysis. Springer.
+Schillinger, M., H. Weigt, M. Barry, R. Schumann. 2017. Hydropower operation in a changing environment ­
+
+       a Swiss case study. Proceedings of the 14th International Conference on the European Energy Market.
+       1­6.
+Shapiro, A., D. Dentcheva, A. Ruszczynski. 2009. Lectures on Stochastic Programming: Modeling and Theory.
+       SIAM.
+Shapiro, A., W. Tekaya, M. Soares, J. da Costa. 2013. Worst-case-expectation approach to optimization
+       under uncertainty. Operations Research 61(6) 1435­1449.
+Vayanos, P., D. Kuhn, B. Rustem. 2012. A constraint sampling approach for multi-stage robust optimization.
+       Automatica 48(3) 459­471.
+Wirth, H. 2016. Recent facts about photovoltaics in Germany. Fraunhofer Institute for Solar Energy Systems.
+Yanikoglu, I., B. L. Gorissen, D. den Hertog. 2019. A survey of adjustable robust optimization. European
+       Journal of Operational Research 277(3) 799­813.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                                                              33
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Appendix.
+
+A. Serial Independence of Reserve Activations
+
+Throughout the paper we assume that the uncertain reserve activations tu and vt are serially independent
+across different hours t  T . To further investigate this assumption, recall that secondary reserve is dispatched
+
+by the grid operator in five-second intervals. It is therefore expedient to model the reserve activations as
+hourly averages of more fine-grained reserve activation processes u(s) and v(s), where s  S indexes all
+
+five-second intervals within the planning horizon. Formally, we thus set
+
+                          tu   =     1             u(s)      and      vt  =     1             v(s) t  T ,                               (7)
+                                   |S (t)|                                    |S (t)|
+                                            sS(t)                                      sS(t)
+
+where S(t) denotes the set of all 720 five-second intervals in hour t. In any given interval s  S, there cannot be
+a simultaneous call-off on the reserve-up and reserve-down markets. This prompts us to model u(s) and v(s)
+
+as Bernoulli random variables, which evaluate to 0 if there is no call-off and to 1 if there is a call-off on the
+reserve-up or the reserve-down market, respectively, and to assume that u(s) and v(s) cannot evaluate to 1
+at the same time. More precisely, we model the stochastic process {(u(s), u(s))}sS as a time-homogeneous
+Markov chain with three states: no call-off (state 1: u(s) = v(s) = 0), a call-off on the reserve-up market
+(state 2: u(s) = 1 and v(s) = 0), or a call-off on the reserve-down market (state 3: u(s) = 0 and v(s) = 1).
+
+If we assume that the system cannot transition from a reserve-up call-off to a reserve-down call-off (or vice
+
+versa) in just five seconds and that call-offs on the reserve-up and the reserve-down markets are equally
+
+likely, then the transition probability matrix of the Markov chain can be represented as
+
+                                                            1 - 2p p p 
+                                                     P= q 1-q 0 ,
+
+                                                                 q 0 1-q
+
+where    the  rows  and  columns        refer  to  the  three  states     in  order    of  appearance.  Here,  p    (0,  1  )  denotes  the
+                                                                                                                         2
+
+probability of a call-off on the reserve-up or the reserve-down market in the next five seconds if there is
+
+no call-off at present. Similarly, q  (0, 1) denotes the probability that an ongoing call-off on either market
+
+terminates over the next five seconds. The imposed time homogeneity makes the simplifying assumption
+
+that the probability of entering a new reserve activation (i.e., the probability p leaving state 1) as well
+
+as the probability of terminating a reserve activation (i.e., the probability q of entering state 1) are inde-
+
+pendent of the recent history of reserve activations. Using this Markov chain, we will investigate below to
+
+which degree the averaged hourly reserve activations tu and tv can be considered serially independent. To
+
+estimate p and q, we first note that the unique invariant distribution of the Markov chain encoded by P
+
+is  given  by    =     1  (q,  p,  p).  Thus,  the     long-run    fraction   of  time     spent  in  reserve-up  call-offs    (or  equiva-
+                    q+2p
+
+lently,  reserve-down    call-offs)     is  given  by     =     p  .  In  addition,    an  elementary   calculation  reveals   that     1/q
+                                                             q+2p
+
+coincides with the expected duration h of a call-off. Both  and h can be estimated from data, and they
+
+uniquely determine p and q. In the following we assume that the initial state distribution is given by .
+Thus, the Markov chain is in the stationary regime, and E[u(s)] = E[v(s)] =  for all s  S, which in turn
+implies via (7) that ^tu = E[ut ] =  and ^vt = E[vt ] =  for all t  T . In this case, the dependence between the
+states of the Markov chain at time 1 and at time s can be measured by the uncertainty coefficient U (s) =
+34                                             Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                   A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+            1          100  200    300  400    500  600  700
+          0.9
+          0.8
+          0.7
+          0.6
+          0.5
+          0.4
+          0.3
+          0.2
+          0.1
+
+            0
+              0
+
+Figure 7  The uncertainty coefficient U (s) as a function of time s measured in five-second intervals for different
+              expected call durations h when the frequency of reserve-up call-offs equals  = 1%.
+
+          h = 1 min h = 5 mins h = 10 mins h = 15 mins h = 20 mins
+
+          t = 2 0.01%       0.18%       1.26%  2.99%     5.24%
+
+          t = 3 7 × 10-3% 0.03%         0.06%  0.08%     0.11%
+
+          t = 4 7 × 10-3% 0.02%         0.06%  0.07%     0.08%
+
+Table 3   The uncertainty coefficient between (u1 , 1v) and (tu, vt ) for different hourly time lags t and expected
+
+          call durations h when the frequency of reserve-up call-offs equals  = 1%.
+
+I((u(s), u(s)); (u(1), u(1)))/H((u(s), u(s))), where I(·; ·) denotes mutual information, and H(·) denotes
+entropy. The uncertainty coefficient ranges over [0, 1] and characterizes the fraction of the bits of (u(s), u(s))
+that can be predicted from (u(1), u(1)). The smaller U (s), the more independent are the reserve activations
+at times 1 and s; see e.g. Press et al. (2007, §14.7.4). Figure 7 shows that U (s) decays rapidly with s for  =
+1% and for all values of h  {1 min, 5 min, 10 min, 15 min, 20 min}, which implies that the reserve activations
+become increasingly independent as the lag s grows. In particular, for lags exceeding one hour (s  720),
+the uncertainty coefficient U (s) virtually vanishes for all considered values of h. Note that 15 minutes is a
+natural upper bound on h as longer-lasting imbalances trigger an activation of tertiary reserves.
+
+   Table 3 reports the uncertainty coefficient between the hourly reserve activations (u1, 1v) and (ut , tv)
+constructed as in (7) for t  {2, 3, 4}. Here, the uncertainty coefficient is computed via simulation using
+106 sample trajectories. Hence, consecutive hourly reserve activations are indeed nearly independent.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                                35
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+B. Proofs and Auxiliary Technical Results
+
+   Proof of Proposition 1 As problem (2) is a relaxation of problem (1), it suffices to show that any feasible
+solution of problem (2) corresponds to a feasible solution of problem (1) that attains the same objective
+function value. To this end, select any {(st, ut, vt, gt, pt, zt, wd)}t,d feasible in (2). As spillage is neither
+restricted nor penalized and as the reservoir topology represents a directed acyclic graph, any amount of
+water equal to the slack of the reformulated reservoir balance constraints in (2) can be spilled through to
+node R sequentially for all reservoirs in the partial order induced by the topology graph and sequentially
+for all hours in the planning horizon. Thus, one can systematically replace the spillage decision zt with
+another F[t]-measurable random vector zt for each t  T such that {(st, ut, vt, gt, pt, zt, wd)}t,d is feasible in
+problem (1). The claim now follows because the spillage decisions do not enter the objective function. 
+
+   The proof of Proposition 2 relies on an auxiliary result which we state and prove first. To this end, consider
+a generic multistage stochastic program of the form
+
+                                     sup E f (x0, . . . , xT , [T ])
+                                                                                                                                          (8)
+
+                                     s.t. x0  Ln0 (F0), xt  Lnt (F[t]) t = 1, . . . , T,
+where the expectation is taken with respect to P, the joint distribution of the random vectors t  Rkt , t =
+0, . . . , T . Here, f constitutes a normal integrand in the sense of Rockafellar and Wets (2010, Definition 14.27),
+that is, its epigraph epi(f (·, [T])) is a closed-valued measurable multifunction of [T]. We assume that f
+may adopt the value - and thereby encode P-almost sure constraints on the decision variables. We also
+retain the notational conventions for combined random vectors and -algebras introduced in Section 2. The
+following lemma relies on Theorem 14.60 by Rockafellar and Wets (2010) and the properties of conditional
+expectations.
+
+    Lemma 1. The optimal value of the multistage stochastic program (8) equals
+
+                        sup E f (x0, . . . , xT , [T ]) 0
+
+                     E                                                          .                         (9)
+
+                        s.t. x0  Rn0 , xt  Lnt (F[1,t]) t = 1, . . . , T
+
+    Proof  As joint optimization over the stage-wise decision variables is equivalent to sequential optimization,
+
+we can rewrite the multistage stochastic program (8) as
+
+           sup       sup · · ·              sup                    sup     E f (x0, . . . , xT , [T ]) .
+
+           x0Ln0 (F0) x1Ln1 (F[1])  xT -1LnT -1 (F[T -1]) xT LnT (F[T ])
+
+By Rockafellar and Wets (2010, Theorem 14.60), the above problem is equivalent to
+
+                sup     sup · · ·                sup               E sup f (x0, . . . , xT , [T ]) .
+
+           x0Ln0 (F0) x1Ln1 (F[1])          xT -1LnT -1 (F[T -1])  xT RnT
+
+Recalling the tower property of conditional expectations, we can rewrite the resulting problem as
+
+           sup       sup · · ·              sup            E E sup f (x0, . . . , xT , [T ]) [T -1]
+
+           x0Ln0 (F0) x1Ln1 (F[1])  xT -1LnT -1 (F[T -1])          xT RnT
+
+and invoke the interchangeability theorem of Rockafellar and Wets (2010) once again to prove its equivalence
+
+to
+
+                sup     sup · · · E         sup E sup f (x0, . . . , xT , [T ]) [T -1]
+
+           x0Ln0 (F0) x1Ln1 (F[1])          xT -1RnT -1           xT RnT
+36                                                    Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                         A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Repeating this argument, it is possible to move all supremum operators inside the appropriate conditional
+expectation layers such as to obtain the equivalent problem
+
+    E sup E sup E sup · · · E sup f (x0, . . . , xT , [T ]) [T -1] · · · [1] 0 .
+    x0 Rn0  x1 Rn1  x2 Rn2             xT RnT
+
+Applying the interchangeability theorem of Rockafellar and Wets (2010) in the reverse direction, we can then
+
+move the second supremum out of its conditional expectation layer to obtain
+
+    E sup   sup           E sup · · · E sup f (x0, . . . , xT , [T ]) [T -1] · · · 0 .
+
+    x0Rn0 x1Ln1 (F[1,1])       x2 Rn2    xT RnT
+
+Iterating this argument from the outside to the inside, it is indeed possible to move all supremum operators
+
+into the outermost (unconditional) expectation layer and thus obtain
+
+    E sup   sup                sup · · · sup E f (x0, . . . , xT , [T ]) 0 .
+
+    x0Rn0 x1Ln1 (F[1,1]) x2Ln2 (F[1,2])  xT LnT (F[1,T ])
+
+Re-combining the stage-wise supremum operators finally yields problem (9).                     
+
+   Proof of Proposition 2 Observe that if the reservoir filling levels {wd}dD are fixed, then the remaining
+decisions in problem (2) are no longer coupled across days. This allows us to decompose the stochastic pro-
+
+gram (2) into an outer maximization problem over the end-of-day reservoir filling levels {wd}dD and a series
+of (mutually independent) inner stochastic programs maximizing over the bidding decisions {(st, ut, vt)}tT (d)
+and the operational decisions {(gt, pt, zt)}tT (d), one for each day d  D. Formally, problem (2) is thus
+equivalent to the outer stochastic program
+
+                          sup     ^ d(wd-1, wd)
+
+                                      dD
+
+                          s.t. wd  LR(F[(d)]) d  D
+
+                                 wd  wd  wd d  D, P-a.s.,
+
+where ^ d(wd-1, wd) stands for the optimal value of the inner (parametric) stochastic program
+
+    sup E           tsst + ut (tu + ut tu)ut + vt (tv + vt tv)vt
+
+                     tT (d)                                           t  T (d)
+
+    s.t. st, ut, vt  L(F[(d)]), gt, pt, zt  LA(F[t])
+
+            0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt t  T (d), P-a.s.
+
+            st + tuut ut - tvvt vt = tgt - tpt                        t  T (d), P-a.s.         (10)
+
+                                              t
+
+            wt  wd-1 +            + M(g - p + z )  wt t  T (d), P-a.s.
+
+                           =(d)
+
+            wd  wd-1 +             + M(g - p + z )                    P-a.s.,
+
+                           T (d)
+
+which optimizes only over decisions pertaining to day d. Observe that problem (10) differs from the trader's
+
+problem (CT) in that it maximizes an unconditional expectation of the profits earned on day d and in that
+
+its decision variables may still adapt to information revealed prior to day d.
+   We will now use Lemma 1 to show that ^ d(wd-1, wd) coincides with the expected value of
+
+d(wd-1, wd, [(d)]). For notational convenience, we abbreviate the random variables revealed before the
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                                                          37
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+beginning of day d as 0d = [(d)] and those revealed up to each hour h = 1, . . . , H of day d by [dh] = [(d)+h].
+Furthermore, we gather the hourly decisions of day d in the vectors
+
+xd0  =  ({s     ,  u   ,        v  }(d)     )    L3H       (F[(d)]),
+                                      =(d)
+
+xhd = (g(d)+h, p(d)+h, z(d)+h)  L3A(F[(d)+h]) h = 1, . . . , H.
+
+Using this notation, the profit earned on day d can be expressed more concisely as
+
+                                         tsst + ut (tu +tutu)ut + tv(tv + tvtv)vt
+                   
+
+                   
+
+                                tT  (d)
+                   
+                   
+
+                                                                  if (x0d, . . . , xHd ) satisfies all P-almost sure
+f d(x0d, . . . , xdH , [dH]) =                                    constraints of problem (10) in scenario [dH],
+
+                             
+                             
+
+                   
+
+                   
+
+                   
+
+                    -                                             otherwise.
+
+Problem (10) can thus be represented abstractly as
+
+^ d(wd-1, wd) =        sup E f d(xd0, . . . , xdH , [dH])
+                       s.t. x0d  L3H (F[(d)]), xhd  L3A(F[(d)+h]) h = 1, . . . , H.
+
+By the extended interchangeability principle established in Lemma 1, we thus find
+
+^ d(wd-1, wd) = E sup E f d(xd0, . . . , xdH , [dH]) | 0d                                                                .
+
+                                s.t. xd0  R3H , xhd  L3A(F[(d),(d)+h]) h = 1, . . . , H
+
+Unravelling the abbreviations shows that the stochastic program inside the expectation coincides with the
+
+trader's problem (CT), whose optimal value is given by d(wd-1, wd, [(d)]).                                                          
+
+   Proof of Proposition 3 Throughout this proof we will fix a realization of the contextual covariates [(d)],
+which reflect the trader's information when solving problem (CT) for day d. Approximation 1 then implies
+that wd-1 and wd reduce to deterministic constants. In addition, P|[(d)] becomes an unconditional distri-
+bution. Below we will denote the expectation with respect to this distribution by E|[(d)] [·].
+
+   As problem (3) is a restriction of problem (CT), it suffices to show that for every feasible solution
+{(st, ut, vt, gt, pt, zt)}tT (d) of (CT) there is a feasible solution {(st, ut, vt, gt, pt , zt)}tT (d) of (12) that attains
+the same objective value. Such a solution can readily be constructed as
+
+(st , ut , vt) = (st, ut, vt)      and      (gt  ,  pt  ,  zt  )  =   E|[(d)]  [(gt  ,  pt   ,  zt  )  |  F           ]  t  T (d).
+                                                                                                             [(d),t]
+
+The equality of objective values is immediate because the objective function only depends on the bidding
+decisions, which are preserved. The non-anticipativity constraints gt, pt, zt  LA(F[(d),t]) are also satisfied
+thanks to the defining properties of conditional expectations. To show that the almost sure constraints hold,
+
+we recall first that the reserve activations are serially independent and independent of all other sources of
+uncertainty. This implies that {(u , v )}(=dt)+1 is independent of the non-anticipative flow decisions gt, pt, zt 
+LA(F[(d),t]) under the distribution P , |[(d)] that is
+
+        (gt  ,  pt  ,  zt       )  =  E|[(d)]    [(gt   ,  pt  ,  zt  )  |  F             ]     P|[(d)] -a.s.                       (11)
+                                                                               [(d),(d)]
+
+for all t  T (d). The feasibility of {(st , ut, vt, gt, pt, zt)}tT (d) in (3) therefore follows from the feasibility of
+{(st, ut, vt, gt, pt, zt)}tT (d) in (CT) and the linearity of the almost sure constraints in (3), which implies
+38                                                                     Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                                       A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+that they all remain valid under conditional expectations. For example, the newly constructed solution
+{(st , ut , vt, gt, pt, zt)}tT (d) obeys the end-of-day reservoir bound in (12) because
+
+                          wd = E [w |[(d)] d | F[(d),(d)]]
+                               E [w |[(d)] d-1 + T (d)  + M(g - p + z ) | F[(d),(d)]]
+                              = wd-1 + T (d)  + M(g - p + z ) t  T (d), P|[(d)] a.s.,
+
+where the first equality follows from Approximation 1, whereby wd is deterministic when [(d)] is kept fixed,
+
+the inequality holds because {(st, ut, vt, gt, pt, zt)}tT (d) satisfies the last constraint of (CT), and the last
+
+equality follows from (11). Thus, the claim follows.                                                  
+
+   Proof of Proposition 4 Any feasible solution of the stochastic program (3) satisfies the energy delivery
+constraint st + ut ut ut - vt tvvt = tgt - tpt for all t  T (d) P|[(d)] -almost surely. Similarly, for any
+t  T (d), we have that gt  0 and pt  pt P|[(d)] -almost surely. Together, these inequalities imply
+
+    st + ut tuut - tvtvvt = tgt - tpt  -tpt  -tpt t  T (d), P|[(d)] -a.s.
+
+As the scenario (0, 1, 0, vt ) belongs to the support of the random vector (ut , tv, ut , tv) under the conditional
+
+probability measure P , |[(d)] we thus find st - vt vt  -tpt for every t  T (d).                      
+
+   Proof of Proposition 5 We will prove the proposition by showing that every feasible solution of prob-
+lem (4) corresponds to a feasible solution of problem (CTr) with the same objective value. To this end, fix
+any feasible solution {(st, ut, vt, gt, pt, zt)}tT (d) of problem (4) and an arbitrary realization of the contex-
+tual covariates [(d)]. Since all non-dummy reservoirs and pumps have finite capacity, there is z  RA such
+that zt  z P|[(d)] -almost surely for all t  T (d). Then, there exists an event 0  F with P|[(d)] [0] = 1
+such that all constraints of problem (4) are satisfied pointwise for all   0. In addition, by our assumptions
+about the statistics of the reserve allocations and activations, there exists a sequence of samples n  0,
+n  N, such that
+
+                  lim  ut  (n)  =  1,  lim    tu  (n)  =  ut  and  lim    vt  (n  )  =  0  t  T (d).
+
+                  n                    n                           n
+
+Note that the sequence {(gt(n), pt(n), zt(n))}nN is bounded. By passing to a sub-sequence if necessary,
+we may thus assume that this sequence converges for every t  T (d), and we may define
+
+    gt            =    lim  gt(n),     pt  =  lim  pt(n)      and  zt  =  lim  zt(n)       t  T (d).
+
+                       n                      n                           n
+
+One readily verifies that {(st, ut, vt, gt, pt , zt)}tT (d) is feasible in (CTr) because the constraints of the stochas-
+tic program (4) are continuous in the uncertain parameters and the uncertain flow decisions. Also, the
+
+objective value of {(st, ut, vt, gt, pt , zt)}tT (d) in (CTr) coincides with that of {(st, ut, vt, gt, pt, zt)}tT (d) in (4)
+
+because the two solutions involve identical market bids. The claim thus follows.                      
+
+Proof of Theorem 1 This is an immediate consequence of Propositions 3, 4 and 5, as well as Proposition 9
+
+from Appendix C.                                                                                      
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        39
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+Proof of Theorem 2 From Propositions 1 and 2 we know that the bidding model (C) has the same optimal
+
+value as the planner's problem (CP), and it is easy to see that problem (CPr) is obtained by applying
+
+Approximation 1 to problem (CP). As this approximation consists in restricting the planner's information
+
+structure, the optimal value of problem (CPr) is no larger than that of problem (C). It remains to be
+
+shown that (CPr) and (Cr) share the same optimal value. As Approximation 1 is in force, we may conclude
+
+via Theorem 1 that the optimal value d(wd-1, wd, [(d)]) of the stochastic program (CT) coincides with
+the optimal value of the linear program (CTr). Substituting (CTr) into (CPr) and using Theorem 14.60
+
+by Rockafellar and Wets (2010) to move the maximization over the trading and flow decisions out of the
+
+expectation and the sum finally yields (Cr).                      
+40                                                   Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                    A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+C. Proof that Problem (CT) is a Restriction of Problem (CTr)
+In this appendix we prove that problem (CT) is a restriction of problem (CTr), that is, that the arc from the
+node labelled (CTr) to the node labelled (CT) in Figure 1 is justified. To this end, we introduce a variant of
+problem (CT) that we henceforth refer to as the individual trader's problem.
+
+    sup E       ts 1st + tu(tu + ut tu) 1ut + vt (tv + vt tv) 1vt [(d)]
+
+                     tT (d)                                t  T (d)
+
+    s.t. st, ut, vt  RA, gt, pt, zt  LA(F[(d),t])
+
+    0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt              t  T (d), P|[(d)] -a.s.
+                                                           t  T (d), P|[(d)] -a.s.
+    st + tutuut - tvtvvt = t  gt - t  pt                   t  T (d), P|[(d)] -a.s.  (IT)
+
+                                      t                    P|[(d)] -a.s.
+
+    wt  wd-1 +           + M(g - p + z )  wt
+
+                 =(d)
+
+    wd  wd-1 +           + M(g - p + z )
+
+                 T (d)
+
+    To understand how (IT) differs from (CT), recall that energy is produced by the generators and consumed
+
+by the pumps installed along the arcs of the reservoir topology. Under problem (IT), the company places
+
+an individual bid for every arc of its reservoir system. We gather these individual (arc-specific) bids placed
+on the spot market, the reserve-up market and the reserve-down market in the vectors st, ut, vt  LA(F[(t)])
+[MWh], respectively. In contrast, the previous trader's problem (CT) contains aggregate decisions st, ut, vt 
+L(F[(t)]). Note that (CT) is non-inferior to (IT) because it increases the producer's flexibility in choosing the
+generation and pumping decisions. We show below that, similarly to (CT), problem (IT) can undergo several
+
+simplifications. However, we will show that (IT) itself eventually reduces to the tractable linear program
+
+           sup          ~ts 1st + ~tu 1ut + ~tv 1vt
+
+                tT (d)
+
+           s.t. st, ut, vt  RA, gt, pt, zt  RA             t  T (d)
+
+                0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt  t  T (d)
+                                                           t  T (d)
+                st + tuut = t  gt - t  pt                  t  T (d)                 (ITr)
+                                                           t  T (d)
+                st - tvvt  -t  pt
+
+                            t
+
+                wt  wd-1 +          + M(g - p + z )  wt
+
+                             =(d)
+
+                wd  wd-1 +           + M(g - p + z )
+
+                             T (d)
+
+if we impose Approximation 1, whereby wd is restricted to LR(F[(d-1)]). By construction, problem (CTr)
+is non-inferior to (ITr). Proposition 9 below, which has previously been used to prove Theorem 1, shows
+that (ITr) is non-inferior to (CTr) as well.
+
+   In analogy to Proposition 3, we first establish that, conditional on [(d)], the wait-and-see decisions
+{(gt, pt, zt)}tT (d) in (IT) may be restricted to measurable functions of the reserve allocations and the reserve
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                                     41
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+activations without sacrificing optimality. This additional information restriction gives rise to the problem
+
+sup          ~ts 1st + ~tu 1ut + ~tv 1vt
+
+     tT (d)
+
+s.t. st, ut, vt  RA, gt, pt, zt  LA(F[(d),t])                     t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt                    t  T (d), P|[(d)] -a.s.
+                                                                  t  T (d), P|[(d)] -a.s.
+     st + ut tuut - tvvt vt = t  gt - t  pt                       t  T (d), P|[(d)] -a.s.      (12)
+
+                                     t
+
+     wt  wd-1 +                              + M(g - p + z )  wt
+
+                                      =(d)
+
+     wd  wd-1 +                               + M(g - p + z )     P|[(d)] -a.s.,
+
+                                      T (d)
+
+Proposition 6. Under Approximation 1, the optimal values of problems (IT) and (12) are equal.
+
+Proof As in the proof of Proposition 3, one may condition any feasible solution of problem (IT) on the
+
+history of reserve activations to construct a feasible solution of problem (12) that adopts the same objective
+
+value. Details are omitted for brevity.                                                        
+
+Proposition 6 asserts that the individual trader's problem (IT) is equivalent to the stochastic program (12),
+
+which accommodates only H + 1 decision stages and whose wait-and-see decisions depend only on the reserve
+
+allocations and the reserve activations. However, problem (12) still constitutes an infinite-dimensional linear
+
+program. We now show that problem (12) is indeed equivalent to an efficiently solvable finite linear program.
+
+As a first step towards this goal, we derive a family of valid inequalities that may be added to problem (12)
+
+without affecting its feasible set.
+
+Proposition 7. Any feasible solution of (12) satisfies st - vt vt  -t  pt for all t  T (d).
+
+Proof The proof widely parallels that of Proposition 4 and is thus omitted for brevity.        
+
+   By Proposition 7, the deterministic inequalities st - tvvt  -t  pt are valid for all t  T (d) and can
+therefore be appended to problem (12) without affecting its feasible set. Observe that st + t  pt comprises
+the arc-wise maximum bids in the reserve-down market on which the company can deliver in case of a call-off.
+
+To see this, note that st,a is the amount of energy produced on arc a for the spot market and that t,apt,a
+represents the maximum amount of energy that can be absorbed on arc a by pumping. In case of a call-off
+
+on the reserve-down market, the energy production on arc a can thus be reduced at most by st,a + t,apa.
+
+Appending the valid inequalities to (12), we obtain
+
+sup          ~ts 1st + ~tu 1ut + ~tv 1vt
+
+     tT (d)
+
+s.t. st, ut, vt  RA, gt, pt, zt  LA(F[(d),t])                     t  T (d)
+
+     0  ut, 0  vt, 0  gt  gt, 0  pt  pt, 0  zt t  T (d), P|[(d)] -a.s.
+
+     st + ut ut ut - vt vt vt = t  gt - t  pt                     t  T (d), P|[(d)] -a.s.      (13)
+                                                                  t  T (d)
+     st - tvvt  -t  pt                                            t  T (d), P|[(d)] -a.s.
+
+                                     t
+
+     wt  wd-1 +                              + M(g - p + z )  wt
+
+                                      =(d)
+
+     wd  wd-1 +                               + M(g - p + z )     P|[(d)] -a.s.,
+
+                                      T (d)
+42                                                    Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                                                  A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+which is equivalent to problem (12) by virtue of Proposition 7.
+   Next, we will show that problem (13) is equivalent to the reduced individual trader's problem (ITr). Our
+
+argument critically relies on the following technical yet intuitive lemma, which asserts that there is no benefit
+in simultaneous generation and pumping.
+
+   Lemma 2. The optimal value of the reduced planner's problem (ITr) does not decrease if we append the
+complementarity constraints gt  pt = 0 for all t  T (d).
+
+   Proof Consider any feasible solution {(st, ut, vt, gt, pt, zt)}tT (d) of problem (ITr), and construct a new
+solution {(st, ut, vt, gt, pt , zt)}tT (d) with adjusted flow decisions
+
+                             gt = gt - t  t, pt = pt - t  t, zt = zt + (t - t)  t,
+
+where t  RA is defined through t,a = min{gt,a/t,a, pt,a/t,a}. This new solution preserves the market
+decisions and consequently the objective value of the original solution, and it is readily seen to satisfy the
+
+complementarity constraints gt  pt = 0 for all t  T (d). The claim thus follows if we can show that the new
+solution is feasible in (ITr). To this end, note that t  0, which implies that gt  gt  g, pt  pt  p, and
+zt  0, where the last inequality exploits our standing assumption that t > t. Similarly, the inequalities
+t  t  gt and t  t  pt ensure that gt  0 and pt  0. Finally, observe that gt - pt + zt = gt - pt + zt
+(i.e., the net reservoir outflows remain unchanged) and t  gt - t  pt = t  gt - t  pt (i.e., the arc-wise net
+energy production quantities remain unchanged), which implies that the new solution satisfies the reservoir
+
+balance constraints and the energy delivery constraints, respectively. In summary, we have shown that the
+
+new solution is indeed feasible in (ITr), and thus the claim follows.                      
+
+    Proposition 8. Under Approximation 1, the optimal values of (13) and (ITr) are equal.
+
+    Proof We will prove the proposition by showing that every feasible solution of problem (13) corresponds
+
+to a feasible solution of problem (ITr) with the same objective value and vice versa. Since the first corre-
+
+spondence follows from a simple adaptation of the respective argument in the proof of Proposition 5, we
+
+omit its detailed proof for the sake of brevity.
+
+    To prove that every feasible solution of problem (ITr) corresponds to a feasible solution of problem (13), we
+
+fix any feasible solution {(st, ut, vt, gt, pt, zt)}tT (d) of the reduced trader's problem (ITr). By Lemma 2, we
+may assume without loss of generality that this solution satisfies the complementarity constraints gt  pt = 0
+for all t  T (d). We claim that one can systematically construct flow decisions {(gt, pt)}tT (d) that satisfy
+
+    gt,a, pt,a  L(F[(d),t])                                                                (14a)
+
+    0  gt,a  gt,a                                                      P|[(d)] -a.s.       (14b)
+
+    0  pt,a  pt,a                                                      P|[(d)] -a.s.       (14c)
+    t,agt,a - t,apt,a = st,a + ut tuut,a - vt tvvt,a                   P|[(d)] -a.s.       (14d)
+    gt,a - pt,a  gt,a - pt,a                                           P|[(d)] -a.s.       (14e)
+
+for all t  T (d) and a  A. As gt,apt,a = 0, we can distinguish two cases for each hour-arc pair (t, a), which
+necessitate two different constructions of the corresponding flows gt,a and pt,a. Specifically, we first assume
+that gt,a = 0 (Case 1), and then we assume that gt,a > 0 (Case 2). From now on all equalities and inequalities
+involving random variables are understood to hold P|[(d)] -almost surely.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                                   43
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+  Case 1 (gt,a = 0): We set gt,a = 0 and pt,a = -(st,a + ut tuut,a - tvvt vt,a)/t,a. It is easy to verify that
+(gt,a, pt,a) satisfies (14b) and (14d). The non-anticipativity constraints (14a) are also met because the reserve
+allocations tu and tv are revealed in hour  (t), whereas the reserve activations ut and tv are revealed in
+hour t. In order to establish (14c) and (14e), we first observe that the given feasible solution of the reduced
+trader's problem (ITr) satisfies
+
+                           st,a + tuut,a = t,agt,a - t,apt,a = pt,a = -(st,a + ut ut,a)/t,a,
+
+where the implication holds because gt,a = 0. As ut  tu and ut  1 while tv, tv, ut,a and vt,a are non-
+negative, we may thus conclude that pt,a  pt,a. Hence, the constructed pumping decision pt,a meets require-
+ment (14e). Finally, requirement (14c) is satisfied because 0  pt,a  pt,a and because
+
+                        pt,a = -(st,a + tuut ut,a - vt tvvt,a)/t,a  -(st,a - vt vt,a)/t,a  pt,a,
+
+where the second inequality follows from the valid cut derived in Proposition 7, which constitutes one of the
+constraints of the reduced trader's problem (ITr). Thus, gt,a and pt,a satisfy (14).
+
+  Case 2 (gt,a > 0): We set gt,a = (st,a + ut ut ut,a - tvtvvt,a)+/t,a and pt,a = (st,a + tutuut,a -
+tvtvvt,a)-/t,a. These flow decisions manifestly satisfy the non-anticipativity constraints (14a).
+
+   If st,a + ut tuut,a - tvvt vt,a  0, then we have gt,a = 0 and pt,a = -(st,a + ut ut ut,a - tvtvvt,a)/t,a, and
+one can proceed as in Case 1 to show that the requirements (14b)­(14e) are met. From now on assume that
+st,a + ut tuut,a - tvtvvt,a > 0, in which case gt,a = (st,a + ut tuut,a - vt tvvt,a)/t,a and pt,a = 0. Note first that
+the requirements (14c) and (14d) are trivially met. We further find that
+
+gt,a = (st,a + ut tuut,a - tvtvvt,a)/t,a  (st,a + tuut,a)/t,a = gt,a  gt,a,  (15)
+
+where the second equality follows from the constraint st,a + ut ut,a = t,agt,a - t,apt,a of problem (ITr) and
+the complementarity condition gt,apt,a = 0, which implies that pt,a = 0. Hence, requirement (14b) is satisfied.
+Finally, as pt,a = pt,a = 0, the inequality (15) also implies that requirement (14e) is met. Thus, gt,a and pt,a
+satisfy again all of the requirements listed in (14).
+
+   Given the flow decisions {(gt, pt)}tT (d) constructed above, we are now ready to introduce compatible spill
+decisions zt = zt + (gt - pt) - (gt - pt ) for all t  T (d). In the remainder of the proof we will demonstrate
+that the constructed solution {(st, ut, vt, gt, pt , zt)}tT (d) is feasible in (13).
+
+   Note first that we need not be concerned with the constraints that only involve the market deci-
+
+sions {(st, ut, vt)}tT (d), which are trivially satisfied because {(st, ut, vt, gt, pt, zt)}tT (d) is feasible in prob-
+lem (ITr). Moreover, all constraints of problem (13) that do not involve the spill decisions are satisfied because
+
+of (14). It remains to verify that the spill decisions are non-anticipative as well as non-negative and that the
+reservoir balance constraints are satisfied. To this end, we note first that zt inherits non-anticipativity from
+gt and pt . Similarly, zt inherits non-negativity from zt thanks to (14e). Finally, we highlight that (gt, pt , zt)
+impacts the reservoir balance constraints only through the net water outflows gt - pt + zt, which coincide
+with gt - pt + zt by the construction of zt. This guarantees via the feasibility of {(st, ut, vt, gt, pt, zt)}tT (d)
+in (ITr) that the reservoir balance constraints are satisfied. Therefore, {(st, ut, vt, gt, pt , zt)}tT (d) is indeed
+feasible in (13).
+44                                            Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+                               A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+   The claim now follows because {(st, ut, vt, gt, pt, zt)}tT (d) and {(st, ut, vt, gt, pt, zt)}tT (d) share the same
+market decisions, which implies that these two solutions attain the same objective values in their respective
+
+optimization problems. Thus, we can always find a feasible solution of (13) that attains the same objective
+
+value as any feasible solution of the reduced trader's problem (ITr).                         
+
+   In summary, the results of this section show that, as long as the end-of-day reservoir levels are fixed a day
+in advance, the infinite-dimensional trader's problem (IT) is equivalent to the tractable linear program (ITr),
+whose size scales linearly with the number A of arcs in the reservoir system and the number H of hours per
+day. This key insight is formalized in the following theorem.
+
+    Theorem 3. Under Approximation 1, the optimal values of (IT) and (ITr) are equal.
+
+    Proof This is an immediate consequence of Propositions 6, 7 and 8.                        
+
+   The relations between the various optimization problems studied so far in this appendix are illustrated
+in the upper row of Figure 8, which uses the same conventions as Figure 1. To conclude the appendix, it
+remains to be shown that the optimal objective value of (CTr) is upper bounded by that of (ITr). This is
+established in the next and final proposition.
+
+          Proposition 6        Proposition 7                            Proposition 8
+
+    (IT)                 (12)                 (13)                                     (ITr)
+
+                                                                        Proposition 9
+
+          Proposition 3        Proposition 4                            Proposition 5
+
+    (CT)                 (3)                  (4)                                      (CTr)
+
+Figure 8 Illustration of the relations between different variants of the trader's problem. Dashed arcs represent
+      trivial relaxations, and solid arcs represent non-trivial implications proved in the referenced propositions.
+
+   Proposition 9. Under Approximation 1, the optimal value of problem (ITr) is larger than or equal to
+that of problem (CTr).
+
+   Proof The claim follows if we can show that for every feasible solution of problem (CTr) there exists
+a feasible solution of (ITr) that attains the same objective function value. To achieve this, we select an
+arbitrary feasible solution {(st, ut, vt, gt, pt, zt)}tT (d) of problem (CTr) and aim to show that problem (ITr)
+admits a feasible solution {(st , ut , vt, gt, pt, zt)}tT (d) with the same flow decisions that satisfies 1st = st,
+1ut = ut and 1vt = vt for all t  T (d). These identities ensure that the two solutions adopt the same
+objective values in their respective optimization problems.
+Schindler, Rujeerapaiboon, Kuhn, Wiesemann                        45
+
+A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+   As the flow decisions {(gt, pt, zt)}tT (d) are preserved, their upper and lower bounds as well as the reser-
+voir level constraints are trivially satisfied. It thus suffices to show that there exist individual market bids
+{(st, ut , vt)}tT (d) that are consistent with the prescribed collective market bids {(st, ut, vt)}tT (d) and that
+satisfy all remaining constraints of problem (ITr), that is, the non-negativity constraints, the energy delivery
+constraints and the valid inequalities from Proposition 4. Formally, such individual market bids exist if and
+
+only if the optimal value of the feasibility problem
+
+min 0
+
+s.t. st  RA, ut  R+A , vt  RA+
+
+1st = st, 1ut = ut, 1vt = vt                                      (16)
+
+st + tuut = t  gt - t  pt
+
+                                                      st - tvvt  -t  pt
+vanishes for each hour t  T (d), provided that {(st, ut, vt, gt, pt, zt)}tT (d) is feasible in (CTr). Assigning
+dual variables , ,   R to the consistency constraints for the market bids,   RA to the energy delivery
+
+constraints and µ  RA+ to the valid inequalities from Proposition 4, the linear program dual to the above
+feasibility problem can be represented as
+
+max st + ut + vt + (t  gt - t  pt) - µ(t  pt)
+
+s.t. , ,   R,   RA, µ  R+A
+
+1 +  + µ = 0                                                      (17)
+
+                                          1 + ut   0
+                                          1 - tvµ  0.
+Strong duality holds because the feasible set of the dual problem contains the origin. In the remainder we
+
+will argue that the objective value of any feasible solution (, , , , µ) of the dual linear program (17)
+is bounded above by 0. To this end, we define µ = minaA µa  0 and note that combining the first two
+constraints in (17) yields ( - ut )1 - ut µ  0, which in turn implies that  - tu - tuµ  0. We thus find
+that the objective value in (17) satisfies
+
+                          st + ut + vt + (t  gt - t  pt) - µ(t  pt)
+                     = st + ut + vt + ( + µ)(t  gt - t  pt) - µ(t  gt + t  (pt - pt))
+                      st + ut + vt - (tgt - tpt) - µ(tgt + t(pt - pt))
+                     = st + ut + vt - (st + tuut) - µ(st + ut ut + tpt)
+                     = ( - ut  - ut µ)ut + vt - µ(st + tpt)
+                      ( - tu - tuµ)ut + µ(vt vt - st - tpt)  0,
+where the first inequality exploits the relations  + µ = -1 (by the feasibility of ,  and µ in (17)) and
+µ1  µ (by the construction of µ) together with the non-negativity of gt and pt - pt (by the feasibility of
+gt and pt in (CTr)). The second equality follows from the energy delivery constraints in (CTr), and the
+second inequality holds because   tvµ (by the feasibility of  in (17) and the construction of µ) and vt  0
+46  Schindler, Rujeerapaiboon, Kuhn, Wiesemann
+
+    A Planner-Trader Decomposition for Multi-Market Hydro Scheduling
+
+(by the feasibility of vt in (CTr)). The last inequality, finally, follows from our earlier observations that
+ - tu - ut µ  0 and µ  0 combined with the relations ut  0 and tvvt - st - tpt  0 (by the feasibility
+of st, ut and vt in (CTr)).
+
+   In conclusion, we have demonstrated the that optimal value of the dual feasibility problem (17)--and
+
+thus also that of its primal counterpart--must vanish. As our arguments hold for any feasible solution
+
+{(st, ut, vt, gt, pt, zt)}tT (d) of (CTr) and for any t  T (d), the claim follows.  
+

@@ -1,0 +1,3253 @@
+Department of Industrial Economics
+      and Technology Management
+
+     TIØ4500 - Managerial Economics and
+Operations Research, Specialization Project
+
+  Multi-market optimization of
+         flexible hydropower
+
+                                    Authors:
+               Martin Bore & Sigurd Skogan Brensholm
+
+                                   Supervisor:
+                                  Stian Backe
+                                Co-supervisor:
+                             Kasper Thorvaldsen
+                                 Collaborators:
+                 Ivar Refsdal & Anders Strand Ryssdal
+                              December 16, 2025
+Project Report           TIØ4500
+
+Preface
+
+This project report concludes the work conducted throughout the course TIØ4500 -
+Managerial Economics and Operations Research, Specialization Project at the Nor-
+wegian University of Science and Technology, Department of Industrial Economics
+and Technology Management.
+
+We extend our sincere gratitude to Stian Backe, whose guidance and expertise have
+been invaluable throughout this project. His insight and experience within energy
+and power market modelling have greatly supported us in navigating complex chal-
+lenges. We would also like to express our appreciation to Kasper Thorvaldsen for his
+valuable discussions, constructive feedback, and helpful insights. Finally, we would
+like to thank Anders Strand Ryssdal and Ivar Refsdal for their consistent contribu-
+tions and valuable input to the work presented in this specialization project.
+
+Trondheim, December 2025
+
+         Martin Bore     Sigurd Skogan Brensholm
+
+                      i
+Project Report      TIØ4500
+
+Abstract
+
+In an evolving power system, balancing services are expected to become an increas-
+ingly important consideration. A growing share of intermittent generation technolo-
+gies, increased interconnection capacities, and rising electricity demand are among
+the key drivers behind this development. Furthermore, due to the inherent struc-
+ture of power markets, flexible resources such as hydropower are well-positioned to
+participate across multiple markets. These aspects provide a strong motivation for
+investigating how flexible hydropower can be operated more e!ciently across mul-
+tiple markets, not only to increase profitability but also to ensure system stability. As
+many hydropower plants are ageing and are currently being considered for upgrades,
+the question of whether additional investments in capacity upgrades of hydropower
+plants can help address the challenges mentioned above.
+
+The project analyses the various electricity and capacity markets with respect to
+both their technical characteristics and economic incentives. This is followed by a
+literature review revealing a research gap on flexible hydropower plants participating
+in a detailed multi-market framework. Thus, the following research problem has been
+identified:
+
+Optimization of flexible hydropower operation by incorporating multi-
+market characteristics and relevant modelling considerations to quantify
+operational performance and revenues.
+
+This research is addressed through a deterministic optimisation model with the ob-
+jective of maximising operational revenues across energy and several capacity mar-
+kets. A case study of a hydropower producer located in the NO2 price area is
+conducted to assess whether multi-market participation can contribute to justifying
+a potential capacity upgrade of the power plant.
+
+From an operational perspective, the results indicate that participation across both
+energy and reserve markets, without the consideration of activation, leads to less
+aggressive plant operation. From an economic perspective, participation in capacity
+markets results in increased operational revenues, as the water resource is utilized
+more e"ectively. The results further indicate, with the underlying assumptions and
+input data employed, that a capacity upgrade could be economically justified. With
+further development, the findings also suggest that the proposed model may evolve
+into a more robust decision-support tool for evaluating future investments.
+
+                ii
+Project Report          TIØ4500
+
+Table of Contents
+
+List of Figures         vi
+
+List of Tables          vii
+
+1 Introduction          1
+
+1.1 Purpose of the project . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+
+1.2 Outline of the project report . . . . . . . . . . . . . . . . . . . . . . . 5
+
+2 Power markets         6
+
+2.1 The Norwegian power market and system . . . . . . . . . . . . . . . . 6
+
+2.2 Day-Ahead market . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+
+2.3 Intraday market . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+
+2.4 Reserve markets . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+
+2.4.1 FFR - Fast Frequency Reserves . . . . . . . . . . . . . . . . . 9
+
+2.4.2 FCR - Frequency Containment Reserves . . . . . . . . . . . . 9
+
+2.4.3 aFRR - automatic Frequency Restoration Reserve . . . . . . . 10
+
+2.4.4 mFRR - manual Frequency Restoration Reserve . . . . . . . . 10
+
+2.4.5 Summarizing the power markets . . . . . . . . . . . . . . . . . 11
+
+2.5 Future considerations and research in the power market . . . . . . . . 12
+
+2.6 Demand for balancing services . . . . . . . . . . . . . . . . . . . . . . 13
+
+3 Hydropower            18
+
+3.1 Hydropower from a physical and technical perspective . . . . . . . . . 18
+
+3.1.1 Storage using the reservoir . . . . . . . . . . . . . . . . . . . . 19
+
+                   iii
+Project Report                   TIØ4500
+
+      3.1.2 Filling up the reservoir with inflow . . . . . . . . . . . . . . . 19
+      3.1.3 Discharging water through the penstock . . . . . . . . . . . . 19
+      3.1.4 Converting to electrical energy using the generating unit . . . 20
+      3.1.5 Using the hydropower production function to determine the
+
+                generated power . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+3.2 Key elements from an economic perspective . . . . . . . . . . . . . . 21
+
+      3.2.1 Water value . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+      3.2.2 Planning horizons . . . . . . . . . . . . . . . . . . . . . . . . . 21
+      3.2.3 Market participation . . . . . . . . . . . . . . . . . . . . . . . 24
+      3.2.4 Hydropower investment analysis . . . . . . . . . . . . . . . . . 25
+
+4 Related literature review      27
+
+4.1 Searching strategy to find relevant literature . . . . . . . . . . . . . . 27
+
+4.2 Stochaciticy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 28
+
+4.3 Hydraulic modelling . . . . . . . . . . . . . . . . . . . . . . . . . . . 29
+
+4.4 Multimarket dynamics and participation . . . . . . . . . . . . . . . . 30
+
+4.5 Relevant solution methods . . . . . . . . . . . . . . . . . . . . . . . . 32
+
+4.6 Our contribution to the literature . . . . . . . . . . . . . . . . . . . . 35
+
+5 Problem description            38
+
+6 Mathematical model             40
+
+6.1 Model assumptions and simplifications . . . . . . . . . . . . . . . . . 40
+
+7 Presenting the input data      49
+
+                             iv
+Project Report                      TIØ4500
+
+8 Validation                        52
+
+8.1 Water value . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 52
+
+8.2 Net production in energy markets . . . . . . . . . . . . . . . . . . . . 55
+
+8.3 Energy market prices vs traded volumes . . . . . . . . . . . . . . . . 56
+
+8.4 Capacity market participation . . . . . . . . . . . . . . . . . . . . . . 58
+
+9 Computational study               60
+
+9.1 Explaining the model instances . . . . . . . . . . . . . . . . . . . . . 60
+
+9.1.1 Connecting water values and the reservoir level . . . . . . . . 61
+
+9.2 Technical execution . . . . . . . . . . . . . . . . . . . . . . . . . . . . 62
+
+9.3 Analyzing operational and economic performance . . . . . . . . . . . 62
+
+9.3.1 Operational performance . . . . . . . . . . . . . . . . . . . . . 63
+
+9.3.2 Economic performance . . . . . . . . . . . . . . . . . . . . . . 65
+
+9.4 Modelling revenues with capacity expansions . . . . . . . . . . . . . . 69
+
+9.4.1 Investment analysis . . . . . . . . . . . . . . . . . . . . . . . . 70
+
+10 Concluding remarks               73
+
+11 Future Research                  75
+
+References                          78
+
+Appendix                            I
+
+A Analysing capacity market prices  I
+
+B Turbine E!ciency Curve            VI
+
+                          v
+Project Report               TIØ4500
+C Generator e!ciency curve         VII
+D Link to GitHub repository        VII
+
+List of Figures
+
+    1 Development of solar and wind power generation compared to other
+           resources in Europe (Ember, 2025b). . . . . . . . . . . . . . . . . . . 2
+
+    2 Cost developments in VRES and increased EV demand (Ember, 2025a). 2
+    3 Three main categories in the power market as the delivery hour ap-
+
+           proaches. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 6
+    4 Illustration of various reserve markets activated when an imbalance
+
+           occurs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+    5 Chronological order of bidding into the power markets. . . . . . . . . 11
+    6 mFRR up prices in NO2 before and after the implementation of FBMC. 13
+    7 Electricity production mix Norway 2018-2025 (SSB, 2025b). . . . . . 14
+    8 A clear rightward shift in the filtered FCR-N prices from 2019 to 2024. 15
+    9 Schematic illustration of a hydropower plant (Kasper, n.d.). . . . . . 18
+    10 Visualization of long, mid, and short term hydropower scheduling. . . 22
+    11 The production relationship for two separate sections of the PQ-Curve. 42
+    12 The simplified PQ-Curve used in the mathematical model. . . . . . . 43
+    13 Inflow profile for the modelled reservoir in 2024. . . . . . . . . . . . . 49
+    14 Duration curve for day ahead and intraday market prices in NO2 2024. 50
+    15 Maximum tradeable volumes in Intraday markets as 10% of average
+
+           daily tradeable volumes. . . . . . . . . . . . . . . . . . . . . . . . . . 51
+    16 The water value across the planning period for the validation case. . . 53
+
+                                                     vi
+Project Report  TIØ4500
+
+17 The energy sold across the DA and ID markets in the validation case. 55
+18 Production profile, and DA and ID prices in the validation case. . . . 56
+19 Production, capacity, and prices in energy and capacity markets for
+
+      the validation case. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 58
+20 Water value and reservoir level for the full-year base instance. . . . . 61
+21 Duration curves across the various instances. . . . . . . . . . . . . . . 63
+22 Ramping duration curves across the various instances. . . . . . . . . . 64
+23 The water values across the various instances. . . . . . . . . . . . . . 65
+24 Energy traded in the markets for the various instances. . . . . . . . . 66
+25 Capacity sold to the markets across the various instances. . . . . . . . 67
+26 The revenues obtained from the various instances. . . . . . . . . . . . 68
+27 Revenues obtained from base case and the various capacity expansion
+
+      cases. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 70
+28 Incremental annual revenues obtained from the capacity expansions. . 71
+29 aFRR Down price distribution (2019 vs 2024) . . . . . . . . . . . . . I
+30 aFRR Up price distribution (2019 vs 2024) . . . . . . . . . . . . . . . II
+31 mFRR Down price distribution (2019 vs 2024) . . . . . . . . . . . . . III
+32 mFRR Up price distribution (2019 vs 2024) . . . . . . . . . . . . . . IV
+33 FCR-D price distribution (2023 vs 2024) . . . . . . . . . . . . . . . . V
+
+List of Tables
+
+    1 Overview of key informational parameters for the various reserve mar-
+           kets. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+
+    2 Mean reserve capacity prices in EUR for 2019 and 2024. . . . . . . . . 16
+                                                                                MW
+
+                                                    vii
+Project Report        TIØ4500
+
+3 Review of research papers, highlighting how this report contributes to
+      the existing literature. . . . . . . . . . . . . . . . . . . . . . . . . . . 37
+
+5 The underlying assumptions and their consequences for the mathem-
+      atical formulation. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+
+6 Defining the sets used in the model. . . . . . . . . . . . . . . . . . . . 44
+
+7 Defining the parameters used in the model. . . . . . . . . . . . . . . . 45
+
+8 Defining the decision variables used in the model. . . . . . . . . . . . 46
+
+9 Operational bounds of the hydropower plant, including generator pro-
+      duction capacity and reservoir storage limits. . . . . . . . . . . . . . . 49
+
+10 Mean capacity market prices in NO2 for 2024 and tradable volume
+      limits. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 50
+
+11 Water value revenue decomposition for the validation case. . . . . . . 54
+
+12 Market inclusion for each model instance . . . . . . . . . . . . . . . . 60
+
+14 Annual revenue per MW and mean prices for the individual reserve
+      markets in NO2. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 69
+
+15 Per-MW investment cost required to achieve NPV = 0 for various
+      discount rates r, and various capacity upgrade cases . . . . . . . . . . 72
+
+16 Turbine e!ciency as a function of discharge . . . . . . . . . . . . . . VI
+
+17 Generator e!ciency vs. load . . . . . . . . . . . . . . . . . . . . . . . VII
+
+                viii
+Project Report  TIØ4500
+
+1 Introduction
+
+Despite su!cient reservoir levels in Norwegian hydropower reservoirs and relatively
+moderate outdoor temperatures on the 12th of December 2024, power prices surged
+to 13.37 NOK (Andersen, 2024; NVE, 2025a). This price level is almost twenty times
+
+                 kW h
+
+higher than the annual mean in 2024, illustrating the significant price fluctuations
+currently occurring in the market (SSB, 2025a).
+
+In the power system, electricity must be produced and consumed simultaneously to
+maintain the system frequency. A range of electricity markets has therefore been de-
+veloped to ensure operational feasibility. While long-term financial instruments aim
+to provide predictability, the day-ahead (DA) market provides operational guidance
+one day before physical delivery. The market-clearing price (MCP) is determined by
+the intersection of the supply and demand curves, established through bids placed
+according to the merit-order principle. Furthermore, the intraday (ID) market func-
+tions as a continuous bilateral trading arena, allowing participants to adjust their
+scheduled positions. Closer to real time, several reserve markets are activated to
+counteract imbalances and maintain a stable frequency.
+
+Theoretically, the MCP equals the bid of the marginal unit in the merit order required
+to satisfy demand. In the European market, this marginal unit is usually a gas-
+fired power plant (Blume-Werry et al., 2021). Although hydropower typically has
+very low marginal production costs, this is not reflected in its supply bids. On the
+one hand, reservoir-based hydropower can defer production to future periods when
+electricity is scarcer, creating an opportunity cost associated with alternative uses of
+stored water. Furthermore, water in the reservoir functions as a societal safeguard
+against costly blackouts, an aspect that must be incorporated into bidding strategies.
+This opportunity cost is commonly referred to as the water value, which forms the
+basis for the hydropower marginal cost bidding. Moreover, one unit of hydropower
+generation can e"ectively displace the marginal gas-fired unit that would otherwise
+set the price in the continent, given available transfer capacity. Consequently, the
+severe constraints on European gas supply following Russia's invasion of Ukraine
+triggered an energy crisis, ultimately driving power prices to notably high levels.
+
+Achieving the target of net-zero greenhouse gas emissions by 2050 requires substan-
+tial innovation and regulatory measures within the energy sector. Instruments such
+as the EU Emissions Trading System (ETS) and rapid cost reductions in wind and
+solar technologies have made variable renewable energy sources (VRES) an increas-
+ingly important part of the energy mix, as illustrated in Figure 1 and Figure 2a. At
+
+                                                     1
+Project Report                              TIØ4500
+
+the same time, consumers have altered their consumption patterns through the wide-
+spread adoption of electric vehicles, as shown in Figure 2b. Together, these devel-
+opments increase the risk of volatile production and consumption patterns, thereby
+increasing the risk of imbalances in the power system (Belsnes et al., 2016).
+
+Figure 1: Development of solar and wind power generation compared to other re-
+sources in Europe (Ember, 2025b).
+
+                (a) Cost improving VRES     (b) Increased demand for
+                                            EVs
+
+Figure 2: Cost developments in VRES and increased EV demand (Ember, 2025a).
+
+                                         2
+Project Report     TIØ4500
+
+Norway's power system relies heavily on hydropower, which accounts for approxim-
+ately 90% of total electricity production. As a weather-dependent resource, hydro-
+power is vulnerable to dry periods that can lead to low reservoir levels, meaning
+the country cannot always be fully self-su!cient in electricity supply. To mitigate
+this risk, Norway has over time invested in several interconnectors to neighbouring
+European countries, enabling more e!cient utilisation of electricity across regions
+(RME, 2025). Increased integration with the European power market, however, also
+exposes Norway to greater uncertainty in continental power prices.
+
+Interconnecting the European grid reflects broader political and technological changes
+in the European energy market, necessitating increased flexibility. Mentens et. al.
+(2025) emphasize that such flexibility is essential for e"ective grid management and
+a reliable power supply. They distinguish three overarching mechanisms: i) spa-
+tial adjustment of demand and supply through interconnectors, ii) demand-response
+systems facilitated by price signals, and iii) temporal adjustment of supply and de-
+mand through storage solutions. Temporal flexibility may be provided by batteries,
+prosumers, or upgrades that enhance the flexibility of hydropower plants. However,
+uncertainty in battery deployment and future load development favours reservoir-
+based hydropower as a stabilizing force in the market (Statnett, 2025b). Warland
+and Mo (2016) argue that flexible, fast-responding hydropower plants capable of
+producing during peak-price periods will benefit most in an increasingly uncertain
+system. This increases the likelihood of operation at capacity bounds. Consequently,
+physically accurate modelling of hydropower capacity becomes essential for delivering
+the flexibility increasingly required by the evolving energy system.
+
+The growth of intermittent generation, increased interconnection, gas shortages, and
+new policy measures all underline the need to study non-conventional hydropower
+planning. Belsnes (2016) suggests that hydropower producers may need to allocate a
+larger share of their capacity toward the intraday and reserve markets. To optimise
+future production, hydropower producers must therefore schedule watercourses in
+ways that enable participation in multiple markets simultaneously.
+
+The profitability of providing flexibility in a multi-market setting has already triggered
+numerous investment plans among Norwegian hydropower producers. Concurrently,
+simple analyses show that increased hydropower flexibility can significantly reduce
+power price variability (Messel Larsen, 2024). A clear example is Eviny, a major
+Norwegian power producer, which plans to double the installed capacity of three hy-
+dropower plants to capture additional market value. Although profit is the primary
+motive, such investments are also expected to alleviate price pressure (Messel Larsen,
+
+                3
+Project Report  TIØ4500
+
+2025). Investigating how flexible hydropower, capable of contributing to both price
+and frequency stability, can be economically optimized is therefore a highly relevant
+operations research topic for this specialization project.
+
+1.1 Purpose of the project
+
+This project seeks to establish an understanding of the electricity markets available
+to Norwegian power producers, develop a fundamental comprehension of how hydro-
+power scheduling is modelled within an optimization framework subject to physical
+constraints, and identify research gaps in the academic literature on hydropower
+planning. The findings from the literature review indicate that multi-market op-
+timisation models have received limited attention, which has led to the following
+research questions:
+
+     · What are the operational impacts of multi-market participation on the hydro
+        power plant's cost-optimal capacity utilization and ramping hours?
+
+     · What is the added value of including several capacity markets in a multi-market
+        optimisation model?
+
+     · How costly can capacity upgrades be while remaining economically viable, given
+        the increased earning potential?
+
+The main purpose of this project is therefore to investigate how a deterministic multi-
+market model allocates the capacity of a single hydropower plant across the available
+markets, and to assess the added value this may provide to the producer. The results
+represent an optimistic estimate by construction, but demonstrate that the increased
+revenue potential may justify the investment costs reported in industry benchmarks.
+Participation in capacity markets causes the production level to fluctuate more fre-
+quently, but typically with smaller amplitudes, and the reservoir is emptied less often
+due to an overall lower production level. Factors such as the available reserve ca-
+pacity and the relative price interaction between individual reserve markets and the
+energy markets are decisive for determining which reserve products contribute most
+to increasing revenues in an optimization setting. The work presented in this project
+can serve as a base for future research on more realistic modelling of multi-market
+participation.
+
+                                                     4
+Project Report     TIØ4500
+
+1.2 Outline of the project report
+
+The remainder of the report is organized as follows. Section 2 presents a background
+on the various power markets with a subsequent assessment of the need for balan-
+cing services and the price dynamics across these markets. Section 3 introduces key
+aspects of hydropower production in Norway and outlines the considerations relev-
+ant when modeling a hydropower plant within optimization frameworks. Section 4
+provides a qualitative review of the relevant literature and modeling approaches,
+followed by a problem description in Section 5.
+
+Further, Section 6 presents the mathematical model together with the assumptions
+and simplifications applied during implementation. This is followed by a short-term
+model validation in Section 8, aimed at assessing the model's behaviour and decisions
+at fine temporal resolution. Section 9 presents a computational study evaluating both
+operational and economic performance, which is subsequently linked to an investment
+analysis of various capacity-upgrade scenarios. Concluding remarks are provided in
+Section 10 and future research directions are outlined in Section 11.
+
+                5
+Project Report   TIØ4500
+
+2 Power markets
+
+This section presents a brief overview of the Norwegian power system, followed by an
+introduction to the di"erent segments of the electricity market and a simple analysis
+of market prices. The markets considered include the spot market, commonly referred
+to as the day-ahead market, the intraday market, and the various reserve markets.
+An overview of the main markets discussed in this study is provided in Figure 3.
+Long-term contracts and financial markets are excluded, as they fall outside the
+scope of this project.
+
+Figure 3: Three main categories in the power market as the delivery hour approaches.
+
+2.1 The Norwegian power market and system
+
+The Norwegian power market was liberalized on the 1st of January 1991, when the
+Energy Act was o!cially implemented (Moen & Johansen, 1992). This meant that
+the supply and demand of electrical energy were subject to the principles of mar-
+ket clearing to increase overall economic e!ciency. A clear distinction was thereby
+established between the competitive supply and demand of electric power through
+market mechanisms and the monopolistic principle of governing electricity distribu-
+
+                                                     6
+Project Report     TIØ4500
+
+tion through the power grid.
+
+The Norwegian power grid can be divided into three main levels: the transmission
+level, the regional level, and the distribution level. The Norwegian power grid is
+regulated by The Norwegian Regulathory Authorty (RME), and one of the main
+responsibilities of RME is to ensure e!cient energy distribution management in
+Norway by facilitating sustainable grid development and improving the utilization of
+existing power grid. Statnett, the Norwegian Transmission System Operator (TSO),
+operates and maintains the transmission grid and is responsible for ensuring that the
+power system remains balanced (Statnett, 2025a). The various reserve markets are
+described under Section 2.4.
+
+2.2 Day-Ahead market
+
+The Day-Ahead (DA) market is the wholesale market where supply and demand
+for electricity are determined. Here, producers and consumers submit bids on both
+volume and price, and then the market is cleared for the coming 24 hours. At 10:00
+CET, the available transmission capacities on interconnectors are published, and
+by 12:00 CET, every market participant must have submitted their bids. Then,
+the common European coupling process called Single Day-Ahead Coupling uses the
+Euphemia algorithm to clear the market every hour for the coming 24 hours (Nord
+Pool, 2023a).
+
+From the 30th of September 2025, the European power system changed its time
+resolution from hourly to sub-hourly (15 min) (Statnett, 2022). The transition to
+quarterly time resolution is an important measure to meet the climate targets set
+by European authorities. More precisely, the measure aims to smooth out structural
+imbalances in the power system caused by a disaligned production profile compared
+to the load change.
+
+2.3 Intraday market
+
+To better align supply and demand between the DA market and real-time operations,
+the intraday (ID) market provides an additional platform for securing the necessary
+system balance. Once the TSO has calculated the flows based on the results from
+the DA auction, the available capacities for the ID market are published. The ID
+
+                7
+Project Report  TIØ4500
+
+market functions as a bilateral trading platform where participants can trade up to
+one hour before delivery (Nord Pool, 2023b). The market platform for the ID market
+is called SIDC (Nord Pool, 2023c).
+
+2.4 Reserve markets
+
+As the delivery period approaches, further market imbalances may arise. Therefore, a
+range of support services exists to ensure the simultaneous balance between electricity
+production and consumption, which, in turn, maintains the frequency at 50 Hz in
+the Norwegian power system. The markets helping maintain this balance are known
+as the reserve markets and are operated by Statnett. The system imbalances can
+come in terms of both under- and over-frequency. If the system frequency falls below
+50 Hz, balance can be restored by increasing power output to the grid or by reducing
+power consumption. Conversely, if the frequency rises above 50 Hz, balancing can
+be achieved by decreasing power output or by increasing the amount of power drawn
+from the grid.
+
+To achieve a smooth balancing, there is a range of di"erent support services, which
+can essentially be divided into four main categories: FFR, FCR, aFRR, and mFRR
+(Statnett, 2023). The set of reserve products all serve di"erent purposes in maintain-
+ing a balanced frequency. In Figure 4, it can be observed how an under-frequency is
+handled through an increase in power from the various ancillary services.
+
+Figure 4: Illustration of various reserve markets activated when an imbalance occurs
+                                          (Statnett, 2025a).
+
+                                                     8
+Project Report     TIØ4500
+
+2.4.1 FFR - Fast Frequency Reserves
+
+FFR is the fastest responding reserve and must be activated within one second. The
+reserve was introduced quite recently, and exists to ensure that the frequency does not
+fall below 49 Hz, and is activated once the frequency falls below a certain threshold
+set between 49.5 and 49.7 Hz. The system operator, i.e., Statnett, is responsible for
+the procurement of FFR capacity. To limit the possibility of over-dimensioning the
+procurement of reserve capacity, FFR is acquired in two main products: A seasonal
+profile with limited capacity on weekends and nighttime (FFR Profil), and a more
+flexible profile delivered based on request by the system operator and short-term
+forecasts (FFR Flex). For the seasonal procurement, the minimum bid capacity is
+1MW, but for FFR Flex, the minimum bid capacity is 5 MW (Statnett, 2025d).
+
+2.4.2 FCR - Frequency Containment Reserves
+
+FCR is the primary reserve and can be split into two main reserves, FCR-N and FCR-
+D. FCR-N is activated within the normal frequency band, 49.9 Hz ­ 50.1 Hz, and is
+intended to reduce frequency deviations under normal conditions. Thus, providers of
+FCR-N must be able to supply both upwards and downwards regulation, reflecting
+the symmetric nature of the product. With larger imbalances related to faults in
+production units, consumption units, or transmission components, the FCR-D is
+activated. FCR-D does not have the same symmetric requirement as FCR-N, and
+for now, downregulation in FCR-D is absent (Statnett, 2025c).
+
+To ensure su!cient capacity from primary frequency reserves, a marketplace has
+been established to determine the natural intersection between supply and demand
+of reserve capacity. This market consists of two sub-markets, known as D1 and
+D2. The minimum bid size in both markets is 0.1 MW, and the maximum response
+time is 30 seconds. To be eligible for participation in the FCR market, each market
+provider must be approved by Statnett, act as the balancing responsible for that
+specific object, and hold an approved prequalification for the specific object (Statnett,
+2025c).
+
+The D2 market is executed before the DA market and cleared two days ahead with
+hourly resolution per bidding zone. Bidders are allowed to submit bids between
+00:00 and 17:30 two days ahead of the operational day. Awarded bids are notified
+by Statnett at 18:30 (Statnett, 2025h).
+
+                9
+Project Report  TIØ4500
+
+Further, the D1 market is conducted after the DA market to cover residual require-
+ments, including exchange requests from neighbouring TSOs. The D1 market is
+cleared daily for the next operational day with hourly resolution per bidding zone.
+Bidders are allowed to submit bids between 00:00 and 18:00 one day ahead of the
+operational day. Awarded bids are notified by Statnett by 19:00 this day, which
+then reveals the price (Statnett, 2025h). The separation into D2 and D1 markets
+improves predictability because the D2 market runs before the DA auction, while
+the D1 market runs afterward to cover remaining needs and exchange requests from
+other TSOs.
+
+2.4.3 aFRR - automatic Frequency Restoration Reserve
+
+Secondary reserves are referred to as aFRR, and they are procured for both up and
+down regulation. aFRR is activated to restore the frequency to 50.00 Hz. This, in
+turn, releases the activated primary reserve, making it available for any new faults
+and imbalances that may occur. The maximum time for full activation is currently
+set at 5 minutes after the TSO sends a signal. However, Statnett targets a faster
+response, ideally within 2 minutes or less. The minimum allowed bid size is 1 MW.
+Bids can be submitted starting from 7 days before the operational day, and must
+be submitted for each daily auction. Suppliers to this capacity market must submit
+their bids by 07:30 CET the day before the operational day, but can be modified or
+withdrawn up until the deadline. The need for aFRR is dimensioned per el-spot area,
+and Statnett, being the system operator, clears the market before every operating
+day. (Statnett, 2024a). The resulting market prices are published at 09 a.m. on the
+operating day.
+
+2.4.4 mFRR - manual Frequency Restoration Reserve
+
+The mFRR, known as the tetriary reserve, releases the activated secondary reserve,
+aFRR. For mFRR, there exsists two markets: a capacity market and an activation
+market. In the capacity market, participants are paid for guaranteeing that their
+reserved capacity can be utilized, with separate markets for both down- and up-
+regulation. The activation market works by providers submitting bids with prices
+for regulating production and consumption. The bids are sorted into a common list,
+and when balancing is needed, the cheapest resources will be activated first (Statnett,
+2024b). For mFRR, each bidding zone must maintain its own balance, but can receive
+
+                                                    10
+Project Report                                                                          TIØ4500
+
+support from neighbouring zones if transmission capacity is available.
+
+The mFRR is the slowest and most energy-intensive reserve. Each bid must be at
+least 5 MW, have a maximum activation time of 12.5 minutes, and must be pro-
+cured every 15 minutes. For the mFRR capacity market, bids must be submitted by
+07:30 CET the day ahead of the operational day; meanwhile, for the mFRR activa-
+tion market, bids must be submitted 45 minutes ahead of the operating hour. The
+bids in the activation market must be submitted with increments of 0.5 EUR/MWh
+(Statnett, 2024c).
+
+2.4.5 Summarizing the power markets
+
+Section 2 demonstrates the complexity of the power markets that evolve in the pursuit
+of maintaining a stable frequency in the system. Figure 5 shows the sequential
+interaction between the markets to fulfill this purpose, while Table 1 summarizes the
+reserve markets.
+
+FCR-N D2       aFRR CM       Day-Ahead                Intraday mFRR EAM
+   17:30           07:30        12:00                   T­1h T­45 min
+
+               mFRR CM                                                       Delivery Period
+                   07:30
+                                        FCR-N/D D1
+                                             18:00
+
+          Figure 5: Chronological order of bidding into the power markets.
+
+Table 1: Overview of key informational parameters for the various reserve markets.
+
+                     FFR Flex FFR Seasonal FCR-N FCR-D aFRR CM aFRR EAM mFRR CM mFRR EAM
+
+Response Time        0.7­1.3 s 0.7­1.3 s  2 min  2 min  5 min  5 min 12.5 min           15 min
+
+Duration             5­30 s  5­30 s      15 min  15 min Bid size2 Bid size2  Bid size2  Bid size2
+
+Minimum Volume (MW)  1       5          0.1      0.1  1    1                 1          2.53
+
+Implemented (YES/NO) YES     YES        YES      YES  YES  NO1               YES        YES
+
+                                           1
+
+                                      Planned to go live in 2027/2028
+
+                               2
+
+                              Duration depends on the submitted bid size
+
+                     3
+
+                       Minimum bid of 10 MW constant power for 15 minutes
+
+                                             11
+Project Report      TIØ4500
+
+2.5 Future considerations and research in the power market
+
+The need for electricity and better ancillary services is expected to increase moving
+further towards 2050 (DNV, 2024). The reserve markets must therefore undergo
+several structural changes to handle this development. It is still early to determine
+how these developments and implementations will a"ect the markets, and they are
+therefore only discussed briefly in this subsection.
+
+Firstly, the Nordic TSOs are planning to transition to an activation market where
+the aFRR demand will be calculated per bidding zone. Then, the cheapest bids will
+be selected for activation through a common optimization, which takes into account
+transmission constraints between zones. This transition is a part of the Nordic
+balancing model (NBM), and will take place when Statnett connects to the European
+Platform for the International Coordination of Automated Frequency Restoration
+and Stable System Operation, commonly known as PICASSO (Statnett, 2025e).
+Statnett is expected to join PICASSO in late 2027/early 2028.
+
+Secondly, for the mFRR activation market, the Nordic TSOs will join the Manually
+Activated Reserve Initiative (MARI) platform. MARI is a European platform for
+the exchange of mFRR. As with PICASSO, this is also a part of the transition to
+the Nordic balancing model (Statnett, 2025g). Statnett is expected to join MARI
+somewhere around the turn of the year 2026 and 2027. Modelling the activation
+markets is not considered in this project, but rather mentioned as possible future
+work.
+
+An additional structural change of importance is the transition to a 15-minute time
+resolution. In the DA market, this change is scheduled for 30th September 2025,
+while the ID market adopted 15-minute intervals in Norway on 18th March 2025.
+Since this project relies on hourly data, a finer time resolution could reveal dynamics
+not captured here. Nevertheless, the long-term implications of this transition remain
+an interesting topic for future consideration.
+
+Lastly, it is also relevant to consider how reserve market prices have been a"ected by
+the transition to flow-based market coupling (FBMC). A preliminary examination of
+this development may indicate its potential influence on the future power market. On
+the 29th October 2024, FBMC was introduced in the Nordic region. FBMC optimizes
+the allocation of grid capacity within and across European countries by accounting
+for the actual physical power flows in the grid rather than relying solely on predefined
+bilateral limits. Under FBMC, the allocation of cross-border interconnection capacity
+
+                12
+Project Report  TIØ4500
+
+is integrated into the market-clearing process, enabling more e!cient use of the grid
+and reducing price di"erences between regions (Shinde, 2024). The implementation
+of FBMC has also a"ected several reserve capacity markets.
+
+Figure 6: mFRR up prices in NO2 before and after the implementation of FBMC.
+
+Performing a brief, but non-exhaustive, analysis of this development can give some
+indications on FBMC's influence on future reserve market prices. For instance, Fig-
+ure 6 illustrates that the mFRR Up market in NO2 experienced an increase in average
+daily prices after the introduction of FBMC. The same can be observed for NO5 and
+NO1, but they are excluded for visual clarity. The increase in the daily average
+prices can be attributed to changes in cross-zonal capacity allocation under FBMC,
+which may tighten congestion between certain Norwegian price zones and thereby
+raise reserve market prices. The pronounced spike observed in the plot is associated
+with the extreme price event on 12th December 2024.
+
+2.6 Demand for balancing services
+
+The project thus far has motivated the need for balancing services, which is in ac-
+cordance with Statnett's System Development Plan (Statnett, 2025f). It has further
+outlined how the market design facilitates meeting this need. However, to incentivize
+
+                                                    13
+Project Report  TIØ4500
+
+power producers to provide additional balancing services, ownership of flexible re-
+sources must be profitable in future market conditions. Identifying whether capacity
+market prices have increased, alongside attractive price zones, may therefore serve
+as an indicator of such profitability.
+
+Modelling the future profitability of providing balancing services requires assump-
+tions about the prices that suppliers can expect to receive. Although historical prices
+may appear reasonable as input data, they are subject to considerable uncertainty. It
+is therefore important to emphasize that such data may not fully reflect future mar-
+ket conditions. Nevertheless, historical data can be used, provided that it represents
+market characteristics expected to persist in the long term and that its limitations
+are clearly acknowledged. The following presents a comparison of capacity prices
+only used to discuss the appropriate selection of historical data.
+
+        Figure 7: Electricity production mix Norway 2018-2025 (SSB, 2025b).
+
+Firstly, it is necessary to determine which years should be compared. The power mix
+development presented in Figure 7 shows that most VRES was introduced around
+2020. A meaningful comparison of balancing prices should therefore reflect the con-
+ditions prior to this development, making 2019 an appropriate reference year.
+Furthermore, during 2020 and 2021, two interconnectors were integrated into the
+Norwegian grid, exposing the power system to structural imbalances arising from the
+
+                                                    14
+Project Report  TIØ4500
+
+production mix in continental Europe (Statnett, 2021). In 2022, Russia's invasion of
+Ukraine triggered a European energy crisis, putting significant upward pressure on
+power prices. Because of these factors, 2024 has been chosen as the main comparison
+year to 2019. An exception was made for mFRR and FCR-D due to the unavailability
+of price data for 2019. Consequently, data from 2022 and 2023, respectively, were
+used as the basis for comparison.
+
+Analysing the price development
+The analysis covers all reserve markets described in Section 2.4, with the exception
+of FFR and FCR obtained from the D2 market, and includes all Norwegian price
+zones. To reduce the influence of extreme values, we have excluded observations
+below the 1st percentile and above the 99th percentile of the price distribution.
+
+ Figure 8: A clear rightward shift in the filtered FCR-N prices from 2019 to 2024.
+
+Figure 8 exemplifies the broader trend of increasing capacity prices from 2019 to
+2024. Corresponding plots for the remaining markets, presented in Appendix A,
+
+                                                    15
+Project Report                                                                TIØ4500
+
+reveal similar tendencies. This development is further supported by the summary
+statistics in Table 2. When using 2022 data for mFRR and 2023 data for FCR-D,
+the trend appears less uniform, highlighting the influence of abnormal price patterns
+in those years. Based on the 2024 data, the table indicates that FCR-N exhibits the
+highest average price considering all zones collectively. Further, the table shows that
+no price zone is distinctly more attractive than the others, while most markets have
+experienced substantial price increases.
+
+            Table 2: Mean reserve capacity prices in EUR for 2019 and 2024.
+                                                                                                   MW
+
+Year    Market                     NO1    NO2    NO3    NO4                   NO5
+                                   0.93   1.98   0.74   0.74                  1.87
+ 2019   aFRR Up                    0.72   1.84   0.66   0.66                  1.70
+Before                             4.64   4.64   4.64   4.64                  4.64
+        aFRR Down                  37.27  40.53  2.39   2.42                  36.15
+2024                               0.67   0.67   0.50   0.50                  0.67
+After   FCR-N                      6.51   8.38   8.28   7.06                  7.81
+                                   15.71  16.08  18.51  17.64                 14.29
+                           *       15.16  12.39  23.08  23.13                 8.25
+                                   18.80  18.80  18.80  18.80                 18.80
+        mFRR Up                    10.02  11.08  3.87   4.16                  9.54
+                                   5.27   3.96   1.08   2.01                  1.64
+                                *  3.07   4.36   5.44   4.65                  5.40
+
+        mFRR Down
+
+                     **
+
+        FCR-D
+
+        aFRR Up
+
+        aFRR Down
+
+        FCR-N
+        mFRR Up*
+
+                                *
+
+        mFRR Down
+
+                     **
+
+        FCR-D
+
+*
+
+ 2022 is used as a comparison year due to missing data from 2019.
+
+**
+
+   2023 is used as a comparison year due to missing data from 2019 and 2022.
+
+Input data used for case study
+Historical capacity market prices show a nearly uniform increase from 2019 to 2024.
+Because 2024 better represents current market conditions, these prices are used as
+input parameters when projecting future revenues from capacity market participa-
+tion. However, elevated prices may not persist, and increased consumer flexibility
+could even reduce them (NVE, 2024b). Using historical data can therefore be scaled
+to reflect alternative future scenarios. Although this is recognised, scenario analysis
+
+                                                    16
+Project Report      TIØ4500
+
+lies outside the scope of the project. Consequently, the mid-term hydropower model
+is solved using 2024 price and volume data.
+
+The model is applied to a case study of a reservoir-based hydropower plant in NO2.
+Plant-specific data were provided by a confidential power producer in this price
+zone. The dataset includes maximum and minimum production limits, upper and
+lower operating water levels, generator elevation, reservoir storage capacity, turbine
+and generator e!ciency curves, and historical inflow time series.
+
+The market prices used as input were retrieved from di"erent platforms. Although
+full-year aFRR data were used in the analysis found in Appendix A, these data
+only became available at a late stage of the research process. Consequently, the
+computational study in Section 9 and the validation in Section 8 rely on simplified
+representations of the aFRR market. Prices for the aFRR Up and Down markets
+were collected from NUCS for the 12th day of each month in 2024 and replicated
+to form annual time series. Similar simplifications were applied to the ID market.
+Here, volume-weighted average prices were computed using Nord Pool data from the
+12th day of each month in 2024, and the resulting hourly price­volume profiles were
+repeated for the remainder of each month to construct full-year time series. DA
+prices for the NO2 bidding zone were retrieved from ENTSO-E, while FCR-N and
+FCR-D prices for 2024 were collected from Statnett. These data were provided on a
+full-year basis and did not require any further simplifications.
+
+Price data from the mFRR capacity market was not included further in the case
+study. Among the reserve markets, mFRR is the most energy-intensive, and activated
+capacity may be dispatched continuously over long periods (Statnett, 2025c). The
+long and uncertain activation durations of mFRR complicate the requirement to
+maintain su!cient energy in the reservoir, thereby increasing uncertainty in the
+estimation of the delta parameters in Section 6.
+
+                17
+Project Report  TIØ4500
+
+3 Hydropower
+
+The power output of a reservoir-based hydropower plant depends on the interaction
+of technical components, physical processes, and economic considerations. Determ-
+ining an optimal production level while accounting for temporal coupling, non-linear
+dynamics, and uncertainty is di!cult without advanced optimization methods. This
+section outlines the key elements relevant to the modelling process, beginning with
+the physical and technical characteristics of hydropower systems and then addressing
+the associated economic considerations.
+
+3.1 Hydropower from a physical and technical perspective
+
+Over time, the weather-dependent hydrological cycle has shaped the landscape into
+interconnected systems of oceans, rivers, lakes, and glaciers collectively referred to
+as water courses (Bonsor, 2001; LVK, n.d.). Hydropower utilizes the topographical
+di"erences within these water courses to convert the kinetic energy of water into
+electrical energy. In Norway, approximately 2700 of the 4000 water courses have
+been developed for this purpose, leading hydropower to account for about 90% of
+the national power mix (LVK, n.d. WWF Norge, n.d.). Many of these systems are
+reservoir-based, where key elements include the reservoir, inflow, penstock, generat-
+ing unit, and hydraulic couplings. A schematic of such a power plant is shown in
+Figure 9 to support the following elaboration.
+
+Figure 9: Schematic illustration of a hydropower plant (Kasper, n.d.).
+                                           18
+Project Report      TIØ4500
+
+3.1.1 Storage using the reservoir
+
+The reservoir enables water to be stored during periods of high inflow and released
+during dry periods (LVK, n.d.). It also allows the plant to exploit altitude di"erences,
+commonly referred to as the hydraulic head. The water level must remain between
+the Highest Regulated Water Level (HRWL) and the Lowest Regulated Water Level
+(LRWL) to satisfy ecological and safety requirements. These limits determine the
+amount of water that can be stored in a given time step and thereby the available
+potential energy. In modelling, the reservoir level is typically determined by a balance
+equation relating inflow, discharge, and storage.
+
+3.1.2 Filling up the reservoir with inflow
+
+Seasonal precipitation patterns and temperature variations largely determine the in-
+flow to the reservoir. The inflow originates from the parts of the water course located
+at equal or higher elevation. Producers are primarily interested in the utilizable in-
+flow, defined as the portion of water that can be used for production within a given
+period (NVE, 2024a). Estimating utilizable inflow requires information on snow
+storage, the unsaturated zone, and drainage sections (NVE, 2015). These factors
+contribute to determining the feasible production region. Including the avoidance of
+curtailment, an involuntary reduction in a generator's output caused by grid restric-
+tions, and spillage of excess water influences it even further (Gandhi et al., 2022;
+IFC, 2015). In modelling, inflow may be represented as a deterministic parameter or
+as a stochastic variable.
+
+3.1.3 Discharging water through the penstock
+
+To convert potential energy into kinetic energy, water stored in the reservoir is re-
+leased into a penstock under hydrostatic pressure, directing the flow toward the tur-
+bine. Penstocks are typically tunnels or pipelines constructed within the mountains
+(LVK, n.d.). The cross-sectional dimensions and frictional properties of the penstock
+determine the instantaneous flow capacity and thereby influence the volume of water
+that can reach the turbine at any moment. In modelling, the penstock can impose a
+physical capacity constraint on the rate of discharge.
+
+                19
+Project Report                                               TIØ4500
+
+3.1.4 Converting to electrical energy using the generating unit
+
+The generating unit converts the kinetic energy of flowing water into electrical energy,
+and consists of a turbine and a generator. Water entering the turbine causes the rotor
+to spin, inducing an electromagnetic field in the generator and producing electricity
+(EDP, 2025). The e!ciency of the generating unit, defined as the ratio of electrical
+output to mechanical input, a"ects the e"ective available capacity and must be
+accounted for in the modelling framework.
+
+3.1.5 Using the hydropower production function to determine the gen-
+          erated power
+
+In hydropower modelling, it is essential to represent the relationship between the
+physical elements described above in a realistic manner. From a flexibility perspect-
+ive, this is particularly important, as these relationships influence the calculated
+capacity for participation in reserve markets. However, the underlying physics are
+far from linear, but instead governed by a complex set of interdependent processes.
+To capture these dynamics, researchers typically employ a hydropower production
+function (HPF), which describes how the available water resource is converted into
+electrical energy through a non-linear relationship (Diniz & Maceira, 2008).
+
+                P = g · 103 · T (q, h) · G(P ) · q · h [MW]  (1)
+
+The HPF in (1) expresses the electrical power output as the product of the gravita-
+tional acceleration g, the mass density of water absorbed in the factor 103 for unit
+conversion, the turbine e!ciency T , the generator e!ciency G, the discharge q, and
+the net head h. The net head depends not only on the geometric altitude di"erence
+between the intake and outflow, but also on the reservoir level at each point in time.
+Because reservoir geometry is often irregular, the relationship between reservoir level
+and net head is generally non-linear.
+
+Moreover, the turbine e!ciency varies with both discharge and head, while the gen-
+erator e!ciency depends on the produced power. These functional dependencies
+introduce nonlinearity directly into the HPF, making it computationally demanding
+to include in large-scale optimization models. To maintain tractability, particularly
+in mid- and long-term scheduling models, it is therefore common to apply simplifying
+approximations of the HPF.
+
+                20
+Project Report  TIØ4500
+
+3.2 Key elements from an economic perspective
+
+The physical characteristics of hydropower provide the basis for understanding the
+economic decisions faced by producers. Producers must define planning horizons,
+choose pricing strategies, and identify relevant markets. They must also consider
+cost drivers, particularly when evaluating investments. The following sections discuss
+these elements in more detail.
+
+3.2.1 Water value
+
+Section 1 introduced the term water value and explained how it is used to price an
+otherwise seemingly inexpensive resource by reflecting its alternative use through
+storage. To understand this concept more thoroughly, it is necessary to consider
+how seasonal variations a"ect the reservoir filling level. In spring, electricity prices
+are typically low and snowmelt generates substantial inflow, causing reservoir levels
+to rise as production is reduced. During autumn and winter, by contrast, inflow de-
+clines while electricity demand and prices increase, leading to higher discharge rates.
+Although this seasonal pattern is well known, future power prices and hydrological
+conditions remain uncertain. The core operational challenge is therefore to determine
+the optimal amount of water to release at each time step to ensure long-term energy
+security and short-term profitability. By applying statistical analysis and advanced
+modelling frameworks, producers can estimate the water value, which represents the
+expected marginal value of having an additional unit of water in the reservoir (A.
+Helseth, personal communication, April 2024). Thus, the water value reflects the
+opportunity cost of using one additional unit of water for production rather than
+storing it for future periods.
+
+3.2.2 Planning horizons
+
+Hydropower planning is relevant to consider at an operational, tactical, and stra-
+tegic level. Depending on the planning horizon, each level has its own framework,
+where short-term models deal with the operational concerns, mid-term models are
+assigned to a more tactical level, and long-term models are dedicated to strategic con-
+siderations. Altogether, these models are denoted as Long-, Mid-, and Short-Term
+Hydro Scheduling optimization models (LMSTHS). It should be noted that although
+some long-term models may incorporate price-making behaviour, the price-taker as-
+
+                                                    21
+Project Report  TIØ4500
+
+sumption is more common across several planning horizons. Under this assumption,
+electricity prices are treated as exogenous inputs to the model rather than being
+influenced by the producer's decisions.
+
+Ahlfors and Amelin (2021) describe the di"erent planning horizons and find that
+the literature is not unanimous in its definitions of these horizons in terms of time.
+However, the article describes the overarching characteristic of each planning horizon,
+and a visual representation of the di"erent levels of planning horizons is depicted in
+Figure 10.
+
+    Figure 10: Visualization of long, mid, and short term hydropower scheduling.
+
+Long-term planning
+Hydropower planning is inherently stochastic due to uncertainty in future reservoir
+inflow, which is particularly important to account for in long-term models (Larsen
+et al., 2015). Many large reservoirs require several years to refill once they have been
+drawn down, meaning that short-sighted operations can jeopardize future energy
+security. Consequently, long-term planning and the establishment of water values
+are essential to ensure that current operational decisions reflect both present market
+conditions and the long-term availability of water resources.
+
+According to Thaeer Hammid et al. (2020), long-term planning typically covers
+horizons of one to five years. Its primary purpose is to secure energy availability,
+and its outputs commonly include water values or weekly discharge plans, which
+often serve as direct inputs to mid-term models. Because hydropower scheduling
+involves substantial uncertainty, long-term planning is frequently based on Stochastic
+Dynamic Programming (SDP) or Stochastic Dual Dynamic Programming (SDDP)
+
+                                                    22
+Project Report      TIØ4500
+
+(Warland & Mo, 2016).
+
+Although ensuring energy availability is a central motivation for long-term planning,
+the mathematical objective of such models can vary from profit to social welfare
+maximization. Whether both revenues and costs are incorporated in this objective
+may also vary. When revenues are excluded, long-term models fail to directly capture
+the potential upside associated with participation in di"erent electricity markets.
+
+Long-term models usually represent hydropower systems at aggregated levels to re-
+duce computational complexity, but this also introduces simplifications that may
+lead to non-optimal operational decisions (Warland & Mo, 2016). Common simpli-
+fications include neglecting detailed hydraulic characteristics or using coarse time
+resolutions (Ahlfors & Amelin, 2021). In Nordic studies, weekly time steps are com-
+mon, as illustrated by Helseth et al. (2022), whereas monthly time steps have been
+observed in a Brazilian system study (Scarcelli et al., 2017). To mitigate the limita-
+tions introduced by aggregation, many frameworks employ disaggregation procedures
+to validate or refine long-term schedules. These procedures help address non-linear
+and state-dependent constraints that would otherwise need to be simplified or omit-
+ted due to problem size and computational burden (Warland & Mo, 2016).
+
+Mid-term planning
+This planning horizon typically covers horizons from several weeks to a few months.
+Compared to long-term planning, the shorter time horizon allows hydropower sys-
+tems to be represented with a lower degree of aggregation, enabling a more detailed
+description of hydraulic connections, reservoir dynamics, and operational constraints.
+However, mid-term planning still involves substantial uncertainty, particularly re-
+lated to inflow variability and future electricity prices, and therefore relies on many
+of the same modelling techniques as long-term scheduling. In this context, recent
+research highlights the role of weekly planning as a promising extension which can
+o"er valuable insights for the development of low-carbon power systems (Ahlfors &
+Amelin, 2021).
+
+The purpose of mid-term planning is to allocate water resources across seasons in
+a way that balances operational profitability and long-term water availability. Typ-
+ical criteria include maintaining adequate reservoir levels and deriving more detailed
+water values than those produced in long-term models (A. Helseth, personal com-
+munication, April 2024). Because the mid-term horizon is closer to real market
+operations, market participation becomes a central element of the analysis, includ-
+ing participation in day-ahead markets, capacity markets, and financial markets. As
+
+                23
+Project Report      TIØ4500
+
+a result, mid-term models are particularly relevant for business case development
+and investment assessment.
+
+Short-term planning
+Lastly, short-term planning concerns the immediate future. As in mid-term planning,
+the input parameters in short-term models depend on the outcomes of the longer
+planning horizons. The result is an operational production schedule, typically with
+an hourly time resolution, specifying the discharge levels for each hydropower plant.
+Because of the short time horizon, uncertainty plays a less prominent role. Therefore,
+the modelling focus shifts toward achieving a realistic representation of plant beha-
+viour, including e!ciency curves, hydraulic characteristics, and water travel time.
+Such detailed modelling has become increasingly important as a growing number of
+hydropower producers participate in both energy and capacity markets (Kong et al.,
+2020).
+
+Both the objectives and the solution methods vary in short-term hydropower schedul-
+ing. Depending on the modelling context, objectives can include revenue maxim-
+ization, cost minimization, or minimization of spilled energy (Kong et al., 2020).
+Although short-term models are commonly solved deterministically, accounting for
+uncertainty can improve their performance (Belsnes et al., 2016). Heuristic methods
+are also used in the literature to address the STHS problem, as they are able to
+provide good solutions within short computation times (Kong et al., 2020).
+
+3.2.3 Market participation
+
+Reservoir-based hydropower, with its significant storage capacity, is capable of provid-
+ing considerable operational flexibility. In addition to the day-ahead (DA) and intra-
+day (ID) markets, hydropower producers can participate in several reserve markets,
+as highlighted in Section 2. According to the Nordic TSOs (2019), a large share
+of Norwegian hydropower capacity qualifies for participation in the FCR market.
+Furthermore, because hydropower can deliver the required response times, it is also
+eligible for the aFRR and mFRR markets, which have longer activation times com-
+pared to the FCR products.
+
+                24
+Project Report      TIØ4500
+
+3.2.4 Hydropower investment analysis
+
+Many of the large hydropower plants in Norway were built between the 1950s and
+1980s, and many are now approaching or exceeding their technical lifetimes. Be-
+cause political regulations limit further development of many of the remaining wa-
+tercourses, reinvestments have become the primary strategy for hydropower produ-
+cers (WWF Norge, n.d.). This strategy is further reinforced by the growing need for
+system flexibility, which increases the importance of upgrading and reconstructing
+existing hydropower plants (Statkraft, n.d.). Such reinvestment measures fall into
+the two categories, rearmament and expansion (NVE, 2025b).
+
+Rearmament
+Rearmament focuses on improving existing parts of the power plant while keeping
+the discharge and head at the same level. This can include replacing the impeller,
+replacing the generator, or reducing the friction loss in the penstock. These measures
+typically fall under the same concession and are therefore exempt from new licensing
+procedures (NVE, 2020).
+
+Expansions
+Expansion measures can enable higher discharge capacity and/or a greater head.
+This may include enlarging the cross-section of the penstock, installing pumped-
+hydro storage, which e"ectively reduces the LRWL, or extending tunnels to increase
+the available head. "Driva 1 TWh" is a concrete example of a planned capacity
+expansion in a Norwegian hydropower plant (TrønderEnergi, 2025). Unlike rearma-
+ment, these measures require new licensing procedures (NVE, 2020).
+
+Main cost-drivers
+There is limited publicly available information about the costs associated with rearm-
+ament and expansion that can be directly applied in an analysis. According to a re-
+port published by the International Renewable Energy Agency (IRENA) (2012), the
+estimated cost ranges between 500 and 1 000 USD/kW of increased capacity. When
+adjusted for inflation and converted using an exchange rate of 0.85 EUR/USD, this
+corresponds to approximately 625 000­1 250 000 EUR/MW. This is, however, a very
+broad range, as the cost is heavily dependent on which investment is considered.
+According to IRENA (2012), the cost structure of a hydropower refurbishment or
+expansion project is largely governed by two main drivers: civil works and electro-
+mechanical equipment.
+
+                25
+Project Report                              TIØ4500
+
+· Civil works costs includes all structural and construction-related activities
+  such as dam or reservoir construction, tunnel construction, powerhouse modi-
+  fications, access road improvements, grid-connection works, as well as engin-
+  eering, procurement, and construction services. For upgrade projects, relevant
+  measures may include redesign of water intakes, refurbishment or enlargement
+  of tunnels, and structural interventions on the dam. Because civil works often
+  involve extensive excavation, concrete work, and site-specific engineering, they
+  frequently constitute the most significant share of total investment costs.
+
+· Electro-mechanical equipment includes the costs associated with repla-
+  cing or upgrading turbines, generators, transformers, cabling, and control and
+  protection systems. Turbine and generator replacements are particularly relev-
+  ant for capacity upgrades, as modern designs can provide improved e!ciency,
+  higher output, and enhanced operational flexibility without requiring major
+  modifications to the existing waterway infrastructure.
+
+NPV - Net Present Value Method
+To quantify the value of a reinvestment, calculating the net present value (NPV)
+is highly relevant. The NPV method aims to measure whether a project will be
+profitable by comparing its future cash flows to its cost and will be applied to the
+case study later in Section 9. The formula for NPV can be summarized as follows
+(Investopedia, 2025):
+
+                       N      C Fi
+                            (1 + r)i
+                NPV =                   I0  (2)
+
+                       i=1
+
+I0 reflects the initial investment cost of the upgrade. CFi is the net cash flow,
+i.e., the additional periodic income from the upgrade corrected for the additional
+operational costs. This cash flow is then discounted at the discount rate r, which
+reflects the capital cost of the reinvestment. These cash flows are computed for the
+entire planning period and discounted back to the present value. If the net present
+value is positive, the project should be considered for implementation.
+
+                          26
+Project Report               TIØ4500
+
+4 Related literature review
+
+The literature on hydropower planning covers a variety of topics. This section
+presents a related literature review of topics relevant to this report. While Sec-
+tion 3 highlighted aspects related to the planning horizons, the review will further
+focus on the dimensions of hydraulic modelling, stochasticity, market participation,
+and solution methods, presented through the 5'Cs framework (A. Gullhav, personal
+communication, October 2025). Each dimension will cite, compare, contrast, and
+criticize the content presented in the literature and connect it to the work presented
+in this project.
+
+4.1 Searching strategy to find relevant literature
+
+A two-step searching strategy was applied to find relevant literature e!ciently. First,
+we chose a set of particular searching words in databases such as Google Scholar, Sci-
+ence Direct, and Scopus. Search words that have been used are HYDROPOWER
+SCHEDULING, CAPACITY MARKETS, UNCERTAINTY, PLANNING HORI-
+ZONS AND PROFIT MAXIMIZING, MULTIMARKET OPTIMIZATION. Addi-
+tionally, Elicit has also been used for finding relevant articles. Elicit is an AI model
+that utilizes a large language model to retrieve relevant articles. The search in this
+model was: Multimarket Optimization of hydropower across the Norwegian Power
+markets. When picking relevant articles or papers, we have asked ourselves quality
+check questions:
+
+    · Does the title and abstract fit our purpose?
+
+    · Is the document published in a recognized journal that practices peer review?
+
+    · Does it contain a broad literature list with other recognized articles?
+
+    · Does it contain a clear literature review on the topic it is writing about?
+
+While the first two questions are relevant to all the selected articles, only one of
+the latter two had to be fulfilled. Once approved accordingly, we started to read
+qualified papers. The second step was to identify new potential papers based on
+the referencing in the initial paper using similar control questions. The method that
+has been used is an adaptation of the backwards snowballing method, which is a
+generalized method for performing literature studies (Wohlin, 2014).
+
+                                                    27
+Project Report      TIØ4500
+
+4.2 Stochaciticy
+
+Capturing the stochasticity associated with hydropower planning is highly relevant
+in an operations research setting. While deterministic models often provide useful
+insights to decision-making, Belsnes et al. (2016) showcased in their study that
+adding stochasticity enhances profit margins by allocating production to expensive
+hours and reducing the risk of spillage. This was demonstrated in a case study by
+evaluating the strategies obtained from the stochastic and the deterministic models
+over a new set of scenarios. Consequently, the stochastic model provided more robust
+solution strategies to the decision-maker while improving the degree of realism.
+
+An important element of uncertainty in hydropower planning is inflow. This is fre-
+quently recognized in literature review across all types of planning horizons (Abgott-
+spon & Andersson, 2013; Belsnes et al., 2016; Helseth et al., 2016, 2017). Inflow to a
+given reservoir is determined to a large extent by the temperature conditions in the
+area where the hydropower plant is located. Hence, temperature can also be treated
+as a stochastic variable in a hydropower planning model, as seen in the SOVN model
+(Warland & Mo, 2016). Temperature is also closely linked to electricity consumption
+patterns, influencing the demand curve used to determine the market-clearing price
+(Idsø et al., 2024). This relationship is particularly relevant in long-term models,
+where prices are derived through a market-clearing process, as seen in the EMPS
+model (SINTEF, 2025).
+
+Building on this, it provides a rationale for modelling prices as stochastic variables
+in short- to mid-term hydropower optimization models. Scha¨"er et al. (2022) imple-
+ment stochastic market prices in their study, in addition to a generic stochastic en-
+vironmental variable, which implicitly represents temperature by indicating whether
+a low inflow period has ended. Aasg°ard (2020) and Faria and Fleten (2011), on the
+other hand, do not include any explicit environmental variables and instead focus
+on market prices. Various configurations of modelling stochastic market prices have
+also been observed in several of the papers mentioned above. Ideally, a model should
+take all prices across the existing markets into account, as they are subject to uncer-
+tainty (Belsnes et al., 2016). However, treating all prices as independent stochastic
+variables would possibly yield the curse of dimensionality when generating scenarios
+for the problem.
+
+Hence, the literature appears to converge on the importance of incorporating stochasti-
+city into models across di"erent planning horizons, as this improves the realism of the
+results. The most prominent stochastic variables to include are prices and inflows.
+
+                28
+Project Report  TIØ4500
+
+Uncertain prices are particularly relevant in models where actors operate as price
+takers, while uncertain inflow is important to consider irrespective of how the price
+is determined. Regardless, researchers often limit the number of stochastic variables
+to avoid the curse of dimensionality.
+
+4.3 Hydraulic modelling
+
+Section 3.1.5 showed the non-linear relationship between generated power and net
+head. To achieve su!cient precision of a hydropower system, accurate hydraulic
+modelling is often essential, as pinpointed in a meeting with Professor Arild Helseth
+at the NTNU Department of Electric Energy (A. Helseth, personal commmunica-
+tion, 07th of November 2025). When incorporating the HPF into a model, it becomes
+crucial to select a method that both captures the underlying physical relationships
+and aligns with the problem requirements. This is often a trade-o" between compu-
+tational complexity and the desired level of model detail.
+
+Several techniques for modelling the HPF exist, which depend on the time horizon,
+temporal resolution, system size, the available data, and the goals of the optimization
+model (Kong et al., 2020). The study points out piecewise linear approximation as
+a common technique to account for the non-linear HPF. The breakpoints, defined
+as pairs of water discharge and power output, are typically specified in advance
+and represented either as a two-dimensional table for fixed-head conditions or as a
+three-dimensional matrix when head variations are considered (Kong et al., 2020). A
+closely related approach described in Chazarra et al. (2016) is discretizing a family
+of non-linear curves and using binary auxiliary variables to indicate which section
+of the e!ciency curve is activated for a given time step. As such, this approach
+can be characterized as a mixed integer linear program (MILP). The drawback of a
+MILP is that it often can become computationally burdensome when the size of the
+problem increases (Kong et al., 2020). It is important to consider this in relation to
+the purpose of the hydropower planning model.
+
+In contrast to the MILP approach, Gjelsvik and Haugstad (2005) and Belsnes et al.
+(2016) present a less computationally demanding approach to the HPF modelling.
+Gjelsvik and Haugstad (2005) present ProdRisk, a mid-term hydropower schedul-
+ing model developed by Sintef Energy Research. It ignores the variable head in the
+HPF and introduces correction coe!cients in the form of head sensitivities instead.
+This is done through two separate simulations, in which the last simulation aims to
+correct the initial simulation through the inclusion of head sensitivities. Similarly,
+
+                                                    29
+Project Report  TIØ4500
+
+Belsnes et al. (2016) use an iterative method called successive linear programming,
+where the e!ciency related to the net head is updated based on the e!ciency used in
+the previous time step. To avoid flip-flopping solutions and ensure convergence, the
+e!ciencies are linearized using a first-order approximation of the coupling between
+e!ciency and a marginal increase in reservoir level. In addition, a penalty is added to
+the objective function for deviating from the previous e!ciencies in the iterative pro-
+cess. The study concludes that implementing a head-of-water optimization improves
+the model solution, especially when the reservoir is half-full due to its flexibility.
+
+In the continuation of this, it is recognized that modelling hydraulic behavior can
+be decisive for model performance, but some approaches might lead to increased
+computational complexity. Thus, this trade-o" needs to be tailored to fit the purpose
+of the model.
+
+4.4 Multimarket dynamics and participation
+
+Norwegian hydropower producers operate across energy and reserve markets, lever-
+aging the storage capability to maximize revenues (SINTEF Energi, 2025). Mod-
+elling multiple markets can therefore provide more accurate income estimates and
+a more realistic representation of hydropower's true value than single-market ap-
+proaches. Consequently, reviewing how the literature addresses multi-market parti-
+cipation across modelling frameworks is essential to capturing the full value-creation
+potential that this work aims to explore.
+
+It is evident that the literature provides studies with di"erent configurations of mar-
+ket participation. Aasg°ard (2020) investigates a multi-market bidding problem con-
+sidering the DA-market and mFRR-market using a price-taking approach, without
+the inclusion of reserve activation. Her model co-optimizes the revenue gained from
+participating in both markets, and a case study from NO2 shows positive gains from
+such coordinated bidding. Chazarra et al. (2016) report similar results when model-
+ling coordinated bidding in DA-markets and the secondary reserve markets (aFRR)
+in a Spanish 7-day case study, as this yields significantly higher income compared
+to DA-participation only. Although the number of connected reservoirs and power
+plants may vary between the studies, they both show the benefits of multi-market op-
+timization. A potential limitation with the latter model, however, is that it assumes
+that an expected fixed percentage of the contracted reserves is always activated.
+While this exogenous parameter is determined through statistical analysis, this is a
+simplified behaviour of the market, potentially yielding too optimistic results. On the
+
+                                                    30
+Project Report      TIØ4500
+
+contrary, the model mitigates risk in terms of water shortage and spillage, thereby
+reducing the overall risk associated with the strategy suggested by the model.
+
+Building on the modelling of activation presented in Chazarra et al. (2016), Farah-
+mand et al. (2020) emphasizes the value of detailed reserve market activation model-
+ling, taking the perspective of the system operator. In particular, the study demon-
+strates that reserve provision decisions that ignore activation lead to systematic-
+ally underestimated costs. To a hydropower producer, this manifests as lost water
+value, adjusted reservoir management, slightly reduced future flexibility, and in-
+creased ramping. The latter can lead to additional wear and tear on the hydropower
+unit.
+
+Similar to several of the above-mentioned studies, Faria and Fleten (2011) also
+present a co-optimization model across the DA market and the Elbas market (Intra-
+day), from a price-taking perspective. The model captures both block and hourly
+bids in a 24-hour schedule in a rolling horizon fashion over multiple consecutive
+days. In contrast to Aasg°ard (2020), this model is implemented on a case study
+with a hydropower plant located in NO1, and the results indicate that including
+ID-participation yields negligible increased profit margins. While these studies seem
+to disagree on the benefit of modelling multi-market participation, it is important to
+emphasize that they model di"erent markets and bidding zones. Thus, the results
+might not be directly comparable, but they highlight interesting aspects of multi-
+market interaction.
+
+While the previous studies have considered the value of adding one extra market
+into the optimization model, Ahmadi et al. (2015) choose a broader approach to
+multi-market participation by including the DA, the bilateral long-term contracts,
+and spinning and non-spinning reserve markets. The focus in their study, however, is
+multi-objective optimization where minimizing environmental impact from thermal
+power plants serves as the second objective. Thus, the study lacks a discussion on
+the added value of modelling several power markets. The direction of the balancing
+market is also a dimension that is omitted in this study.
+
+Long-term forward contracts and price-making hydropower producers fall outside of
+the scope of this project. However, in the literature review, it seems worth men-
+tioning the work of Abgottspon and Andersson (2013). They showed that adding
+forward contracts as an ingredient in the operation of a price-making hydropower
+plant, as well as pumped storage, contributes to a 20% increase in profit. While
+the model tends to be realistic and tractable, the results might be coloured by lin-
+
+                31
+Project Report      TIØ4500
+
+ear dependencies between commodities and market prices, and the assumption that
+forward contract prices are known.
+
+Connecting these articles reveals that the additional economic value of a joint mar-
+ket formulation across eligible markets for a hydropower producer is largely absent
+from the literature, as also noted by Belsnes (2016). Such a formulation could spe-
+cifically integrate the various capacity markets with participation in the DA and ID
+markets. It would be particularly interesting to examine whether the synergies from
+co-optimization yield more accurate estimates of the potential operational revenues
+for a hydropower plant. In our work, however, it is important to note that omitting
+activation markets may lead to underestimation of operating costs.
+
+4.5 Relevant solution methods
+
+Within hydropower planning, a range of solution methods is used to handle short-
+and mid-term operational problems, and long-term strategic decision-making. The
+choice of method shapes how flexibility, uncertainty, and the value creation of the
+hydro resources are represented. Reviewing these methods in the literature is there-
+fore important for understanding how di"erent approaches can be utilized, and for
+positioning our own work.
+
+SDP/SDDP
+A common solution method used across all hydropower planning horizons is Stochastic
+(Dual) Dynamic Programming (SDP/SDDP) as seen in various studies (Helseth et
+al., 2016, 2017, 2022; P´erez-D´iaz et al., 2020). Helseth et al. (2016) use the SDDP
+framework for profit maximization of a hydropower producer selling electricity and
+capacity in separate markets. The problem is decomposed into weekly subproblems
+for a given sample of scenarios, and solved through a forward iteration where inform-
+ation is passed from one state to another. Then, at the end of the planning horizon,
+a backward iteration is performed, and cuts are added to the problem based on sens-
+itivities from the state variables on the objective function. Similarly, Helseth et al.
+(2017), a SDP-model is used to assess the operational profitability of a hydropower
+producer participating in the energy and capacity market. The complete planning
+period is one year, but the problem is decomposed into weekly MILP problems. The
+SDP decomposition allows for the representation of non-linear and non-convex re-
+lationships, and for the given week, the realizations of the stochastic variables are
+known.
+
+                32
+Project Report      TIØ4500
+
+P´eres-Diaz et al. (2020) also use the SDP-framework in their mid-term optimization
+model, which has a scheduling horizon of one year. However, they decompose the
+problem into daily decision problems as mixed-integer quadratic programming prob-
+lems with known exogenous stochastic state variables. These variables were the daily
+average energy market price, the daily inflow, and the daily residual demand curve
+in the reserve market. While both SDDP and SDP are common solution methods for
+stochastic operational decision problems, SDDP might be superior to SDP in terms
+of computational cost. The SDDP approach increases linearly with the number of
+scenarios, while the SDP increases exponentially.
+
+Two-stage Benders decomposition
+A conceptually related solution method to SDP/SDDP is the two-stage Benders De-
+composition method, identified in numerous studies (Jacobson et al., 2023; Sifuentes
+& Vargas, 2007; Warland & Mo, 2016). Warland and Mo (2016) show that the
+Benders decomposition is a suitable solution method to long-term hydro-thermal
+planning problems. Using the stochastic optimization model for Scandinavia with
+individual water values and grid restrictions, denoted as SOVN-model, a sequence
+of problems referred to as scenario fan problems (SFP) is simulated for each time
+step in the planning period. Each SFP problem is a two-stage stochastic LP problem
+solved by using Benders decomposition. The first stage represents a given week of
+the simulation (weather scenario and week), and the second stage is represented by
+independent scenarios, where the decisions from the first stage problem are taken
+as input and used to solve the rest of the planning period for each scenario. Their
+analysis shows promising results, as it yields a better utilization of hydro resources
+compared to EMPS. This is also a long-term planning model, but it is based on
+aggregated hydro description and heuristics.
+
+In Jacobson et al. (2023), a Benders Decomposition technique for a large-scale energy
+system planning problem is presented. The complete problem is formulated as a
+MILP model. Further, it is then decomposed into a master problem, which handles
+investment decisions, and operational subproblems, handling detailed operational
+constraints. A key innovation in this work is the decomposition of the operational
+problem by weeks, despite the planning horizon covering the full 52-week year. This
+is achieved by introducing budgeting variables that impose weekly limits, thereby
+allowing the weekly subproblems to be solved independently and in parallel, Jacobson
+et al. (2023).
+
+Sifuentes and Vargas (2007) shows that the Benders decomposition is also applicable
+when solving a short-term hydro scheduling problem (STHS) with a full AC power
+
+                33
+Project Report      TIØ4500
+
+flow model. The master problem is a mixed-integer programming problem that min-
+imizes fixed costs associated with hydropower generation and thermal units. Whereas
+in the subproblem, the Optimal Power Flow (OPF) problem is solved. Then, the
+Benders cuts are applied to the master problem with respect to the sensitivities of
+the dual variables obtained from the OPF solution. These studies show that, irre-
+spective of the planning horizon, Benders decomposition could be a relevant solution
+method.
+
+Stochastic Successive Linear Programming
+Building on the short-term solution methods presented above, Belsnes et al., (2016)
+propose a stochastic successive linear programming approach for the STHS prob-
+lem, explicitly modelling uncertainty via scenario trees. They highlight a limitation
+of scenario-tree-based multistage stochastic programming, namely the decay of un-
+certainty as one moves deeper into the tree. The e"ective uncertainty is reduced,
+which biases the solution towards determinism. To mitigate this, they discuss the
+use of rolling horizon schemes, recalculating scenario trees as new information be-
+comes available. They also note that scenario-tree generation and fine temporal
+resolution raise computational tractability issues when the horizon is very long, or
+the discretisation is fine, akin to the limitations of SDP. However, the SSLP does not
+exploit structures in hydropower planning, which avoids the benefit of decomposing
+the large hydropower planning problem. Thus, this method is primarily suited for
+STHS problems.
+
+Multi Objective Programming
+While the presented solution methods thus far have focused on single objective optim-
+ization, Ahmadi et al. (2015) choose a di"erent approach to the hydropower schedul-
+ing problem. They present a deterministic multi-objective optimization (MOO) ap-
+proach that simultaneously considers emission minimization and profit maximization.
+In their work, the Normal Boundary Intersection (NBI) method and Weighted-Sum
+(WS) method are applied to a MILP problem to generate non-inferior solutions and
+construct the Pareto-optimal frontier. Obtaining this frontier provides stakehold-
+ers with valuable insights into the trade-o" between profit and emissions. While
+considering emissions is beyond the intended scope of our study, MOO represents
+an important direction for future research, particularly when integrating sustainable
+energy sources such as wind and solar (Ahlfors & Amelin, 2021).
+
+The presented solution methods in this subsection show that there are several ap-
+proaches to the hydropower planning problem, depending on the inclusion of stochasti-
+city, nonlinearities, multistage, planning horizon, and objectives. SDDP is a prom-
+
+                34
+Project Report  TIØ4500
+
+ising solution method if all these characteristics are under consideration, while SDP is
+suitable as long as the planning horizon is short enough to avoid intractable scenario
+trees. This is also a shortcoming of the SSLP. In contrast, the Benders' decomposi-
+tion method avoids the planning horizon issue. Simultaneously, the method discussed
+here is limited to two-stage problems. However, this limitation can be addressed by
+using a nested Benders approach. Nested Benders essentially extends the classical
+Benders decomposition method to a scenario tree structure, where the tree can be
+viewed as a set of nested two-stage problems (Murphy, 2013). If several conflicting
+objectives are under consideration, MOO techniques such as the NBI and WS can
+be used to construct Pareto frontiers. In total, these methods provide guidance in
+how various problems can be solved in a holistic and more realistic manner.
+
+4.6 Our contribution to the literature
+
+An overview of the discussed literature review is provided through Table 3 where
+the stochasticity, hydraulic modelling, market participation and solution methods
+are compared. Further, it displays the contribution this report has to the existing
+literature.
+
+To the author's best knowledge, there is a research gap concerning multi-market
+participation for hydropower producers that simultaneously considers all eligible ca-
+pacity markets without having to explicitly model activation. Since activation is
+excluded in this work, model complexity is reduced by omitting the mFRR market.
+As most power exchange occurs in the DA market, the reviewed literature shows that
+its inclusion is essential in hydropower planning models. Furthermore, while several
+studies examine participation in individual capacity markets, none incorporate the
+DA, ID, FCR, and aFRR markets jointly. Ahmadi (2015) modelled a detailed mar-
+ket participation framework, but within a multiobjective deterministic context and
+without distinguishing upward and downward regulation.
+
+Thus, Section 4.4 reveals an opportunity to model a more exhaustive market parti-
+cipation, and study how this a"ects water values, operational patterns, and potential
+revenue streams discussed from a hydropower capacity expansion perspective. This
+is pursued in the case study, which uses a mid-term planning horizon with hourly
+time resolution.
+
+The remainder of the literature review points out important aspects and solution
+techniques to achieve realistic results for the hydropower planning problem. In our
+
+                                                    35
+Project Report      TIØ4500
+
+modelling, we recognize the importance of representing hydraulic behavior in reser-
+voirs as found in Section 4.3. Further, the authors realize that this is especially
+important in the consideration of capacity market participation, as the level of ac-
+curacy might a"ect the actual available capacity for participation. While the purpose
+of this project can be achieved by solving a deterministic model, Section 4.2 showed
+how pervasive stochastic modelling is in hydropower modelling to achieve accurate
+results. Section 4.5 presented several possible solution methods if stochasticity is to
+be added to the model.
+
+                36
+Project Report                                                                  TIØ4500
+
+Table 3: Review of research papers, highlighting how this report contributes to the
+existing literature.
+
+      Article/          Planning    Hydraulic      Stochastic        Market     Solution
+     Reference           horizon    modelling                    participation  method
+                                                   Prices and    DA and mFRR
+(Aasg°ard, 2020)           STM            [-]        Volumes                        DE
+                           STM    Constant head    DA and ID       DA and ID        DE
+(Faria & Fleten,           MTM    Constant head                    DA and CM      SDDP
+2011)                  STM/MTM    Variable head        prices                     SDDP
+(Helseth et al.,           STM    Variable head    Inflow and            DA       SSLP
+2016)                  STM/MTM                                           DA        SDP
+(Helseth et al.,           MTM            [-]          Prices      DA and FM       SDP
+2017)                             Constant head    Inflow and            DA
+(Belsnes et al.,           LTM                                                      BD
+2016)                                     [-]          Prices            EM
+(Abgottspon &           STMO-M                     Inflow and                      NBI
+Andersson, 2013)           STM    Variable head                   DA, RM and       SDP
+(Sch¨a!er et al.,          MTM    Variable head        Prices            FM         BD
+2022)                      STM                     Inflow and                     SDDP
+                           MTM            [-]                    DA and aFRR       SDP
+(Warland & Mo,                                         Prices            EM
+2016)                      STM                   Inflow, Prices                     BD
+                                                                                    LP
+(Ahmadi et al.,                                         and
+2015)                                            Environmental
+(Chazarra et al.,
+2016)                                                  state
+(Jacobson et al.,                                Inflow, Prices
+2023)
+(Helseth et al.,                                        and
+2022)                                             Temperature
+(P´erez-D´iaz et al.,
+2020)                                                    [-]
+
+(Sifuentes &                                       Inflow and
+Vargas, 2007)                                    Market prices
+
+Our contribution                                         [-]
+
+                                  Constant head  Inflow          System level
+
+                                  Variable head  Inflow, market  EM and RM
+                                          [-]       prices and          [-]
+                                                     residual
+                                                     demand
+
+                                                         [-]
+
+                       MTM        Constant Head  [-]             DA, ID, FCR
+                                                                   and aFRR
+
+Abbreviations: STM = Short-term model, MTM = Mid-term model, LTM = Long-term
+model, LP = Linear programming, BD = Benders decomposition, DE = Deterministic equivalent,
+SDP = Stochastic dynamic programming, SDDP = Stochastic dual dynamic programming, SSLP
+= Stochastic Successive Linear Programming, NBI = Normal Boundary Intersection, STMO-M
+= Short-term multi-objective model, DA = Day-ahead, ID = Intraday, CM = Capacity markets,
+RM = Reserve Markets, EM = Energy Markets
+
+                                  37
+Project Report         TIØ4500
+
+5 Problem description
+
+This section presents a detailed description of the multi-market participation problem
+for a single hydro power plant, with emphasis on key limitations and decision-making
+processes involved. Assumptions that have been made when developing the model
+and their implications for the results are highlighted in Table 5.
+
+The operator of a reservoir-based hydropower plant must coordinate production de-
+cisions across operational, tactical, and strategic horizons. The present discussion
+focuses on the mid-term operational setting, in which the plant is scheduled on an
+hourly basis across a full year. In this context, the operator receives inputs in the
+form of expected water inflow to the reservoir and market prices in the day-ahead
+(DA), intraday (ID), and capacity markets (aFRR and FCR). These price signals
+and hydrological conditions evolve over the planning horizon and constitute the in-
+formational basis for subsequent operational decisions.
+
+In reality, prices and inflows are uncertain. However, assuming a fairly certain estim-
+ate exists, the operator must determine the hourly allocation of energy and capacity
+across the available electricity markets. This entails selecting the production level
+from the reservoir and distributing available power capacity between energy and
+capacity markets. The central decision variables, therefore, include the amount of
+energy produced and sold in the DA and ID markets, as well as the upward and
+downward committed capacities in the aFRR and FCR markets. It is assumed that
+the operator can submit bids for every hour simultaneously and does not have to
+consider the chronological sequence of the market participation as described in Sec-
+tion 2.
+
+These decisions are governed by a set of physical, hydrological, and market-related
+constraints. First, generation is bounded between minimum and maximum plant ca-
+pacity, and the e!ciency of the turbine depends on the level of production. Second,
+the reservoir state must remain within prescribed upper and lower limits for oper-
+ational, environmental, and safety reasons. Water balance dynamics link decisions
+intertemporally. While water release for electricity generation reduces the reservoir
+level, inflow replenishes it, meaning that the level at any hour directly influences
+the feasible operating region in subsequent hours. Third, participation in capacity
+markets is contingent upon the scheduled production level. The ability to provide
+upward reserve capacity is constrained by the margin between the plant's current pro-
+duction and its maximum generation capacity. On the contrary, downward reserve
+capacity is bounded by the di"erence between current production and the minimum
+
+                                                    38
+Project Report      TIØ4500
+
+stable operating level. In both cases, reserve capacity may be activated. While the
+activation dynamics are kept outside the model, the possibility of activation can be
+reflected by introducing additional margins to the minimum and maximum stable
+operating levels of the reservoir to ensure su!cient energy security. Additionally, the
+size of the plant limits the share of the reserve market that the plant can capture.
+Lastly, as the plant operates as a price taker, there is a tradeable volume limitation
+in the ID market based on a set percentage.
+
+Within this framework, the operator's objective is to maximize total revenue over
+the planning period by optimally allocating energy and reserve capacity across the
+markets while respecting physical and regulatory constraints. The result identifies
+the optimal production schedule and market commitments for each hour. This spe-
+cifies the reservoir state, discharge, and energy and capacity allocations that jointly
+represent the economically best operating strategy under the given conditions.
+
+                39
+Project Report                                       TIØ4500
+
+6 Mathematical model
+
+The model is designed as a deterministic linear programming model, from the per-
+spective of a price-taking hydropower producer. The model aims to maximize oper-
+ational revenue across energy and capacity markets. Since the model is given perfect
+foresight of market prices, the results obtained from running it represent a demon-
+strative upper bound on the potential revenues that a power plant can theoretically
+achieve. In addition, the model introduces PQ-curves to more accurately model the
+relationship between active power delivered to the grid and the water discharged
+from the reservoir.
+
+6.1 Model assumptions and simplifications
+
+The assumptions used in the model regard market dynamics and power plant specif-
+ics. These assumptions and consequences are presented in Table 5.
+
+Table 5: The underlying assumptions and their consequences for the mathematical
+formulation.
+
+Assumption                      Consequence/comment
+
+The hydropower production       This simplification may cause slight deviations
+function depends solely on      from the actual PQ-curve, but this is not ex-
+reservoir discharge, implying   pected to be significant given the characterist-
+only minor variations in head   ics of the plant.
+over the planning horizon.
+This assumption was con-
+firmed as reasonable follow-
+ing discussions with Professor
+Arild Helseth at NTNU (A.
+Helseth, personal communic-
+ation, 7th November 2025).
+
+                                    (continued on next page)
+
+                                40
+Project Report                                        TIØ4500
+
+                (continued from previous page)
+
+Assumption                       Consequence/comment
+
+The state of the reservoir can   Since inflow is represented using discrete time
+be described using the reser-    steps, the inflow at time t can simultan-
+voir state in the previous time  eously be used for market trading. The model
+step plus inflow minus the dis-  does not explicitly capture the time coupling
+charge.                          between water inflow and production.
+
+Only capacity markets are        As a result, the model neglects potential in-
+modeled, while energy activ-     come from delivering energy through activa-
+ation markets are neglected      tion. However, due short activation time in
+                                 the aFRR and FCR markets, these revenues
+                                 constitute a rather small contribution
+
+The operator is assumed to       Assuming perfect information leads to an op-
+have perfect information re-     timistic upper bound on revenues, and a poten-
+garding day ahead and intra-     tial overestimation of the true revenue streams.
+day prices, such that the ac-    Additionally, it allows the model to explicitly
+tual production delivered to     exploit the possibility of arbitrage between DA
+the market equals the day-       and ID markets.
+ahead obligations minus the
+net intraday position. The
+operator is also assumed to
+have perfect foresight regard-
+ing capacity market prices.
+
+The power producer operates      This implies that the producer cannot influ-
+as a price taker.                ence the merit order curve, and the model does
+                                 not attempt to capture strategic bidding beha-
+                                 viour.
+
+PQ-curve modelling
+
+For the given power plant, there exists a relationship between the amount of water
+drained from the reservoir and the power output delivered to the grid. This relation-
+ship can be described using a power discharge curve, denoted as a PQ-curve. Using
+the data presented in Appendix B and Appendix C, combined with linear interpol-
+
+                                                    41
+Project Report  TIØ4500
+
+ation, points describing the relationship between discharge from the reservoir [m3/s]
+and the power [MWh/h] delivered to the grid were obtained.
+
+Figure 11: The production relationship for two separate sections of the PQ-Curve.
+
+The observed blue PQ-curve in Figure 11 is compared to a simple orange linear PQ-
+curve approximation. This is plotted for two separate segments of the PQ-curve. The
+plot suggests that the PQ-curve appears to exhibit a linear to weakly convex shape for
+low discharge values (left plot), and a concave relationship for higher levels of water
+discharge (right plot). To incorporate these characteristics into the optimization
+model, the relationship between reservoir discharge and power production must be
+represented explicitly, either through the introduction of binary variables or through
+a simplified relationship.
+
+                                                    42
+Project Report  TIØ4500
+
+        Figure 12: The simplified PQ-Curve used in the mathematical model.
+To avoid the use of binary variables, which would increase computational time and
+pose challenges for future model expansions, it was decided to approximate the
+weakly convex part of the production curve using a simplified linear relationship.
+This approximation is estimated to give small deviations from the true PQ-curve.
+For the concave part of the curve, a set of piecewise linear inequalities was con-
+structed. These inequalities provide a conservative representation of the true system
+performance while maintaining linearity within the model. The PQ-curve used for
+modelling in this work is presented in Figure 12.
+
+                                                    43
+Project Report                                                     TIØ4500
+
+Sets
+
+                Table 6: Defining the sets used in the model.
+
+Set Description                                                Elements
+
+T Set of time periods with hourly step length                  tT
+
+E Set of energy markets available for participation consist- e  E
+        ing of DA, ID Sell and ID Buy
+
+C Set of capacity markets consisting of the aFRR Up, c  C
+        aFRR Down, FCR-N and FCR-D
+
+CD Subset of capacity markets with the down-regulating c  CD
+        products aFRR Down and FCR-N
+
+CU Subset of capacity markets with the up-regulating c  CU
+        products aFRR Up, FCR-N and FCR-D
+
+SP Q Index set of points (x,y) used in the linearized PQ-curve i  SP Q
+
+                 44
+Project Report                                                             TIØ4500
+
+Parameters
+
+                Table 7: Defining the parameters used in the model.
+
+Parameter Description                                                Unit
+
+Pe              Price for energy market e  E in time step t  T [EUR/MWh]
+t
+
+Pc              Price for capacity market c  C in time step t  T [EUR/MW]
+t
+
+P hyd           Discretized hydraulic power levels defining point [MWh/h]
+i
+                i  SPQ, computed from the PQ-Curve
+
+P net           Corresponding net electrical power delivered to the [MWh/h]
+i
+                grid at point i  SPQ, computed from the PQ-
+
+                curve
+
+Mi              Slope between consecutive points i and i+1 on the [­]
+
+                PQ-curve,  i  SPQ \ {max(SPQ)}
+
+It              Inflow in time step t  T                             [GWh/h]
+C max           Maximum production capacity                          [MW]
+
+C min           Maximum production capacity                          [MW]
+S max           Maximum reservoir storage capacity                   [GWh]
+S min           Minimum reservoir storage capacity                   [GWh]
+
+up              Maximum energy demand for up regulation              [GWh]
+
+down            Maximum energy demand for down regulation [GWh]
+
+V c,max         Maximum capacity in market c  C                      [MW]
+
+V e,max         Maximum energy in intraday markets e  E \{DA} [MWh]
+  t             in timestep t  T
+
+S0              Initial reservoiar level                             [GWh]
+
+Ae              Available market share in intraday markets e  [-]
+
+                E \ {DA}
+
+                                          45
+Project Report                                                        TIØ4500
+
+Decision Variables
+
+         Table 8: Defining the decision variables used in the model.
+
+Variable Description                                             Domain
+
+yc              Capacity allocated to market c  C, at time t  T [MW]
+t
+
+xe              Production volume traded in market e  E, at time [MWh]
+t
+
+                tT
+
+st              Storage level for the reservoir at time step t  T [GWh]
+
+tphyd           Hydraulic power available to the turbine, i.e., [MWh/h]
+
+                power extracted from the reservoir at time t  T
+
+Objective
+
+The model aims to maximize the revenues obtained from selling energy to the DA and
+ID markets, in addition to capacity sold to the capacity markets. ID Buy represents
+the additional power in which the plant can purchase from the intraday market.
+
+max z =             P c yc +                   P e xe  P ID BuyxID Buy [EUR] (3)tt
+                      tt                       tt
+
+         tT cC                 tT eE\{ID Buy}
+
+         Revenue from reserve            Net revenue from
+            capacity markets              energy markets
+
+Constraints
+
+Production constraints: This constraint ensures that energy production for the
+given power plant respects its upper and lower production limits. Since the power
+plant can adjust its position through trading in the ID markets, these energy markets
+are also considered.
+
+      Cmin                     xe  xID Buy  Cmax, t  T [M W h]t          (4)
+                               t
+
+                eE\{ID Buy}
+
+                                     46
+Project Report                                                             TIØ4500
+
+Reservoir constraint: The reservoir constraint ensures that the storage in the
+reservoir remains between its minimum and maximum capacity, while maintaining
+adequate energy for obligations in the reserve markets.
+
+                      Smin + up  st  Smax  down, t  T [GW h]               (5)
+
+Initial reservoir constraint: The reservoir level is initialized to a predetermined
+level using the initial reservoir constraint.
+
+                                       st=0 = S0 [GW h]                    (6)
+
+End reservoir constraint: Load demand follows seasonal patterns and thus the
+
+end reservoir constraint ensures that the reservoir ends at the same level as it initially
+
+was.
+
+                                       st=T = S0 [GW h]                    (7)
+
+PQ-curve constraints: Ensures that the power traded in the markets does not
+exceed the linear interpolation of two consecutive points on the PQ-Curve.
+
+             xe   xID Buy     Pinet+Mi     phyd  P hydt   ,  i  SPQ, t  T [M W h/h].
+               t        t                              i                                      (8)
+
+eE\{ID Buy}
+
+Reservoir time step linking constraints: The reservoir storage time step linking
+constraint ensures that there is a physical coupling from one time step to the next,
+considering the inflow and discharge that have been present.
+
+                  st  =  st1  +  It    phyd        t  T \ {t = 0}, [GWh].  (9)
+                                        t,
+                                       1000
+
+Down capacity bidding constraints: The maximum capacity that can be alloc-
+ated in the downwards capacity regulation markets is determined by the di"erence
+between the energy sold across the various energy markets and the minimum pro-
+duction capacity.
+
+                      yc                xe  xID Buy  Cmin t  T [M W ]t     (10)
+                        t               t
+
+             cCD           eE\{ID Buy}
+
+                                                   47
+Project Report                                                       TIØ4500
+
+Up capacity bidding constraints: The maximum capacity that can be allocated
+in the upwards capacity markets is determined by the di"erence between the max-
+imum production capacity and the energy sold across the various energy markets.
+
+                yc  Cmax  (               xe  xID Buy), t  T [M W ]t (11)
+                  t                       t
+
+cCU                          eE\{ID Buy}
+
+Maximum capacity bidding constraints: The allocation of capacity across the
+di"erent capacity markets is subject to an upper bound, with values specified based
+on the characteristics of the modeled power plant.
+
+                   yc  V c,max, t  T c  C [M W ]                     (12)
+                   t
+
+Maximum ID volume limits: Trading volumes in the intraday market are restric-
+ted to remain within the permitted limits.
+
+                xe  Ae · V e,max, t  T e  E \ {DA} [M W ]t           (13)
+                t
+
+Non-negative constraints:
+
+yc  0 c  C,              xe  0 e  E,          phyd  0,  st  0  t  T  (14)
+  t                        t                    t
+
+                                          48
+Project Report                                                 TIØ4500
+
+7 Presenting the input data
+
+This section presents the described data from Section 2.6 used as input for the
+parameters in the mathematical model. The data includes assumed plant-specific
+operational data and inflows, as well as market prices and tradeable volumes. Its
+purpose is to give the reader su!cient insight into the model inputs when interpreting
+the results in Section 8 and Section 9.
+
+                Parameter Value
+
+                Cmax (MW)    79.04
+                Cmin (MW)   15.504
+                Smax (GWh)   101.2
+                Smin (GWh)
+                up (GWh)          0
+                down (GWh)  0.0175
+                            0.0095
+
+Table 9: Operational bounds of the hydropower plant, including generator produc-
+tion capacity and reservoir storage limits.
+
+Figure 13: Inflow profile for the modelled reservoir in 2024.
+                                    49
+Project Report         TIØ4500
+
+Reserve Market Mean Price (EUR/MWh) Volume (MW)
+
+aFRR Down       16.84  30
+
+aFRR Up         16.05  30
+
+FCR-N           18.80  8
+
+FCR-D           4.36   32
+
+Table 10: Mean capacity market prices in NO2 for 2024 and tradable volume limits.
+
+Figure 14: Duration curve for day ahead and intraday market prices in NO2 2024.
+                                                    50
+Project Report      TIØ4500
+
+Figure 15: Maximum tradeable volumes in Intraday markets as 10% of average daily
+tradeable volumes.
+
+                51
+Project Report      TIØ4500
+
+8 Validation
+
+The purpose of the validation is to assess whether the model's decisions align with its
+stated objectives and constraints. This preliminary step strengthens the credibility
+of the subsequent computational study.
+
+For the validation, we restrict the planning horizon to two weeks in January. This
+shorter horizon allows for a clearer visual interpretation of the parameters and vari-
+ables in the optimal solution. However, it also requires minor adjustments to the
+model. In the full-year simulation, the end-of-horizon reservoir level is required
+to match the initial level. This constraint is feasible for the annual model while
+still satisfying the minimum production requirement. In contrast, applying the
+same constraint to the January subset results in infeasibility. Intuitively, this is
+expected, as inflow levels in the beginning of January, previously illustrated in Fig-
+ure 13. Therefore, for the validation exercise, the end-reservoir constraint is relaxed
+to ST = 0.75 · S0, which is close to the highest feasible terminal storage level. Nat-
+urally, the chosen end-reservoir level influences the resulting production plan.
+
+The validation consists of three steps. First, we assess whether the water value, rep-
+resented by the dual value of the reservoir balance constraint, is reasonable. Second,
+we analyse the model's behaviour in the energy markets, comparing its decisions
+to corresponding price patterns. Finally, we examine whether the energy-market
+decisions appear consistent with those made in the capacity markets.
+
+8.1 Water value
+
+As discussed in Section 1, the water value represents the marginal income associated
+with storing one additional unit of water in the reservoir at the beginning of the
+planning horizon. In a deterministic model, this value reflects perfect foresight re-
+garding how the additional unit can be used optimally. Running the model over the
+two-week validation horizon yields a constant water value of 127.271 EUR/MWh, as
+shown in Figure 16.
+
+                52
+Project Report  TIØ4500
+
+   Figure 16: The water value across the planning period for the validation case.
+
+To assess if the dual value of the reservoir balance constraint is reasonable, we apply
+a decomposition-based validation. First, the model is solved under the base assump-
+tions, producing an optimal bidding strategy and a corresponding objective value,
+referred to as the base scenario. The model is then solved again with an additional
+1 MWh of water added to the initial reservoir level S0, which yields a perturbed
+optimal solution and a new objective value. Comparing these two solutions reveals
+how the additional unit a"ects both the decision variables and the objective value.
+The results, shown in Table 11, confirm the expected dual value. The decomposition
+indicates that the additional water is optimally used in a single hour (t = 274), and
+that only 0.9237 MWh of it becomes economically viable due to turbine and generator
+e!ciencies. During this hour, the marginal unit is sold in the DA-market, replacing
+upward capacity in the FCR-N market, and simultaneously increasing sales in the
+aFRR Down market. Overall, the analysis demonstrates that the model behaves as
+expected with respect to the water values.
+
+                                                    53
+Project Report                                                   TIØ4500
+
+Table 11: Water value revenue decomposition for the validation case.
+
+                Metric                               Value
+
+                Objective # (water value) [EUR/MWh] 127.271178
+
+                Energy revenue contribution [EUR]    120.805086
+
+                Capacity revenue contribution [EUR]  6.466093
+
+                Reduced ID buy cost [EUR]            -0.000000
+
+                Decomposition total [EUR]            127.271178
+
+                t #Energy (MWh) #Capacity (MW)
+
+                274     0.923728           0.923728
+
+Market                  Marginal Contribution at t = 274 [EUR]
+
+DA Market                                            120.805086
+
+ID Sell Market                                       0.000000
+
+ID Buy Market                                        0.000000
+
+aFRR Up Market                                       0.000000
+
+aFRR Down Market                                     23.093188
+
+FCR-N Market                                         -16.627095
+
+FCR-D Market                                         0.000000
+
+Total                                                127.271178
+
+                                  54
+Project Report                        TIØ4500
+
+8.2 Net production in energy markets
+
+ Figure 17: The energy sold across the DA and ID markets in the validation case.
+
+In the energy markets, the model selects the most profitable combination of markets,
+subject to the production constraints and the reservoir balance constraint. The red
+curve in Figure 17 represents the net energy traded, referred to as the Net Total
+Market. This reflects the combined net volume traded across the DA and ID markets,
+and therefore corresponds to the net hourly production of the hydropower plant. For
+most hours, the generator operates at its minimum capacity, Cmin, which is necessary
+to satisfy the terminal reservoir constraint. This behaviour is fully consistent with
+the intended operation of the model when accounting for both storage limitations
+and production requirements.
+
+                                                    55
+Project Report                              TIØ4500
+
+8.3 Energy market prices vs traded volumes
+
+     Figure 18: Production profile, and DA and ID prices in the validation case.
+
+Extending Figure 17 to include the corresponding price series, we observe in Figure 18
+how the model determines when to trade based on price fluctuations across the energy
+markets. Due to the terminal reservoir constraint, enforcing ST = 0.75·S0, the model
+
+                                                    56
+Project Report      TIØ4500
+
+must carefully select the hours in which production exceeds the minimum operating
+level. We observe that this occurs predominantly in the most expensive DA hours,
+where the DA price also exceeds the ID prices. In other hours, where the DA price
+exceeds the ID price, the model exploits the arbitrage opportunity by selling more
+in the DA market while purchasing in the ID market such that the net production
+satisfies Cmin. An additional observation is that, in most hours, the ID price tends
+to exceed the DA price. However, the permitted cyclic market share constrains the
+volume that can be traded in the ID market, limiting it to Ae of the available traded
+volume, which is set to 10%. Overall, the model behaves in accordance with both
+the market share limitations and the revenue-maximizing strategy.
+
+                57
+Project Report                     TIØ4500
+
+8.4 Capacity market participation
+
+Figure 19: Production, capacity, and prices in energy and capacity markets for the
+validation case.
+
+In Figure 19, we observe how the model allocates capacity according to the prices in
+various capacity markets, together with the net energy production. FCR-D is omitted
+
+                                                    58
+Project Report      TIØ4500
+
+from the plot as all prices during this period are zero. Thus, in the validation process,
+the bids in this market were correspondingly zero. Figure 19 shows that as the plant
+seldom reaches its maximum generating capacity, the model bids the full upward
+regulating margin in the aFRR Up market whenever the associated price is positive.
+Conversely, in hours where production exceeds the technical minimum, the model
+allocates the excess to downward capacity products. In hours where FCR-N yields
+the highest marginal revenue, the model first places the maximum possible bid in this
+market, and subsequently allocates any remaining downward margin to the aFRR
+Down market. As FCR-N is a symmetric product, the available bidding volume is
+constrained by both the upward and downward regulating limits. We further observe
+that aFRR Down respects its maximum permitted bid volume. Overall, this indicates
+that the model behaves in accordance with the regulating constraints.
+
+To conclude the validation exercises, it is evident that the model behaves consist-
+ently with its objective function and associated constraints. The model is therefore
+ready for a more thorough computational analysis of the case study. Figure 18
+demonstrated that the production allocated to the energy markets is driven by the
+reservoir constraint and the most profitable prices. In the following computational
+study, the net production to the energy markets will therefore be considered as the
+base case.
+
+                59
+Project Report                                    TIØ4500
+
+9 Computational study
+
+The following section presents and discusses the results from the computational
+study. This includes an explanation of the methodology, a brief technical presenta-
+tion, and a more thorough economic interpretation of the results based on the di"er-
+ent instances simulated in the model described in Section 6. More specifically, our
+computational study aims to investigate how configurations of expanded market par-
+ticipation perform both operationally and economically, with and without a capacity
+expansion. The results will be further discussed from an investor's perspective.
+
+9.1 Explaining the model instances
+
+Quantifying the e"ects of incorporating additional markets and observing how the
+model allocates capacity with the corresponding monetary gains requires a systematic
+generation and simulation of instances. These consist of a base instance and separate
+instances for the inclusion of aFRR, FCR, up-regulating, and down-regulating mar-
+kets. All instances exclude capacity expansion for the power plant, and are depicted
+in Table 12
+
+                     Table 12: Market inclusion for each model instance
+
+Instance            Day- Intra-  aFRR aFRR  FCR-  FCR-
+                   Ahead day       up down    N     D
+
+BASE                             ­  ­          ­     ­
+
+BASE + aFRR                                    ­     ­
+                                                    
+BASE + FCR                       ­  ­               
+                                                     ­
+BASE + Up Markets                   ­               
+
+BASE + Down Markets              ­  
+
+Total                               
+
+                      60
+Project Report  TIØ4500
+
+9.1.1 Connecting water values and the reservoir level
+
+Before proceeding with the computational study, the base instance is used to il-
+lustrate how the water value behaves in relation to the evolution of the reservoir
+level.
+
+Figure 20: Water value and reservoir level for the full-year base instance.
+                                             61
+Project Report      TIØ4500
+
+Examining the water value in Figure 20 and comparing it with Figure 16, it can be
+observed that the former exhibits several discontinuities, rather than a single con-
+stant value as in the latter. When considering these discontinuities in the context
+of Figure 20, it becomes apparent that they occur whenever the reservoir is fully
+depleted. Because the model has perfect foresight regarding prices and inflows, the
+production schedule is optimized to maximize certain revenues. Consequently, the
+reservoir is emptied whenever this constitutes the optimal strategy. Between such
+depletion events, there is a marginal hour in which allocating one additional unit of
+water to the market would be optimal. As the model is fully deterministic, it is there-
+fore reasonable that the water value evolves as a strictly decreasing function. Each
+depletion point represents a change in the opportunity cost of stored water, which
+induces a new marginal valuation segment. In the remainder of the computational
+study, this insight can be recalled whenever water values are presented.
+
+9.2 Technical execution
+
+The model was solved using Python version 3.12.10 and is implemented in the open-
+source optimization modelling language Pyomo. As solver to the optimization model,
+Gurobi version 12.0.3 optimization software was used. The model was run on a
+computer with an AMD Ryzen 5 5600H with Radeon Graphics at CPU at 3.301
+GHz and 16 GB of installed memory (RAM). As the model is kept linear and the
+number of variables and constraints are rather low, further technical analysis of
+run time and number of iterations will not provide results relevant to the further
+discussion.
+
+9.3 Analyzing operational and economic performance
+
+The defined instances enable the subsequent computational study of the hydropower
+plant's operational and economic performance from an investment perspective.
+
+                62
+Project Report                 TIØ4500
+9.3.1 Operational performance
+
+                 Figure 21: Duration curves across the various instances.
+
+A duration curve, as presented for the di"erent instances in Figure 21, illustrates
+how the generation capacity of the plant is utilized throughout the year, sorted from
+the highest to the lowest output levels. It appears that excluding capacity market
+participation leads to a greater number of hours in which the power plant operates at
+maximum production capacity, relative to configurations that include reserve provi-
+sion. Moreover, the production level appears closely linked to the amount of capacity
+allocated to the respective reserve markets. For example, the aFRR instance has ac-
+cess to larger capacity market shares than the FCR instance. This is reflected in
+periods of operation where the plant can simultaneously o"er its maximum upward
+and downward regulating capacity.
+
+                                                    63
+Project Report  TIØ4500
+
+           Figure 22: Ramping duration curves across the various instances.
+
+The characteristics of the duration curve can also be used to examine how di"erent
+market configurations a"ect the ramping behavior of the power plant. In this con-
+text, ramping refers to all hours in which the production level in hour t changes the
+next hour t+1. From Figure 22, it can be observed that the base instance exhibits
+a higher frequency of maximum ramping events. As the model seeks to maximize
+revenue, the production level responds accordingly by exploiting price fluctuations in
+the energy markets. When capacity markets are introduced, the overall magnitude
+of ramping generally decreases, while the number of hours in which ramping occurs
+increases. Since lower average production levels enable greater bidirectional flexibil-
+ity, it is reasonable that the ramping magnitude decreases across configurations that
+include reserve market participation. This change in operational pattern is partic-
+ularly pronounced in the configuration involving down-regulating markets. In this
+case, the model is incentivized to maintain a su!cient and stable production profile
+to o"er down-regulating capacity.
+
+Conversely, exploiting short-term price di"erences across markets, and thereby indu-
+cing frequent ramps, is most apparent in the up-regulation configuration, as well as
+in the total configuration. Significant ramping from one production level to another
+
+                                                    64
+Project Report              TIØ4500
+
+can lead to deviations from the optimal e!ciency operating point and pose addi-
+tional mechanical stress on the unit (Liu et al., 2016). In this respect, participation
+in capacity markets may be beneficial. It should be noted, however, that accounting
+for activation would likely lead to a di"erent ramping profile.
+
+9.3.2 Economic performance
+
+                 Figure 23: The water values across the various instances.
+
+Presenting the water values for the di"erent model instances in Figure 23 indicates
+that the marginal value of an additional unit of stored water is highest in the down-
+regulating instance, and lowest in the up-regulating instance. Interpreted within the
+model context, this suggests that participation in down-regulating reserve markets
+is more profitable than participation in up-regulating markets. One additional unit
+of water can be sold in the Day-Ahead market while simultaneously being o"ered as
+down-regulating reserve capacity, e"ectively yielding a double payo" to the producer.
+In contrast, in the up-regulating setup, the same marginal unit must be allocated
+to the DA market, displacing the marginal unit in the up-regulating reserve market.
+
+                                                    65
+Project Report  TIØ4500
+
+Thus, it cannot generate revenues in both markets simultaneously. The lower water
+value implies that storing water for future use is considered less valuable, as the
+incentive to retain water diminishes in the absence of downregulating markets.
+
+Extending the discussion from Section 9.3.1, the plotted water values also highlight
+a relationship between market share limitations in the capacity markets and the
+number of reservoir emptying cycles. The instance with only access to the FCR
+markets has a relatively low market share and many periods with zero capacity prices.
+Consequently, the producer faces fewer incentives to defer production into later hours
+and therefore tends to empty the reservoir more often, a behaviour similar to the base
+case. From a flexibility perspective under uncertainty, such reservoir depletion may
+be undesirable, implying that participation in downward reserve markets encourages
+operating patterns that preserve flexibility while increasing revenues.
+
+           Figure 24: Energy traded in the markets for the various instances.
+
+The foregoing results have shown that distinct operational patterns emerge depend-
+ing on the market configuration under consideration. While these di"erences influ-
+ence the hourly production profile and thus the reservoir trajectory, Figure 24 demon-
+strates that the annually accumulated net energy production is nearly identical across
+
+                                                    66
+Project Report  TIØ4500
+
+all instances. This indicates that the inclusion of capacity market participation does
+not materially a"ect the total energy generated over the year. Given that the energy
+markets remain the most profitable outlet for the plant, it is reasonable that the
+model seeks to maintain a stable aggregated level of annual energy production.
+
+         Figure 25: Capacity sold to the markets across the various instances.
+
+Examining the corresponding aggregated contributions to the capacity markets in
+Figure 25 enables a discussion on which products are preferred, and why. The most
+noticeable observation is the dominance of aFRR Up whenever this market is in-
+cluded. In the context of a revenue-maximizing strategy, this dominance can be at-
+tributed to comparatively lucrative prices observed in this market, which frequently
+coincide with favourable prices in the energy markets. These synergies appear to
+be stronger for aFRR Up than for aFRR Down, despite both markets having access
+to the same amount of available capacity. Additionally, since the power plant is
+restricted to volume limitations of the reservoir, it would have a volume bias towards
+bidding up-regulating capacity whenever the plant does not produce at maximum
+production capacity.
+
+Furthermore, the contribution to FCR-D is larger than the contribution to FCR-N.
+
+                                                    67
+Project Report  TIØ4500
+
+Given that the former has four times the available market share of the latter, this
+outcome seems reasonable, even though the FCR-D price is equal to zero for most
+hours. Consolidating these results for the total configuration suggests that the model
+tends to prioritise aFRR Up, followed by aFRR Down, then FCR-D, and finally FCR-
+N. This hierarchical bidding pattern reflects the combined e"ect of price signals and
+available market capacity, of which the latter is logically the most decisive factor.
+
+              Figure 26: The revenues obtained from the various instances.
+
+Figure 26 illustrates the preceding discussion on the economic performance analysis.
+While the introduction of capacity market participation leads to a slight reduction in
+energy-market revenues, the latter remain relatively stable across the di"erent con-
+figurations. Hence, participation in multiple capacity markets provides additional
+value on top of the energy that is produced. The extent to which capacity is al-
+located to each reserve product is determined by the available market capacity, the
+associated price levels, and the production level, which together form the basis for
+the prioritization discussed above.
+
+To highlight these contributing factors, the annual revenues can be expressed in
+terms of total revenues per MW of annual tradeable capacity. These values can be
+
+                                                    68
+Project Report                           TIØ4500
+
+compared to the mean prices used in Section 7. For practical purposes, we restrict
+this comparison presented in Table 14 to the total instance and the annual mean
+prices in NO2.
+
+Market     Total revenue [EUR] Revenue per MW [EUR/MW] Mean price [EUR/MW]
+
+aFRR Up         4 015 494.74      15.24  16.05
+
+aFRR Down       2 144 774.91      8.14   16.84
+
+FCR-N           427 313.19        6.08   18.80
+
+FCR-D           370 761.50        2.27   4.36
+
+Table 14: Annual revenue per MW and mean prices for the individual reserve markets
+in NO2.
+
+Examining Table 14 illustrates the volume bias through the aFRR Up annual price
+per MW. Further, it shows the aFRR markets are favoured due to their large trade-
+able market shares and price patterns compared to the FCR markets. It also im-
+portant to remark that the resulting values are also influenced by decisions made in
+the energy markets as this influences the available capacity to bid into the capacity
+markets. Consequently, the revenue per MW di"ers from the mean price, reported
+in Table 14.
+
+9.4 Modelling revenues with capacity expansions
+
+The computational study thus far has demonstrated that participation in multiple
+markets alters the operational pattern and generates additional value for the hydro-
+power producer. A central strategic question is whether this additional value can
+justify investments in expanding production capacity. Consequently, the remainder
+of the computational study examines how di"erent levels of capacity expansion in-
+fluence the expected cash flows associated with multi-market participation. In the
+model, this is implemented by adjusting the maximum generation capacity and the
+maximum capacity that can be o"ered in the respective capacity markets.
+
+                              69
+Project Report  TIØ4500
+
+Figure 27: Revenues obtained from base case and the various capacity expansion
+cases.
+
+From Figure 27, it can be observed that the revenue e"ect of an additional x MW
+of capacity expansion exhibits a weakly concave pattern. This suggests that the
+marginal benefit of additional capacity upgrades declines as the installed capacity
+increases. With a given capacity upgrade, the maximum level of market participation
+in the reserve markets scales proportionally with the increase in installed capacity.
+However, as the volume limits in the intraday market are fixed, this market does
+not provide an income source that can be proportionally leveraged. The diminishing
+revenues are in accordance with diminishing marginal utility presented in economic
+theory (Lin & Peng, 2019). Moreover, the figure indicates that the underlying revenue
+composition remains largely unchanged across the scenarios. Since the power plant
+acts as a price taker, the additional capacity primarily enhances its ability to exploit
+high-price hours across the various markets.
+
+9.4.1 Investment analysis
+
+When evaluating the long-term e"ects of a potential capacity expansion, it is relevant
+to conduct an NPV analysis, as outlined in Section 3.2.4. As these investments
+are inherently complex, assumptions regarding expected expenditures are required
+
+                                                    70
+Project Report  TIØ4500
+
+and subsequently compared with the incremental revenues enabled by the expanded
+capacity. For this analysis, it has been assumed that the capacity expansion has an
+economic lifetime of 40 years and that annual O&M costs correspond to 2% of the
+initial investment cost (IRENA, 2012). It is further assumed that the investment cost
+is incurred one year prior to the commencement of operation. The annual revenues
+associated with the incremental capacity expansion is presented in Figure 28.
+
+  Figure 28: Incremental annual revenues obtained from the capacity expansions.
+
+Using the NPV expression in Equation 2, the incremental cash flows can be assessed
+relative to the investment costs and the annual O&M expenses. Given the consid-
+erable uncertainty associated with investment costs, it is useful to determine the
+maximum investment cost per MW that still yields a net present value equal to zero.
+This assessment is carried out across a range of discount rates and for the full set of
+cash-flow outcomes associated with the di"erent capacity-expansion alternatives. By
+solving the NPV equation for these combinations of cash flows and discount rates,
+an estimate of the maximum economically justifiable investment cost per MW is
+obtained.
+
+                                                    71
+Project Report                                TIØ4500
+
+Table 15: Per-MW investment cost required to achieve NPV = 0 for various discount
+rates r, and various capacity upgrade cases
+
+Capacity upgrade     r = 0.03      r = 0.07      r = 0.10
+        [MW]      [EUR/MW]      [EUR/MW]      [EUR/MW]
+           20
+           40        1 565 336     1 042 288      809 973
+           60        1 519 720     1 011 914      786 370
+           80        1 485 398      989 061       768 610
+                     1 456 478      969 804       753 645
+
+When these investment cost levels are compared with the per-MW benchmarks ref-
+erenced in Section 3.2.4, ranging from 625,000 to 1,250,000 EUR/MW, the results
+suggest that the proposed capacity upgrades could be economically feasible. At the
+lower end of the investment range, the upgrades are expected to be profitable across
+all three discount rates and for all incremental cash-flow scenarios considered. At
+the upper end of the range, however, profitability becomes more sensitive to the re-
+quired rate of return, and the highest discount rate may only be justifiable at around
+3%. While these results indicate that investing in increased power capacity might be
+profitable, it is important to emphasize the uncertainty regarding these cash flows,
+as the investment analysis is based on a single year of historical data.
+
+                  72
+Project Report         TIØ4500
+
+10 Concluding remarks
+
+This project has examined electricity markets, recent price developments, and key
+modelling considerations relevant for hydropower systems. A central finding from
+the literature review is that existing studies largely lack analyses of multi-market
+participation within a mid-term planning context. To address this gap, the project
+has focused on a deterministic mid-term hydropower planning problem that expli-
+citly allows participation across multiple energy and capacity markets. The purpose
+has been to analyse how the model allocates capacity across markets, how this al-
+location influences the operational behaviour of a hydropower plant, the economic
+value generated by such multi-market participation, and how these e"ects should be
+interpreted in relation to investment decisions in increased capacity.
+
+Operationally, the results indicate that participation in capacity markets leads to a
+lower utilisation of turbine capacity, as large parts of the available capacity is reserved
+for reserve market participation. At the same time, the model exhibits a higher num-
+ber of ramping hours, although with smaller amplitude variations. These findings
+imply that the hydropower plant engaged in multi-market participation tend to oper-
+ate less aggressively in a market situation without considering activation. This can,
+for several hours, reflect a strategic positioning for both upward and downward reg-
+ulation. Moreover, as the plant undergoes fewer transitions between near-minimum
+and near-maximum production levels, the mechanical wear is expected to be reduced.
+
+Economically, the results show that participation in capacity markets can lead to
+fewer reservoir drawdowns and that the model places a relatively high value on down-
+regulation, as this may generate double revenue streams. At the same time, there
+is a volume bias towards up-regulation. While energy markets remain the dominant
+source of revenue, the tradable volumes and price patterns in aFRR favour participa-
+tion in this market rather than FCR-N, despite FCR-N exhibiting the highest average
+prices. These findings highlight the key drivers influencing the revenue potential of
+capacity market participation. Further, it illustrates how the reservoir constraints
+may favour up-regulation, while the input data incentives down-regulation as en-
+ergy and down-regulating prices exceeding up-regulation prices alone. This reveals
+important trade-o"s inherent in multi-market optimisation.
+
+From the investment perspective, the analysis indicates diminishing marginal bene-
+fits from increasing installed capacity. Nevertheless, the additional value generated
+through capacity market participation can justify costly investments in increased
+capacity, also under higher discount rates. The implications of these results sug-
+
+                                                    73
+Project Report      TIØ4500
+
+gest that capacity upgrade investments can be economically viable, but uncertain
+future prices and investment costs necessitate conservative assumptions to support
+well-informed and robust investment decisions.
+
+Overall, this work provides insights into both the technical and economic character-
+istics of electricity markets, as well as key modelling considerations relevant to hy-
+dropower applications. The findings establish a strong foundation for further model
+development, with the potential to support more robust decision-making for hydro-
+power producers. Future work can include more detailed representations of stepwise
+dynamics of the power markets, explicit modelling of reserve activation, incorpora-
+tion of uncertainty, refined cost modelling, and the application of advanced solution
+methodologies as the problem formulation increases in complexity.
+
+                74
+Project Report          TIØ4500
+
+11 Future Research
+
+There are several promising directions for future research, such as model extensions
+and the application of more advanced solution techniques as the problem becomes
+increasingly complex.
+
+Possible model expansions
+
+Stochasticity
+A natural first step would be to incorporate stochasticity in energy and capacity
+market prices. Assuming perfect foresight of future market conditions is optimistic
+and can lead the model to operate the hydropower plant closer to its physical and
+operational limits. Additionally, having perfect knowledge of future inflows makes
+the model unrealistically confident in its water management decisions. Lastly, traded
+volumes in the ID market can also be regarded as stochastic. Given that the model
+limits trading to the realised hourly traded volumes, this constraint may also be
+treated as a stochastic parameter.
+
+Building on the lack of modelling uncertainty, the model currently exploits arbit-
+rage opportunities arising from di"erences between DA and ID prices. With greater
+uncertainty in ID and DA prices, the model would likely refrain from selling large
+quantities of energy in the DA market and subsequently buying them back in the
+ID market, as this strategy would become riskier under uncertain price conditions.
+Changes in the water values are also expected to change relative to the baseline
+water value trajectory, which exhibits a stepwise pattern over the planning horizon.
+Finally, reservoir levels would likely appear more stable, as the model would be less
+inclined to operate the power plant aggressively early in the planning horizon to
+maximize revenues at specific high-price hours.
+
+When incorporating stochasticity, modelling the decision hierarchy becomes a natural
+point of focus. The timing of information availability and bid submission deadlines
+provides the basis for constructing multi-stage formulations. Under such a frame-
+work, the problem could be further developed, allowing the stepwise requirements of
+the power market to be represented more realistically. To the best of the author's
+knowledge, such an extension would provide new and valuable insights, particularly
+in a multi-market context.
+
+                    75
+Project Report  TIØ4500
+
+Cost and degradation
+Another interesting aspect concerns the influence of generator start-up and shut-
+down costs, detailed O&M expenses, taxes, and degradation e"ects. Since the current
+model only accounts for operational revenues, incorporating these components into
+the optimization model would possibly lead to a more realistic representation of
+actual operational decisions. However, the inclusion of start-up/shut-down costs is
+likely to increase computational complexity. Introducing start-up and shut-down
+costs could necessitate the use of binary variables to indicate whether the generator
+is started or shut down in each hour, thereby adding complexity to the optimization
+problem, which must be represented over the entire planning period of one year.
+
+In contrast, taxes, O&M costs and degradation e"ects could be incorporated without
+necessarily increasing computational complexity, although they would require more
+detailed data to produce a realistic estimate of profitability. Additionally, it is worth
+emphasizing that these components, particularly taxes, are important considerations
+for power producers and may enhance the study's relevance to the industry.
+
+Reserve activation
+Regarding more detailed modelling of the reserve markets, there also exists a clear
+potential to incorporate reserve activation in a manner that is both suitable and
+computationally e!cient. The approach proposed by Chazarra et al. (2016) can be
+regarded as a simpler, yet suitable modelling alternative.
+
+Transition to 15-minute time resolution
+Lastly, another potential direction for future research is to move from an hourly to a
+15-minute time resolution. However, the limited availability of high-resolution data
+may pose a challenge. Moreover, such a refinement would increase computational
+complexity, as the planning horizon would e"ectively quadruple and each decision
+variable would need to be represented at the quarter-hour level throughout the entire
+planning period.
+
+Possible solution methods
+
+As the model becomes more complex, it is relevant to adapt solution techniques to
+ensure that the problem can still be solved within a reasonable time. Based on the
+literature review, there appears to be potential for incorporating a stochastic dy-
+namic programming framework into the presented optimization problem. This may
+be achieved by decomposing the problem formulation into subproblems, where the
+
+                                                    76
+Project Report      TIØ4500
+
+stochastic parameters are treated deterministically within each respective timeframe.
+
+Helseth et al. (2017) provide valuable insights into this modelling framework and can
+serve as inspiration for future work. Incorporating this type of framework alongside
+a more detailed representation of the various reserve markets would, to the best of
+the authors' knowledge, o"er new and valuable insights for hydropower producers.
+Consequently, the study is relevant to the industry at a time when capacity upgrades
+for participation across markets are an increasingly important topic.
+
+                77
+Project Report      TIØ4500
+
+References
+
+Aasg°ard, E. K. (2020). The value of coordinated hydropower bidding in the nordic
+         day-ahead and balancing market. Energy Systems, 13, 53­77. https://doi.org
+         /10.1007/s12667-020-00388-7
+
+Abgottspon, H., & Andersson, G. (2013). Stochastic scheduling for a price-maker
+         hydro producer considering forward trading. 2013 IEEE Grenoble Conference,
+         1­6. https://doi.org/10.1109/PTC.2013.6652304
+
+Agneholm, E., Afkhami Meybodi, S., Kuivaniemi, M., Ruokolainen, P., Ødeg°ard,
+         J. N., Modig, N., & Eriksson, R. (2019). FCR-D design of requirements: Phase
+         2 (Report No. Version 1 (2019-01-13)). ENTSO-E / Energinet / DNV GL /
+         Statnett / Svenska kraftn¨at / Fingrid. Retrieved 6th October 2025, from htt
+         ps://energinet.dk/media/ljtfnuru/fcr-d-design-of-requirements-phase-2.pdf
+
+Ahlfors, C., & Amelin, M. (2021). Weekly planning of hydropower in systems with
+         large volumes and varying power generation: A literature review. 2021 IEEE
+         Madrid PowerTech (PowerTech), 1­7. https://doi.org/10.1109/PowerTech46
+         648.2021.9495058
+
+Ahmadi, A., Kaymanesh, A., Siano, P., Janghorbani, M., Nezhad, A. E., & Sarno, D.
+         (2015). Evaluating the e"ectiveness of normal boundary intersection method
+         for short-term environmental/economic hydrothermal self-scheduling. Electric
+         Power Systems Research, 123, 192­204. https://doi.org/10.1016/j.epsr.2015.0
+         2.007
+
+Andersen, I. (2024, December 11). Strømprisen n°ar nye høyder i sørvest-norge: Over
+         13 kroner kilowattimen [Teknisk Ukeblad]. Retrieved 26th September 2025,
+         from https://www.tu.no/artikler/stromprisen-hopper-opp-til-over-13-kroner-ti
+         men-inkludert-moms-i-sorvest-norge-torsdag/553823
+
+Belsnes, M. M., Wolfgang, O., Follestad, T., & Aasg°ard, E. K. (2016). Applying
+         successive linear programming for stochastic short-term hydropower optimiz-
+         ation. Electric Power Systems Research, 130, 167­180. https://doi.org/10.10
+         16/j.epsr.2015.08.020
+
+Blume-Werry, E., Faber, T., Hirth, L., Huber, C., & Everts, M. (2021). Eyes on the
+         price: Which power generation technologies set the market price? Economics
+         of Energy & Environmental Policy, 10 (1). https://doi.org/10.5547/2160-589
+         0.10.1.eblu
+
+Bonsor, K. (2001, September 6). How hydropower plants work. Retrieved 6th October
+         2025, from https://science.howstuffworks.com/environmental/energy/hydropo
+         wer-plant.htm
+
+                78
+Project Report      TIØ4500
+
+Chazarra, M., Garc´ia-Gonza´lez, J., P´erez-D´iaz, J. I., & Arteseros, M. (2016). Stochastic
+         optimization model for the weekly scheduling of a hydropower system in day-
+         ahead and secondary regulation reserve markets. Electric Power Systems Re-
+         search, 130, 67­77. https://doi.org/10.1016/j.epsr.2015.08.014
+
+Diniz, A. L., & Maceira, M. E. P. (2008). A four-dimensional model of hydro gen-
+         eration for the short-term hydrothermal dispatch problem considering head
+         and spillage e"ects. IEEE Transactions on Power Systems, 23 (3), 1298­1308.
+         https://doi.org/10.1109/TPWRS.2008.922253
+
+DNV. (2024, June 18). Dnv new power systems report: Global grid infrastructure to
+         double by 2050 to meet surging electricity demand. Retrieved 24th September
+         2025, from https://www.dnv.com/news/2024/dnv-new-power-systems-report/
+
+EDP. (2025, May). What is hydropower and how does it work? Retrieved 11th Decem-
+         ber 2025, from https://edp.com/en/media/edp-stories/what-hydropower-and-
+         how-does-it-work
+
+Ember. (2025a). Slidedeck: The electrotech revolution [Slide deck. Kingsmill Bond and
+         Ember Futures team]. Retrieved 4th October 2025, from https://ember-energ
+         y.org/app/uploads/2025/09/Slidedeck-The-Electrotech-Revolution-PDF.pdf
+
+Ember. (2025b, January 23). European electricity review 2025 (Report). Ember. Re-
+         trieved 4th October 2025, from https://ember-energy.org/app/uploads/2025
+         /01/EER 2025 22012025.pdf
+
+Farahmand, H., Helseth, A., & Naversen, C. (2020). Stochastic and robust optimiz-
+         ation approaches for reserve procurement in hydropower systems considering
+         activated reserves. Energy Policy, 135, 111001. https://doi.org/10.1016/j.ijep
+         es.2020.105864
+
+Faria, E., & Fleten, S.-E. (2011). Day-ahead market bidding for a nordic hydropower
+         producer: Taking the elbas market into account. Computational Management
+         Science, 8, 75­101. https://doi.org/10.1007/s10287-009-0108-5
+
+Gandhi, H. H., Hoex, B., & Hallam, B. J. (2022). Strategic investment risks threaten-
+         ing india's renewable energy ambition. Energy Strategy Reviews, 43, 100921.
+         https://doi.org/10.1016/j.esr.2022.100921
+
+Gjelsvik, A., & Haugstad, A. (2005). Considering head variations in a linear model
+         for optimal hydro scheduling. Hydropower '05: The Backbone of Sustainable
+         Energy Supply. https://hdl.handle.net/11250/3134055
+
+Hammid, A. T., Awad, O. I., Sulaiman, M. H., Gunasekaran, S. S., Mostafa, S. A.,
+         Kumar, N. M., Khalaf, B. A., Al-Jawhar, Y. A., & Abdulhasan, R. A. (2020).
+         A review of optimization algorithms in solving hydro generation scheduling
+         problems. Energies, 13 (11), 2787. https://doi.org/10.3390/en13112787
+
+                79
+Project Report      TIØ4500
+
+Helseth, A., Fodstad, M., Askeland, M., Mo, B., Nilsen, O. B., P´erez-D´iaz, J. I.,
+         Chazarra, M., & Guis´andez, I. (2017). Assessing hydropower operational prof-
+         itability considering energy and reserve markets. IET Renewable Power Gen-
+         eration, 11 (13), 1640­1647. https://doi.org/10.1049/iet-rpg.2017.0407
+
+Helseth, A., Fodstad, M., & Mo, B. (2016). Optimal medium-term hydropower
+         scheduling considering energy and reserve capacity markets. IEEE Transac-
+         tions on Sustainable Energy, 7 (3), 934­942. https://doi.org/10.1109/TSTE.2
+         015.2509447
+
+Helseth, A., Mo, B., H°agenvik, H. O., & Scha¨"er, L. E. (2022). Hydropower schedul-
+         ing with state-dependent discharge constraints: An SDDP approach. Journal
+         of Water Resources Planning and Management, 148 (11), 04022061. https://d
+         oi.org/10.1061/(ASCE)WR.1943-5452.0001609
+
+Idsø, J., Nesse, J. G., & Larsen, Ø. H. (2024). The short-term price elasticity, tem-
+         perature elasticity, and wind speed elasticity of electricity: A case study from
+         norway. Sustainability, 16 (8), 3321. https://doi.org/10.3390/su16083321
+
+IFC. (2015). Hydroelectric power: A guide for developers and investors. International
+         Finance Corporation (IFC). Retrieved 6th October 2025, from https://ppp.w
+         orldbank.org/sites/default/files/2021-10/Hydroelectric%20Power%20-%20A%2
+         0Guide%20for%20Developers%20and%20Investors.pdf
+
+Investopedia. (2025, October 1). Net present value (NPV). Retrieved 15th November
+         2025, from https://www.investopedia.com/terms/n/npv.asp
+
+IRENA. (2012, June). Hydropower: Renewable energy technologies: Cost analysis
+         series (Working paper No. Issue 3/5). International Renewable Energy Agency
+         (IRENA). https://www.irena.org/-/media/Files/IRENA/Agency/Publication/2
+         012/RE Technologies Cost Analysis-HYDROPOWER.pdf
+
+Jacobson, A., Pecci, F., Sepulveda, N., Xu, Q., & Jenkins, J. (2023). A computation-
+         ally e!cient benders decomposition for energy systems planning problems
+         with detailed operations and time-coupling constraints. INFORMS Journal
+         on Optimization, 6 (1), 32­45. https://doi.org/10.1287/ijoo.2023.0005
+
+Kasper, D. (n.d.). Microhydro [Penn State e-Education Institute]. Retrieved 15th Oc-
+         tober 2025, from https://www.e-education.psu.edu/emsc297/node/648
+
+Kong, J., Skjelbred, H. I., & Fosso, O. B. (2020). An overview on formulations and
+         optimization methods for the unit-based short-term hydro scheduling prob-
+         lem. Electric Power Systems Research, 178, 106027. https://doi.org/10.1016
+         /j.epsr.2019.106027
+
+Larsen, C. T., Doorman, G. L., & Mo, B. (2015). Evaluation of scenario reduction
+         methods for stochastic inflow in hydro scheduling models. 2015 IEEE Eind-
+         hoven PowerTech, 1­6. https://doi.org/10.1109/PTC.2015.7232819
+
+                80
+Project Report      TIØ4500
+
+Lin, C.-C., & Peng, S.-S. (2019). The role of diminishing marginal utility in the
+         ordinal and cardinal utility theories. Australian Economic Papers, 58 (3), 233­
+         246. https://doi.org/10.1111/1467-8454.12151
+
+Liu, X., Luo, Y., & Wang, Z. (2016). A review on fatigue damage mechanism in
+         hydro turbines. Renewable and Sustainable Energy Reviews, 54, 1­14. https:
+         //doi.org/10.1016/j.rser.2015.09.025
+
+LVK. (n.d.). Norsk vannkraft: Nøkkeltall [No publication date stated]. Retrieved
+         5th October 2025, from https://lvk.no/fagomrader/vannkraftproduksjon/nors
+         k-vannkraft-nokkeltall
+
+Mentens, L., Peremans, H., Springael, J., & Nimmegeers, P. (2025). Flexibility in
+         short-term electricity markets for renewable penetration. Smart Energy, 18,
+         100183. https://doi.org/10.1016/j.segy.2025.100183
+
+Messel Larsen, J. (2024, December 17). E´n prosent større produksjon kunne halvert
+         ekstremprisen. Retrieved 9th September 2025, from https://www.europower.n
+         o/kraftmarked/-n-prosent-storre-produksjon-kunne-halvert-ekstremprisen/2-1-
+         1753442
+
+Messel Larsen, J. (2025, April 29). Eviny vil mer enn doble e!ekten p°a tre kraftverk.
+         Retrieved 9th September 2025, from https://www.europower.no/vannkraft/ev
+         iny-vil-mer-enn-doble-effekten-pa-tre-kraftverk/2-1-1812834
+
+Moen, J., & Johansen, C. (1992, June). Norway's new energy act: Lessons to date.
+         Norwegian Water Resources and Energy Administration (NVE). Oslo, Nor-
+         way. Retrieved 11th December 2025, from https://publikasjoner.nve.no/divers
+         e/1992/Norways.new.energy.act1992.pdf
+
+Murphy, J. (2013, December 11). Benders, nested benders and stochastic program-
+         ming: An intuitive introduction (Technical report No. CUED/F-INFENG/TR.675).
+         Cambridge University Engineering Department. Retrieved 7th December 2025,
+         from http://www.optimization-online.org/DB FILE/2013/12/4157.pdf
+
+Nord Pool. (2023a). Day-ahead market. Retrieved 1st September 2023, from https:
+         //www.nordpoolgroup.com/en/the-power-market/Day-ahead-market/
+
+Nord Pool. (2023b). Intraday market. Retrieved 1st September 2023, from https://w
+         ww.nordpoolgroup.com/en/the-power-market/Intraday-market/
+
+Nord Pool. (2023c). Single intraday coupling. Retrieved 1st September 2023, from
+         https://www.nordpoolgroup.com/en/the-power-market/Intraday-market/single
+         -intraday-coupling/
+
+NVE. (2015, December 8). HBV-modellen. Retrieved 6th October 2025, from https:
+         //www.nve.no/vann-og-vassdrag/vannets-kretsloep/analysemetoder-og-modelle
+         r/hbv-modellen/
+
+                81
+Project Report      TIØ4500
+
+NVE. (2020). Hva er egentlig potensialet for opprusting og utvidelse av norske vannkraftverk?
+         (Fact sheet No. NVE Fakta Nr. 6/2020). Retrieved 15th November 2025, from
+         https://publikasjoner.nve.no/faktaark/2020/faktaark2020 06.pdf
+
+NVE. (2024a). Hydrologiske data til kraftsituasjonsrapporten [Last updated 2024-10-
+         14. Licensed under NLOD / CC BY 3.0 Norway]. Retrieved 6th October 2025,
+         from https://www.nve.no/energi/analyser-og-statistikk/hydrologiske-data-til-kr
+         aftsituasjonsrapporten/
+
+NVE. (2024b, October). Utviklingen i kraftmarkedet mot 2050: En utvidelse av lang-
+         siktig kraftmarkedsanalyse 2023 (Report) (Published October 2024). Oslo.
+         https://www.nve.no/energi/analyser-og-statistikk/langsiktig-kraftmarkedsanaly
+         se/utviklingen-i-kraftmarkedet-mot-2050/
+
+NVE. (2025a). Magasinstatistikk [Updated weekly]. Retrieved 26th September 2025,
+         from https://www.nve.no/energi/analyser-og-statistikk/magasinstatistikk/
+
+NVE. (2025b, April 4). Reinvesteringsbehov, opprusting og utvidelse [Last updated
+         2025-04-04]. Retrieved 6th October 2025, from https://www.nve.no/energi/en
+         ergisystem/vannkraft/reinvesteringsbehov-opprusting-og-utvidelse/
+
+P´erez-D´iaz, J. I., Guisa´ndez, I., Chazarra, M., & Helseth, A. (2020). Medium-term
+         scheduling of a hydropower plant participating as a price-maker in the auto-
+         matic frequency restoration reserve market. Electric Power Systems Research,
+         185, 106399. https://doi.org/10.1016/j.epsr.2020.106399
+
+RME. (2025, February 3). Cross-border interconnectors: Why they exist and con-
+         tribute to a sustainable energy future. Retrieved 9th September 2025, from
+         https://www.nve.no/norwegian-energy-regulatory-authority/the-norwegian-ene
+         rgy-regulatory-authority/cross-border-interconnectors-why-they-exist-and-contr
+         ibute-to-a-sustainable-energy-future/
+
+Scarcelli, R. O. C., Zambelli, M. S., Soares, S., & Carneiro, A. A. F. M. (2017).
+         Ensemble of markovian stochastic dynamic programming models in di"er-
+         ent time scales for long term hydropower scheduling. Electric Power Systems
+         Research, 150, 129­136. https://doi.org/10.1016/j.epsr.2017.05.013
+
+Scha¨"er, L. E., Helseth, A., & Korp°as, M. (2022). A stochastic dynamic programming
+         model for hydropower scheduling with state-dependent maximum discharge
+         constraints. Renewable Energy, 197, 1018­1030. https://doi.org/10.1016/j.ren
+         ene.2022.05.106
+
+Shinde, P. (2024). An assessment of flow-based market coupling in the nordics. Re-
+         trieved 19th September 2025, from https://montel.energy/commentary/flow-
+         based-market-coupling-in-the-nordics
+
+Sifuentes, E., & Vargas, A. (2007). Hydrothermal scheduling using benders decom-
+         position: Accelerating techniques [First published 2007-05-15]. IEEE Transac-
+
+                82
+Project Report      TIØ4500
+
+         tions on Power Systems, 22 (4), 1351­1359. https://doi.org/10.1109/TPWRS.2
+         007.901751
+SINTEF. (2025). EMPS: Multi-area power market simulator. Retrieved 12th Decem-
+         ber 2025, from https://www.sintef.no/en/software/emps-multi-area-power-ma
+         rket-simulator/
+SINTEF Energi. (2025). Kraftmarkeder og markedsmodeller for vannkraft. Retrieved
+         14th November 2025, from https://www.sintef.no/fagomrader/vannkraft/kraf
+         tmarkeder-og-markedsmodeller-for-vannkraft/
+SSB. (2025a). Statbank table 09387. Retrieved 26th September 2025, from https://w
+         ww.ssb.no/statbank/table/09387/tableViewLayout1/
+SSB. (2025b). Statbank table 14091: Electricity production, by type [Online database].
+         Retrieved 22nd September 2025, from https://www.ssb.no/statbank/table/14
+         091/chartViewLine/
+Statkraft. (n.d.). Elektrisitet: Økt e!ekt blir vel s°a viktig som Økt produksjon i fremtidens
+         vannkraftverk. Retrieved 15th November 2025, from https://www.statkraft.n
+         o/presserom/explained/elektrisitet-okt-effekt-kan-bli-viktigere-enn-bare-okt-pr
+         oduksjon-i-fremtidens-vannkraftverk/
+Statnett. (2021, October 1). Trial operation underway for North Sea Link [Press
+         release]. https://www.statnett.no/en/about-statnett/news-and-press-releases/n
+         ews-archive-2021/trial-operation-underway-for-north-sea-link/
+Statnett. (2022). 15 minutters avregning og energimarkeder [Last updated 2025-10-
+         15]. Retrieved 22nd September 2025, from https://www.statnett.no/for-aktor
+         er-i-kraftbransjen/systemansvaret/kraftmarkedet/15-minutters-avregning-og-en
+         ergimarkeder/
+Statnett. (2023). Hva er reservemarkedene? [Published 06.01.2023, updated 07.03.2025].
+         https://www.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraftmark
+         edet/reservemarkeder/introduksjon-til-reserver/
+Statnett. (2024a). Vilk°ar for aFRR (fra 01.01.2024). Retrieved 21st September 2025,
+         from https://www.statnett.no/globalassets/for-aktorer-i-kraftsystemet/system
+         ansvaret/retningslinjer---historikk/systemansvaret---vedlegg-til-retningslinjer-fo
+         r-fos--9---vilkar-for-afrr-fra-01.01.2024.pdf
+Statnett. (2024b). Vilk°ar for aktiveringsmarkedet for mFRR (fra 01.01.2024). Re-
+         trieved 21st September 2025, from https://www.statnett.no/globalassets/for-
+         aktorer-i-kraftsystemet/systemansvaret/retningslinjer---historikk/systemansvare
+         t---vedlegg-til-retningslinjer-for-fos--11---vilkar-mfrr-aktiveringsmarked-fra-01
+         .01.2024.pdf
+Statnett. (2024c). Vilk°ar for kapasitetsmarkedet for mFRR (fra 11.02.2024). Re-
+         trieved 21st September 2025, from https://www.statnett.no/globalassets/for-
+
+                83
+Project Report      TIØ4500
+
+         aktorer-i-kraftsystemet/systemansvaret/retningslinjer---historikk/systemansvare
+         t---vedlegg-til-retningslinjer-for-fos--9---vilkar-for-kapasitetsmarkedet-for-mfrr
+         -11.02.2024.pdf
+Statnett. (2025a). Introduksjon til reservemarkedene. Retrieved 21st November 2025,
+         from https://www.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraf
+         tmarkedet/reservemarkeder/introduksjon-til-reserver/
+Statnett. (2025b). Kortsiktig markedsanalyse 2025­2030 (Report). Retrieved 9th Septem-
+         ber 2025, from https://www.statnett.no/globalassets/for-aktorer-i-kraftsystem
+         et/planer-og-analyser/kma/kortsiktig-markedsanalyse-2025---2030.pdf
+Statnett. (2025c). Primærreserver. Retrieved 21st September 2025, from https://w
+         ww.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraftmarkedet/rese
+         rvemarkeder/primarreserver/
+Statnett. (2025d). Raske frekvensreserver - FFR. Retrieved 21st September 2025,
+         from https://www.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraf
+         tmarkedet/reservemarkeder/ffr/
+Statnett. (2025e). Sekundærreserver. Retrieved 21st September 2025, from https://w
+         ww.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraftmarkedet/rese
+         rvemarkeder/sekundarreserver/
+Statnett. (2025f). Systemutviklingsplan 2025: Elektrifisering for en ny tid. Retrieved
+         21st September 2025, from https://www.statnett.no/globalassets/for-aktorer-i
+         -kraftsystemet/planer-og-analyser/sup/systemutviklingsplan-2025.pdf
+Statnett. (2025g). Tertiærreserver. Retrieved 21st September 2025, from https://w
+         ww.statnett.no/for-aktorer-i-kraftbransjen/systemansvaret/kraftmarkedet/rese
+         rvemarkeder/tertiarreserver/
+Statnett. (2025h). Vilk°ar for FCR-marked (gjeldende fra juni 2025). Retrieved 21st Septem-
+         ber 2025, from https://www.statnett.no/globalassets/for-aktorer-i-kraftsystem
+         et/systemansvaret/retningslinjer-fos/godkjent-v25/vedlegg-til-retningslinjer-fos
+         -fos--9---vilkar-for-fcr-marked---gjeldende-fra-juni-25.pdf
+TrønderEnergi. (2025). Nedre driva kraftverk: Mer kraft og e!ekt for fremtiden. Re-
+         trieved 7th October 2025, from https://www.tronderenergi.no/nedre-driva
+Warland, G., & Mo, B. (2016). Stochastic optimization model for detailed long-term
+         hydro thermal scheduling using scenario-tree simulation. Energy Procedia, 87,
+         165­172. https://doi.org/10.1016/j.egypro.2015.12.347
+Wohlin, C. (2014). Guidelines for snowballing in systematic literature studies and
+         a replication in software engineering. Proceedings of the 18th International
+         Conference on Evaluation and Assessment in Software Engineering, 1­10. ht
+         tps://doi.org/10.1145/2601248.2601268
+
+                84
+Project Report      TIØ4500
+
+WWF Norge. (n.d.). Elver og vassdrag. Retrieved 5th October 2025, from https://w
+         ww.wwf.no/dyr-og-natur/vernede-vassdrag
+
+                85
+Project Report                                          TIØ4500
+
+Appendix
+A Analysing capacity market prices
+
+The aFRR market
+
+Figure 29: aFRR Down price distribution (2019 vs 2024)
+                                    I
+Project Report                                        TIØ4500
+
+Figure 30: aFRR Up price distribution (2019 vs 2024)
+                                  II
+Project Report                                          TIØ4500
+The mFRR market
+
+Figure 31: mFRR Down price distribution (2019 vs 2024)
+                                   III
+Project Report                                        TIØ4500
+
+Figure 32: mFRR Up price distribution (2019 vs 2024)
+                                  IV
+Project Report                                      TIØ4500
+The FCR-D market
+
+Figure 33: FCR-D price distribution (2023 vs 2024)
+                                V
+Project Report                                             TIØ4500
+
+B Turbine E!ciency Curve
+
+The turbine e!ciency is defined as a function of the water discharge Q [m3/s].
+Table 16 lists the measured e!ciency values used to construct a piecewise­linear
+approximation for the optimization model.
+
+                   Table 16: Turbine e!ciency as a function of discharge
+
+                Index Discharge Q [m3/s] E!ciency tur [%]
+
+                1   0.00       88.08
+                               88.08
+                2   1.56       89.70
+                               89.77
+                3   2.25       90.20
+                               90.16
+                4   2.40       90.10
+                               90.54
+                5   2.76       91.00
+                               91.23
+                6   2.98       91.25
+                               91.20
+                7   3.12       91.11
+                               91.30
+                8   3.70       91.38
+                               91.45
+                9   4.43       91.41
+                               91.22
+                10  5.11       90.92
+                               90.79
+                11  5.53
+
+                12  5.90
+
+                13  6.47
+
+                14  7.36
+
+                15  7.90
+
+                16  8.68
+
+                17  9.34
+
+                18  10.84
+
+                19  12.25
+
+                20  12.83
+
+                           VI
+Project Report                           TIØ4500
+
+C Generator e!ciency curve
+
+The generator e!ciency is provided as a function of load in MW. Table 17 lists the
+values used to build a piecewise­linear (PWL) approximation.
+
+                             Table 17: Generator e!ciency vs. load
+
+                Index Load [MW] gen [%]
+
+                1   0       96.90
+
+                2   18      96.90
+
+                3   20      96.90
+
+                4   30      97.60
+
+                5   40      98.10
+
+                6   50      98.40
+
+                7   60      98.65
+
+                8   65      98.70
+
+                9   70      98.79
+
+                10  75      98.80
+
+                11  80      98.80
+
+                12  85      98.80
+
+                13  90      98.70
+
+D Link to GitHub repository
+
+The GitHub repository containing the open source file is available at: https://gith
+ub.com/SigurdBrensholm/Model code mid term hydropower model.git Power plant
+specific information, in addition to prices and volumes are excluded from the file.
+
+                    VII
+

@@ -1,0 +1,2499 @@
+BSP - Implementation Guide – mFRR energy activation market
+
+BSP - Implementation Guide
+
+mFRR energy activation market
+
+             15 min resolution and automated balancing
+
+Business process: mFRR energy activation market
+
+Version:  1.1.6
+
+Status:   Published
+
+Date:     9.9.2024
+
+                                                            1
+                  BSP - Implementation Guide – mFRR energy activation market
+
+Revision History
+
+Version  Date        Changed by       Comments
+
+1.0      17.12.2020  Nordic mFRR EAM First published version of the guide
+
+                     project
+
+1.1      14.06.2021  Nordic mFRR EAM Added:
+
+                     project          National bid attributes and products:
+
+                                      - Faster activation and earlier deactivation
+
+                                      - InclusiveBids
+
+                                      - Period shift activation
+
+                                      - Slower product bids (specific product)
+
+                                      New documents:
+
+                                      - Bid availability document
+
+                                      - Reserve allocation result document
+
+                                      - Acknowledgement document
+
+                                      Updated/added:
+
+                                      - Conditional linking
+
+                                      - Activation heartbeat description
+
+                                      - General rules for messaging
+
+                                      - TSO specific: implementation plans
+
+                                      - TSO specific: alternative channels
+
+1.1.1    9.9.2021    Nordic mFRR EAM  Updated:
+                           project
+                                      - Small modification of "Update and
+                                        cancellation principles"
+
+                                      - Validation rule for not allowing change of
+                                        bid period and resource object
+
+                                      - Adjusted description of 3.4 Activate bid
+                                        process
+
+                                      - Codes for type and processtype to
+                                        Acknowledgement document
+
+                                      - Document codes, and naming of
+                                        document time interval attribute for
+                                        Activation document
+
+                                      - Reason codes for ReserveBid document
+                                        and ReserveAllocationResult document
+
+                                      - Implementation plan Svk and SN:
+                                        removed pilot
+
+1.1.2    16.11.2021                   Updated:
+
+                                      - Activate bid process: updated description
+                                      - General rules for messaging: Message size
+
+                                        limit and detailing of update principle for
+                                        bids
+
+                                      - Bid document:
+
+                                                                                                            2
+       BSP - Implementation Guide – mFRR energy activation market
+
+                      o rule on connecting_Domain.mRID
+                   - Activation document:
+
+                      o new version 6.2 w/support for
+                           proper UUID
+
+                      o Document code for production
+                           smoothing (only Norway)
+
+                      o Reason in response
+                   - Implementation plan:
+
+                      o Statnett: description of transition
+
+                      o Svenska kraftnät: description of
+                           transition
+
+1.1.3  13.5.2022   Updated:
+1.1.4
+                   - Description of activation ordering process
+
+                   - Bid validation rules for non-standard
+                     product bids
+
+                   - Implementation plans
+
+                   - Transition phase Statnett and Svk
+
+                   - Other updates:
+
+                      o Message time series limit
+
+                      o Reference to namespace for
+                           ReserveBidDocument
+
+                      o Modified bid validation rule for
+                           complex bids
+
+                      o ReserveAllocationResult document –
+                           added price and short explanation of
+                           use
+
+       13.12.2023  - Information about TSO specific
+                     implementation plans and releases before
+                     Go-live has been moved to separate TSO
+                     specific guides.
+
+                   Updates:
+
+                   - Updated ResereveBid document to v7.4
+
+                   - Updated ReserveAllocationResult
+                     document to v6.4, removed non-
+                     mandatory fields not in use, allowed two
+                     periods for direct activations
+
+                   - Updated BidAvailability document to v1.1
+
+                   - Minimum offered volume mandatory for
+                     divisible bids
+
+                   - Rules for period shift updated
+
+                   Energinet specific:
+                   - Production type mandatory
+
+                   Statnett specific:
+                   - Disturbance reserve (DFR)
+                   - Linked period shift bid
+
+                                                                   3
+       BSP - Implementation Guide – mFRR energy activation market
+
+                                             Svenska kraftnät specific:
+                                             - Disturbance reserve
+                                             - Updated Nation bid attributes support
+
+1.1.5  26.4.2024  Updated:
+1.1.6  9.9.2024   - Go-live date
+                  - Product characteristics
+                  - Bid message size limit
+                  - resending of BidAvailability document and
+                  ReserveAllocationResult document
+                  - codes for Disturbance reserve (mFRR-
+                  D/överbelastningsreserv)
+
+                  Statnett specific:
+                  - period shift conditional linking
+
+                  Energinet specific:
+                  - Energinet will not implement the heartbeat
+                  messaging process in the Go-live
+
+                                                                                      4
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+Table of contents:
+
+1 Introduction ...............................................................................................................................................................6
+  1.1 Background ........................................................................................................................................................ 6
+  1.2 Scope..................................................................................................................................................................6
+  1.3 Terms and definitions ........................................................................................................................................7
+  1.4 References ......................................................................................................................................................... 8
+
+2 Business context ........................................................................................................................................................9
+  2.1 Overall process and timeline ............................................................................................................................. 9
+  2.2 System context.................................................................................................................................................10
+  2.3 Fallback ............................................................................................................................................................11
+
+3 Business process ......................................................................................................................................................12
+  3.1 mFRR Business process ....................................................................................................................................12
+  3.2 The mFRR energy activation market sequence diagram .................................................................................13
+  3.3 Submit bid process...........................................................................................................................................14
+  3.4 Activate bid process.........................................................................................................................................20
+  3.5 Publication and reporting of market results....................................................................................................24
+
+4 TSO specific information..........................................................................................................................................25
+  4.1 Energinet..........................................................................................................................................................25
+  4.2 Fingrid ..............................................................................................................................................................26
+  4.3 Statnett ............................................................................................................................................................27
+  4.4 Svenska kraftnät ..............................................................................................................................................30
+
+5 General rules for messaging ....................................................................................................................................32
+  5.1 Date and time ..................................................................................................................................................32
+  5.2 Daylight saving time.........................................................................................................................................32
+  5.3 Unique identifiers – UUID ................................................................................................................................32
+  5.4 Document identification and revision number ...............................................................................................32
+  5.5 Message size limit ............................................................................................................................................32
+  5.6 Update and cancellation principles .................................................................................................................32
+  5.7 Acknowledgement ...........................................................................................................................................33
+  5.8 Energy communication platform .....................................................................................................................33
+
+6 Appendix 1 – Document attributes and dependencies ...........................................................................................34
+  6.1 Bid document – Attributes and dependencies ................................................................................................34
+  6.2 Activation document – Attributes and dependencies.....................................................................................43
+  6.3 Bid availability document – Attributes and dependencies..............................................................................47
+  6.4 Reserve allocation result document – Attributes and dependencies .............................................................50
+  6.5 Acknowledgement document – Attributes and dependencies.......................................................................55
+  6.6 Supported coding schemes for sender/receiver identification.......................................................................56
+
+7 Appendix 2 – Examples ............................................................................................................................................57
+
+                                                                                                                                              5
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+1 Introduction
+
+This implementation guide describes the interface between BSP and TSO for the mFRR energy activation market on
+15 minute resolution and support for automated balancing. The go-live date for mFRR energy activation market is
+December 3rd 2024.
+The guide may be updated based on feedback from the market participants and reassessment of the TSO's
+implementation plans.
+
+1.1 Background
+
+mFRR Energy activation market (mFRR EAM) is a project within Nordic Balancing Model (NBM) program. NBM is the
+program for updating the Nordic balancing process in order to facilitate increased volumes of variable renewable
+energy in the system, European market integration and improved balancing market efficiency, while maintaining
+operational security in the most cost-effective manner. This is a complex program having several great challenges to
+be resolved, including changing and automating critical system operation processes.
+Information about the overall roadmap for the NBM program is available at the www.nordicbalancingmodel.net
+webpage.
+
+1.2 Scope
+
+This document covers the implementation of Nordic mFRR energy activation market and provides information about
+the processes required to support this market. Both functional and technical aspects are covered. The intended
+users of this document are the participating BSPs1.
+The main processes described are:
+
+    • Bid collection process, including
+              • New CIM-based message format
+              • New bid attributes
+
+    • Energy activation process
+              • Scheduled activation, Direct activation
+              • Changes to electronic ordering, including introduction of activation heartbeat
+
+1 In Denmark the BSP role has not been separated from the BRP role, so in Denmark the target audience for this document is the
+BRP. Whenever the term BSP is used throughout this document it should be interpreted - for Denmark - as the «BRP acting as
+BSP»
+
+                                                                                                                                              6
+                        BSP - Implementation Guide – mFRR energy activation market
+
+1.3 Terms and definitions               Definition
+
+ Acronym Term
+
+AOF    Activation Optimization Function The role to operate the algorithm applied for the optimisation of
+
+                                        the activation of Balancing Energy bids within a Coordinated
+
+                                        Balancing Area.
+
+BEGCT  Balancing Energy Gate closure    The point in time when submission or update of a balancing energy
+                                        bid is no longer permitted
+(BSP GCT) time
+
+BEGOT  Balancing Energy Gate opening    The first point in time when submission of a balancing energy bid is
+       time                             permitted
+
+BRP    Balance Responsible Party        A market participant or its chosen representative responsible for its
+
+                                        imbalances
+
+BSP    Balancing Services Provider      A market participant with reserve-providing units or reserve-
+
+                                        providing groups able to provide balancing services to TSOs
+
+CIM    IEC Common Information Model A standard for describing information about an electrical network.
+
+                                        The European style market profile is a profile derivation from the
+
+                                        CIM to harmonize the energy market data exchanges in Europe.
+
+CZC    Cross Zonal Capacity             The cross-zonal transmission capacity between two bidding zones
+
+DA     Direct activation / direct       Activation of standard mFRR product bid(s) at any point of time
+                                        following the point of scheduled activation of the quarter hour and
+       activatable bid                  until the point of scheduled activation of the subsequent quarter
+                                        hour.
+
+FAT    Full Activation Time             The period between the activation request by the connecting TSO
+                                        and the corresponding full delivery of the concerned product
+
+ECP    Energy Communication Platform Reference implementation of MADES standard
+
+ISP    Imbalance Settlement Period      The time unit for which balance responsible parties' imbalance is
+
+                                        calculated
+
+MADES  Market Data Exchange Standard Communication IEC standard designed by ENTSO-E
+
+MOL    Merit Order List                 A list of balancing energy bids sorted in order of their bid prices,
+MTU    Market Time Unit                 used for the activation of those bids
+SA
+TSO    Scheduled activation / schedule  The period for which the market price is established or the shortest
+       activatable bid                  possible common time period for the two bidding zones, if their
+       Transmission System Operator     market time units are different.
+
+                                        Activation of standard mFRR product bids at a specific point in time
+                                        with respect to the period of time for which the bids were
+                                        submitted. The scheduled activation time is once per quarter hour.
+
+                                        A party that is responsible for a stable power system operation
+                                        (including the organisation of physical balance) through a
+                                        transmission grid in a geographical area. In the Nordic synchronous
+                                        area, there are four TSOs: Svenska kraftnät, Fingrid, Energinet.dk
+                                        and Statnett.
+
+                                                                                                               7
+                         BSP - Implementation Guide – mFRR energy activation market
+
+         Connecting TSO                  the TSO that operates the scheduling area in which balancing
+                                         service providers and balance responsible parties shall be compliant
+                                         with the terms and conditions related to balancing;
+
+TSO GCT  TSO energy bid submission gate  The latest point in time when a connecting TSO can forward the
+         closure time                    balancing energy bids received from a balancing service provider to
+                                         the activation optimisation function
+
+1.4 References
+
+Ref [1]  mFRR Implementation Framework
+         https://consultations.entsoe.eu/markets/mfrr_implementation_framework/
+
+Ref [2]  Common Information Model (CIM) and CIM based documents. ENTSO-E implementation guides, see
+         ENTSO-E Electronic Data Interchange (EDI) Library
+
+Ref [3]  Acknowledgement: IEC 62325-451-1: Acknowledgement Business Process And Contextual Model
+         For CIM European Market.
+
+Ref [4] EIC codes: The Energy Identification Coding (EIC)
+
+Ref [5] ENTSO-E codelist: Common information model (CIM) European style market profile
+
+Ref [6] European platform - MARI : Manually Activated Reserves Initiative (entsoe.eu)
+
+Ref [7]  Nordic Trading System BRS: This document is a Business Requirement Specification (BRS) detailing
+         the document exchanges related to trade in the Nordic energy market
+
+Ref [8]  Nordic Operate BRS: This document is a Business Requirement Specification (BRS) detailing the
+         document exchanges related to operation of the Nordic energy market.
+
+Ref [9]  NMEG Code List Library: Description of additional codes used for the Nordic Market, Code list
+         schema.
+
+Ref [10] Nordic TSOs - Memo - Process for activating products
+
+                                                                                                               8
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+2 Business context
+
+2.1 Overall process and timeline
+
+In the figure below the timing for the bidding and activation processes is illustrated. The subprocesses and timing
+where the BSP is involved are indicated in orange colour.
+
+                                                                                                                                Standard
+                                                                                                                                 product
+                                                                                                                               definition
+
+               BSP bid               TSO bid                          Delivery period
+                 GCT                   GCT
+                                                                                Fully
+Submit bids                           mFRR                                   activated
+                                     Request
+                                     and ATC                          Activate bids
+
+                                              AOF result
+
+                                                             BSP
+                                                          activation
+
+                        Filter bids  Select bidscatioVnerify
+
+The timing of the processes will change at Go-live of mFRR EAM and further changes will be made at the latest when
+connecting to MARI. The reason for having a different timing of the processes at Go-live of mFRR EAM than later,
+when connecting to MARI, is to allow more time for the TSOs to assess bid availability and remediate grid
+congestions before and after the AOF bid selection process.
+
+BSP GCT (BEGCT bids)    Today                 Go-live of mFRR         Latest when
+TSO GCT                                              EAM              connecting to
+TSO mFRR request        H-45
+AOF run                 H-45                   H-45/QH-45 *)               MARI
+AOF results              NA                         QH-15
+                         NA                         QH-14                 QH-25
+                         NA                         QH-14
+                                                    QH-13                 QH-12
+
+                                                                          QH-10
+
+                                                                          QH-10
+
+                                                                           QH-8
+
+                                                                                                                                           9
+                       BSP - Implementation Guide – mFRR energy activation market
+
+TSO verification       NA **)  QH-7.5  QH-7.5
+period
+
+Activation orders are
+sent to BSPs
+
+H-x means x minutes before the start of every hour. QH-x means x minutes before every quarter-hour.
+
+*) QH-45 from go-live of 15 min IDC/ISP
+**) In Denmark activation orders are sent QH-7.5 from April 2023. In Finland activation orders are sent H-15. In
+Sweden and Norway activation orders are sent according to the "Implementation guide for mFRR EAM transition".
+
+2.2 System context
+
+The diagram below shows the system context of the mFRR energy activation market from a BSP viewpoint. This
+document provides detailed information about the message exchanges between BSP and TSO. The other exchanges
+are shown for information purposes only and are outside the scope of this document
+
+                                                                                                                  10
+              BSP - Implementation Guide – mFRR energy activation market
+
+2.3 Fallback
+
+2.3.1 Bid collection
+
+Each TSO will have redundant mechanisms to receive bids from BSPs. In addition to machine-to-machine via ECP, it
+could be a web solution, e-mail, etc. See more on the TSO specific details in chapter 4.
+
+2.3.2 Bid selection
+
+In cases where the automatic solutions don't work, there will be fall-back solutions in use by one or more TSOs. This
+fall-back algorithm does not take all bid attributes into account and cannot guarantee a bid selection where all bids
+that are in-the-money are selected (e.g. not selecting up regulation bid with lower bid price than the marginal price).
+Unforeseeably rejected bids can potentially happen in normal operation but is more likely to happen in fall-back
+situations.
+
+2.3.3 Activation
+
+Each TSO will have a redundant mechanism to order bid activation. TSO specific details on the redundancy
+mechanism and handling of issues with communication with BSPs are described in chapter 4.
+
+                                                                                                          11
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3 Business process
+
+This chapter describes the mFRR EAM process from a BSP perspective with a focus on implementation of message
+exchanges. In addition to this implementation guide the BSPs need to comply with the relevant national Terms &
+Conditions, that will be updated accordingly.
+
+3.1 mFRR Business process
+
+This is an overview of the business processes included in the mFRR energy activation market.
+
+                                                                                                                                             12
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3.2 The mFRR energy activation market sequence diagram
+
+The role "Merit Order List Responsible" will be common Nordic during the steps 1-3 prior to connecting to the
+European platform MARI step 4.
+
+                                                                                                                                             13
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3.3 Submit bid process
+
+Bids can be submitted in a ReserveBid_MarketDocument. A bid is placed in the market when the TSO has provided a
+positive Acknowledgement referring to the bid document.
+
+3.3.1 Stepwise implementation of product characteristics
+
+On the NBM web-page the Nordic TSOs has published "Memo - Process for activating products". This product memo
+is currently in the process of being updated to be in accordance with the new national mFRR EAM terms and
+conditions in each of the countries. Below is a summary of product characteristics that are expected to be the result
+of the new national terms and conditions and updated product memo.
+
+                         Today          Go-live of mFRR    Latest when
+                                        EAM                connecting to
+Currency                 EUR and local  EUR                MARI
+                         currency       10000/--10000      EUR
+Maximum/minimum price    10000/-10000
+(EUR/MWh)                               0.01               15000/-15000
+                                                           At a later stage this
+Price granularity (EUR)  0.01 or 0.5                       will be changed to:
+                                                           99 999/-99 999
+                                                           0.01
+
+Minimum bid size (MW)    5 or 10 1      1 or 10 2          1
+
+Maximum bid size (MW) none or 50 3      9 999              9 999
+                                        (technical limit)  (technical limit)
+Bid granularity (MW)     1              1                  1
+                                        1 or 0.1 4         1
+Activation granularity   1
+                                        15                 15
+(MW)
+
+BSP bid time resolution for 60 5
+
+price and volume
+
+(minutes).
+
+Marginal price resolution 60            60                 15
+
+(minutes)
+
+Full Activation Time, FAT 15            12.5 or 15         12.5
+(minutes)
+
+1 The minimum bid size differs today depending on the bidding zone.
+
+2 Statnett will continue with a minimum bid volume of 10MW at "Go-live of mFRR EAM", exceptions may apply in
+some bidding zones or for pilot projects.
+
+3 Energinet currently has maximum bid size of 50 MW.
+
+4 The normal activation granularity is 1 MW. In cases with multiple divisible bids on the same price as the
+clearing price the bids will be selected pro rata with activation granularity 0.1 MW.
+
+5 In Norway 15 min bid volume resolution is supported.
+
+6 SN and Svk will implement FAT 12.5 min from mFRR EAM go-live. BSPs can get exemption for FAT. FG will
+implement FAT 12.5 min, but allow BSPs to apply FAT up to 15 min. EN allows FAT 15 min until 15 min MTU and
+IDC.
+
+                                                                                                             14
+                               BSP - Implementation Guide – mFRR energy activation market
+
+3.3.2 Attribute descriptions
+
+In this chapter new bid attributes are described. The attributes are either common to all Nordic countries or specific to certain
+countries. In order to understand and utilize the bid attributes it is useful to define three types of bids:
+
+    • Simple bids have one price and are valid for one period. Simple bids are either fully divisible, divisible with a
+         minimum volume or indivisible.
+
+    • Complex bids are composed of a combination of simple bids for one period. The combination can be either
+         an exclusive, inclusive or a multipart bid group.
+
+    • Linked bids are linked between time periods. E.g. a bid in period 2 is linked to a bid in period 1. The link can
+         be a technical link or a conditional link.
+
+Attributes common for all Nordic countries
+
+The following attributes are MARI standard product attributes that will be supported by the Nordic AOF from Go-live
+of mFRR EAM.
+
+Type            Bid attribute                    Description
+
+Simple bids Minimum offered volume               A minimum volume to be activated for a divisible bid.
+
+One bid, one
+price
+
+                CIM:
+                Point.minimum_Quantity.quantity
+
+                Indivisible Bids                 A standard mFRR balancing energy product bid, which
+                                                 cannot be activated partially. Therefore, the volume
+                                                 of an indivisible bid is always activated altogether.
+
+                CIM:
+                BidTimeSeries.divisible
+
+Complex bids Exclusive Group Order               The exclusive bid is a group of bids within the same
+                                                 quarter hour, where solely one of the bids can be
+Combination                                      activated; hence, the activation of a bid belonging to
+of simple bids                                   an exclusive bid excludes the activation of the other
+                                                 bids belonging to the same group.
+                CIM: BidTimeSeries.
+                exclusiveBidsIdentification
+
+                Multipart (Parent/child)         A multipart bid consists of two or more simple bids
+                                                 within the same quarter hour. The bids must have
+                CIM: BidTimeSeries.              different prices but may have the same or different
+                multipartBidIdentification       volumes. A component of an upward multipart bid
+                                                 cannot be activated unless all other components with
+                                                 a lower price have been activated up to their entire
+                                                 offered volumes. A component of a downward
+                                                 multipart bid cannot be activated unless all other
+                                                 components with a higher price have been activated
+                                                 up to their entire offered volumes.
+
+Bids linked in Conditional bids                  Conditional linking is the linking of bids (only simple
+time                                             standard-product bids) in subsequent quarter hours.
+                                                 Conditional linking is used to adjust the availability of
+                                                 a bid in QH0 (available/non-available) based on the
+
+                                                                                                                                15
+                         BSP - Implementation Guide – mFRR energy activation market
+
+Between        CIM: BidTimeSeries.               activation outcome of linked bids in previous quarter
+consecutive    Linked_BidTimeSeries              hours QH-1 and/or QH-2.
+quarter hours
+                                                 Technical linking is the linking of bids (simple or
+               Technically linked bids           complex) in two or more subsequent quarter hours.
+                                                 Technical linking ensures that a bid in QH0 is not
+               CIM: BidTimeSeries.               available for clearing if the bid in the previous quarter
+               linkedBidsIdentification          hour was activated in direct activation (DA). This is
+                                                 important in order not to activate the same balancing
+                                                 resource twice.
+
+Activation     Scheduled, or                     Activation type "Scheduled and Direct" are standard
+type           Scheduled and Direct              mFRR balancing energy product bid that can be
+                                                 activated at any point of time following the point of
+               CIM: BidTimeSeries.               scheduled activation of the quarter hour for which the
+               standard_MarketProduct.           bid is submitted and until the point of scheduled
+               marketProductType                 activation of the subsequent quarter hour. Every
+                                                 direct activatable bid is scheduled activatable bid as
+                                                 well.
+
+                                                 All supported activation types can be used with both
+                                                 simple and complex bids.
+
+National bid attributes
+
+See chapter 4 for TSO specific information on which attributes is planned to be implemented and additional information on
+usage of the bid attributes.
+
+Bid attribute                                    Description
+
+Maximum duration                                 BSPs include information on the technical limitations
+                                                 regarding how long a bid can be activated. This attribute is
+CIM: BidTimeSeries.                              necessary to allow BSP to send in bids in advance so that
+maximum_ConstraintDuration.duration              they do not need to update bid if they are activated.
+
+                                                 When using maximum duration, technical linking of the bids
+                                                 must be used. All the linked bids must have the same
+                                                 maximum duration.
+
+Resting time                                     The BSP can add information on the required minimum
+                                                 duration between the time of deactivation and a following
+CIM: BidTimeSeries.                              activation. The resting time applies regardless of the length
+resting_ConstraintDuration.duration              (number of quarter hours) of the preceding activation.
+
+                                                 When using resting time, technical linking of the bids must
+                                                 be used. All the linked bids must have the same resting
+                                                 time.
+
+Inclusive bids                                   If one bid is activated, all bids in the complex group (e.g. a
+CIM: BidTimeSeries.inclusiveBidsIdentification)  resource downstream) must also be activated.
+
+Locational information on bids                   More detailed location on where the resources in the bid
+CIM: BidTimeSeries.registeredResource.mRID       are situated, than bidding zone.
+
+                                                                                                                           16
+                                BSP - Implementation Guide – mFRR energy activation market
+
+Period shift                            Bids are activated for a shorter period than the whole
+CIM: BidTimeSeries.Reason.code          Market Time Unit around period shift to resolve structural
+                                        imbalances.
+
+Faster activation                       Bids that can support a FAT that is faster than standard FAT
+                                        (15 minutes from Go-live mFRR EAM).
+CIM: BidTimeSeries.
+activation_ConstraintDuration.duration  Bids that have a FAT that is slower than standard FAT (15
+                                        minutes from Go-live mFRR EAM).
+Slower activation                       Slower activation is only allowed for non-standard product
+                                        (A02) bids.
+CIM: BidTimeSeries.
+activation_ConstraintDuration.duration
+
+3.3.3 Bid validation rules
+
+Document level
+
+    • The bid document must be submitted by the BSP and received by the TSO after the BEGOT and before the
+         BEGCT of every bid in the document.
+
+All bids:
+
+    • Bid size min/max and resolution
+    • Price resolution
+    • Time period is within the document time period
+    • Divisible bids have provided a Minimum offered volume
+Exclusive group bid:
+
+    • All bid components must have the same market product type
+    • All bid components must refer to the same market period
+    • All bid components must belong to the same bidding zone
+    • None of the bid components can be part of a multipart or inclusive bid
+Inclusive group bid:
+
+    • All bid components must have the same price
+    • All bid components must be in the same direction
+    • All bid components must have the same market product type
+    • All bid components must refer to the same market period
+    • All bid components must belong to the same bidding zone
+    • None of the bid components can be part of an exclusive or multipart bid
+Multipart bid:
+
+    • All bid components must have different prices
+    • All bid components must be in the same direction
+
+                                                                                                                                             17
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+    • All bid components must have the same market product type
+
+    • All bid components must refer to the same market period
+
+    • All bid components must belong to the same bidding zone
+
+    • None of the bid components can be part of an exclusive or inclusive bid
+Technical linking:
+
+    • Technical linking is allowed for both simple bids and for complex bids.
+         All components of a technically linked complex bid (multipart, exclusive or inclusive) must have the same
+         value in the linkedBidIdentification attribute.
+
+    • Technical linking of simple bids can be used in combination with conditional linking.
+
+    • Technical linking ID must be unique within the MTU. That is, within an MTU only one simple bid or one
+         complex bid (with all its bid components) can use a given technical link ID.
+
+    • All bids in a technical link must belong to the same bidding zone.
+Conditional linking:
+
+    • Conditional linking is only allowed for simple bids. Both the referenced bids and the referencing bid must be
+         simple.
+
+    • A bid in QH0 may be linked to maximum three bids in QH-1 and maximum three bids in QH-2
+
+    • It is not permitted to link a given bid in QH0 more than once to a given bid in QH-1 or QH-2
+
+    • For each link a condition must be associated
+
+    • Conditional bids that try to establish a link to a non-existing bid are not allowed. It is the responsibility of a
+         BSP not to place bids with invalid links. For example, if a BSP cancels a bid, which has other bids linked to
+         that bid, those links will become invalid. Any bid with an invalid link will not be considered in the bid
+         selection.
+
+    • All bids in a conditional link must belong to the same bidding zone.
+
+Rules for evaluation of availability of conditional linked bids:
+
+    • A bid is regarded as activated if the TSO has sent activation order for the bid to the BSP, regardless of the
+         response from the BSP
+
+    • A conditionally available bid in MTU0 (i.e. bid with status A65) becomes completely unavailable when at
+         least one of the conditional links indicate unavailability due to the outcome of the linked bid in MTU-1 or
+         MTU-2
+
+    • A conditionally available bid in MTU0 becomes unavailable for direct activation when at least one of the
+         conditional links indicate unavailability for direct activation due to the outcome of the linked bid in MTU-1 or
+         MTU-2
+
+    • A conditionally unavailable bid in MTU0 (i.e. bid with status A66) becomes available when at least one of the
+         conditional links indicate availability due to the outcome of the linked bid in MTU-1 or MTU-2
+
+    • A conditionally unavailable bid in MTU0 becomes available for direct activation when at least one of the
+         conditional links indicate availability for direct activation due to the outcome of the linked bid in MTU-1 or
+         MTU-2
+
+    • A bid that is activated for period shift is regarded as activated subject to SA (status A55, A59, A58, A67, A69,
+         A72)
+
+Rules for updating bids:
+
+    • A bid cannot be changed from simple bid to complex bid (exclusive, inclusive or multipart). Instead, the
+         original bid must be cancelled, and a new bid submitted.
+
+                                                                                                                                             18
+                                        BSP - Implementation Guide – mFRR energy activation market
+    • A complex bid cannot be partially cancelled. All bids in a complex bid must be cancelled; or a bid must be
+
+         converted to a simple bid and cancelled, then the rest of the complex bid will remain.
+    • The time period of a bid cannot be changed. If a bid has been submitted with incorrect time period, the bid
+
+         must be cancelled and a new bid (with new bid identification) must be submitted for the correct time period.
+    • The resource object of a bid cannot be changed. If a bid has been submitted with incorrect resource object,
+
+         the bid must be cancelled and a new bid (with new bid identification) must be submitted for the correct
+         resource object.
+    • Each TSO may decide not to allow changing of the market product type. Please see chapter 4 TSO specific
+         information, Bid submission.
+
+See chapter 5.6 for general rules on updating and cancellation of bids.
+
+3.3.4 Bid validation rules for non-standard product bids
+The following bid attributes are allowed for non-standard product bids (marketProductType = A02):
+
+    • Simple bids, divisible or indivisible
+    • Technical linking: all bid components must have the same market product type
+    • Maximum duration, Resting time
+    • Activation time
+Non-standard product bids cannot use complex bid groups or conditional linking.
+
+3.3.5 Bid acknowledgement
+Each time a BSP submits a Reserve bid document to the TSO the TSO will return an Acknowledgement document. If
+all bids in the bid document are valid a positive Acknowledgement will be returned. If one or more of the bids in the
+bid document are invalid, according to the bid validation rules, a negative Acknowledgement will be returned and all
+bids in the document will be rejected. The negative Acknowledgement will contain error codes and text that indicate
+the reason for why the bids are not valid.
+If acknowledgement is not received, the BSP should interpret the missing acknowledgement as a problem. The BSP
+should check the status of submitted bids by using the web interface provided by the TSO and set bids to
+corresponding status in own system.
+Please see chapter 4 for TSO specific information about the bid submission process (e.g. cut-off time and handling of
+delayed acknowledgements).
+
+                                                                                                                                             19
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3.4 Activate bid process
+
+The TSO will send activation orders for selected bids to the respective BSPs every 15 minutes for scheduled
+activation. Whenever there is a sudden need for activation, the TSO will send an activation order for selected bids
+for direct activation. Scheduled activation orders will cover only one period of 15 minutes. Direct activation orders
+will cover the remaining of the current 15-minute period and the next 15-minute period.
+
+The activation process should be automated as much as possible, and ideally fully automated, to ensure timeliness
+and accuracy of activations.
+
+3.4.1 Activation order message
+
+The TSO orders activation of bids by sending an Activation_MarketDocument to the BSP. An activation document
+may contain activation orders for multiple bids.
+
+The BSP is accountable2 for the activation(s) once the order document is received by the ECP-endpoint of the BSP
+and can immediately start preparing for ramp up of the activation(s).
+
+The BSP sends an Acknowledgement_MarketDocument to the TSO to confirm that the activation order document
+has been received.
+
+3.4.2 Activation response message
+
+The BSP then sends an activation response message to the TSO to confirm that each of the activation orders will be
+fulfilled or cannot be fulfilled if the resource has become unavailable for activation.
+
+The activation response message is sent as an Activation_MarketDocument where all the activation order time series
+from the activation order document are included. For each activation order time series that will be fulfilled the
+Status must be "Activated".
+
+If an activation order time series cannot be fulfilled the Status of that timeseries must be "Unavailable" and a reason
+should be provided in the Reason-element.
+
+The BSP is required to return the activation response message to the TSO within 2 minutes, measured from the time
+the activation order document is sent from the TSO until the time the response message is received by the TSO.
+
+The TSO sends an Acknowledgement_MarketDocument to the BSP to confirm that the activation response message
+has been received.
+
+Handling of activation response message in Finland, Norway and Sweden:
+
+If late responses happen regularly, the BSP must take measures to improve the timeliness of activation responses to
+comply with the response time requirement.
+
+The BSP may send an updated activation response message to change the status of one or more time series from
+"Activated" to "Unavailable", but not vice versa.
+
+The BSP is accountable for the activation regardless of the activation response. That is, the BSP is accountable both
+in the case of status "Activated" and status "Unavailable", as well as in the case of late response or no response.
+
+2 In Denmark, if the BSP responds with status "Unavailable", the BSP is no longer accountable, see text below.
+                                                                                                                                             20
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+Handling of activation response message in Denmark:
+If the TSO receives an activation response message with status "Unavailable" within the response time limit and the
+reason for unavailability is acceptable, the BSP is no longer accountable for the activation.
+The BSP may within the time limit send an updated activation response message to change status of one or more
+time series from "Activated" to "Unavailable", but not vice versa.
+If the TSO receives activation response later than 2 minutes, the response will be rejected by a negative
+Acknowledgement. If late responses happen regularly, the BSP must take measures to improve the timeliness of
+activation responses to comply with the response time requirement.
+The BSP is accountable for the activation unless the BSP has responded with status "Unavailable" within the
+response time limit.
+
+                                                                     Figure 1 Activation ordering sequence diagram
+
+                                                                                                                                             21
+                             BSP - Implementation Guide – mFRR energy activation market
+
+Examples of activation responses from BSP:
+
+Finland, Norway and Sweden:
+
+Activation Response: When    What should BSP do                                          BSP
+activation time series                                                                   accountable
+status                                                                                   for activation?
+
+Activated           < 2 min  BSP should activate                                         Yes
+
+Unavailable         < 2 min  BSP should NOT activate                                     Yes
+
+Activated           > 2 min  BSP should activate                                         Yes
+
+Unavailable         > 2 min  BSP should NOT activate                                     Yes
+
+<no response>                BSP should activate                                         Yes
+
+Late response (> 2           BSP should activate if Activated                            Yes
+
+min)
+
+Activated or
+Unavailable
+
+Updated from        < 2 min or BSP should NOT activate                                   Yes
+
+                    > 2 min
+
+Activated to
+
+Unavailable
+
+Updated from        < 2 min or BSP should NOT activate                                   Yes
+
+Unavailable to      > 2 min
+Activated
+                             This change of status is not allowed. Acknowledgement
+
+                             from TSO will have the status "Message fully rejected".
+
+Denmark:                     What should BSP do                                          BSP
+                                                                                         accountable
+ Activation Response: When   BSP should activate                                         for activation?
+ activation time series      BSP should NOT activate                                     Yes
+ status                      BSP should activate                                         No
+                             (Acknowledgement from TSO will have the status              Yes
+Activated*          < 2 min  "Message fully rejected".)
+                             BSP should activate                                         Yes
+Unavailable*        < 2 min  (Acknowledgement from TSO will have the status
+                             "Message fully rejected".)                                  Yes
+Activated           > 2 min  BSP should activate
+
+Unavailable         > 2 min
+
+<no response>
+
+* BSP may update the activation response within the 2-minute time limit from Activated to Unavailable, but not vice versa.
+
+                                                                                                                            22
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3.4.3 Activation heartbeat
+Due to the high criticality of the activation process it is necessary to implement a way to monitor the status of the
+automated activation process and quickly and accurately detect issues.
+The monitoring system is based on periodic heartbeat activations messages. A heartbeat activation is an "empty"
+activation order that BSPs shall receive, process and respond to like a real activation order. The processing of the
+order should be done by the same systems as for real activation orders. But the heartbeat activation order should
+not result in any real balancing energy activation.
+The BSP should monitor the activation ordering process and correct issues if there is a problem with any of the
+activation messages (both heartbeats and real orders).
+It is important that the BSP responds correctly and timely to both heartbeats and real activation orders. If the BSP
+does not respond to the heartbeat the TSO may consider the BSP to be unavailable for activation.
+
+Heartbeat activation order will be sent for every 5-minute period to BSPs participating in mFRR EAM.
+The heartbeat activation order will contain:
+
+    • order_ MarketDocument.mRID = unique order id
+    • A "dummy" time series with
+
+              o TimeSeries.mRID = "ACTIVATION_HEARTBEAT"
+              • acquiring_Domain.mRID = control area (bidding zone for a normal activation)
+              o registeredResource.mRID = "DUMMY_RESOURCE"
+              o quantity = 0
+Monitoring of activation heartbeat
+The BSP should monitor the entire activation ordering process including the ECP endpoint and identify and correct
+issues if there is a problem with activation messages for heartbeat or real orders.
+Please refer to chapter 4 for TSO specific information about heartbeat and handling of issues with the activation
+process.
+
+                                                                                                                                             23
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+3.5 Publication and reporting of market results
+
+3.5.1 Publication of market prices and volumes
+Market prices and volumes for the mFRR energy activation market will be published on the ENTSO-E Transparency
+platform (transparency.entsoe.eu) as well as the Nordic Transparency platform NBiS (www.nucs.net).
+3.5.2 Activated bids per BSP
+A report of each BSP's activated bids will be sent from the TSO to the BSP after each ISP (Imbalance settlement
+period) in a ReserveAllocationResult_MarketDocument. Please see Appendix 1 for further details on the message
+document.
+3.5.3 Bid availability report
+Submitted bids must be available for activation ordering. If bids, for any reason, become unavailable for activation
+before BEGCT, the BSP must cancel the bids. In cases where bids become unavailable for activation after BEGCT, the
+BSP must inform the TSO as quickly as possible by phone.
+The TSO will for each market period assess the availability of activation for each bid.
+The TSO can mark a bid unavailable for different reasons, e.g.:
+
+    • local congestions
+    • unavailability of the BSP electronic ordering process
+    • to meet any constraints specified in the bid
+The TSO will inform the BSP about bids that have been marked unavailable for activation by sending a
+BidAvailability_MarketDocument. Please see Appendix 1 for further details on the message document.
+
+                                                                                                                                             24
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+4 TSO specific information
+
+4.1 Energinet
+
+4.1.1 Submit bid process
+
+Minimum bid volume
+Energinet will allow a minimum bid volume of 1 MW from go-live of mFRR EAM.
+
+National bid attributes         Planned to be implemented
+ Bid attribute
+
+Maximum duration                Yes
+
+Resting time                    Yes
+
+Inclusive bids                  No
+
+Locational information on bids  Yes
+                                (Locational information will be a list
+                                of substations indicating where the
+                                bid is feeding into the grid)
+
+Period shift                    No
+
+Faster activation               No
+
+Slower activation               Yes
+                                (Bids with a FAT slower than the
+                                standard product will not be
+                                forwarded to the AOF, but may be
+                                activated locally when circumstances
+                                call for it)
+
+Activation type                 Only activation type Scheduled is
+                                allowed. Direct activation is not
+                                allowed until MARI.
+
+Communication channel
+Communication between BRP and Energinet is CIM-based and via ECP/EDX.
+
+Fallback for bid submission and/or activation process
+Energinet will continue to use the concept of Emergency Volumes as fallback when the automated activation process
+fails.
+
+If bid submission via ECP fails Energinet will support manual bid submission through the BRP Self Service Portal.
+Information about activated bids is also available through the BRP Self Service Portal.
+
+4.1.2 Activate bid process
+
+Heartbeat
+Energinet will not implement the heartbeat messaging process in the Go-live.
+
+                                                                                                                                             25
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+4.1.3 TSO contact information
+
+Any questions and concerns regarding this implementation guide, and the follow-up of the implementation in
+Energinet, can be directed to: electricitymarket@energinet.dk
+
+4.2 Fingrid
+
+4.2.1 Submit bid process
+
+The Balancing energy gate opening time (BEGOT) for BSPs is 30 days. The preferred channel for bid submission is
+sending a reserve bid document via ECP/EDX3.
+
+National bid attributes         Planned to be implemented
+ Bid attribute
+
+Maximum duration                No
+
+Resting time                    No
+
+Inclusive bids                  Yes
+
+Locational information on bids  Yes (Locational information will be
+                                related to the reserve resources)
+
+Period shift                    No
+
+Faster activation               No
+
+Slower activation               No
+
+Conditional bids
+
+Conditional bid types A71 (= Available for DA if linked bid subject to DA ), and A72 (= Available for DA if linked bid
+subject to SA) are not supported.
+
+Rules for updating bids
+
+The market product type of a bid cannot be changed. If a bid has been submitted with incorrect market product type
+the bid must be cancelled and a new bid (with new bid identification) must be submitted for the correct market
+product type.
+
+Alternative channel for bid submission
+
+Additionally, bids may be submitted manually in TSO’s MMS (Vaksi Web). More detailed description of manual bid
+submission can be found in Fingrid's reserve trading and information exchange guidelines (Fingridin
+reservikaupankäynti- ja tiedonvaihto-ohje). Sending conditionally linked bids will not be possible via Vaksi Web, and
+there are other limitations for technical linking and complex bids in Vaksi Web.
+
+3 https://www.fingrid.fi/en/electricity-market/reserves_and_balancing/reserve-trading-and-information-exchange/ecp-
+messaging2/
+
+                                                                                                                                             26
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+4.2.2 Activate bid process
+
+Notification of activation orders via SCADA
+A Back-up channel for electronic activation which can be used simultaneously with ECP, is a notification in TSO’s
+MMS (Vaksi Web) and an alert sent from TSO’s SCADA to the BSP’s SCADA via ELCOM. This back-up process requires
+a manual confirmation in Vaksi Web by the BSP.
+
+Heartbeat
+Fingrid will not implement the heartbeat messaging process in the Go-live.
+
+4.2.3 TSO contact information
+
+Any questions and concerns regarding this implementation guide, and the follow-up of the implementation in
+Fingrid, can be directed to: reservit@fingrid.fi
+
+4.3 Statnett
+
+4.3.1 Submit bid process
+
+Bid price granularity and minimum bid volume
+
+To limit the number of bids Statnett will continue the current practice with 0.5 EUR price granularity for bid prices.
+For operational reasons Statnett sees a risk of removing this constraint at Go-live of mFRR EAM. Statnett foresees to
+remove this constraint no later than when connecting to MARI.
+
+Statnett will continue with a minimum bid volume of 10MW at Go-live mFRR EAM. Exceptions may apply in some
+bidding zones or for pilot projects.
+
+National bid attributes           Planned to be implemented
+ Bid attribute
+
+Maximum duration                  Yes
+
+Resting time                      Yes
+
+Inclusive bids                    Yes
+
+Locational information on bids    Yes
+
+Period shift                      Yes
+
+Faster activation                 Yes
+
+Slower activation                 No
+
+Non-standard activation – mFRR-D  Yes
+
+Non-standard activation – Other   Yes
+
+Rules for updating bids
+The market product type of a simple bid may be changed between A05 and A07.
+
+                                                                                                                                             27
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+Cut-off time
+There is a 15-minute cut-off time for bid submission. Bid documents older than 15 minutes will not be processed. No
+negative acknowledgement will be sent to the BSP to avoid messages queueing up when the system is resuming
+message processing after an incident.
+
+Period shift bids
+In standard mFRR product bids the BSP can indicate in the Reason-element that the bid can be used for period shift if
+it is not selected for scheduled activation.
+
+Conditional linking can be used to avoid activation both before and after a quarter shift. A special conditional linking
+status may be used to specify the availability for period shift bids. This conditional linking status also allows linking to
+a component in a multipart bid or to the group identifier of a multipart, exclusive or inclusive bid. This is in contrast
+to all other conditional linking which only supports linking between simple bids.
+
+The use of conditional linking is recommended for all BSPs delivering Period Shift bids.
+
+If a BSP needs to provide period shift but does not want to submit a standard mFRR product bid the market product
+type "Period shift only" must be used. Period shift only bids must be simple indivisible bids.
+
+Disturbance reserve (mFRR-D) bids
+A BSP that participates in the local Statnett balancing capacity procurement of mFRR-D disturbance reserve
+("Driftsforstyrrelsesreserve") shall deliver energy activation bids according to mFRR-D commitment. mFRR-D energy
+activation bids shall be fully activated within 15 minutes. mFRR-D energy activation bids shall be submitted as
+simple, non-standard, technically linked bids. mFRR-D energy activation bids shall follow all bidding rules in the mFRR
+EAM unless stated otherwise in the mFRR-D terms and conditions. See dependency matrix in chapter 6.1 for further
+details.
+
+Alternative channel for bid submission
+The recommended method for bid submission is by sending a reserve bid document via ECP. Alternatively, bids may
+be submitted in the manual user interface FiftyWeb (fiftyweb.statnett.no).
+
+4.3.2 Activate bid process
+
+Faster activation and deactivation
+Faster activation and deactivation can be done for bids with activation time
+(CIM:activation_ConstraintDuration.duration) shorter than the minimum requirement for the standard product.
+When circumstances call for it, the TSO can order activation of such bids on a shorter notice. See market terms and
+conditions for description of under what circumstances faster activation and/or deactivation can be used.
+
+For faster activation the TSO will respect the bid's activation time (FAT) and will not request activation or
+deactivation on shorter notice than the activation time of the bid. For faster activation the preparation time (PT) is 1
+minute. The last possible ordering time for faster activation is (FAT–PT)/2+PT minutes before the middle of the ramp.
+
+The TSO can also order deactivation of bids, both for standard product bids with standard FAT and faster bids. When
+ordering earlier deactivation, the TSO will send an updated activation request with the same order identification
+(order_ MarketDocument.mRID) and the same bid identification for the time series, and where the time period of
+the activation ends earlier than in the original activation request.
+
+Preparation time of 1 minute and ramping time of 4 minutes is always assumed for deactivation. The ordering time
+for deactivation is consequently always 3 minutes before the middle of the deactivation ramp.
+
+                                                                                                                                             28
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+Period shift activation
+Period shift activations will be ordered periodically every 15 minutes based on the amount of structural imbalances
+around the period shift. All period shift activations for a given quarter hour will be ordered 7,5 minutes before the
+start of the quarter hour (T-7,5).
+
+Each period shift activation will have a duration of 5 or 10 minutes in either the beginning of the quarter hour or in
+the end of the quarter hour. The period shift activation will be ordered using an Activation_MarketDocument.
+
+Period shift activations replace Planned production adjustments (Produksjonsflytting) from Go-live mFRR EAM.
+
+Production smoothing
+Production smoothing will use the activation document format and the code (Z41) for Production Smoothing as
+described in this guide. The process and use of the format will otherwise remain the same as described in
+"Implementation Guide – Production Smoothing" available at: "https://ediel.no/Portal". Production smoothing will
+be phased out no later than start of 15-min ISP.
+
+Disturbance reserve (mFRR-D) activation
+Activation of mFRR-D bids will be ordered using the Activation Document and the code for Disturbance reserve.
+Please see terms and conditions for the mFRR-D activation market for further information about activation.
+
+Other non-standard product activation
+Activation of Other non-standard product will be ordered using the Activation Document with the code for Other
+non-standard product for BSPs who support electronic ordering. Activation ordering will be done by telephone for
+BSPs who do not support electronic ordering of Other non-standard product.
+
+No longer supported
+The new process for bid activation involves the following simplifications compared to the legacy process:
+
+    • The scheme for "recurring activations" is no longer supported.
+    • Adjustment of activation time period in the activation response from the BSP is no longer supported.
+
+Notification of activation orders via SCADA
+The BSP can opt to receive notifications of activation orders via SCADA signalling. A notification signal will then be
+sent from TSO SCADA to BSP SCADA through ELCOM each time an activation request is sent, that is every 15 minutes
+when the BSP has bids selected for activation. Configuration of SCADA to listen for activation signal from TSO SCADA
+and to provide an acoustic alarm and presentation of the activation notification is required by the BSP.
+
+Alternative channel for activation orders
+The alternative channel for activation orders when electronic ordering via ECP is not available is manual
+communication by telephone.
+
+Heartbeat
+When no response to heartbeat activation is received from a BSP all bids for upcoming two quarters will be set to
+unavailable. When the BSP starts to respond to heartbeat activation again, the bids will be considered available
+again.
+
+4.3.3 TSO contact information
+
+Any questions and concerns regarding this implementation guide, and the follow-up of the implementation in
+Norway, can be directed to: BSP@statnett.no.
+
+                                                                                                                                             29
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+4.4 Svenska kraftnät
+
+4.4.1 Submit bid process
+
+Minimum bid volume
+Svk will allow minimum bid size of 1 MW from Go-live mFRR EAM.
+
+National bid attributes                Planned to be implemented
+ Bid attribute
+
+Maximum duration                       Yes
+
+Resting time                           Yes
+
+Inclusive bids                         No
+
+Locational information on bids         Yes
+
+Period shift                           No
+
+Faster activation                      No
+
+Slower activation                      No
+
+Non-standard activation -              Yes
+
+Överbelastningshantering vid störning
+
+Rules for updating bids
+
+The market product type of a simple bid may be changed between A05 and A07.
+
+Cut-off time
+There is a 6-minute cut-off time for bid submission. Bid documents older than 6 minutes will not be processed. No
+negative acknowledgement will be sent to the BSP to avoid messages queueing up when the system is resuming
+message processing after an incident.
+
+Överbelastningshantering vid störning
+A participant in the local procurement of resources for redispach with the pupuse to handle overloads in the event of
+disturbance, shall submit energy activation bids according to their procurement commitment. The bids shall be
+submitted as a simple, non-standard, indivisible, technically linked bid, with a defined activation time and reason
+code (time series) and shall follow all bidding rules unless stated otherwise in the överbelastningshantering - störning
+terms and conditions. See dependency matrix in chapter 6.1 for further details.
+
+Alternative channel for bid submission
+The recommended method for bid submission is by sending a reserve bid document via ECP. Alternatively, bids
+may be submitted in the manual user interface FiftyWeb.
+
+Bids can either be uploaded through an XML-file where all supported bid attributes are accepted. Simple bids can
+also be added individually in the manual user interface. When adding bids this way a bid-ID is generated for each bid.
+The generated bid-id can be found and retrieved in the overview of submitted bids.
+
+                                                                                                    30
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+4.4.2 Activate bid process
+Received activation bid documents need to be validated on timeseries mRID to ensure that the activation messages
+correspond to previously submitted bids.
+Non-standard product activation
+No electronic ordering for non-standard products. Activation of överbelastningshantering vid störning is described in
+terms and conditions for the local procurement. In Reserve allocation result document the activation is indicated in
+the Reason-element.
+Alternative channel for activation orders
+The alternative channel for activation orders is telephone. When telephone is used for activation a volume per
+regulation object is communicated to the BSP.
+Heartbeat
+Heartbeat activation order will be sent from TSO to BSP at xx:05, xx:10, xx:15 and so on. The heartbeat will be sent
+regardless of whether the BSP has submitted bids or not.
+When no response to heartbeat activation is received from a BSP all bids for upcoming two quarters will be set to
+unavailable. When the BSP starts to respond to heartbeat activation again, the bids will be considered available
+again.
+If no heartbeat activation message is received from the TSO there is a problem with the communication and the BSP
+should start troubleshooting.
+4.4.3 TSO contact information
+Any questions and concerns regarding this implementation guide, and the follow-up of the implementation in
+Sweden, can be directed to: mfrr@svk.se.
+
+                                                                                                                                             31
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+5 General rules for messaging
+
+5.1 Date and time
+
+Date and Times are based on ENTSO-E Standards and shall be expressed in universal time (UTC+0) in compliance
+with ISO 8601 as YYYY-MM-DDThh:mm:ssZ. The last ‘Z’ stands for Zero and indicates UTC+0.
+
+5.2 Daylight saving time
+
+The full day is expressed as follows in UTC+0:
+
+    • A day is from 23:00 to 23:00 during winter time.
+    • A day is from 22:00 to 22:00 during summer time (daylight saving time).
+    • When changing from winter time to summer time there are 23 hours in the time series (from 23:00 to
+
+         22:00).
+    • When changing from summer time to winter time there are 25 hours in the time series (from 22:00 to
+
+         23:00).
+
+5.3 Unique identifiers – UUID
+
+Unique identifiers should be proper UUID v4 as per RFC 4122.
+
+5.4 Document identification and revision number
+
+The document identification must be unique over time for the sender in question and should be a proper UUID. The
+document identification will then not have any significant meaning. The revision number is not used and shall always
+be equal to '1'.
+The same document identification UUID should be used in the BA Message ID in the ECP header to allow easier log
+tracing of messages.
+
+5.5 Message size limit
+
+The maximum allowed number of time series in a message is 4000.
+If a BSP wants to submit more bids than this limit the bids must be split into several messages. To avoid risk of
+rejected bids, it is advised not to split complex bids or conditionally linked bids across multiple messages. If linked
+bids are sent in multiple messages the BSP must make sure bids for preceding MTUs are submitted and
+acknowledged before bids for the subsequent MTUs are sent.
+The upper limit of number of bid messages sent from a BSP during one MTU is 100.
+The total number of bid time series sent within an MTU should be kept at a reasonable level.
+
+5.6 Update and cancellation principles
+
+To update or cancel time series previously sent a new document is sent with the following information:
+
+    • A new unique document mRID (document identification)
+    • Fixed revision number (always equal to '1')
+
+                                                                                                                                             32
+                                        BSP - Implementation Guide – mFRR energy activation market
+    • A newer created date-time than the previously sent document
+    • The original bid timeseries mRID must always be used to identify the bid to be updated. Any bids with a new
+
+         bid time series mRID, is considered as a new bid
+For ReserveBid_MarketDocument and Activation_MarketDocument updates are done by sending the affected time
+series with new data. Cancellation of time series is done by sending value 0 for quantity. To ensure update of the
+correct time series the bid identification of the original time series must be used.
+To update bids for upcoming MTUs only the updated bids should be sent in a new bid message. There is no need to
+resend unchanged bids.
+It is not allowed to include bids for MTUs which are closed for bidding in a bid message, ref. 3.3.3 Bid validation
+rules.
+For BidAvailability_MarketDocument and ReserveAllocationResult_MarketDocument a new document completely
+replaces a previously sent document for the same period. Cancellation of time series is thus done by omitting the
+time series in the new document.
+
+5.7 Acknowledgement
+
+For each electronic data interchange defined in this document, an acknowledgement document, as defined in IEC
+62325-451-1, should be generated either accepting the whole received document or rejecting it completely.
+
+    • All received messages shall be validated at both a technical and an application level.
+    • The Acknowledgement document shall be used as the tool to exchange errors.
+    • At a technical level, the reason code in the acknowledgement document shall reflect the error type, and the
+
+         reason text should have a reference to the element containing the error.
+    • At the application level, the reason code shall reflect the error type and the reason text should reflect the
+
+         appropriate business rule that is broken.
+    • An Acknowledgement document may contain many reason objects, to reflect multiple errors in the received
+
+         document.
+
+5.8 Energy communication platform
+
+All the messages described in this document shall be communicated over the Energy communication platform (ECP)
+provided by each TSO.
+Implementation guide for ECP can be requested from the respective TSO.
+
+                                                                                                                                             33
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6 Appendix 1 – Document attributes and dependencies
+
+This chapter provides the attributes and dependencies for the documents used to support the mFRR energy
+activation market.
+
+The following classifications are used for the attributes:
+    • M – Must be used for the document in the process described in this guide
+    • D – Must be used if a defined condition is met
+    • O – Optional, can be used
+
+6.1 Bid document – Attributes and dependencies
+
+ReserveBid_MarketDocument                 iec62325-451-7-reservebiddocument.xsd – version
+                                          7.4
+
+                                          Denmark currently uses a specific version of the
+                                          schema, please see local implementation guide.
+
+mRID                                           Unique identification of the document.
+                                          M
+
+                                               Proper UUID is required.
+
+revisionNumber                            M Constant value of 1
+
+Type                                      M A37 - Reserve bid document
+
+process.processType                       M A47 – Manual frequency restoration reserve
+
+sender_MarketParticipant.mRID             M Identification of the party sending the document
+                                               See 6.6 for supported coding schemes.
+
+                                               A46 - Balancing Service Provider (BSP)
+
+sender_MarketParticipant.marketRole.type  M
+                                               In Denmark BRPs act as BSP and must use the BSP-
+                                               role.
+
+receiver_MarketParticipant.mRID                Identification of the party receiving the document.
+                                               One of:
+
+                                               - Energinet.dk
+                                          M - Fingrid
+
+                                               - Statnett
+                                               - Svenska kraftnät
+
+                                          A01 - EIC coding scheme
+
+                                                                                                         34
+BSP - Implementation Guide – mFRR energy activation market
+
+receiver_MarketParticipant.marketRole.type  M A34 – Reserve Allocator
+createdDateTime
+reserveBid_Period.timeInterval                   Date and time of document creation (in ISO 8601 UTC
+                                            M format)
+domain.mRID
+subject_MarketParticipant.mRID                   YYYY-MM-DDTHH:MM:SSZ
+subject_MarketParticipant.marketRole.type
+                                                 The period covered by the document (in ISO 8601
+                                                 UTC format)
+                                            M
+                                                 Start: YYYY-MM-DDTHH:MMZ
+                                                 End: YYYY-MM-DDTHH:MMZ
+
+                                                 EIC identification of the Control Area
+                                                 Denmark: 10Y1001A1001A796
+                                                 Finland: 10YFI-1--------U
+                                            M
+                                                 Norway: 10YNO-0--------C
+                                                 Sweden: 10YSE-1--------K
+                                                 A01 - EIC coding scheme
+
+                                                 Identification of the party responsible for the bid
+                                            M
+
+                                                 See 6.6 for supported coding schemes.
+
+                                            M A46 - Balancing Service Provider (BSP)
+
+                                                                                                      35
+BidTimeSeries               BSP - Implementation Guide – mFRR energy activation market
+mRID
+                                                                           Unique identification of the bid.
+                                                               M
+
+                                                                           Proper UUID is required.
+
+auction.mRID                    O  Constant value of
+businessType                       MFRR_ENERGY_ACTIVATION_MARKET
+
+                                M  B74 – Offer
+
+acquiring_Domain.mRID           M  10Y1001A1001A91G (Nordic Market Area)
+
+                                   A01 - EIC coding scheme
+
+                                   The EIC identification of the bidding zone
+                                   where the resource is located.
+
+                                   Associated multipart, linked, conditional,
+
+connecting_Domain.mRID          M  inclusive and exclusive bids must be
+
+                                   associated with the same bidding zone.
+
+                                   A01 - EIC coding scheme
+
+quantity_Measurement_Unit.name  M  MAW – megawatt
+
+currency_Unit.name              M  EUR – euro
+
+price_Measure_Unit.name                    MAW – megawatt
+                                R
+
+                                           MWH - Megawatt hours.
+
+                                   A01 = Yes - quantity may be reduced to the
+
+                                   minimum bid size by increments of 1 MW
+
+Divisible                       M  A02 = No - no reduction possible on the
+
+                                   quantity, the bid is indivisible
+
+                                   For non-standard överbelastningshantering -
+                                   störning bids in Sweden: A02 must be used
+
+                                   Unique identification used to associate
+                                   technically linked bids. Proper UUID is
+                                   required.
+
+linkedBidsIdentification        O  Not used if bid is not technically linked.
+
+                                   For non-standard överbelastningshantering -
+                                   störning bids in Sweden all bids for the same
+                                   regulation object must be technically linked
+
+multipartBidIdentification      O  Unique identification used to associate
+
+                                   multipart bids. Proper UUID is required.
+
+                                                                                                              36
+                             BSP - Implementation Guide – mFRR energy activation market
+
+                                If bid with flowDirection.direction=A01 (Up) is
+                                accepted, then all associated bids with
+                                inferior price must also be accepted. If bid
+                                with flowDirection.direction=A02 (Down) is
+                                accepted, then all associated bids with
+                                superior price must also be accepted.
+
+                                Not used if bid is not multipart.
+                                Unique identification used to associate
+                                exclusive group bids. Proper UUID is required.
+
+                                If one bid is selected, then none of the other
+
+exclusiveBidsIdentification  O  with the same exclusiveBidsIdentification can
+inclusiveBidsIdentification
+Status                          be selected.
+
+                                Not used if bid is not part of exclusive group
+                                bid.
+                                Optional for bids in Norway and Finland.
+
+                                Unique identification used to associate
+                                inclusive group bids. Proper UUID is required.
+
+                             O  All or none of the bids with the same “bid
+
+                                family” identification must be selected.
+
+                                For Finland this is used for aggregated bids.
+                                The same proportion of each bid is selected.
+
+                                A06 – Available
+
+                                For conditionally linked bids, having one or
+
+                             M  several instances of Linked BidTimeseries:
+
+                                A65 – Conditionally available
+
+                                A66 – Conditionally unavailable
+
+                                EIC or national code for the resource
+                                (regulation object).
+
+                                For DK1 and DK2:
+
+                                List of geotags indicating where the bid feeds
+
+registeredResource.mRID      M  into the grid. Comma separated list of 400kV,
+
+                                220kV, 150kV (DK1) or 132kV (DK2)
+
+                                substations. If the bid feeds into different
+
+                                points in the grid (as with portfolio-based
+
+                                bids), all relevant substations must be
+
+                                provided. All substations in the list must be in
+
+                                the same bidding zone as the bid itself. An
+
+                                                                                         37
+                         BSP - Implementation Guide – mFRR energy activation market
+
+                                           empty geotag list (an empty string) is allowed
+                                           and will be interpreted as “all geotags”.
+
+flowDirection.direction                 M  A01 - Up
+
+                                           A02 - Down
+
+energyPrice_Measurement_Unit.name       M  MWH - Megawatt hours.
+activation_ConstraintDuration.duration
+                                           Activation time - The minimum time for full
+                                           activation of the physical resource including
+                                           preparation time and ramping time.
+
+                                           For bids that have a standard FAT of 12,5 min
+                                           (or 15 min in Automated operation) activation
+                                           time can be left blank or omitted.
+
+                                           Applicable only to bids in Norway:
+
+                                           For bids that can be activated faster than 12,5
+
+                                           minutes the activation time should be
+
+                                           specified and should assume a preparation
+
+                                           time of 1 minute.
+
+                                           E.g.
+
+                                           PT3M (if ramping time is 2 min)
+
+                                           PT5M (if ramping time is 4 min)
+
+                                        O  PT10M (if ramping time is 9 min)
+
+                                           Applicable only to slower activation bids (in
+                                           Denmark :
+                                           For bids with slower full activation time than
+                                           12,5 minutes (15 minutes from Go-live mFRR
+                                           EAM) the activation time must be specified.
+
+                                           Applicable only to non-standard
+                                           överbelastningshantering - störning bids in
+                                           Sweden:
+
+                                           For bids in överbelastningshantering - störning
+                                           procurment the activation time must be
+                                           specified. See technical requirements in
+                                           procurement.
+
+                                           Applicable to bids in Norway, Sweden,
+
+                                           Denmark”
+
+resting_ConstraintDuration.duration     O  Resting time for the resource object after
+
+                                           activation, in number of minutes, divisible by
+
+                                           15. E.g.: PT45M, PT60M, PT90M.
+
+                                           Requires technical linking of bids.
+
+                                                                                            38
+                    BSP - Implementation Guide – mFRR energy activation market
+
+                                                                   For bids in överbelastningshantering - störning
+                                                                   procurement: see technical requirements in
+                                                                   procurement.
+
+                                             Applicable to bids in Norway, Sweden,
+                                             Denmark
+
+                                             Maximum duration of activation for the
+                                             resource object, in number of minutes,
+                                             divisible by 15.
+                                             E.g.: PT45M, PT60M, PT90M.
+
+maximum_ConstraintDuration.duration       O  If maximum duration is specified and resting
+
+                                             time is not specified, a resting time of 15
+
+                                             minutes will be assumed.
+
+                                             Requires technical linking of bids.
+
+                                             For bids in överbelastningshantering - störning
+                                             procurement activation: see technical
+                                             requirements in procurement.
+
+                                             A05 – Standard mFRR product eligible for
+                                             scheduled activation only
+
+                                             A07 – Standard mFRR product eligible for
+                                             scheduled and direct activation
+
+                                             A02 – Non-standard product not eligible for
+                                             the scheduled or direct activation processes.
+
+standard_MarketProduct.marketProductType  M  Z01 – Stand-alone period shift. To be used
+
+                                             when period shift is not combined with
+
+                                             standard mFRR product (A05 or A07). Must
+
+                                             be indivisible simple bids4. Applicable only to
+
+                                             bids in Norway.
+
+mktPSRType.psrType                                     Associated multipart, exclusive and inclusive
+                                                       bids must have the same value.
+
+                                                       Mandatory in Denmark. Not used in
+                                                       Finland, Sweden and Norway.
+                                          O/M
+                                                       Production type
+
+                                                       B16 - Solar
+
+4 When used, two conditionally linked bids must be submitted for adjacent MTUs
+                                                                                                                                             39
+                     BSP - Implementation Guide – mFRR energy activation market
+                                                                    B18 – Wind Offshore
+                                                                    B19 – Wind Onshore
+                                                                    B20 – Other
+
+Note                                                    O  Only used in Denmark.
+                                                           Custom text attribute for BRP usage only. The
+Series_Period – exactly one instance per BidTimeSeries     attribute will not be evaluated or used by the
+                                                           TSO. The value received will be copied
+timeInterval                                            M  unchanged to the Note attribute in the
+                                                           Activation_MarketDocument if the bid is
+Resolution                                              M  activated.
+
+Point – exactly one instance per Series_Period             Period covered (in ISO 8601 UTC format).
+                                                           Must be 15 minutes. There must be one, and
+Position                                                M  only one, period for each Bid_TimeSeries.
+                                                           Start: YYYY-MM-DDTHH:MMZ
+quantity.quantity                                       M  End: YYYY-MM-DDTHH:MMZ
+
+energy_Price.amount                                     M  PT15M– the time resolution. Must equal the
+                                                           duration of the timeInterval.
+minimum_Quantity.quantity                               D
+                                                           Position is always 1
+
+                                                           Offered quantity
+
+                                                           The price of the product offered
+
+                                                           The minimum quantity of energy that can be
+                                                           activated at a given time position
+                                                           It must be used for divisible bids and can be 0
+                                                           (fully divisible) but must not be used for
+                                                           indivisible bids.
+
+Linked_BidTimeSeries (associated with BidTimeSeries) - no more than three instances referring to each of
+MTU-1 and MTU-2, respectively
+
+mRID                                            O mRID of a simple bid in MTU-1 or MTU-2
+
+status                                                One of the following values shall be used when bid in
+                                                      MTU0 is conditionally available, i.e.
+                                                D BidTimeSeries.status = A65:
+                                                     A55 = Not available if linked bid activated
+                                                     A56 = Not available if linked bid not activated
+                                                     A59 = Not available if linked bid subject to SA
+
+                                                                                                                      40
+      BSP - Implementation Guide – mFRR energy activation market
+
+                                             A60 = Not available if linked bid subject to DA
+                                             A57 = Not available for DA if linked bid subject to DA
+                                             A58 = Not available for DA if linked bid subject to SA
+
+                                                 One of the following values shall be used when bid in
+                                                 MTU0 is conditionally unavailable, i.e.
+                                                 BidTimeSeries.status = A66:
+
+                                             A67 = Available if linked bid activated
+                                             A68 = Available if linked bid not activated
+                                             A69 = Available if linked bid subject to SA
+                                             A70 = Available if linked bid subject to DA
+                                             A71 = Available for DA if linked bid subject to DA
+                                             A72 = Available for DA if linked bid subject to SA
+
+                                                 (SA = scheduled activation, DA = direct activation, MTU
+                                                 = market time unit)
+
+                                                 See chapter 3.3.3. "Rules for evaluation of availability of
+                                                 conditional linked bids" for details
+
+                                                 Applicable to period shift bids in Norway
+
+                                                 The following value may be used when bid in MTU0 is
+                                                 available, i.e. BidTimeSeries = A06, and has support for
+                                                 period shift. The linked bid in MTU-1 can be either
+                                                 simple or complex. For complex bids the link can
+                                                 reference either the mRID of a single bid component of
+                                                 the complex bid, or the group identifier of the complex
+                                                 bid (i.e. multipartBidIdentification,
+                                                 exclusiveBidsIdentification, or
+                                                 inclusiveBidsIdentification)
+
+                                                 Z04 = Not available for activation if linked bid activated
+
+Reason (associated with BidTimeSeries) – zero, one or two instances per BidTimeSeries
+
+      Optional for mFRR standard product bids in Norway
+      Period shift activation may be ordered:
+
+code        Z64 = Period shift, beginning of period
+            Z65 = Period shift, end of period
+      D Mandatory for non-standard product bids:
+
+      Z74 = Disturbance reserve5
+      Z83 = Other non-standard bid
+
+5 Norway: mFRR-D – driftsforstyrrelsesreserve, Sweden: Överbelastningshantering - störning
+                                                                                                                                             41
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6.1.1 ReserveBid_MarketDocument assembly model
+
+Note: the cardinalities indicated in the assembly model are further restricted for the implementation according to
+this guide, please see Attributes and dependencies table above.
+
+                                                                                                                                             42
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6.2 Activation document – Attributes and dependencies
+
+Activation_MarketDocument                   iec62325-451-7-activationdocument – version
+                                            6.2
+
+mRID                                               Unique identification of the document. Proper
+                                            M UUID is required.
+
+revisionNumber                              M Constant value of 1
+Type
+                                                   For the request:
+                                                   A39 – SATCR activation (Scheduled activation)
+                                                   A40 – DATCR activation (Direct activation)
+                                                   Z37 – Faster than standard FAT (in Norway)
+                                                   Z38 – Faster than standard deactivation time
+                                                   Z39 – Slower than standard FAT
+                                                   Z43 – Disturbance reserve
+                                            M Z44 – Other non-standard
+                                                   Z40 – Period shift activation (in Norway)
+                                                   Z41 – Production smoothing (applicable only in
+                                                   Norway)
+
+process.processType                                For the response:
+sender_MarketParticipant.mRID                      A41 – Activation response
+sender_MarketParticipant.marketRole.type
+receiver_MarketParticipant.mRID             M A47 – Manual frequency restoration reserve
+receiver_MarketParticipant.marketRole.type
+createdDateTime                                    Identification of the party sending the
+                                            M document
+
+                                                   See 6.6 for supported coding schemes.
+
+                                                   For the request:
+                                                   A04 – System Operator
+                                            M For the response:
+                                                   A46 – Balancing Service Provider (BSP)
+                                                   A27 – Resource Provider
+
+                                                   Identification of the party receiving the
+                                            M document.
+
+                                                   See 6.6 for supported coding schemes.
+
+                                                   For the request:
+                                                   A46 – Balancing Service Provider (BSP)
+                                            M A27 – Resource Provider
+                                                   For the response:
+                                                   A04 – System Operator
+
+                                            M Date and time of document creation (in ISO
+                                                   8601 UTC format)
+                                                                                                                  43
+BSP - Implementation Guide – mFRR energy activation market
+
+activation_Time_Period.timeInterval               YYYY-MM-DDTHH:MM:SSZ
+domain.mRID
+                                                  The period covered by the document (in ISO
+                                                  8601 UTC format)
+                                                  Start: YYYY-MM-DDTHH:MMZ
+                                           M End: YYYY-MM-DDTHH:MMZ
+                                                  ---
+                                                  1 MTU (Market Unit Time – 15 min)
+                                                  2 MTUs ( 30 min.) for Direct activation (DA).
+
+                                                  EIC identification of the Control Area
+                                                  Denmark: 10Y1001A1001A796
+                                                  Finland: 10YFI-1--------U
+                                           M Norway: 10YNO-0--------C
+                                                  Sweden: 10YSE-1--------K
+
+                                                  A01 - EIC coding scheme
+
+subject_MarketParticipant.mRID                    Identification of the party for whom the bid
+                                           M document is submitted.
+
+                                                  See 6.6 for supported coding schemes.
+
+subject_MarketParticipant.marketRole.type  M A46 – Balancing Service Provider (BSP)
+
+order_ MarketDocument.mRID                        Unique identification of the activation order.
+                                           M The same order id is used in the request and
+order_MarketDocument.revisionNumber
+TimeSeries – one or more instances                the response. UUID.
+mRID
+resourceProvider_MarketParticipant.mRID           The version of the activation order.
+                                                  Incremented with one for each transmission of
+                                           M the document from the System Operator. The
+                                                  same version is used in the request and the
+                                                  response.
+
+                                                  Reference to the bid to be activated. Proper
+                                                  UUID is required, except for Heartbeat that
+                                           M
+                                                  uses fixed string "ACTIVATION_HEARTBEAT" is
+                                                  used.
+
+                                           M The identification of the Resource Provider.
+
+                                                                                                                 44
+                           BSP - Implementation Guide – mFRR energy activation market
+
+businessType                                         M A97 – Manual frequency restoration reserve
+
+acquiring_Domain.mRID                                       The EIC identification of the Nordic Market
+                                                     M Area - 10Y1001A1001A91G
+
+                                                            A01 – EIC coding scheme
+
+connecting_Domain.mRID                                      The EIC identification of the bidding zone
+                                                     M where the resource is located
+
+                                                            A01 – EIC coding scheme
+
+meaurement_Unit.name                                 M MAW – megawatt
+
+flowDirection.direction                              M A01 – Up
+marketObjectStatus.status                                   A02 – Down
+
+                                                            Only in the request:
+                                                            A10 – Ordered
+
+                                                     M Only in the response:
+                                                            A07 – Activated (confirmation that quantities in
+                                                            the time series have been activated)
+                                                            A11 – Unavailable
+
+registeredResource.mRID                                      EIC or national code for the resource
+                                                     O/M (regulation object).
+
+                                                     Mandatory in Norway, Sweden and Denmark.
+
+                                                     Only used in Denmark.
+
+                                                     Custom text attribute for BRP usage only.
+
+                                                     Contains a copy of the text received in the Note
+
+Note                                                 O attribute in the ReserveBid_MarketDocument.
+                                                           The attribute will only be present if the Note
+
+                                                     attribute in the ReserveBid_MarketDocument
+
+                                                     where present and contained a value different
+
+                                                     than the empty string.
+
+Series_Period – exactly one instance per TimeSeries
+
+timeInterval                                                The start and end date and time of the time
+                                                            interval of the period of activation (in ISO 8601
+                                                            UTC format)
+                                                     M
+                                                            Start: YYYY-MM-DDTHH:MMZ
+
+                                                     End: YYYY-MM-DDTHH:MMZ
+
+                                                                                                               45
+BSP - Implementation Guide – mFRR energy activation market
+
+resolution                                             The time resolution is always the difference
+                                                       between the Time Interval End and the Time
+Point – exactly one instance per Series_Period         Interval Start.
+position                                        M E.g.:
+quantity.quantity                                      PT15M (for a scheduled activation)
+Reason – only in the request                           PT24M (for a direct activation with duration of
+code                                                   24 minutes)
+
+                                                M Position is always 1
+
+                                                M Activated quantity
+
+                                                       B22 – System regulation
+                                                O B49 – Balancing
+
+text                                            O
+Reason – only in the response
+code                                                  To be used to provide a reason when
+                                                      marketObjectStatus.status is A11 - Unavailable:
+text                                            D
+                                                      B59 – Unavailability of reserve providing unit
+                                                      999 – Errors not specifically identified
+
+                                                      For activation response with status Unavailable
+                                                D a reason for the unavailability should be
+
+                                                      provided in free text format.
+
+                                                                                                        46
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6.2.1 Activation_MarketDocument assembly model
+
+Note: the cardinalities indicated in the assembly model are further restricted for the implementation according to
+this guide, please see Attributes and dependencies table above.
+
+6.3 Bid availability document – Attributes and dependencies
+
+The bid availability document will be sent from TSO to BSP after each imbalance settlement period (ISP) only if any
+bids are made unavailable. In cases when the TSO has to resend reports, all MTUs for a given date will be resent as
+part of the same document.
+
+                                                                                                                                             47
+BSP - Implementation Guide – mFRR energy activation market
+
+BidAvailability_MarketDocument                    urn:iec62325.351:tc57wg16:451-
+mRID                                              n:bidavailabilitydocument:1:1
+revisionNumber
+Type                                              Unique identification of the document.
+process.processType                         M
+
+sender_MarketParticipant.mRID                     Proper UUID is required.
+
+sender_MarketParticipant.marketRole.type    M Constant value of 1
+receiver_MarketParticipant.mRID
+receiver_MarketParticipant.marketRole.type  M B45 – Bid availability document
+createdDateTime
+                                            M A47 – Manual frequency restoration reserve
+time_Period.timeInterval
+BidTimeSeries – one or more instances             Identification of the party sending the
+mRID                                              document. One of:
+bidDocument_MarketDocument.mRID                   - Energinet.dk
+bidDocument_MarketDocument.revisionNumber   M - Fingrid
+requestingParty_MarketParticipant.mRID            - Statnett
+                                                  - Svenska kraftnät
+                                                  A01 – EIC coding scheme
+                                            M A04 – System Operator
+
+                                                  Identification of the party receiving the
+                                            M document.
+
+                                                  See 6.6 for supported coding schemes.
+                                            M A46 – Balancing Service Provider (BSP)
+
+                                                  Date and time of document creation (in ISO
+                                            M 8601 UTC format)
+
+                                                  YYYY-MM-DDTHH:MM:SSZ
+
+                                                  The period(s) covered by the bid(s) referenced
+                                                  in the document (in ISO 8601 UTC format)
+                                            M Start: YYYY-MM-DDTHH:MMZ
+                                                  End: YYYY-MM-DDTHH:MMZ
+
+                                            M Unique identification of the bid
+
+                                            M Constant value of NA
+
+                                            M Constant value of 1
+
+                                            M EIC code of Party that requested the update of
+                                                  bid availability
+                                                                                                                48
+                       BSP - Implementation Guide – mFRR energy activation market
+
+requestingParty_MarketParticipant.marketRole.type  M A46 – Balancing Service Provider
+                                                         A49 – Transmission System Operator
+                                                         A50 – Distribution System Operator
+
+businessType                                       M C40 – Conditional bid
+                                                         C41 – Thermal limit
+                                                         C42 – Frequency limit
+                                                         C43 – Voltage limit
+                                                         C44 – Current limit
+                                                         C45 – Short-circuit current limits
+                                                         C46 – Dynamic stability limit
+                                                         ZA0 – Missing heartbeat response
+
+acquiring_Domain.mRID                              M The EIC identification of the Nordic Market
+                                                         Area - 10Y1001A1001A91G
+
+                                                      A01 – EIC coding scheme
+
+domain.mRID                                              The EIC identification of the bidding zone
+Reason – exactly one instance per time series *)   M where the resource is located
+
+Code                                                     A01 – EIC coding scheme
+
+                                                         When business type = C40 the following
+                                                         reason apply:
+                                                         B16 = Tender unavailable in MOL list
+                                                         When business type = C42 one of the
+                                                         following reasons apply:
+                                                         B58 – Insufficiency of reserves
+                                                         B59 – Unavailability of reserve providing units
+
+                                                         When business type = C41, C43, C44, C45 or
+                                                   M C46 one of the following reasons apply:
+
+                                                         B18 – Failure
+                                                         B46 – Internal congestion
+                                                         B47 – Operational security constraints
+                                                         B60 – Unavailability of automatic protection
+                                                         systems
+
+                                                         When business type = ZA0 the following
+                                                         reason apply:
+
+                                                         Z81 – BSP unavailable for activation
+
+text                                               O  May be populated to provide additional
+
+                                                      explanation in free text format
+
+RegisteredResource (associated with BidTimeSeries) – only when BusinessType is Thermal Limit = C41
+
+                                                                                                          49
+mrID  BSP - Implementation Guide – mFRR energy activation market
+                                          O EIC code of concerned network element
+
+*) The business types and reasons can be subject to changes due to do the development of the MARI-project.
+6.3.1 BidAvailability_MarketDocument assembly model
+
+Note: This is the MARI definition. The cardinalities indicated in the assembly model are further restricted for the
+implementation according to this guide, please see Attributes and dependencies table above.
+
+6.4 Reserve allocation result document – Attributes and dependencies
+
+The reserve allocation result will be sent from TSO to BSP after each imbalance settlement period (ISP). The report
+will include start time, stop time, quantity and price for every agreed activation during the ISP.
+
+The BSP will receive an empty document with no time series if none of the bids have been selected for activation.
+
+Allocation result for direct activation will be sent in a separate document covering two MTUs.
+
+In cases when the TSO has to resend reports, all activations in all MTUs for a given date will be resent as part of the
+same document.
+
+ReserveAllocationResult_MarketDocument  iec62325-451-7-
+                                        reserveallocationresult.xsd –version
+                                        6.4
+
+                                                                                                                     50
+             BSP - Implementation Guide – mFRR energy activation market
+
+mRID                                        M Unique identification of the
+revisionNumber                                    document. Proper UUID is required.
+type
+process.processType                         M Constant value of 1
+
+sender_MarketParticipant.mRID                     A38 – Reserve allocation result
+                                            M document
+sender_MarketParticipant.marketRole.type    M A47 – Manual frequency restoration
+
+                                                  reserve
+
+                                                  Identification of the party sending the
+                                                  document. One of:
+
+                                                  - Energinet.dk
+                                            M - Fingrid
+
+                                                  - Statnett
+                                                  - Svenska kraftnät
+
+                                                  A01 – EIC
+                                            M A04 – System Operator
+
+receiver_MarketParticipant.mRID                   Identification of the party receiving
+                                            M the document.
+
+                                                  See 6.6 for supported coding schemes.
+
+receiver_MarketParticipant.marketRole.type  M A46 – Balancing Service Provider
+createdDateTime                                   (BSP)
+
+                                                  Date and time of document creation
+                                            M (in ISO 8601 UTC format)
+
+                                                  YYYY-MM-DDTHH:MM:SSZ
+
+reserveBid_Period.timeInterval                    The period covered by the document
+                                                  (in ISO 8601 UTC format)
+
+                                                  Start: YYYY-MM-DDTHH:MMZ
+
+                                                  End: YYYY-MM-DDTHH:MMZ
+                                            M ---
+
+                                                  1 MTU (Market Unit Time – 15 min)
+                                                  for Scheduled activation (SA).
+
+                                                  2 MTUs (30 min.) for Direct activation
+                                                  (DA).
+
+domain.mRID                                       EIC identification of the Control Area
+
+                                            M Denmark: 10Y1001A1001A796
+                                                  Finland: 10YFI-1--------U
+                                                  Norway: 10YNO-0--------C
+
+                                                                                                                  51
+                         BSP - Implementation Guide – mFRR energy activation market
+                                                                 Sweden: 10YSE-1--------K
+
+TimeSeries – one or more instances                    A01 – EIC coding scheme
+mRID                                                  Unique identification of the time
+                                                M series
+
+bid_Original_MarketDocument.bid_TimeSeries.mRID M Reference to the bid (unique bid
+                                                                           identification)
+
+bid_Original_MarketDocument.                    M Identification of the tendering party
+tendering_MarketParticipant.mRID                      (BSP) according to the original bid
+                                                      document.
+
+auction.mRID                                    O Constant value of
+                                                      MFRR_ENERGY_ACTIVATION_MARKET
+
+businessType                                    M A97 – Manual frequency restoration
+                                                      reserve
+
+acquiring_Domain.mRID                                 The EIC identification of the Nordic
+                                                M Market Area - 10Y1001A1001A91G
+
+                                                      A01 – EIC coding scheme
+
+connecting_Domain.mRID                                The EIC identification of the bidding
+                                                M zone where the resource is located
+
+                                                      A01 – EIC coding scheme
+
+measurementquantity_Meaure_Unit.name            M MAW – megawatt
+
+currency_Unit.name                              M EUR – euro
+
+energyPrice_Measurement_Unit.name               M MWH - Megawatt hours
+
+flowDirection.direction                         M A01 – Up
+                                                      A02 – Down
+
+Series_Period –one or two instances per TimeSeries (two periods for direct activations)
+
+timeInterval                                          The start and end date and time of the
+                                                M time interval of the period of
+
+                                                      activation.
+
+Resolution                                            The time resolution is always the
+Point – exactly one instance per Series_Period  M difference between the Time Interval
+
+                                                      End and the Time Interval Start.
+
+                                                                                              52
+                     BSP - Implementation Guide – mFRR energy activation market
+
+Position             M Position is always 1
+
+quantity.quantity    M Activated quantity
+
+energy_Price.amount  M The energy price for the activation
+
+Reason – zero, one or multiple instances per TimeSeries
+
+                                                         Reason for activation:
+
+                                                         B22 – System regulation
+                                                         B49 – Balancing
+
+                                                         Type of activation:
+
+Code                       Z58 – Scheduled activation
+                           Z59 – Direct activation
+                           Z60 – Faster than standard FAT
+                           Z61 – Earlier than standard
+                           deactivation
+                           Z62 – Slower than standard FAT
+                     M Z63 – Period shift activation
+                           Z74 – Disturbance reserve
+                           Z83 – Other non-standard
+                           Z89 – Bidless activation
+
+                                                         E.g.
+
+                                                         - for a scheduled activation for
+                                                         balancing purpose two reasons will be
+                                                         sent, B49 and Z58.
+
+                                                         - for a direct activation for system
+                                                         purpose two reasons will be sent, B22
+                                                         and Z59.
+
+                                                         May be populated to provide
+
+Text                 O additional explanation in free text
+
+                                                         format
+
+                                                                                                53
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6.4.1 ReserveAllocationResult_MarketDocument assembly model
+
+Note: the cardinalities indicated in the assembly model are further restricted for the implementation according to
+this guide, please see Attributes and dependencies table above.
+
+                                                                                                                                             54
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+6.5 Acknowledgement document – Attributes and dependencies
+
+Acknowledgement_MarketDocument               iec62325-451-1-acknowledgement.xsd –
+                                             version 8.1
+
+mRID                                         M Unique identification of the document.
+
+createdDateTime                                     Date and time of document creation (in
+                                             M ISO 8601 UTC format)
+
+                                                    YYYY-MM-DDTHH:MM:SSZ
+
+sender_MarketParticipant.mRID                       Identification of the party sending the
+                                             M document.
+
+                                                    See 6.6 for supported coding schemes.
+
+sender_MarketParticipant.marketRole.type            One of:
+receiver_MarketParticipant.mRID                     A04 – System Operator
+                                             M A46 – Balancing Service Provider (BSP)
+                                                    A27 – Resource Provider
+                                                    A34 – Reserve Allocator
+
+                                                    Identification of the party receiving the
+                                             M document.
+
+                                                    See 6.6 for supported coding schemes.
+
+receiver_MarketParticipant.marketRole.type          One of:
+received_MarketDocument.mRID                 M A04 – System Operator
+
+                                                    A46 – Balancing Service Provider (BSP)
+                                                    A27 – Resource Provider
+
+                                                    The unique identification of the received
+                                             M document.
+
+received_MarketDocument.revisionNumber       M The revision of the received document.
+
+received_MarketDocument.type                 M The type of the received document.
+
+received_MarketDocument.process.processType         The processType of the received
+                                             M
+
+                                                    document.
+
+received_MarketDocument.createdDateTime      M The date and time of the creation of the
+Reason – one or more instances                      received document.
+code
+                                                    A01 – Message fully accepted
+                                             M A02 – Message fully rejected
+
+                                                    More specific error codes may be used.
+
+                                                                                                    55
+      BSP - Implementation Guide – mFRR energy activation market
+
+text                                                      O May be populated to provide additional
+                                                          explanation in free text format.
+
+Reason – zero or more instances per Rejected time series         999 – Errors not specifically identified
+code                                                      M
+
+text                                                             More specific error codes may be used.
+
+                                                                 May be populated to provide additional
+                                                                 explanation in free text format.
+                                                          O
+                                                                 For rejected bids a specific reason for the
+                                                                 rejection will be provided.
+
+6.6 Supported coding schemes for sender/receiver identification
+
+The following coding schemes are supported for identification of sender/receiver.
+
+A01 – EIC
+A10 – GS1
+NSE – Swedish national coding scheme. If no preferred coding scheme is registered at Svk, NSE is used for activations.
+
+                                                                                                                        56
+                                        BSP - Implementation Guide – mFRR energy activation market
+
+7 Appendix 2 – Examples
+
+Example messages for this implementation guide are available for download at nordicbalancingmodel.net.
+
+                                                                                                                                             57
+

@@ -1,0 +1,449 @@
+                                           Available online at www.sciencedirect.com
+
+                              ScienceDirect
+
+                                                           Energy Procedia 87 (2016) 28 ­ 35
+
+               5th International Workshop on Hydro Scheduling in Competitive Electricity
+                                                        Markets
+
+         Linear decision rules for seasonal hydropower planning:
+                           modelling considerations
+
+              Simen V. Braatena, Ola Gjønnesa, Knut Hjertvika,, Stein-Erik Fletena
+
+                                          aNorwegian University of Science and Technology, NO-7491 Trondheim, Norway
+
+             Abstract
+
+             The seasonal hydropower planning problem is presented as a robust optimization model using linear decision
+             rules (LDR). Uncertainty is present in multiple inflow series and the price of electricity. The objective is to
+             generate weekly policies that maximize profit. The LDR approximation is effective at reducing computational
+             complexity, and is well-suited to multistage problems. By restricting the decision variables to be affine reactions
+             of the realizations of the uncertain parameters, the original intractable problem is transformed into a tractable
+             one with shorter computational time. This article is intended as an introduction to LDR for practitioners within
+             the hydropower industry. The basic results will be presented, along with explanations of the ideas behind the
+             method. An example case is given to illustrate the solution method.
+              ©c 22001165TThehAe uAthuotrhso. rPsu.bPliushbeldisbhyedElbseyvEielrsLevtdi.eTr hListdis. an open access article under the CC BY-NC-ND license
+             P(hetetpr:-/r/ecrveiaetwiveucnomdemr orness.poorgn/sliicbeinlisteys/obyf-SnIcN-nTd/E4.F0/E).nergi AS.
+               Peer-review under responsibility of SINTEF Energi AS
+             Keywords: OR in energy; Robust optimization; Seasonal planning problem; Hydropower optimization; Linear decision
+               rules
+
+            1. Introduction
+
+            This paper is intended as an introductory guide to understanding, modelling and implementing linear
+            decision rules (LDR) in practice, specifically in the context of hydropower scheduling. It presents
+            a new approach to LDR in reservoir management, with zero-mean forecast errors as uncertainty
+
+                  Corresponding author. Tel.: +47-908-44-997
+                    E-mail address: knutjonn@stud.ntnu.no
+
+1876-6102 © 2016 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license
+(http://creativecommons.org/licenses/by-nc-nd/4.0/).
+Peer-review under responsibility of SINTEF Energi AS
+doi:10.1016/j.egypro.2015.12.354
+                     Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35                           29
+
+parameters, and slopes on multiple uncertainty types, aspects not found in previous publications[1].
+Additionally, it discusses issues related to limited dependencies on uncertainty parameters more
+thouroughly than earlier literature. These contributions to the field will be shown to give compact
+models that return sensible schedules, and intuitively understandable policies.
+
+2. Problem formulation
+
+The problem at hand involves optimally deciding a seasonal production plan. Given a forecast for
+
+weekly prices   and  inflow, the aim is to maximize profit. Specifically, discharge for generation, xrqt,
+pumping, xrpt,  and  spill, xrst should be decided for all reservoirs r at all times t. For simplicity of
+
+notation, the three types of decisions constitute the decision set D = {q, p, s}. From these decisions,
+
+the reservoir levels mrt are deduced. All the variables need to be within certain bounds, that may be
+
+time dependent. i.e. water for generation together with water that bypass the connected power station.
+
+                     max T H tt                     Erdt xrdt                                    (1)
+
+                                tT rR dD
+
+                     s.t. mr0 = Mr0                                                  rR          (2)
+
+                        mrt  =  mr(t-1)  +  Frt  +  TS                xdt  -  xrdt   r  R, t  T  (3)
+
+                                                        dD       Cdr
+
+                        Mrt  mrt  Mrt                                                r  R, t  T  (4)
+                        Lrqt  Erqt xrqt  Urqt
+                                                                                     r  R, t  T  (5)
+
+                        Lrpt  Erpt xrpt  Urpt                                        r  R, t  T  (6)
+
+                        Drt  xrqt + CrBt  Drt                                        r  R, t  T  (7)
+
+                        xrst  0                                                      r  R, t  T  (8)
+
+All reservoirs are considered to have a power station immediately downstream, either real, or a
+
+dummy station without generation capabilities if the reservoir discharges directly to another reservoir.
+
+Power stations can therefore be omitted from the model formulation, as seen in the simplified topology
+in Fig. 1. The objective function (1) maximizes the present value of the difference between revenues
+and costs for all decision types. Here, prices, , are discounted with a discount rate, , and are given
+per MW h, while decisions are in m3/s. Thus, energy coefficients Ed are needed to convert volumetric
+sizes to power levels, and the number of hours in a time period, T H, is used to get the total energy
+level. The energy coefficients are greater than zero for generation, less than zero for pumping, and
+zero for spillage. Equalities (2) and (3) ensure that the reservoir balance starts at its initial level
+
+and is updated between time periods. The reservoir level in one period depends on the previous
+level and the natural inflow, as well as the decisions made both in connected upstream reservoirs, Crd,
+and in the current reservoir. Constraints (4)-(8) impose upper and lower bounds on reservoir level,
+
+generation, pumping, discharge, and spill, respectively. Pumping and generation limits are given in
+MW, so energy coefficients are also needed in the generation constraints (5) and pumping constraints
+(6). Notably, pumping is considered to be decided at the upstream reservoir, and can simply be seen
+30  Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35
+
+    1       x1p                                        x2q       2
+       x1q                                                  x1s
+                                                3
+
+                                                  x3q
+                                                4
+
+                            Fig. 1: An illustration of some of the variables used in the formulation.
+
+    as negative generation at a different energy coefficient. Thus, inequalities (6) typically have an upper
+    bound of zero and always a non-positive lower bound. Since reservoir levels and natural inflows are
+    given in Mm3, the decisions that are given in m3/s need to be multiplied by the length of a time
+    period. Constraints (7) are the total discharge limits, so here bypass (CrBt) is considered in addition to
+    the water for generation.
+
+    3. Linear decision rules and reformulation
+
+    Understanding the uncertain parameter , decisions of how much to discharge, pump and spill at
+    reservoir r at time t can be defined as affine functions. As an example, the amount of discharge for
+    generation becomes
+
+    xrqt = x^rqt +                                      Krqtuu.     (9)
+
+                                                uU Mut
+
+    Here, the intercept x^rqt and slopes Krqt uniquely define the function, as long as the uncertainty
+    parameters are linearly independent [2]. The intercepts represent scheduled values, while the slopes
+    represent the real-time adjustments. Note that these adjustments depend on the realizations of the
+    uncertain parameter u for all time periods  in the memory set Mtu.
+
+    The memory set contains the periods a decision is dependent on, and can include all or some of the
+    previous time periods, but never future ones. Allowing the LDR to depend on only a subset of the
+    uncertain parameters will speed up computation, but reduce the flexibility of decisions. Some ways
+    to reduce the size of the memory set include limiting the number of periods the decision can look
+    backwards, and neglecting the uncertainty in time periods where the reservoir level typically is well
+    within its upper and lower limits. Similarly, one could restrict what uncertainty series a variable
+    is allowed to depend on, but in the following, it is assumed that every decision depends on every
+    uncertainty series.
+
+    Now, a reformulation of the deterministic model to a robust optimization problem with LDR is
+    described, following the setup in [3]. The aim is to show how a purely linear model can be used
+    to find the intercepts and slopes as decision variables, and thus identify the optimal affine reactions.
+                                   Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35                                              31
+
+First, the inequalities for discharge, pumping and spill are converted, before the reservoir volume
+inequalities and the objective are transformed.
+
+3.1. General inequalities
+
+Consider inequality (5) rewritten with the function valued variable for generation,
+
+                                 x^rqt  +             Krqtuu        Urqt   ,    r  R, t  T ,   U.                               (10)
+                                                                    Erqt
+                                            uU Mtu
+
+Rewriting (1)-(8) this way would yield an LP where the intercepts and slopes are the decision
+
+variables, so the function valued search is reduced to an LP. However, since there should be one such
+
+constraint for each point in the set of values the uncertainty can take U, and there are uncountably
+
+many points in a polytope, the problem will still be impossible to solve. As noted in [3], this problem
+
+can be circumvented, because only constraints describing the worst case is really needed. It is not
+
+trivial, though, to tell which constraint will be the strictest. To this end, the shape of the uncertainty
+
+set can be utilized. As a polytope defined by H  h, it can be used as the feasible region for a linear
+
+program determining the parameter values maximizing the LHS.
+                                                                              
+     max                             Krqtu                          : rUtqj        Urqt  -  x^rqt            r  R, t  T (11)
+                                                                                   Erqt
+                     s.t.  uU Mut                              j
+
+                                  H juu  h j,
+
+                           uU T
+
+This formulation of the constraints is equivalent with (10), but has finite cardinality. However, it is
+
+not linear as both the slopes and the uncertainties are decision variables in the objective. To regain a
+completely linear structure, LP duality theory [4] can be exploited to unlink the different variables K
+and  (Note the dual variables in gray with their corresponding constraint). An equivalent formulation
+
+to (11) is
+
+                       h jrUtqj                                                    
+
+                     j
+
+min         s.t.     H     jurUt   q    =   Krqt,     u  U,   Mut             : u          Urqt    -  x^rqt  r  R, t  T . (12)
+                                   j                  u  U,  Mtu              : u          Erqt
+ Uq
+                  j
+
+                     H jurUtqj = 0,
+
+                  j
+
+                           rUtqj  0,  j
+
+Here, the equalities come from the fact that the -variables are free. Now, this formulation only
+                                      Urqt
+requires that     j h jUrtqj          Erqt  -  x^rqt  for some set of      Uq.  That  is,  the   set  of     constraints  that  needed  to
+
+hold true for all realizations is replaced with a set of constraints that only need to be satisfied once.
+
+Thus, the original (10) holds whenever the following set of constraints have a solution:
+
+                                h jUrtqj                Urqt   -  x^rqt ,  r  R, t  T                                           (13)
+                                                        Erqt
+                              j
+
+                                   H    ju  Urt  q    = Krqt,              r  R, t  T , u  U,   Mut                             (14a)
+                                                 j
+
+                              j
+
+                                   H    ju  Urt  q    = 0,                 r  R, t  T , u  U,  Mtu                              (14b)
+                                                 j
+
+                              j
+
+                                                    Urtqj  0,              r  R, t  T , j.                                      (15)
+32                               Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35
+
+    Similar transformations can be carried out for all the original constraints, to formulate a robust linear
+    program in which (4)-(8) holds for any realization of the uncertainty. Further examples are omitted
+    here for brevity, as the transformations are very similar to the one shown above. However, there are
+    some subtleties to be noted.
+
+    First, constraints (18) are defined for every combination (u, ), even if the decision in question does
+    not depend on u. This simply means that u has objective coefficient 0 in the primal in (11), but
+    the variable is still present in the constraints below. Thus, the corresponding dual constraint (14b)
+    should have a right hand side of 0. Second, completely analogous transformations could be done to
+    -restrictions. But here, the left hand side becomes a minimization problem in the primal space,
+    so the restrictions H  h are non-standard and give rise to non-positive dual variables [4]. Third,
+    equality constraints can be handled in a simpler way, see [3].
+
+    3.2. Reservoir volumes
+
+    The reservoir volumes mrt are not decisions themselves, but merely consequenses of all previous
+    discharge, pumping and spill decisions, which again depend on all previous realizations of uncertainty.
+    This makes limited memory (|Mtu| < t) impossible1. The idea is that the reservoir balance is simply
+    the initial level plus the sum of all natural inflows, adjusted for all decisions in the current and
+
+    connected reservoirs. Note that the purpose of stating Eqs.(2)-(3) in the deterministic model is for
+
+    readability, and they can be substituted into (4).
+
+    If the expressions of the linear decision rules for discharge, pumping and spill are inserted, then
+    (2)-(4) can be desribed by the following inequalities2,
+
+    Mrt  +   t  F^r  +                x^d - x^rd  +                   Kdtu - Krdtu            + IuSr FrV u  (16)
+            =1
+                        dD       Cdr                 uU   tt dD  Cdr
+                                                         Mtu
+
+         + Mr0  Mrt,
+
+    and similar transformations as described in Section 3.1 can be made.
+
+    3.3. The objective function
+
+    At last, the definitions in (9) are employed on the objective function (1), and the price variables are
+    substituted with affine functions as well.
+
+                E T H            t ^ t +      P                 Ed x^rdt +          Krdtuu  .               (17)
+
+                            tT            Tt             rR dD              uU Mut
+
+      1 Similarly, if restrictions are imposed on which uncertainty series decisions are allowed to depend on, these restrictions
+
+    cannot apply as strictly to the reservoir level. This is because the reservoir level is a consequence of decisions at upstream
+
+    reservoirs as well, and these can depend on other series.
+      2 Here, binary parameters IuSr are 1 if u is the inflow series reservoir r belongs to, i.e. u = V(r).
+Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35                                                 33
+
+Exploiting that (17) is a linear expression and expanding the multiplication, it is possible to take
+
+advantage of the facts that E[ut] = 0 and thus E[Ptu] = Cov(Pt, u), to get
+
+                                                             
+          T HtErdt ^ t x^rdt +          tKrdtuCov(Pt, u) .
+                                                                            (18)
+
+tT rR dD                        uU Mut
+
+This objective function contains two terms, the first one equivalent to the deterministic objective in
+
+Section 2, while the second one accounts for the uncertainty. The price depends on tPt, and the
+decisions depend on Krdtuu, so the expected value of their product is needed. This is exactly what
+the covariance provides for zero-mean variables, so this term allows the objective function to take
+
+into account both cross- and autocorrelations between the stochastic parameters.
+
+4. Illustrative example
+
+A two-reservoir system in cascade is considered with a 52-week planning horizon starting in January.
+The larger reservoir upstream (M7) is connected to a pumped-storage facility, and has the highest
+degree of regulation (DoR). The power station below reservoir (M6) can only generate power. M7
+and M6 belong to different inflow series. As price and inflow forecasts, the mean of 3000 scenarios
+is used. They are generated by a time series model, tuned to match data from a sofisticated market
+model [5]. The time series formulation is similar to what is outlined in [6]. The uncertainty polytope
+is defined as the convex hull of these scenarios, so the problem is feasible for each of them. The LDR
+formulated in Section 2 have been implemented and solved in IBM ILOG CPLEX Optimization
+Studio 12.6.1.0 on a 64-bit Windows 7 Enterprise, Intel CoreTMi7-3770 3.40 GHz, 16.0 GB RAM.
+The formulations yield an LP of 131 021 rows, 295 128 columns, and a run time of 249 seconds. The
+model is implemented with a full memory set, i.e. every previous time period is in the memory of
+every decision. Additionally, every reservoir has a target volume of 66.8 % in week 52, a normal
+reservoir level at this time of year.
+
+The optimal policies are simulated on the 3000 scenarios, and percentiles of the resulting reservoir
+trajectories are plotted in Fig. 2a and Fig. 2b.
+
+As can be seen, the LDR yield rather similar trajectories regardless of the inflow and price development.
+This is indicative of the model trying to counteract deviations. A natural conclusion is that it is easier
+to find robust continuations if the reservoir level is known with some degree of certainty. In M7 a
+gradual dispersal of scenarios can be seen, while in M6 the weeks 22-40 see the biggest spread of
+trajectories. In weeks of greater uncertainty, such as the snow melting season around weeks 17 to 33,
+more variation in trajectories can be observed.
+
+Since M6 has the lowest DoR, it is intuitively the reservoir most likely to spill. Considering this, it
+makes sense that M6 is drained first, resulting in a rather sharp volume decrease in the initial weeks.
+Then, as M6 moves close to its lower bound, M7 is gradually emptied. Looking at the forecasted
+price in Fig. 3, it also seems logical that both reservoirs are emptied during the inital high price,
+and then start filling up at the very low prices during summer. In summary, the reservoir trajectories
+seem sensible. The next plot (Fig. 4) illustrates the slopes for discharge and pumping in every
+(t, )-combination for all uncertainty series. They indicate the amount of adjustment of a decision,
+given the realization of the price error, inflow error in M7 and inflow error in M6, respectively. The
+greater the magnitude of coefficients, the more the realization of u affects discharge and pumping
+in t.
+
+In general, the discharge adjustment decisions are positively dependent on both the price and inflow
+deviation in the current time period. This means that if the realized price or inflow exceeds the
+34                                                                   Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35
+
+                                300                                                            100
+
+    Reservoir volume M7 [Mm3 ]                                                                 80
+
+                                200                                                            60
+
+                                100                                  100 % percentile          40                                           100 % percentile
+                                                                     95 % percentile           20                                           95 % percentile
+                                   0                                  5 % percentile                                                         5 % percentile
+                                       1                              0 % percentile            0                                            0 % percentile
+                                                                                                    1
+                                          13                     26  39                52                   13      26                      39                52
+
+                                              Time period (t)                                                   Time period (t)
+
+                                (a) Percentiles for reservoir volumes of M7                             (b) Percentiles for reservoir volumes of M6
+
+                                                                     Fig. 2: Reservoir trajectories
+
+                                                                 80                               Forecasted price
+                                                                                               Forecasted inflow, M6 17
+
+                                              Inflow [Mm3/week]                                Forecasted inflow, M7 16  Price [AC[]/MW h]
+
+                                                                 60
+
+                                                                                                                15
+
+                                                                 40                                             14
+
+                                                                                                                13
+
+                                                                 20                                             12
+
+                                                                                                                11
+
+                                                                 0       13                26           39      52
+
+                                                                                       time period (t)
+
+                                                                     Fig. 3: Forecasted inflows and price
+
+    forecast, the discharge is adjusted upwards, generating more power. Intuitively, the strongest dependencies
+    are found in the reservoir's own inflow series. Generation decisions at M7 depend only on its own
+    inflow series, while pumping decisions are entirely independent of both inflow disturbances, only
+    reacting to the price in the previous period. Discharge decisions at M6 (Fig. 4),depend mainly on
+    inflow at its own reservoir, but also on inflow to M7. These observations are reasonable, as M6 is
+    the bottom reservoir, and its reservoir level depends on decisions made at M7. M7 does not need to
+    take M6 into account, and pumping is used mainly as a financial opportunity, rather than as a tool to
+    balance reservoir levels.
+
+    The possibility of reducing memory has been mentioned. Results show that there are mainly two
+    periods where long memory matters. First, there are dependencies between decisions around week
+    30 and realizations of inflow disturbance for up to the 10 previous weeks. The second period is the
+    end of the scheduling horizon, where dependencies on many earlier periods are seen. Common for
+    both periods is a need for a specific reservoir level. Around week 30, the reservoirs are approaching
+    their maximum capacity, so accurate decisions keep the reservoirs from spilling. At the end, one aims
+    for the target volume. Keeping more water than the minimum requirement does not give any benefits,
+    but reduces the total generation, so here, higher accuracy pays off. It seems that the memory in the
+    other time periods can safely be reduced, without affecting the optimal objective value much.
+Simen V. Braaten et al. / Energy Procedia 87 (2016) 28 ­ 35                                                                35
+
+             Fig. 4: Optimal slope matrix for discharge from the smaller downstream reservoir, KMq 6tu
+
+5. Concluding remarks
+
+In this work, the seasonal planning problem for a hydropower producer is considered. Decisions
+regarding the amount to discharge for generation, pumping and spillage are made in the face of
+uncertainty in inflow and price. A robust optimization model using LDR is proposed. Recourse
+decisions are decided by affine functions of the stochastic disturbances, rendering a tractable pure
+LP. The results from an illustrative example provide credible decisions and reservoir trajectories, the
+obtained policies are robust with respect to deviations in inflow and price, and the level of discharge
+is positively dependent on the inflow and price disturbance.
+
+Future research should include testing with larger water systems, and comparison of LDR with
+alternative solutions methods, both in terms of run time, objective value and schedule. Long memory
+was only significant in certain periods, suggesting that memory could be limited in others. This will
+improve LDR's performance, so research on this topic is recommended. Furthermore, quantifying
+the approximation error will be important to test LDR's applicability in hydropower scheduling.
+
+6. Acknowledgments
+
+The authors would like to thank Powel AS for providing the data, Gro Klæboe for invaluable help,
+and Marco Zugno, co-writer of [3] which has been an inspiration.
+
+References
+
+[1] Gronvik, I., Hadziomerovic, A., Ingvoldstad, N., Egging, R., Fleten, S.E.. Feasibility of linear decision rules for
+     hydropower scheduling. In: PMAPS. 2014, p. 1­6.
+
+[2] Warrington, J., Goulart, P., Mariethoz, S., Morari, M.. Policy-based-reserves for power systems. IEEE Transactions on
+     Power Systems 2013;28(4):4427­4437.
+
+[3] Zugno, M., Morales, J., Madsen, H.. Robust management of combined heat and power systems via linear decision rules.
+     In: 2014 IEEE International Energy Conference (ENERGYCON). 2014, p. 479­486.
+
+[4] Saltzman, M.J.. Linear programming duality; 1998. http://www.ces.clemson.edu/mjs/courses/mthsc.440/duality.pdf.
+[5] Wolfgang, O., Haugstad, A., Mo, B., Gjelsvik, A., Wangensteen, I., Doorman, G.. Hydro reservoir handling in Norway
+
+     before and after deregulation. Energy 2009;34(10):1642­1651.
+[6] Gjelsvik, A., Mo, B., Haugstad, A.. Long- and medium-term operations planning and stochastic modelling in
+
+     hydro-dominated power systems based on SDDP. In: Handbook of Power Systems I. Springer; 2010, p. 33­55.
+

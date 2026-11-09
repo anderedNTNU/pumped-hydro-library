@@ -1,0 +1,1119 @@
+  Periodical Multistage Stochastic Programs
+
+                     Alexander Shapiroand Lingquan Ding
+
+                             School of Industrial and Systems Engineering,
+                                      Georgia Institute of Technology,
+                                        Atlanta, Georgia 30332-0205.
+
+Abstract. In some applications the considered multistage stochastic programs have a peri-
+odical behavior. We show that in such cases it is possible to drastically reduce the number of
+stages by introducing a periodical analog of the so-called Bellman equations for discounted
+infinite horizon problems, used in Markov Decision Processes and Stochastic Optimal Con-
+trol. Furthermore, we describe a variant of the Stochastic Dual Dynamic Programming
+algorithm, applied to the constructed periodical Bellman equations, and provide numerical
+experiments for the Brazilian interconnected power system problem.
+Key Words: multistage programs, decision rules, dynamic programming, Bellman equa-
+tions, SDDP algorithm, fixed point theorem
+
+    This research was partly supported by NSF grant 1633196.
+
+                                                          1
+1 Introduction
+
+There are many practical problems where one has to make decisions sequentially based on
+data (observations) available at time of the decision. Trying to make such decisions under
+uncertainty in some optimal way, looking forward in time, leads to the area of multistage
+optimization. Traditionally the uncertainty in such problems was modeled as randomness
+using tools of probability theory. We can mention the following areas of research dealing
+with such optimization problems: Markov Decision Processes (MDP) (e.g., [10]), Stochastic
+Optimal Control (SOC) (e.g., [3]), and Stochastic Programming (SP). The main tools, used
+both in MDP and SOC, are based on utilising dynamic programming equations. Until
+recently the dominant approach in SP was based on generating scenarios. Since the number
+of scenarios needed to approximate the considered data process grows exponentially with
+increase of the number of stages, the scenario approach could be computationally infeasible
+even for a moderate number of stages (cf., [14]).
+
+    On the other hand the dynamic programming approach suffers from the so-called "curse of
+dimensionality", the term coined by Bellman already in the early work on dynamic program-
+ming. This motivated development of approximate approaches to dynamic programming.
+One type of algorithms, which can be classified as approximate dynamic programming, is
+the so-called Stochastic Dual Dynamic Programming (SDDP) method; it was introduced in
+[8] and became quite popular for solving multistage convex stochastic programs. The SDDP
+method is based on approximation of value (cost-to-go) functions of the dynamic program-
+ming equations by piecewise linear functions and can be viewed as a dynamic variant of
+the cutting plane method. It was demonstrated numerically that in some cases the SDDP
+method could produce an acceptably accurate solution even when the number of stages is
+large.
+
+    In some applications the considered multistage stochastic programs have a periodical
+behavior. The main result of this paper is to demonstrate that in such cases it is possible to
+drastically reduce the number of stages by introducing a periodical analogue of the so-called
+Bellman equations, used in MDP and SOC, and consequently applying a variant of the SDDP
+algorithm. The paper is organized as follows. In the next section we give a general formula-
+tion of infinite horizon risk averse stochastic programming problems. The main theoretical
+developments are presented in section 3 where we introduce Bellman equations adjusted to
+the periodical behavior of the considered infinite horizon problems. In section 4 we briefly
+discuss statistical inference of the Sample Average Approximation (SAA) approach to dis-
+cretization of possibly continuous distributions of the data process. An SDDP type algorithm
+for solving the obtained periodical dynamical equations is described in section 5. In section
+6 we provide numerical experiments with the proposed variant of SDDP algorithm applied
+to the Brazilian interconnected power system (cf., [15]). Section 7 gives a brief discussion of
+a possible extension to a Markovian setting, and section 8 is devoted to conclusion remarks.
+
+                                                          1
+2 Multistage programming
+
+Consider the following risk averse multistage stochastic programming problem, given in the
+nested form,
+
+ min f1(x1)  +                        |1       min f2(x2, 2) + · · ·
+
+A1 x1 =b1                                  B2 x1 +A2 x2 =b2
+x1 X1                                          x2 X2
+                                                                                       (2.1)
+                                     +|[T -1]          min            fT (xT , T )  .
+                                                  BT xT -1+AT xT =bT
+
+                                                       xT XT
+
+Here   (0, 1) is the discount coefficient, t  Rd, t = 1, ..., T , is a random data process,
+ft : Rn × Rd  R are cost functions, bt = bt(t) are right side vectors, Bt = Bt(t) and
+At = At(t) are matrices of appropriate dimensions and Xt  Rn are closed sets. The
+
+number of stages T can be finite or it can be that T = . In order to make formulation
+
+(2.1) precise, certain regularity conditions should be introduced, we will discuss this later.
+
+We denote by [t] := (1, ..., t) the history of the data process up to time t. The conditional
+
+functionals |[t] are supposed to be conditional counterparts of a law invariant coherent risk
+measure : Z  R, defined on a linear space Z of random variables. With some abuse of
+the notation, sometimes we view t as a variable in Rd rather than a random vector, the
+
+particular meaning will be clear from the context.
+
+It is said that : Z  R is a coherent risk measure if it is subadditive (i.e., if Z, Z  Z,
+
+then (Z + Z )  (Z) + (Z )), monotone (i.e., if Z, Z  Z are such that Z  Z a.s., then
+
+(Z)  (Z )), translation equivariant (i.e., if Z  Z and a  R, then (Z + a) = (Z) + a),
+
+and positively homogeneous (i.e., if Z  Z and t > 0, then (tZ) = t (Z)). It is said
+
+that is law invariant if (Z) = (Z ) for any distributionally equivalent (with respect to
+
+the reference probability measure) random variables Z, Z  Z. Axioms of coherent risk
+
+measures were introduced in [1], we refer to [5] and [13] for a general discussion of these
+
+concepts. When = E is the expectation operator, conditional risk measures |[t] become
+the respective conditional expectations E|[t]. In that case we refer to the problem (2.1) as
+risk neutral.
+
+    It is assumed that the first stage data vector 1 is known (deterministic), and hence
+|1 = . Optimization in (2.1) is performed over feasible policies (also called decision rules).
+A policy is a sequence of (measurable) functions xt([t]), t = 1, ..., T . Each xt([t]) is a function
+of the data process up to time t, this ensures the nonanticipative property of a considered
+
+policy. The first stage decision x1 is deterministic, i.e., does not depend on realizations of
+random data. The constraints should be satisfied for almost every realization of the random
+
+data process. We denote by  the set of policies  = x1, x2([2]), ..., xT ([T ]) satisfying the
+feasibility constraints and such that the corresponding conditional risk measures are well
+
+defined. Sometimes we write xt for xt = xt([t]) to emphasize dependence on the considered
+policy. It is assumed that the probability distribution of the data process 1, ..., T does not
+depend on considered policies   . The constraints Btxt-1 + Atxt = bt define dynamics of
+the system and often represent balance equations.
+
+Assuming that the risk measure is law invariant and coherent, for finite time horizon
+
+T , problem (2.1) can be written as
+
+       min   f1(x1                   )  +  RT     T    t-1ft(xt ,  t)  ,               (2.2)
+                                                  t=2
+       
+
+                                               2
+where B1 = 0 (and hence the term B1x0 at the first stage is omitted), f1(x1, 1) = f1(x1),
+
+and RT is the respective nested risk measure RT (·) := |1 · · · |[T-1](·) . That is, for a
+
+given policy   , Zt := ft(xt([t]), t) and ST :=  T    t-1Zt  we  have  that
+                                                 t=2
+
+      RT (ST ) = |1 Z2 + · · · + |[T-1] (ZT ) .
+
+    We are going to deal with limit risk measures as T  . In order to proceed we need
+to impose certain boundedness conditions. Suppose that random variables Zt are bounded,
+say |Zt|   a.s. for all t. Then
+
+      RT +1(ST +1) = |1 Z2 + · · · + |[T -1] (ZT + |[T ] (ZT +1)
+                         |1 Z2 + · · · + |[T-1](ZT + )  RT (ST ) + T .
+
+Also
+
+      RT (ST ) = |1 Z2 + · · · + |[T -1] (ZT + |[T ] (ZT +1) - |[T ] (ZT +1)
+                   |1 Z2 + · · · + |[T -1] (ZT + |[T ] (ZT +1) - T ,
+
+and hence |RT +1(ST +1) - RT (ST )|  T . And so on for T < T we have that
+
+                                                      k = T ,
+                                                             1-
+      RT (ST ) - RT (ST )   T                                                 (2.3)
+
+                                                 k=0
+
+and hence R2(S2), ..., is a Cauchy sequence. Letting T   we have then that the following
+limit does exist
+
+      R(S)  :=  lim        |1  · · · |[T -1] (ST ) .                          (2.4)
+
+                T 
+
+    In particular if := E is given by the expectation operator, with |[t] = E|[t] being the
+corresponding conditional expectations, then RT is also the respective expectation operator.
+
+In that case we refer to (2.2) as the risk neutral formulation of the multistage program.
+
+· Unless stated otherwise we assume that the process t is stagewise independent, i.e.,
+  for t = 1, ..., random vector t+1 is independent of [t].
+
+    When the number T of stages is finite, the nested formulation (2.1) leads to the following
+dynamic programming equations (cf., [13]). At stage t = T the value (cost-to-go) function
+VT (xT -1, T ) is given by the optimal value of the problem
+
+       min fT (xT , T )                                                       (2.5)
+
+      xT XT
+
+       s.t. BT xT -1 + AT xT = bT .
+
+Note that variable xT in (2.5) is viewed now as a deterministic vector xT  RnT and should
+satisfy the corresponding feasibility constraints. At stages t = T - 1, ..., 2, the value function
+Vt(xt-1, t) is given by the optimal value of the problem
+
+      min ft(xt, t) + Vt+1(xt)                                                (2.6)
+
+      xtXt
+
+      s.t. Btxt-1 + Atxt = bt,
+
+                           3
+with
+
+      Vt+1(xt) = Vt+1(xt, t+1) .                                   (2.7)
+                                                                   (2.8)
+At the first stage the following problem should be solved
+
+      min f1(x1) + V2(x1)
+
+      x1X1
+
+       s.t. A1x1 = b1.
+
+3 Infinite horizon periodical setting
+
+Consider the infinite horizon setting (i.e., T = ) where problem (2.2) has the following
+periodical behavior with period m  N. That is, let us make the following assumptions
+leading to stationary solutions.
+
+(A1) The random vectors t and t+m have the same distribution, with support   Rd, for
+       t  2 (recall that 1 is deterministic).
+
+(A2) The functions bt(·), Bt(·), At(·) and ft(·, ·) have period m, i.e., are the same for t = 
+       and t =  + m, t = 2, ..., and the sets Xt are nonempty and Xt = Xt+m for all t.
+
+(A3) The functional : Z  R is a law invariant coherent risk measure, defined on space
+       Z = Lp(, B, P ) for some p  [1, ].
+
+(A4) The functions ft(·, ·) are bounded, i.e., there is  > 0 such that |ft(xt, t)|   for all
+       (xt, t)  Xt ×  and all t.
+
+(A5) For every xt-1  Xt-1 the set {xt  Xt : Bt(t)xt-1 + At(t)xt = bt(t)} is nonempty for
+       a.e. t   and t  2.
+
+In assumption (A3), B is the Borel sigma algebra of subsets of  and P is a probability mea-
+sure on (, B), referred to as the reference measure. Unless stated otherwise all probabilistic
+statements are made with respect to the reference measure P . In particular, we sometimes
+write EP to emphasize that the expectation is taken with respect to the distribution P .
+Assumption (A5) usually is referred to as the relatively complete recourse.
+
+    Under these assumptions the value functions Vt(·) and Vt+m(·) of dynamic equations (2.6)
+- (2.7) are the same for all t  2. This leads to the following periodical variant of Wald-
+Bellman (WB) equations (often simply referred to as Bellman equations in Optimal Control
+and MDP) for the value functions V2(·), ..., Vm+1(·),
+
+      V (x-1) = (V (x-1,  )),                                      (3.1)
+
+with
+
+      V (x-1,  ) = inf {f (x ,  ) + V+1(x ) : B x-1 + A x = b } ,  (3.2)
+                                  x X
+
+for  = 2, ..., m + 1, and Vm+2 replaced by V2 for  = m + 1 (note that  in (3.1) is viewed as
+a random vector, while in (3.2) it is treated as a vector valued variable). Consequently for
+
+t  m + 2 the corresponding value functions are defined recursively as Vt(·, t) = Vt-m(·, t),
+and hence Vt(·) = Vt-m(·). At the first stage problem (2.8) should be solved.
+
+      4
+    In order to show that equations (3.1) - (3.2) have a solution we proceed as follows (cf.,
+
+[3]). Let B(Xt) be the space of bounded functions g : Xt  R. Note that B(Xt), equipped
+with the sup-norm g = supxXt |g(x)|, is a Banach space. Consider the space B :=
+B(X1) × · · · × B(Xm) equipped with the max-norm g B := max{ g2 , ..., gm+1 }, for g =
+(g2, ..., gm+1)  B composed from functions gt : Xt-1  R. Moreover consider mapping
+T : B  B defined for m  2 as
+
+T(g)(x) := (g3(x1, 2)), ..., (gm+1(xm-1, m)), (g2(xm, m+1)) ,                (3.3)
+
+where x = (x1, ..., xm)  X, with X := X1 × · · · × Xm, and
+
+g+1 (x-1,  )  :=   inf  {f (x ,  ) + g+1(x )  :  B x-1      + A x  =  b } ,  (3.4)
+
+                  x X
+
+for  = 2, ..., m, and gm+2(·) = g2(·) for  = m + 1. The case of m = 1 is discussed in Remark
+3.1 below.
+
+    Assumptions A(4) and A(5) imply that for any g+1  B(X ) the functions g+1(x-1,  )
+are bounded. In order to verify that g+1(x-1,  ) are well defined we still need to verify
+that g+1(x-1, ·) are measurable. We implicitly assume this. When the set  is finite this
+holds automatically. In general we refer to [3],[11] for a discussion of such measurability
+issues. Then the mapping T is well defined, i.e., for any g  B its image T(g) belongs to
+the space B. We have that V = (V2, ..., Vm+1) is a solution of equations (3.1)­(3.2) iff it is a
+fixed point of the mapping T. Let us show that T is a contraction mapping with respect to
+the norm · B (in that we follow [3, Section 4.2]). Note that the space B, with the norm
+
+  · B, is a Banach space.
+
+Proposition 3.1 For every g, g  B the following inequality holds
+
+                        T(g) - T(g ) B   g - g B.                            (3.5)
+
+    Proof. It follows from monotonicity of that T has the following monotonicity property:
+if g, g  B are such that g g , then T(g) T(g ) (by writing g g we mean that
+gt(·)  gt(·) for t = 2, ..., m + 1). It follows from translation equivariance of that T
+has the following property of constant shift: for any g  B and c  R it follows that
+T(g + ce) = T(g) + ce, where e  B is such that e(x) = (1, ..., 1) for any x  X. These
+two properties imply that T is a contraction mapping. Indeed, consider g, g  B and let
+ := g-g B. Then we have that g+e g , and hence by monotonicity of T it follows that
+T(g + e) T(g ). Applying the constant shift property we obtain that T(g) + e T(g ).
+That is e T(g ) - T(g). The opposite inequality can be shown in the similar way, and
+hence (3.5) follows.
+
+    The contraction property of T implies the following.
+
+Theorem 3.1 Under assumptions (A1)­(A5) the following holds: (i) There exists unique
+
+set of functions V2, ..., Vm+1 satisfying the WB equations (3.1)-(3.2). (ii) For any g0  B,
+the sequence of functions defined iteratively gk+1 = T(gk), k = 0, 1, ..., converges (in the
+norm · B) to V = (V2, ..., Vm+1) as k  . (iii) If, moreover, for all t the sets Xt are
+convex and ft(xt, t) are convex in xt  Xt, then the functions Vt : Xt-1  R, t  2, are
+convex.
+
+                        5
+    Proof. Since the mapping T is a contraction mapping, the assertions (i) and (ii) follow
+
+by the Banach Fixed Point Theorem. Suppose now that Xt and ft(·, t) are convex, and
+consider g  B with convex component functions g+1. It follows then that the functions
+g+1(·,  ) are convex. Consequently by convexity and monotonicity of , we have that
+
+   g+1(·,  ) are convex. Consequently the components of Tk(g)(·) are convex for all k
+and hence the fixed point of T has convex components. This proves (iii).
+
+    Let V2, ..., Vm+1 be the value functions satisfying the WB equations (3.1)-(3.2), and for
+t  m + 2 the corresponding value functions be defined recursively as Vt(·) = Vt-m(·). The
+minimizers
+
+      x¯1  arg min f (x1) + V2(x1) : A1x1 = b1 ,                                (3.6)
+                      x1X1
+
+      x¯t  arg min ft(xt, t) + Vt+1(xt) : Bt(t)x¯t-1 + At(t)xt = bt(t) , t  2,
+                      xtXt
+
+give an optimal policy of the corresponding infinite horizon problem. Note that for t = 2, ...,
+the minimizer x¯t is a function of x¯t-1 and t. The respective optimal value is given by the
+optimal value of the first stage problem.
+
+Remark 3.1 For m = 1 the data is the same for all t, therefore in that case we remove
+
+the subscript t from the data functions. The WB equations for the value function V = V2
+
+become
+
+                                  V(x) = (V (x, )),                             (3.7)
+        V (x, ) = inf f (x , ) + V(x ) : B()x + A()x = b() ,
+                          x X
+
+where  denotes random vector having distribution of t. Solution of these equations are
+given by the fixed point of the mapping T : B(X )  B(X ) defined as
+
+                               T(g)(x) := (g(x, ))                              (3.8)
+
+with
+
+        g(x, ) := inf f (x , ) + g(x ) : B()x + A()x = b() .                    (3.9)
+                              x X
+
+Under the specified assumptions the mapping T is a contraction mapping and the assertions
+
+of Theorem 3.1 do apply.
+
+4 Statistical inference
+
+For the sake of simplicity let us consider first the case of the period length m = 1, with
+
+the corresponding WB equations given in (3.7). In order to evaluate the value function V(·)
+
+numerically we need to discretize the (possibly continuous) distribution of the random vector
+
+. We discuss this in the framework of the (infinite horizon) problem (2.2) with T = .
+    Let P^ be an approximation of the reference distribution P and ^ be the corresponding risk
+
+measure. In the risk neutral case we have that = EP and then ^ = EP^. Consider mapping
+T, defined in (3.8), corresponding to the original (true) problem and its approximation
+counterpart T^ : B(X )  B(X ) defined in the similar way
+
+                               T^(g)(x) := ^(g(x, )) .                          (4.1)
+
+                               6
+Under the specified regularity conditions, both mappings T and T^ are contraction mappings.
+Let V and V^ be their fixed points, i.e., T(V) = V and T^(V^) = V^. Then by using the
+contraction property of T^ we have
+
+                   V - V^ = T(V) - T^(V^) = T(V) - T^(V) + T^(V) - T^(V^)
+                                T(V) - T^(V) +  V - V^ .
+
+It follows that
+
+V - V^  (1 - )-1 T(V) - T^(V) = (1 - )-1 (V (x, )) - ^(V (x, )) . (4.2)
+
+Consider now the Sample Average Approximation (SAA) approach to discretization of
+
+the true problem. That is, a random sample 1, ..., N , of iid realizations of random vector
+
+, is generated by Monte Carlo sampling techniques and distribution P is approximated by
+
+the corresponding empirical distribution P^N = N -1  N         j    .  We can view the associated
+                                                     j=1
+
+risk measure ^N and value function V^N as the SAA estimates of and V, respectively. In
+
+particular, in the risk neutral case, when = EP , we have that
+
+                                                            1  N
+                 ^N (V (x, )) = EP^N [V (x, )] = N
+                                                                    V (x, j).  (4.3)
+
+                                                               j=1
+
+Assuming that the set X is compact, V(x, ) is continuous in x  X and is dominated
+by an integrable function, we have by the uniform Law of Large Numbers (LLN) (e.g., [13,
+Theorem 7.53]) that
+
+                  lim  EP [V (x, )] - EP^N [V (x, )]              = 0 w.p.1.   (4.4)
+
+                 N 
+
+There is also a uniform LLN for general law invariant coherent risk measures (cf., [12]). It
+follows then by (4.2) that V^N (·) converges w.p.1 to V(·) uniformly on X . This in turn implies
+that the optimal value and first stage optimal solutions of the SAA problem converge w.p.1
+
+to their counterparts of the (true) problem (e.g., [13, Theorem 5.3]).
+
+    In the risk neutral setting, when = EP , there are also available results for uniform in
+x  X rates of convergence of EP^N [V(x, )] to EP [V(x, )] (e.g., [13, Section 7.2.10]). By
+(4.2) this implies that for  > 0 , under appropriate regularity conditions, probability of the
+event { V - V^N  } converges to zero exponentially fast with increase of the sample size
+N . It also follows from those results that in order to solve the true problem with accuracy
+
+ > 0 by solving the SAA problem with accuracy   [0, ), for a given confidence one needs
+a sample size N of order O (( - )-2) (cf., [13, Section 5.3.2]).
+
+    In the general setting of m  1 we can proceed in the similar way. The true (marginal)
+distribution of every t is approximated by generating an iid sample t1, ..., tN , say of the
+same size N for every t = 2, ..., m + 1. (Recall that the process t is assumed to be stagewise
+independent.) Consequently the value functions Vt(xt-1) are approximated by their sample
+average approximations
+
+                           V^t,N (xt-1) = ^N Vt+1(xt-1, t) , t = 2, ..., m + 1,
+
+                                                          7
+by replacing the true (original) distribution of vectors t in WB equations (3.1) - (3.2) with
+their respective empirical distributions based on the generated samples. Similar to (4.2) by
+using the max-norm · B, we have that for t = 2, ..., m + 1,
+
+Vt - V^t,N  (1 - )-1 max                           V+1 (x-1,  ) - ^N V+1 (x-1,  ) ,  (4.5)
+                                            2 m+1
+
+with Vm+2 = V2.
+    Under mild regularity conditions (in particular assuming compactness of the sets Xt) a
+
+uniform LLN can be applied to the empirical risk measures ^N (cf., [12],[13, Section 7.2.6]).
+It follows then that the optimal value and first stage optimal solutions of the SAA problem
+
+converge w.p.1 to their counterparts of the (true) problem. In the risk neutral case, when
+
+   = E, it is also possible to apply a general analysis of sample complexity of the SAA
+approach in the multistage setting (we refer to [13, Section 5.8.2] for the derivations and
+
+discussion of required regularity conditions). Again for a given accuracy  > 0 and   [0, )
+one needs the sample size N (per stage) of order O (( - )-2). Note however that the total
+number of scenarios (sample paths) of the constructed SAA problem is N = N m. Therefore
+the corresponding number of scenarios N is of order O (( - )-2m).
+
+5 Cutting plane algorithm
+
+There are different approaches to computing value function, satisfying the WB equations,
+
+which were suggested in the literature (see, e.g., [3]). For a recent discussion of limitations
+
+of classical approaches we can refer to [16]. In this section we discuss a cutting planes
+
+approach to approximation of the value functions. This is somewhat similar to the Stochastic
+
+Dual Dynamic Programming (SDDP) method (introduced in [8]), which became popular for
+
+solving multistage linear (convex) stochastic programs. Such type of algorithms for solving
+
+the WB equations in Optimal Control, with m = 1, were recently considered in [2] and [16].
+
+Let us consider first the case of m = 1 (see Remark 3.1); the general periodic case will
+
+be discussed in sections below. We assume that the distribution of the random vector  is
+discretized, say by the SAA method, so that the set  = {1, ..., N } is finite, equipped with
+
+probabilities pj > 0, j = 1, ..., N . We assume that f (x, ) is convex in x, in particular it can
+be linear f (x, ) = c() x, and the set X is convex, and hence functions V (·, ) and V(·) are
+
+convex. For now we consider the risk neutral case, when = E; later we will comment how
+this can be extended to general coherent risk measures. The WB equations can be written
+
+here as                                                      N
+
+                                        V(x) = pjV j(x),                             (5.1)
+
+         V j(x) = min                                      j=1   , j = 1, ..., N,
+                          x X
+                               f j(x ) + V(x ) : Bjx + Ajx = bj
+
+where f j(x) = f (x, j), Bj = B(j), Aj = A(j), bj = b(j), and pj is the probability of
+scenario j. Given a current piecewise linear (under) approximation V(·) of function V(·) and
+a trial point x  X , the next cutting plane is constructed by computing a subgradient gj, at
+
+x, of the current estimate of value function
+
+         V j(x) = min f j(x ) + V(x ) : Bjx + Ajx = bj                               (5.2)
+                          x X
+
+                                                   8
+for j = 1, ..., N . This subgradient is obtained by solving the respective dual problem. If
+
+f (x, j) = (cj) x is linear and X is a polyhedral set given by a finite number of affine
+
+constraints, then problem (5.2) is a linear programming problem. Then the respective sub-
+
+gradient of V(·) at the point x is estimated as       N       pj  gj  .  There     are  different   strategies   for
+                                                      j=1
+
+generating trial point(s) at each iteration, we will discuss this in section 5.1.1 below.
+
+For an estimate V(·) of the value function, consider policy
+
+x¯t  arg min f (xt, t) + V(xt) : B(t)x¯t-1 + A(t)xt = b(t) , t = 1, ...,                                    (5.3)
+                xtX
+
+with x¯0 = 0 and f (x1, 1) = f1(x1). This is a feasible policy for the respective infinite horizon
+
+problem. For a sample path (realization) 1, ..., of the random process the point estimate of
+                                       
+corresponding value of this policy is  t=1    t-1ft(x¯t,  t).     Hence       the  value  of  this  policy  can  be
+
+estimated by averaging these point estimates for M randomly generated sample paths (this
+
+can be applied to the discretized or the original distribution of the random process). This
+
+will give an upper estimate of the optimal value of problem. This is similar to the forward
+
+step of the SDDP algorithm.
+
+Note that for finite sum     T    t-1ft(x¯t,  t)  we  can     estimate        the  respective  error   as   (com-
+                             t=1
+
+pare with (2.3))
+
+                             T                                                                T
+
+                  t-1ft(x¯t, t) - t-1ft(x¯t, t) =                     t-1ft(x¯t, t)           1-    ,       (5.4)
+
+t=1                          t=1                          t=T +1
+
+where  is such that |ft(x¯t, t)|  .
+    Similar procedure can be applied to a law invariant coherent risk measure . The only
+
+difference is how a subgradient of V j(x) is computed (cf., [15]). Unfortunately for general
+coherent risk measures it is not clear how to compute an upper bound for the optimal
+value of the considered risk averse problem by the randomization method, discussed above
+for the risk neutral problem. Construction of the upper bound by an outer approximation
+was suggested in [9]. That procedure is based on a certain discretization of the set X ; as a
+consequence the number of discretization points needed to achieve a given accuracy typically
+grows exponentially with increase of the dimension of x  X .
+
+    In the next section we discuss an implementation of SDDP type algorithm, referred to as
+the periodical SDDP algorithm, applied to the periodical WB equations, for general period
+m  1 and risk measures.
+
+5.1 SDDP type algorithm
+
+In this section we discuss the proposed periodical variant SDDP algorithm applied to peri-
+odical infinite horizon problems. We follow the formalism, and apply software, described in
+[4]. That is, consider risk functional R, defined in (2.4), and the following problem
+
+                          min R               t-1(ut      xt  + vt       yt)  ,                             (5.5)
+                                       t=1
+                          
+
+with decision variables (xt, yt) and respective policies    satisfying the constraints
+
+                             Btxt-1 + Atxt + Ctyt  bt.                                                      (5.6)
+
+                                              9
+In that approach xt can be viewed as state variables and yt as local (control) variables similar
+to the model used in the Optimal Control. The difference from the Optimal Control approach
+is that the state variables xt are not determined completely by the local variables yt and the
+minimization in (5.5) is performed jointly in xt and yt. Anyway in the above formulation
+the corresponding value functions are functions of state variables and do not depend on yt.
+
+    Suppose that the above problem has a periodical behavior with period m  1. The stage-
+wise independent stochastic processes ut, vt, At, Bt, Ct, bt are discretized into finite set t for
+each stage t = 2, . . . , m + 1 (recall that the first stage data u1 and v1 are deterministic). The
+discretized problem is solved by a periodical version of the SDDP algorithm (see Algorithm
+1 below).
+
+5.1.1 Construction of trial points
+
+There is a delicate issue of choosing trial points where the value functions are updated by
+construction of the respective cutting planes. This is related to the question of eventual
+convergence of the algorithm. Recall that the aim here is solving the corresponding infinite
+horizon problem (with the discount factor  < 1). The WB equations describe the value
+functions for this infinite horizon problem. Available proofs of convergence of standard
+SDDP algorithms, for finite horizon problems, are quite technical (see [6],[7], and references
+therein). Careful derivation of such proofs for the considered framework is outside the scope
+of this paper and will be left for a future research.
+
+    When the number of scenarios (sample paths) is finite, such proofs of convergence are
+based on the property that the considered algorithm eventually goes through every scenario.
+Of course when the number of scenarios is astronomically large, this can not happen in
+a reasonable time. Therefore although such proofs have a theoretical interest, they do
+not guarantee convergence to an arbitrary small precision for larger problems. Therefore
+although such theoretical developments give general guidelines, in practice various heuristics
+are used. We used the following heuristics trying to mimic the standard SDDP approach,
+this worked reasonably well.
+
+    In the forward step of SDDP algorithm, by iteratively solving the first T stage problems,
+we obtain solutions of state variables, denoted by x~t, for each stage t = 1, . . . , T . Those
+solutions are considered as candidates of trial points for stage 2 to stage m + 1 in the
+backward step. Various trial points selection methods can be considered. The method we
+adopt here is as follows. Consider all consecutive m-stage periods for the T stages, i.e.,
+
+ (s, s + 1, . . . , s + m - 1) : s = 1, m + 1, 2m + 1 . . . , s + m - 1  T . Randomly pick one of the
+cycles (s^, s^ + 1, . . . , s^ + m - 1). Trial points are then selected as x¯k = x~s0+k-1, k = 1, . . . , m.
+
+    The backward step then solves each stage problem at those trial points x¯k, k = m, . . . , 1,
+from stage m + 1 to stage 2 backwardly and iteratively adds a corresponding cutting plane to
+the previous stage. The cutting plane obtained from stage 2 is also added to stage m+1 since
+V^m+2(·) = V^2(·). In the end, by solving the first stage problem, the backward step is able
+to produce a lower bound for the infinite horizon problem. Following the paper [4], we add
+local copy variables zt, t = 1, . . . , T , to simplify dual computation and modeling process.
+
+                                                         10
+Algorithm 1 Periodical SDDP algorithm for stagewise independent infinite horizon problem
+
+with a discount factor   (0, 1) and a period m  1
+
+1: Given sample size Nt and discretization t = {ujt , vtj, Ajt , Btj, Ctj, btj}1jNt, for t =
+
+   2, . . . , m + 1
+2: Initial approximation of value functions: V^2(0), . . . , V^m(0+) 1, V^m(0+) 2(= V^2(0))
+
+3: Initialize: i = 1, LB = -
+
+4: while no stopping criterion is met do
+
+     (Forward Step)
+
+5: for t = 1, . . . , T (T  m + 1) do
+
+6: if t = 1 then t = 1
+
+7: else
+
+8:          t  t (mod m), where t  {2, . . . , m + 1}
+
+9:          Draw a sample (ut , vt , At , Bt , Ct , bt ) from t
+
+10:  end if
+
+11:  x~t, y~t = argmin {ut xt + vt yt + V^t(i+-11)(xt) : At xt + Bt zt + Ct yt  bt , zt = x~t-1}
+
+12: end for
+
+13: Trial point selection: (x¯1, x¯2, . . . , x¯m) selected from candidates (x~1, x~2, . . . , x~T )
+      (Backward Step)
+
+14: for t = m + 1, . . . , 2 do
+
+15:  for j = 1, . . . , Nt do
+
+16:         if t = m + 1 then i = i - 1
+
+17:         else i = i
+
+18:         end if
+
+19:         Solve min {utjxt + vtjyt + V^t(+i 1) (xt) : Ajt xt + Btjzt + Ctjyt  bjt , zt = x¯t-1} and get
+
+     optimal value Vtj and dual solution Gtj corresponding to constraint zt = x¯t-1
+
+20: end for
+
+21: Compute coefficients of a new cutting plane, Vt and Gt, from Vtj and Gtj. In partic-
+
+     ular,  for  risk  neutral  measure:  Vt  :=   1  Nt   Vtj ,  Gt  :=   1  Nt   Gtj
+                                                  Nt  j=1                 Nt  j=1
+
+22:  V^t(i)  {  V^t(i-1),   Gt(xt-1 - x¯t-1) + Vt}
+
+23: end for
+
+24: LB = min{u1 x1 + v1 y1 + V^2(i)(x1) : A1x1 + B1z1 + C1y1  b1, z1 = x0}
+
+25: i = i + 1
+
+26: end while
+
+                                                      11
+5.1.2 Policy evaluation
+
+After solving the discretized problem, the obtained policy is feasible and implementable for
+
+infinite number of stages. The classical SDDP on the other hand, produces a policy that is
+
+implementable up to a finite number of stages. Nevertheless, we can still compare the two
+
+approaches by evaluating the obtain policies up to some finite number of stages both for
+
+the discretized problem and the true problem (by "true" we mean the original problem with
+
+possibly continuous distributions of the random variables). The evaluation of the periodical
+
+SDDP can be done by running the forward step in Algorithm 1 multiple times.
+
+In the risk neutral setting, the finite summation of individual discounted stage costs
+
+T      t-1  ut x¯t + vt y¯t  , for sufficiently large T , can be regarded as an approximation of the
+t=1
+
+policy value for T =  (the error of such approximation is given by (5.4)). Therefore, we
+
+are able to construct confidence interval of the (approximated) policy value. If we replace
+
+the discretized set t by the true distribution of the stochastic processes, we are also able
+to construct confidence interval of the policy value for the true problem. In the end, the
+
+optimality gap of the discretization problem is given by the percentage difference between
+
+the upper end of the confidence interval and the lower bound. It is also possible to compute
+
+the optimality gap of the true problem by randomizing the discretized problem. Stopping
+
+criteria and parallelization technique for the classical SDDP are also valid here. All of the
+
+evaluation techniques are quite similar to the classical SDDP. For more details, we direct
+
+readers to the paper [4].
+
+6 Numerical experiments
+
+We implemented the periodical SDDP algorithm for the Brazilian interconnected power
+system problem (cf., [15]). The system has four regions. In each region i, demand is satisfied
+by energy generation qi from an integrated reservoir, energy generation gk from local thermal
+plants k  i and energy inflow exji from other regions (j  {1, 2, 3, 4}) or a transshipment
+station (j = 5). If demand di can not be satisfied, system i borrows dfij units of energy from
+the deficit account in system j and a cost of eij will be incurred. The deficit accounts are set
+up in a way that ensures the complete recourse condition is held. There are tiny costs for
+each unit of energy spillage and energy exchanges, denoted by bi, cji (energy flowed from
+region j to region i) respectively. We assume a cost of uk for each unit of energy thermal
+plant k produces. The dynamics of the system is that the stored energy vit of each reservoir i
+in stage t is equal to the previous stored energy vi,t-1 plus the current water inflow ait minus
+the energy generation qit and the water spillage sit. The transshipment station is solely for
+water exchanges between regions. The inflow energy is modeled as a periodical first order
+autoregressive process with multiplicative errors. The model has a period of 12 in the sense
+that the deterministic demand dit, the stochastic process {ait} are both with period 12 from
+stage 2. The objective is to obtain a sequential scheme to minimize the total operation cost
+over a design period of T stages with a discount factor  while meeting energy requirements
+
+                             12
+and feasibility constraints.
+
+         T                      4              5                     4
+
+min RT       t-1                         bitsit + cji,texji,t +      ukgkt + eijdfijt
+
+        t=1                     i=1            j=1               ki  j=1
+
+                                      4
+
+                              + cj5,texj5,t
+
+                                   j=1
+
+s.t. t = 1, . . . , T
+
+        vit + sit + qit - vi,t-1 = ait, i,
+
+                                            4       5   5
+
+        qit +                 gkt + dfijt - exij,t + exji,t = dit, i,
+
+               ki                        j=1      j=1   j=1
+
+        4                                4
+
+             exj5,t = ex5j,t,
+
+        j=1                           j=1
+
+        0  vit  v¯i, 0  qit  q¯i, i,
+
+        g      gkt              g¯k,  k,
+          k
+
+        0  dfijt  d¯f ij, 0  exij,t  e¯xij, i, j,
+
+        vi,0 are given, ai,1 are deterministic, i.
+
+    This problem was originally a 60-stage (60-month) multistage problem with a monthly
+discount factor  = 0.9906 (this discount factor corresponds to the annual discount rate
+of 12%, i.e., 1/12 = 1.12 for  = 0.9906, and was used in the original project). In order
+to deal with the so-called end-of-horizon effect, 60 more stages are added to the problem,
+which results in T = 120 stage problem. However, implementing the classical SDDP for the
+resulting 120-stage problem requires huge computational effort and resources. By contrast,
+the periodical SDDP leverages the periodical structure of the problem, considers T =  and
+only needs to solve a 13-stage problem (with deterministic first stage problem and m = 12).
+
+    For the discount factor  = 0.9906 in risk neutral setting, the error estimate given in
+(5.4), is T /(1-)  34. This estimate is still large, indicating that the cost-to-go function at
+the 120th stage may be far from zero and the end-of-horizon effect may still be significant.
+If setting a smaller discount factor, for example  = 0.8, the coefficient in (5.4) becomes
+T /(1 - )  1.17e - 11, while the upper bound  of the objective is less than 1e10 for this
+problem. It then makes sense to regard the cost-to-go function at the 120th stage as zero. In
+such case, the 120-stage problem is approximately the same as the infinite horizon problem.
+It can be noted that the monthly discount factor  = 0.8 may not have an economic sense,
+but it is still useful for algorithmic comparisons.
+
+    In this section, we numerically compare the classical SDDP and the proposed (periodical)
+variant of SDDP algorithm on this Brazilian power problem with discount factors 0.8 and
+0.9906 in risk neutral, risk averse, and integer settings. The true problem is discretized by
+SAA with sample size Nt = 100 at every stage t  2. Both algorithms are implemented
+on SAA discretized problems for 300 iterations and are parallelized by 10 processes (i.e., 10
+forward and backward steps are simultaneously done for each iteration, and hence in total
+
+                                                    13
+effectively around 3000 iterations are implemented). For every 100 iterations, we evaluate
+the obtained policy from both approaches and compare the bound, policy value and solution.
+Since the periodical SDDP solves a much smaller problem per iteration (ten times smaller
+in this case since there are around 10 periods for T = 120 and m = 12), if the comparison
+shows similar results, the periodical SDDP will be significantly more efficient for periodical
+multistage problems than the classical SDDP. All experiments are done using MSPPy [4],
+Gurobi 8.1.0, Python 3.7.1 in Red Hat Linux. More details can be found at github.com/
+lingquant/msppy.
+
+6.1 Risk neutral problem
+
+We start with the risk neutral version of the problem, with = E, and discount factor  = 0.8.
+Table 1 compares the speed of convergence for the two approaches. The lower bound,
+confidence interval of policy values, and optimality gap evolve in a similar pattern for the
+classical SDDP and periodical SDDP. The periodical SDDP has similar rate of convergence
+for the same number of iterations. Figure 1 illustrates the evolution of individual stage costs
+both for the discretized problem and the true problem. For both approaches, the individual
+stage costs stabilize after 300 iterations. Figure 2 exhibits the evolution of stored energy
+in one of the regions for the discretized problem and the true problem. The stored energy
+stabilizes very quickly and it is slightly more cyclical for the periodical SDDP than for the
+classical SDDP. Both plots also reflect that the discretized problem is a good approximation
+to the true problem.
+
+Table 1: Comparison of classical SDDP and periodical SDDP, with the lower bound, the 95%
+
+confidence interval of policy values for the SAA discretized problem and the true problem,
+
+and the optimality gap for the SAA discretized problem
+
+             periodical SDDP                            classical SDDP
+
+#iter   LB   CI approx.($m)   gap   LB CI approx.($m)                   gap
+       ($m)    CI true($m)         ($m) CI true($m)
+
+100 7.09     7.57, 8.03       13.27% 7.14               7.70, 8.19      14.71%
+             7.32, 7.81                                 7.42, 7.93
+
+200 7.31     7.55, 8.01       9.56% 7.30                7.67, 8.15      11.6%
+             7.32, 7.81                                 7.40, 7.91
+
+300 7.39     7.51, 7.97       7.84% 7.37                7.65, 8.13      10.3%
+             7.27, 7.76                                 7.38, 7.89
+
+                              14
+Figure 1: Individual stage costs (in average value and 0.9 quantile) by periodical SDDP (on
+the left) and classical SDDP (on the right) for the SAA discretized problem (on the above)
+and the true problem (on the bottom) for the risk neutral case with discount factor 0.8, after
+100, 200 and 300 iterations
+
+Figure 2: Stored energy (in average value and 0.9 quantile) by periodical SDDP (on the left)
+and classical SDDP (on the right) for the SAA discretized problem (on the above) and the
+true problem (on the bottom) for the risk neutral case with discount factor 0.8, after 100,
+200 and 300 iterations
+
+                                                         15
+6.2 Changing discount factor from 0.8 to 0.9906
+
+The original problem has a discount factor of  = 0.9906. As shown above, the 120 stage
+problem may not be a good approximation of the infinite horizon problem. Indeed as shown
+in Figure 3, the implementation results demonstrate significant discrepancies between the
+two approaches. The stage costs for the periodical SDDP are similar to those for the classical
+SDDP for about the first 10 stages, while in the classical SDDP they decay faster in later
+stages. It appears that the reason for that is the end-of-horizon effect: when approaching
+the end of the horizon, the classical SDDP tends to use up all available stored energy and
+thus reduces the stage costs. This argument is verified by Figure 4. That being said, in
+practice, people typically only consider the costs for the first few stages and run a rolling
+horizon based SDDP algorithm. From that point of view these two approaches behave in a
+similar way.
+Figure 3: Individual stage costs (in average value and 0.9 quantile) by periodical SDDP (on
+the left) and classical SDDP (on the right) for the SAA discretized problem (on the above)
+and the true problem (on the bottom) for the risk neutral case with discount factor 0.9906,
+after 100, 200 and 300 iterations
+
+                                                         16
+Figure 4: Stored energy (in average value and 0.9 quantile) by periodical SDDP (on the left)
+and classical SDDP (on the right) for the SAA discretized problem (on the above) and the
+true problem (on the bottom) for the risk neutral case with discount factor 0.9906, after 100,
+200 and 300 iterations
+
+6.3 Incorporating risk
+
+We compare now the two approaches in a risk averse setting. Specifically, we consider a risk
+measure which is a convex combination of the expectation and the Average Value-at-Risk,
+
+                                 AV@R(Z) := inf {x + -1E[Z - x]+},
+                                                                                xR
+
+risk measure (also called Conditional Value-at-Risk, Expected Shortfall, Expected Tail Loss),
+                                       (·) := (1 - )E(·) + AV@R(·),
+
+with  = 0.2 and  = 0.1.
+    Again, as shown in Figures 5 - 8, both approaches stabilize after 300 iterations. For
+
+discount factor 0.8, periodical SDDP shows similar but slightly more cyclical result then
+the classical SDDP. For discount factor 0.9906, the classical SDDP suffers more from the
+end-of-horizon effect than in the risk neutral setting and the periodical SDDP produces more
+cyclical and regular solutions.
+
+                                                         17
+Figure 5: Individual stage costs (in average value and 0.9 quantile) by periodical SDDP (on
+the left) and classical SDDP (on the right) for the SAA discretized problem (on the above)
+and the true problem (on the bottom) for the risk averse case with discount factor 0.8, after
+100, 200 and 300 iterations
+
+                                                          .
+
+Figure 6: Stored energy (in average value and 0.9 quantile) by periodical SDDP (on the left)
+and classical SDDP (on the right) for the SAA discretized problem (on the above) and the
+true problem (on the bottom) for the risk averse case with discount factor 0.8, after 100, 200
+and 300 iterations
+
+                                                         18
+Figure 7: Individual stage costs (in average value and 0.9 quantile) by periodical SDDP (on
+the left) and classical SDDP (on the right) for the SAA discretized problem (on the above)
+and the true problem (on the bottom) for the risk averse case with discount factor 0.9906,
+after 100, 200 and 300 iterations
+
+Figure 8: Stored energy (in average value and 0.9 quantile) by periodical SDDP (on the left)
+and classical SDDP (on the right) for the SAA discretized problem (on the above) and the
+true problem (on the bottom) for the risk averse case with discount factor 0.9906, after 100,
+200 and 300 iterations
+
+                                                         19
+6.4 Including binary variables
+
+One of the concerns about the Brazilian power system is to include a thermal security
+constraint. That is, whenever the stored energy is below certain level, thermal energy must be
+produced to ensure enough operational maneuver options for hydro plants and for electrical
+network reliability. This can be achieved by considering risk neutral measure = E and
+including binary variables as follows,
+
+                   vit  zivi, gkt  (1 - zi)gi, gi and vi given, zi  {0, 1}, i.
+
+                                                 ki
+
+Adding the above additional binary variables and constraints makes the problem a multistage
+stochastic mixed-integer program. Such type of problems are solved by the so-called SDDiP
+algorithm proposed in [17], i.e., SDDP with strengthen Benders' cuts or Lagrangian cuts.
+Following this, the paper [4] makes some preliminary attempts to solve the above problem by
+SDDiP with strengthen Benders' cuts for only up to 6 stages. As far as we know, the above
+problem has not been solved in the literature because of the heavy computational cost.
+
+    By virtue of the proposed techniques, we only need to solve the corresponding 13-stage
+problem, which makes the SDDiP approach computationally much more tractable. As shown
+in Table 2, such large-scale mixed integer problem is able to be solved in a reasonable
+accuracy. Figures 9 and 10 compare the results with and without thermal security constraint.
+For the discount factor 0.9906, the imposed thermal security does not have much impact on
+the solutions and costs. While for the discount factor 0.8, the imposed thermal security
+constraint leads to retain more stored energy over the entire horizon.
+
+Table 2: Result of SDDiP with Benders' cuts for the mixed integer problem with discount
+
+factor 0.8.
+
+                          periodical SDDP
+
+             #iter   LB    CI       CI for true  gap
+                    ($m)  ($m)         ($m)
+
+             100 9.50 9.94, 10.29 9.85, 10.23 8.22%
+
+             200 9.65 9.92, 10.26 9.83, 10.21 6.36%
+
+             300 9.71 9.90, 10.26 9.84, 10.22 5.67%
+
+                                20
+Figure 9: Stored energy (on the left) and discounted stage cost (on the right) in average
+value and 0.9 quantile for the problem with/without thermal security constraint for the
+SAA discretized problem (on the above) and the true problem (on the bottom) for the risk
+neutral with discount factor 0.8
+
+Figure 10: Stored energy (on the left) and discounted stage cost (on the right) in average
+value and 0.9 quantile for the problem with/without thermal security constraint for the SAA
+discretized problem (on the above) and the true problem (on the bottom) for the risk neutral
+case with discount factor 0.9906
+
+                                                         21
+7 Markovian setting
+
+Let us finally mention the following possible extension to a Markovian setting, which could
+be a topic for future research. For the sake of simplicity consider the case of m = 1 (see
+Remark 3.1). Suppose that the process t is Markovian and each t has the same marginal
+distribution. For example t can be stationary first order autoregressive process t = µ +
+t-1 + t, or (after discretization) t can be a stationary homogeneous Markov chain. Let
+ and  be random vectors with  having distribution of t, and  having conditional
+distribution of t+1 given t. For the Markovian process, the WB equations take the form
+(compare with equations (3.7))
+
+                         V(x, ) = |[V (x,  )],                             (7.1)
+V (x, ) = min f (x , ) + V(x , ) : B()x + A()x = b() .
+
+                   x X
+
+The corresponding mapping
+
+                           T(g)(x) := | [g(x,  )]
+
+depends on .
+
+    For example, consider the risk neutral case of stationary homogeneous Markov chain with
+the state space {(B1, A1, b1), ..., (Bk, Ak, bk)} and probability of moving from state (Bi, Ai, bi)
+to state (Bj, Aj, bj) is pij. Then the WB equations take the form
+
+V i(x) = min f i(x ) + Vi(x ) : Bix + Aix = bi ,
+                           x X
+                                                                           (7.2)
+                           Vi(x) =  k    pij V  j  (x),  i = 1, ..., k.
+                                    j=1
+
+Here the value function Vi(·) should be computed for every i = 1, ..., k.
+
+8 Conclusion
+
+In conclusion, in all cases above, the proposed periodical SDDP algorithm provides similar,
+and sometimes more reasonable solutions as opposed to the classical SDDP for the same
+number of iterations, for periodical problems. Giving the benefit of significantly reduced
+computational time it brings about, the periodical SDDP algorithm can be an important
+substitute of the classical one. Having said that, we notice that for the discount factor that is
+close to 1, it is computationally expensive to evaluate policy value and thus hard to compute
+the upper bound. We leave it to a future research for construction of a more efficient way
+to compute the upper bound.
+
+    Of course the periodical SDDP algorithm applies only to problems with the periodical
+structure. It could be mentioned, however, that the user can choose different period lengths
+m for the considered problem. For instance, in the example of the Brazilian interconnected
+power system problem (discussed in section 6), one can use m = 24 (two years) or even
+m = 60 (five years). Still it will reduce the computational effort and will take care of the
+end-of-horizon effect.
+
+                                         22
+Acknowledgments
+
+The authors are indebted to Joari Paulo da Costa for constructive comments which helped
+to improve presentation of the manuscript.
+
+References
+
+ [1] P. Artzner, F. Delbaen, J.-M. Eber, and D. Heath. Coherent measures of risk. Mathe-
+      matical Finance, 9:203­228, 1999.
+
+ [2] R. Baucke. An algorithm for solving infinite horizon Markov dynamic programmes.
+      Optimization online, 2018.
+
+ [3] D.P. Bertsekas and S.E. Shreve. Stochastic Optimal Control, The Discrete Time Case.
+      Academic Press, New York, 1978.
+
+ [4] L. Ding, S. Ahmed, and A. Shapiro. A python package for multi-stage stochastic pro-
+      gramming. Optimization online, 2019.
+
+ [5] H. F¨ollmer and A. Schied. Stochastic Finance: An Introduction in Discrete Time.
+      Walter de Gruyter, Berlin, 2nd edition, 2004.
+
+ [6] P. Girardeau, V. Leclere, and A. B. Philpott. On the convergence of decomposition
+      methods for multistage stochastic convex programs. Mathematics of Operations Re-
+      search, 40:130­145, 2016.
+
+ [7] V. Guigues. Dual dynamic programing with cut selection: Convergence proof and
+      numerical experiments. European Journal of Operational Research, 258:47­57, 2017.
+
+ [8] M.V.F. Pereira and L.M.V.G. Pinto. Multi-stage stochastic optimization applied to
+      energy planning. Mathematical programming, 52(1-3):359­375, 1991.
+
+ [9] A.B. Philpott, V.L. de Matos, and E. Finardi. On solving multistage stochastic programs
+      with coherent risk measures. Operations Research, 61(4):957­970, 2013.
+
+[10] M. L. Puterman. Markov Decision Processes.: Discrete Stochastic Dynamic Program-
+      ming. John Wiley & Sons, 2014.
+
+[11] R. T. Rockafellar and R. J.-B. Wets. Variational Analysis. Springer, New York, 1998.
+
+[12] A. Shapiro. Consistency of sample estimates of risk averse stochastic programs. Journal
+      of Applied Probability, 50:533­541, 2013.
+
+[13] A. Shapiro, D. Dentcheva, and A. Ruszczyn´ski. Lectures on Stochastic Programming:
+      Modeling and Theory. SIAM, Philadelphia, 2nd edition, 2014.
+
+[14] A. Shapiro and A. Nemirovski. On complexity of stochastic programming problems. In
+      V. Jeyakumar and A.M. Rubinov, editors, Continuous Optimization: Current Trends
+      and Applications, pages 111­144. Springer-Verlag, 2005.
+
+                                                         23
+[15] A. Shapiro, W. Tekaya, J.P. da Costa, and M. Pereira Soares. Risk neutral and risk
+      averse stochastic dual dynamic programming method. European Journal of Operational
+      Research, 224:375­391, 2013.
+
+[16] J. Warrington, N. Beuchat, and J. Lygeros. Generalized dual dynamic programming
+      for infinite horizon problems in continuous state and action spaces. IEEE Transactions
+      on Automatic Control, 2019.
+
+[17] Jikai Zou, Shabbir Ahmed, and Xu Andy Sun. Stochastic dual dynamic integer pro-
+      gramming. Mathematical Programming, 175(1-2):461­502, 2019.
+
+                                                         24
+

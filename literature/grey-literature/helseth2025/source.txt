@@ -1,0 +1,2251 @@
+Project Report
+
+The ReSDDP Model
+
+Principles and Algorithm
+
+Author(s)
+
+Arild Helseth
+
+Report Number
+
+2025:00598 -- Unrestricted
+
+Client(s)
+
+Project participants
+
+                                                Technology for a better society
+Document History
+
+VERSION            DATE VERSION DESCRIPTION
+
+1 - Final version
+
+PROJECT NUMBER     REPORT NUMBER             VERSION  2 of 48
+
+502003757          2025:00598                1
+Contents
+
+1 Introduction                                          5
+
+2 Problem Formulation                                   7
+
+2.1 The Scheduling Problem . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+
+2.2 Solution Strategy . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+
+2.2.1 Forward Simulation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+
+2.2.2 Backward Recursion . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+
+2.3 Stochastic Model . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+
+2.4 Detailed Stage Problem . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+
+2.5 Need for Approximation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+
+2.6 Further Reading on SDDP . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 11
+
+3 Approximating Detailed Hydropower            12
+
+3.1 Derivation of Feasibility Cuts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 12
+
+3.1.1 Illustrative Example . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+
+3.2 Stage Problem with Feasibility Spaces . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+
+3.3 Feasibility Space Extensions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 16
+
+3.3.1 Ramping Capability . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+
+3.3.2 Reserve Capacity . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+
+3.4 Feasibility Check . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+
+3.4.1 Coupling Aggregated and Disaggregated Data . . . . . . . . . . . . . . . . . . . . . . 18
+
+3.4.2 Detailed Hydropower Optimization Problem . . . . . . . . . . . . . . . . . . . . . . . 18
+
+3.4.3 Pumped Storage Plants . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+
+3.4.4 Computing Feasibility Cuts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+
+3.5 Visualization of Feasibility Spaces . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 20
+
+3.6 Assumptions and Further Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 21
+
+4 Residual Demand Cost Function                22
+
+4.1 Derivation of the Residual Demand Cost Function . . . . . . . . . . . . . . . . . . . . . . . . 22
+
+4.2 Graphical Interpretation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+
+4.3 Improved Formulation . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 25
+
+4.4 Computational Tests . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+
+4.4.1 Example 1 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 27
+
+4.4.2 Example 2 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+
+4.5 Short-Term Uncertainties . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 32
+
+4.6 Assumptions and Further Work . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 33
+
+PROJECT NUMBER         REPORT NUMBER  VERSION  3 of 48
+
+502003757              2025:00598     1
+5 ReSDDP                                34
+
+5.1 Approximated Stage Problem . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 34
+
+5.2 Cut Management . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 35
+
+5.3 Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 36
+
+6 Computational Experiments             38
+
+6.1 Data and Setup . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 38
+
+6.2 Convergence . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 39
+
+6.3 Computation Time . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 40
+
+6.4 Simulation Results . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 41
+
+6.5 Water Values . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 42
+
+6.6 Feasibility Cuts . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 44
+
+7 Summary                               46
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  4 of 48
+
+502003757       2025:00598     1
+Chapter 1
+
+Introduction
+
+This report documents the principles behind the open source long-term hydropower scheduling model ReS-
+DDP. It was prepared as a part of the research project "Modeling a 100% Renewable Electricity System" (RES100)
+1. The computer code is maintained at the GitLab repository https://gitlab.sintef.no/energy/res100/
+resddp. The model reads data prepared for the EMPS model (version 10).
+
+    The main goal of the ReSDDP model is to find the expected marginal value of water (water value) in large-
+scale hydropower systems as part of renewable electricity systems. Supplementary functionality for simulating
+the dispatch by using the obtained water values is available, but will not be discussed in detail here. The
+model is designed to explicitly model costs and technical constraints related to system dispatch. Traditionally,
+this type of model is classified as long-term hydrothermal scheduling models [1], emphasizing the balance
+between operation of long-term reservoirs and use of thermal generation in lieu of inflow uncertainty. In future
+scenarios with large-scale deployment of variable renewable energy sources (VRES), such as wind and solar
+power, and a gradual phase-out of dispatchable fossil-fueled generation technologies, the key contributors to
+this balance change. In addition to VRES, new technologies are expected to add flexibility on both the supply
+and demand side. These changes will stress the need to update long-term scheduling models with proper
+representations of the short-term variability and uncertainty related to VRES as well as technical descriptions
+of the new technologies.
+
+    The ReSDDP model is based on stochastic optimization, where both long- and short-term uncertainties
+can be represented. It was designed to balance detailed system description and computational effort by use
+of decomposition techniques, as described below and illustrated in Fig. 1.1. Decomposition techniques en-
+able us to formulate a lightweight and computationally efficient function to estimate coupled water values for
+hydropower subsystems. The decomposition allows the separation of:
+
+    · A Core Function: The core function consists of a stochastic dual dynamic programming (SDDP) algorithm
+       applied to hydropower subsystems. The SDDP model expresses hydropower strategies by means of a fu-
+       ture expected cost function (FCF), from which water values can be derived. Both the detailed hydropower
+       system and the residual demand for hydropower are represented by use of decomposition techniques.
+
+    · Approximate Hydropower: A detailed formulation of the hydropower system is formulated so that the
+       feasibility of aggregated decisions per subsystem can be controlled. The feasible operation region of each
+       hydropower subsystem is constrained by feasibility spaces, as elaborated in Chapter 3 and indicated in
+       Fig. 1.1. The feasibility space is expressed as a function of a subsystem's decision variables, involving
+       capabilities to store and produce energy, ramp production and provide reserve capacity.
+
+    · Residual Demand for Hydropower: A detailed description of the least-cost dispatch problem is used to
+       derive the residual demand cost function seen by the hydropower system, as elaborated in Chapter 4
+
+    1https://www.sintef.no/en/projects/2023/modeling-a-100-renewable-electricity-system-res100/
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  5 of 48
+
+502003757       2025:00598     1
+and indicated in Fig. 1.1. The residual demand cost function is expressed as a function of hydropower
+subsystem decision variables.
+
+                              Figure 1.1: Illustration of the spatial decomposition process.
+
+    The report is structured as follows. First, the problem formulation and the SDDP solution algorithm is de-
+scribed in Chapter 2. The approximation of the capabilities of a hydropower subsystem by feasibility spaces is
+elaborated in Chapter 3. Then an interface between the hydropower subsystems and the remaining power sys-
+tem (the "residual demand for hydropower") is elaborated on in 4. A summary of the ReSDDP model principles
+and the underlying assumptions is provided in Chapter 5. Finally, ReSDDP model was tested on a small-scale
+test dataset and the results, in terms of computational performance and water values, are presented and dis-
+cussed in Chapter 6.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  6 of 48
+
+502003757       2025:00598     1
+Chapter 2
+
+Problem Formulation
+
+As a starting point we describe the scheduling problem and how the SDDP algorithm can be applied to solve
+it. All details regarding the hydropower system, other technologies on the supply and demand side, and the
+transmission grid are explicitly formulated in a least-cost dispatch problem. Applying the complete formulation
+to a large-scale system will quickly lead to a computationally intractable problem. This motivates the need for
+decomposition techniques that are further described in this report.
+
+    The SDDP algorithm was introduced in [2] and has later been widely applied in operative scheduling models
+and has been subject to improvements and extensions by the research community. An introduction to some
+of the extensions and application of the algorithm are provided in Section 2.6.
+
+2.1 The Scheduling Problem
+
+A planning horizon of multiple years is assumed, consisting of  = 1, ... ,  weekly decision stages, where each
+stage covers a decision period for which we can assume that the uncertainty is known. In the following we
+assume one stage to represent one week. A finer time discretization of the week, consisting of  = 1, ... , 
+time steps, allows decisions to adapt to variability in net demand.
+
+    The long-term hydropower scheduling problem is defined in (2.1), where  are the state variables  =
+[1, ... , ] the stage variables for each decision stage  and time step . The stage variables represent the
+operational decisions to be made in each stage and time step, while state variables transfer information about
+the system state between stages. One seeks an operating strategy minimizing the expected cost of supplying
+electricity in (2.1a), while accounting for the end-of-horizon valuation of stored water in (), and respecting
+all relevant technical, environmental, and juridical constraints in (2.1b)-(2.1d).
+
+                                        (2.1a)
+                     min { (, ) + ()}
+
+                (1,1),...,(,) =1
+
+                s.t.  + -1 +  = ()      (2.1b)
+                       = 0              (2.1c)
+                      (, )              (2.1d)
+                        {1, 2, ... , }
+
+    The constraints are indicated in (2.1b)-(2.1d), where the initial state vector 0 is given,  is the feasible set
+for the decision variables of decision stage , and , , , and , are matrices of suitable dimensions. The
+expectation in (2.1a) is taken over the stochastic variables. Examples of uncertainties that could be considered
+over the scheduling horizon are inflow, wind and solar power, demand, and exogenous prices.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  7 of 48
+
+502003757       2025:00598     1
+    The problem in (2.1) can be classified as a multi-stage stochastic optimization problem, which may be effi-
+ciently solved by decomposition techniques [3]. We assume that the mathematical model can be expressed in
+terms of linear (or at least convex) functional relationships, so that the optimization problem(s) can be solved
+by efficient linear programming (LP) algorithms. Moreover, we assume that the stochastic problem has slack
+variables to ensure feasible solutions when decomposing it (relatively complete recourse).
+
+2.2 Solution Strategy
+
+This work applies the SDDP algorithm, which is a sampling-based variant of multi-stage Benders decompos-
+ition. The problem in (2.1) can be decomposed into stage-wise nested LP problems of type (2.2). A detailed
+description of the stage problem is provided later in (2.7).
+
+                                              (-1) = min (, ) + +1()                                                        (2.2a)
+                                                                                                                            (2.2b)
+                                                                   ,
+
+                                                 s.t. (, )  (-1, )
+
+    The SDDP algorithm is iterative and typically relies on statistical convergence criteria. Each main SDDP
+iteration consists of a forward simulation and a backward recursion, repeatedly solving stage-wise decision
+problems of type (2.2). The variable +1 represent the future expected cost function (FCF) seen from the
+beginning of stage  + 1 (or similarly, the end of stage ). This variable will gradually be constrained by Benders
+cuts constructed in the SDDP backward iterations. We will refer to these Benders cuts as FCF cuts in this report.
+The SDDP forward iterations provide simulated state space trajectories corresponding to a set of sampled
+inflow scenarios. We assume uncertainty in inflow to the hydropower reservoirs, and that this inflow can be
+described by a vector autoregressive model of first order (VAR1).
+
+2.2.1 Forward Simulation
+
+In the SDDP forward simulation a sequence of inflow scenarios  = 1, ... ,  covering the period of analysis
+from  = 1, ... ,  are found by sampling from the VAR1 inflow model. Subsequently, the stage decision prob-
+lem detailed in (2.7) is solved for each stage  along the simulated scenario , results are collected, and state
+variables are updated for the next stage. The simulated state at the end of the stage is used as the initial state
+for the next stage. The forward simulation provides an updated set of state trajectories. Moreover, the for-
+ward simulation is used to obtain a lower bound - in (2.3) representing the first stage cost 1 plus the future
+expected cost 2 seen from the beginning of the second stage, and an upper bound + in (2.4) representing
+the average simulated cost, assuming equiprobable scenarios.
+
+                                                     - = 1(1, 1) + 2                                                        (2.3)
+
+                                                 +       1                                                                  (2.4)
+                                                                    (, )
+                                                     =
+
+                                                            =1 =1
+
+Uncertainty around the upper bound can be used as a convergence check. One computes the standard devi-
+
+ation    as  in  (2.5)  and  checks  if  the  lower  bound  (-)  lies  in  the  interval  [+  -  1.96     ;  +  +  1.96     ].
+                                                                                                                         
+
+                                                                                                                         
+
+                                                    1                                     2
+                                                  - 1
+                                         2    =             ( (, ) - +)                                                     (2.5)
+
+                                                        =1 =1
+
+For practical purposes the stabilization of the lower bound may serve as an alternative criterion.
+
+PROJECT NUMBER               REPORT NUMBER                       VERSION                                                 8 of 48
+
+502003757                    2025:00598                          1
+2.2.2 Backward Recursion
+
+Benders cuts at the end of the planning horizon  =  can be obtained from a predefined final value function
+. For  =  -1, ... , 1 in the backward recursion one loops through each state trajectory obtained from the last
+forward iteration. Starting from the state at the end of stage  - 1, for each realization of stochastic variables
+one computes the optimal operation for stage  by solving (2.7). From the sensitivities of the objective function
+to the initial state values, found as dual values from (2.7b) and (2.7c), new FCF cuts of type (2.7j) at the end of
+stage  - 1 are obtained.
+
+2.3 Stochastic Model
+
+The stochastic model for energy inflow is briefly described in the following. As a starting point, inflow data are
+read for the detailed hydropower system. Inflow to the reservoir (regulated) and the power station (unreg-
+ulated) are specified for each hydropower module. Unique historical inflow records may be associated with
+both the regulated and unregulated inflow. These records are scaled according to an expected annual inflow
+to form time series of regulated and unregulated inflow for each hydropower module.
+
+    A simple aggregation, based on the best efficiency to sea, is used to aggregate detailed inflow per module,
+measured in water, to time series of energy inflow per subsystem. In this process, regulated and unregulated
+inflows are accumulated to energy inflow that enters the subsystem energy reservoir. The unregulated part
+defines a minimum generation requirement for the subsystems equivalent power station. Next, energy inflow
+time series are normalized 1, and a VAR1 model is fitted to the normalized data. The VAR1 model takes the form
+
+                                     = -1 +  ,                                                   (2.6)
+
+where  and - are vectors of normalized energy inflows to each subsystem for time stages  and  - 1,
+respectively,  is the correlation matrix, and  is the vector of residuals ("white noise").
+
+2.4 Detailed Stage Problem
+
+In this section we provide a mathematical description of the stage problem behind the high-level description
+in (2.2). This detailed stage problem is formulated as an LP problem and is solved for time stage  both in the
+forward simulation and backward recursion in the standard SDDP formulation. As will be discussed in depth
+in Chapters 3 and 4, the ReSDDP model further decomposes the stage problem to separate the treatment of
+detailed hydropower and the residual market.
+
+    To ease formulation, a combination of vectors and matrices (in bold) and their corresponding elements
+are used. Units are in 3, 3, or k e. Conversion factors  and  ensure consistent treatment of units.
+We use the sets  for hydropower modules (reservoir+plant);  for time steps;  for price areas (or 'bidding
+zones');  for generators in area ;  for demands in area ; ,, for upstream hydro modules discharging
+(D), bypassing (B), and spilling (S) to hydro module ;  for efficiency-curve segments for hydro module ;
+and + - for transmission lines directed out of (+) or in to (-) area . For simplicity we assume existence of a
+VAR1 inflow model for the detailed system in (2.7), using the same notation as for the aggregated inflow model
+in Section 2.3.
+
+(-1, -1) =
+
+                          -            + ] + +1                                                     (2.7a)
+                                                                                                 9 of 48
+                min   [
+
+                                    
+
+1A normalized value is obtained by subtracting the mean and dividing by the standard deviation.
+
+PROJECT NUMBER       REPORT NUMBER    VERSION
+
+502003757            2025:00598       1
+-1 = -1                                                           (2.7b)
+-1 = -1
+                                                                  (2.7c)
+ = -1 + 
+                                                                  (2.7d)
+
+ =  + (                                       )                   (2.7e)
+
+                  - ,-1  +     +          +      )
+                    (                     
+                        +       +            =                    (2.7f)
+-                                                            ,    (2.7g)
+                                                             ,    (2.7h)
+                                                             , 
+
+ =                     
+
+                            
+ = 
+
+                            -  
+                   +               + 
+
+                             
+
+                  +       -       -                          ,     (2.7i)
+
+                     +       -                                     (2.7j)
+
+                                                             ,     (2.7k)
+                        +                                          (2.7l)
++1 +                                                              (2.7m)
+                                                                  (2.7n)
+                                                             ,    (2.7o)
+                                                             ,    (2.7p)
+                                                             ,    (2.7q)
+                                                             , 
+0    
+
+0                        
+
+                       
+
+                         
+
+   
+
+0                        
+
+                       
+
+0                        
+
+                       
+
+0    
+
+-     
+
+    The objective in (2.7a) seeks to minimize cost of operating the system within the decision period, including
+power generation  at marginal cost , price-sensitive consumption  at marginal value , curtailment
+of price-insensitive demand  at marginal cost , an the future expected cost of operation expressed by the
+
+variable +1.
+    The state variables are the vector of initial reservoir volumes - and inflow state -1, so that -1 =
+
+[-, -]. Constraints (2.7b)-(2.7c) present variables -1 and -1 as copies of the corresponding observed
+state variables. These constraints are included to ease the computation of dual values  and .
+
+    The vector of normalized inflows  for all detailed reservoirs and for the current decision period is found
+in (2.7d) according to the AR1 inflow model, where  represents a sample. The physical inflow is obtained in
+(2.7e). Reservoir balances for each hydropower reservoir  and time step  are presented in (2.7f). Reservoir
+
+volumes  are balanced with inflow and decisions related to inflow and outflow expressed by three separate
+waterways: Discharge , bypass  and spillage . Hydropower production is represented per module by a
+
+piecewise linear conversion between water and energy in (2.7h), where the discharge decision is segmented
+
+in (2.7g), with efficiencies .
+
+    Power balances for each price area  and time step  are provided in (2.7i), balancing production from
+hydropower  and thermal  generation with price-sensitive  and price-insensitive  demand, wind
+power , curtailment , and the exchange with connected price areas .
+
+    The linear constraints (FCF cuts) shown in (2.7j) are generated in the backward recursion of the SDDP al-
+
+PROJECT NUMBER             REPORT NUMBER            VERSION       10 of 48
+
+502003757                  2025:00598               1
+gorithm and express the future expected cost +1 as a function state variables  and . Finally, variable
+bounds are shown in (2.7k)-(2.7q).
+
+2.5 Need for Approximation
+
+The problem described in (2.7) provides a basic mathematical formulation of the stage problem which is solved
+repeatedly in the SDDP forward simulation and backward recursion. More functionality is typically included,
+such as environmental constraints related to hydropower operation, power flow constraints, constraints lim-
+iting the ramping capability of various production technologies, other types flexibility such as batteries and
+demand response, etc. Including all details soon lead to stage problems that can be classified as medium-
+to large-scale LP problems, comprising hundreds of thousands of variables and constraints. Relevant experi-
+ences with detailed formulation of the unit commitment and dispatch problem for the Nordic power system
+are presented in [4­6], emphasizing the complexity in this type of problem.
+
+    In a typical SDDP run, the stage problem detailed in (2.7) is solved millions of times in total. One can view
+the stage problem as a function that is visited frequently to provide: (i) reservoir trajectories during the for-
+ward simulation; and (ii) estimate the marginal value of the state variables in the backward recursion. In the
+subsequent chapters we will describe how one can define a lightweight function by making use of decompos-
+ition principles. Approximations leading to this lightweight function are derived from the underlying detailed
+optimization problem.
+
+    If the main purpose of using SDDP is to estimate coupled water values for the long-term hydropower stor-
+ages that are later to be used in more detailed simulations of the system, it is reasonable to assume that the
+detailed formulation in (2.7) can be relaxed or approximated to reduce computational effort. However, such
+approximations should be carefully assessed in the context of the rapidly evolving power system landscape,
+e.g, involving more variability and short-term uncertainty. Although the trade-off between modeling accuracy
+and computational performance is not new to long-term scheduling models, the system changes ahead will
+challenge us to revisit previous findings in this matter. In this context, there is a need for transparent approx-
+imations for which the accuracy can be controlled.
+
+2.6 Further Reading on SDDP
+
+Since the seminal works in [2, 7], the SDDP algorithm has been improved in various directions and applied in
+numerous studies of hydro-dominated power systems around the world. We provide some pointers to the
+literature below, while emphasizing that this list by no means is complete.
+
+    · Stochastic programming and decomposition techniques are elaborated in [3], e.g., explaining the multi-
+       stage Benders decomposition algorithm in detail. An early reference on multi-stage Benders decompos-
+       ition including a numerical example on hydrothermal scheduling is provided in [8], while a higher-level
+       description of SDDP is provided in [9].
+
+    · Convergence properties are studied by many authors, such as in [10] and [11]. The latter references also
+       discusses limitations regarding the statistical convergence criterion.
+
+    · Representation of uncertainty in inflow within SDDP is discussed in [12], emphasizing techniques for
+       avoiding generation of negative inflows within the AR-1 model. Joint treatment of uncertainty in inflow
+       and wind is discussed in [13] and [14].
+
+    · The hydropower scheduling model ProdRisk, which is maintained by SINTEF Energy, is widely used for re-
+       gional (or medium-term) hydropower scheduling in the Nordic market (price-taker assumption). ProdRisk
+       is based on a combination of stochastic dynamic programming and SDDP, treating the power price a
+       stochastic exogenous variable [15, 16].
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  11 of 48
+
+502003757       2025:00598     1
+Chapter 3
+
+Approximating Detailed Hydropower
+
+For a typical description of the Nordic power system, a significant share of variables and constraints in stage
+problem instances from (2.7) are due to the hydropower system.
+
+    We describe a detailed hydropower system as a collection of hydropower modules which may be linked to
+form one or more cascades. A module then forms a basic building block for the hydropower system, including a
+reservoir and a power station. As an example, consider a model representing a system with 1000 hydropower
+modules, with hourly time resolution. This would lead to 168.000 reservoir constraints of type (2.7f) and
+168.000 hydropower production variables (). Moreover, the dimensionality of the FCF represented by cuts
+of type (2.7j) will be 1000 plus the number of individual inflow time series being represented in the AR1 model.
+The high dimensionality may hamper both the SDDP convergence properties and the accuracy of the stochastic
+inflow model, as demonstrated and discussed in [17].
+
+    In the following we discuss how the operation of complex hydropower systems can be approximated by use
+of feasibility spaces, represented by linear inequalities which we refer to as feasibility cuts. The details related
+to the construction and use of feasibility cuts were first described in [18] and later explored in [19]. We use
+the term hydropower subsystem to describe a collection of hydropower modules for which aggregate decision
+are made. For each price area with hydropower we require at least one hydropower subsystem. The use
+of feasibility spaces is based on the assumption that operation-dependent costs associated with hydropower
+operation can be neglected.
+
+3.1 Derivation of Feasibility Cuts
+
+Assume that we represent a hydropower subsystem by its equivalent generation  and final storage , both
+expressed in  terms of energy. The state of the subsystem is  giv=en(b,yits)inairteiafleeansiebrlgeyfvoorltuhmeegive0 nansdtaetenerg=y
+(inflow). We  would like to know if the subsystem decisions
+
+0,  . The answer is given by a function
+
+                (, ) = min ,   1()  ,  +   2()  .             (3.1)
+
+The constraint set in (3.1) involves decisions  related to the detailed hydropower system, including reser-
+
+voir balances and production functions detailed in (2.7) and targets for at least meeting subsystem decisions
+
+. The function (, ) provides a feasibility check: Is it possible for the subsystem in state  to meet require-
+ments provided by the decisions  without using slack variables ? If so, (, ) = 0.
+
+    The dual problem of (3.1) can be formulated as:
+
+                (                        )
+
+                (, ) = max 1() + 2() ,   0,   .               (3.2)
+
+    Note that the feasible region of (3.2) does not depend on (, ). Therefore, it is possible to define the
+feasible region independently of (, ) by vertices in a finite set . The optimal solution of (3.2) will always
+
+PROJECT NUMBER  REPORT NUMBER            VERSION              12 of 48
+
+502003757       2025:00598               1
+Figure 3.1: Illustration of the spatial decomposition process between aggregate and detailed hydropower
+
+correspond to a vertex of the feasible region, and thus (3.2) can in theory be solved by enumeration
+
+                                                (                   )
+                                  (, ) = max 1() + 2() ,   .
+                                                                                                                   (3.3)
+
+An equivalent formulation of (3.3) is
+
+                             (, ) = min ,   1() + 2(),   .                                                         (3.4)
+
+    For a convex problem, the optimal solution of (3.4) is equal to (3.3) which is equal to (3.2) and (3.1). In
+(3.4),  can be considered as the cost of operating the detailed hydropower system. Assuming that this cost
+is negligible and setting  = 0, we can arrive at the set of constraints describing the feasibility space of a
+subsystem, i.e., possible outcomes of decisions  provided state information :
+
+                                       0  1() + 2(),   .                                                           (3.5)
+
+Inserting for      (      )  and      ()   and  reorganizing gives  a  linear  inequality  (or  feasibility  cut)  on  the
+                 = ,                = 0, 
+
+form:                                   +   + 0 +   0.
+
+                                                                                                                   (3.6)
+
+                                               
+
+All feasibility cuts corresponding to the set  can in theory be explicitly included in the dispatch problem to
+
+constrain aggregated hydropower. Treating such constraints by relaxation is, however, more computationally
+
+efficient. That is, we ignore them initially, and add them whenever  > 0. From the feasibility check in (3.1)
+we record the objective , the decisions (, ), the states (0, ), and the dual values (, , , ) to
+form a feasibility cut
+                             (      )           (  - ) + (0
+                  +   -  +                                             - 0) + (   - )  0.                          (3.7)
+
+                                       
+
+The idea is to gradually approximate the feasibility space by adding feasibility cuts of type (3.7) for various
+
+realizations of  and . Eventually feasibility cuts in (3.7) can be simplified to
+
+                                     +   + 0 +    ,                                                                (3.8)
+
+                                               
+
+PROJECT NUMBER                  REPORT NUMBER      VERSION                                                   13 of 48
+
+502003757                       2025:00598         1
+where  expresses the feasibility cut right-hand side. A collection of constraints of type (3.8) can be seen as
+a feasibility space limiting the decision variables in  provided a state .
+
+3.1.1 Illustrative Example
+
+To illustrate the basic properties of hydropower aggregation by use of feasibility cuts, we present an example
+system comprising one hydropower module (reservoir+station) serving a demand in one time period, as illus-
+trated in Fig. 3.2. The demand function is shown in blue in the figure, where unit  represents energy and
+ represents 'moneteray units' per 'energy'. The hydropower production function displays energy output
+as a fcuntion of water usage , where the conversion efficiency is 2.0  for production up to 40  and 1.0
+ for production between 40 and 50 . The maximum reservoir capacity is 100  and the initial storage is
+50 . We assume that the system has no inflow and that the water value is 110 .
+
+                                                 Figure 3.2: Example system.
+
+    Consider the hydropower system as a subsystem where properties are expressed in terms of energy, re-
+ferred to the best efficiency (2.0 ). The subsystem's initial storage 0 = 100, maximum production
+
+  
+
+ = 50, and maximum storage  = 200. The target subsystem production is 45 to cover the most
+valuable demand segment, storing the remaining water for future use.
+
+    Fig. 3.3 illustrates the feasibility space for the subsystem decisions, as feasibility cuts 1 and 2 are added.
+First, optimal subsystem decisions ( = 200,  = 45) are found. These decisions do not respect the
+reservoir balance, and thus feasibility cut 1 is added. The second optimal decision ( = 55,  = 45) is
+then found, as illustrated by the rightmost red circle in Fig. 3.3. Consulting the detailed hydropower description
+one finds that the production of 45 requires discharge at the lowest efficiency segment, and thus using more
+water than was estimated using the subsystem formulation. In other words, the second optimal decision is not
+feasible. Thus, feasibility cut 2 is added, forcing the third optimal decision to ( = 50,  = 45), which
+corresponds to the decision obtained when optimizing the detailed system.
+
+    For this simple example there was no need to define a subsystem, but its simplicity allow us to emphasize
+some important points:
+
+    · In the above approach we first overestimate the capabilities of the subsystem and then iteratively con-
+       strain the feasibility space of subsystem decisions through consultations with the detailed hydropower
+       representation.
+
+    · By initially constraining the subsystem model, the number of feasibility cuts can be reduced. In the case
+       above, cut 1 can be avoided if the subsytem storage capability is constrained by an energy balance.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  14 of 48
+
+502003757       2025:00598     1
+                Figure 3.3: Feasibility space visualized.
+
+3.2 Stage Problem with Feasibility Spaces
+
+If we replace the detailed hydropower description per module in (2.7) by an aggregated description per sub-
+system, each subsystem's decisions can be constrained by a feasibility space. To limit computational effort,
+we seek to represent these feasibility spaces in few dimensions. Thus, it will be beneficial to avoid decisions
+per time step in the feasibility cuts, but rather represent these as aggregated decisions per stage. This paves
+the way for using different time resolutions when evaluating the subsystems and the corresponding detailed
+hydropower systems. Rather than hydropower generation per time step  in (3.8), we can accumulate hydro
+production per decision stage in (3.9) and reformulate the feasibility cuts in (3.10):
+
+                                                           (3.9a)
+                                                           (3.9b)
+                                        =
+
+                                           
+
+                                                   
+
+                                              
+
+                                           
+
+                 +  + 0 +                                  (3.10)
+
+    Detailed hydropower in (2.7) can now be replaced by subsystem decisions limited by feasibility spaces
+represented by cuts of type (3.10), as expressed in (3.11) below. The decision variables representing end of
+stage storage () and hydro production per stage () enter feasibility cuts in (3.11i)
+
+PROJECT NUMBER  REPORT NUMBER          VERSION             15 of 48
+
+502003757       2025:00598             1
+(-1, -1) =
+
+                                   -          + ] + +1       (3.11a)
+                                                             (3.11b)
+                min         [                                 (3.11c)
+                                                             (3.11d)
+                                                             (3.11e)
+                                                              (3.11f)
+-1 = -1                                                  
+-1 = -1                                                      (3.11g)
+
+ = -1 +                                                      (3.11h)
+                                                              (3.11i)
+ =   +                                                        (3.11j)
+                      +  = ,-1 +                        , 
+ +                                                            (3.11k)
+                                                              (3.11l)
+ +                     -        +                       , 
+                                                             (3.11m)
+                                                             (3.11n)
+                                                        ,    (3.11o)
+                +        -           -                       (3.11p)
+
+                +              -                        , 
+                                                        , 
+ =                                                      , 
+                                                        , 
+                
+
+ + +  ,-1 +   
++1 +  +   
+
+                               
+
+                          
+
+                        
+
+                                       
+
+                                  
+
+                              
+
+0                       
+
+                      
+
+0                       
+
+                      
+
+0    
+
+-     
+
+3.3 Feasibility Space Extensions
+
+One can think of the hydropower subsystem as an equivalent with multiple capabilities, such as:
+    · Energy storage
+    · Energy production
+    · Ramping capability
+    · Reserve capacity procurement
+    While the two first (energy storage and production) are represented in (3.11), extensions are needed to
+
+capture ramping capability and reserve capacity procurement delivered by a hydropower subsystem.
+
+PROJECT NUMBER              REPORT NUMBER    VERSION         16 of 48
+
+502003757                   2025:00598       1
+3.3.1 Ramping Capability
+
+When an energy target is passed from the subsystem to the detailed hydropower system for feasibility check,
+the detailed system will seek to meet the target by minimum use of water. With the formulation presented
+so far, there are no other subsystem constraints on intra-stage production that limits the detailed system op-
+eration. Thus, the subsystem model may suggest profiles [1, 2, .., ] that exhibit high variability, but this
+variability is not properly tested when optimizing the detailed system to check for feasibility.
+
+    To limit this mismatch, we introduce the concept of ramping capability , as a symmetric capability (up/down)
+for a given subsystem . Equations (3.12) and (3.13) are added to the stage problem in (3.11).
+
+                 - ,-1 -   0            ,   (3.12a)
+                ,-1 -  -   0
+                                        ,   (3.12b)
+                0    
+                                            (3.12c)
+
+                      +  +  + 0 +           (3.13)
+
+    The stage problem request subsystem ramping capability  that enters the feasibility check as a require-
+ment . It is not obvious how this requirement should be enforced by the detailed subsystem. As a starting
+point we require total production from the detailed system to ramp    twice per day, in the morning
+
+(up) and in the evening (down). Note that this ramping capability should not be confused with the technical
+
+ramping capability of the system. The technical capability can be estimated and provided as the upper vari-
+
+able bound  in (3.12c). A request for high subsystem ramping capability will come in conflict with a request
+for high energy production since the ramping capability involves variations in the generation profile over the
+
+stage.
+
+3.3.2 Reserve Capacity
+
+A reserve capacity requirement can be included in the stage problem (2.7), where reserved capacity per subsys-
+tem () is accounted for in the generation limits. As a simplification, it is assumed that the area contributions
+are constant over the week and symmetric with respect to up- and down-regulation capacity.
+
+    Equations (3.14) are added to the stage problem in (3.11). Additionally, a reserve requirement should be
+included in the stage problem to define the need for reserve capacity. The feasibility cut can be extended as
+shown in (3.15).
+
+                  -                     ,   (3.14a)
+
+                           
+
+                  +                     ,   (3.14b)
+
+                         
+
+                   +  +  +  + 0 +           (3.15)
+
+3.4 Feasibility Check
+
+When checking hydropower subsystem feasibility, the aggregation and disaggregation of subsystem results
+and data are important.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION      17 of 48
+
+502003757       2025:00598     1
+3.4.1 Coupling Aggregated and Disaggregated Data
+
+Fig. 3.4 illustrates how subsystem initial storage 0 and subsystem inflow  are disaggregated to the detailed
+hydropower system, according to distribution factors  and , correspondingly. The figure also illustrates how
+storage volumes in the detailed system can be aggregated to a subsystem storage , according to distribution
+factors .
+
+                Figure 3.4: Aggregation and Disaggregation of hydropower data.
+
+A simple way of defining reasonable distribution factors for inflow (both regulated and unregulated) is
+
+                                    =    ,                                                               (3.16)
+                                       
+
+where  is the annual expected energy inflow to reservoir ,  is the total amount of expected energy inflow for
+the subsystem. The expected inflow is provided as input, measured in water. Conversion from water to energy
+is done by using the best efficiency following the discharge waterway to sea. The vector  thus becomes the
+
+fractions of inflow to be received by each hydropower module in the feasibility check. Separate factors for
+regulated () and unregulated () inflow are computed.
+
+3.4.2 Detailed Hydropower Optimization Problem
+
+The feasibility check for a subsystem  for a stage  comprising time steps  = 1, ..,  is formulated in (3.17).
+Note that the formulation can be extended to include more technical details than what is presented here, but
+it should be formulated as an LP to provide dual information.
+
+                               (                )
+( ,  ,  ,  , -1,  ) = min 0 +  +  +  + 
+                                                                                                         (3.17a)
+
+0  -1 + 0                                                                                                (3.17b)
+ = 
+                                                                                                         (3.17c)
+
+PROJECT NUMBER  REPORT NUMBER          VERSION                                     18 of 48
+
+502003757       2025:00598             1
+                                                                  (3.17d)
+      +                                                           (3.17e)
+                                                                   (3.17f)
+                                                                  (3.17g)
+      +   
+                                                             ,    (3.17h)
+                                                             ,     (3.17i)
+                                                             ,     (3.17j)
+ +                                                           ,     (3.17k)
+                                                     ,   +         (3.17l)
+ +                        (       )                  ,   -        (3.17m)
+                                                                  (3.17n)
+     - ,-1            +       +          )                        (3.17o)
+       (                                                          (3.17p)
+                   +           +          = 0 +              ,    (3.17q)
+                                                             , 
+- 
+
+                                  
+
+ +  -  = 
+ =                
+
+                 
+ =                     
+
+(                         )
+
+                 - ,-1  
+
+(                         )
+                ,-1 -   
+
+
+
+                          
+
+                  +     
+
+  -   
+
+
+
+                        
+
+                      
+
+                        
+
+                      
+
+                                                                  (3.17r)
+
+   
+
+    The objective in (3.17a) is to minimize the use of slack variables  to ensure feasibility. The aggregation
+of detailed reservoir volumes  at the end of the decision period to match energy content  is done in
+(3.17d), where  is the conversion rate (energy/water) according to best efficiencies following the discharge
+waterway to sea. The requirement in (3.17d) provides a flexible target, but may lead to unrealistic schedules
+
+for the detailed system. To compensate for that, measures for controlling completely full or empty reservoirs
+
+could be included. The energy (3.17e), ramping (3.17f), and reserve capacity (3.17g) targets are formulated next.
+
+Note that all these targets have an associated slack variable and that their dual variables  are stored. The
+
+state variables representing initial energy storage (3.17b) and sum energy inflow (3.17c) have dual values .
+
+    The reservoir balances per hydropower storage  and time step  are presented in (3.17h). Distribution
+factors  and  are used for disaggregating initial energy storage and sum energy inflow to reservoirs, as
+explained above and illustrated in Fig. 3.4. Note that  is only non-zero for  = 1. Unregulated inflow is
+disaggregated according to  enters the power station of module  downstream its reservoir, as expressed
+in (3.17i).
+
+    The power production  is expressed in (3.17k) as a concave piece-wise linear function of discharge,
+according to discharge segments  with unique efficiencies . Equation (3.17j) aligns discharge from the
+reservoir with use of the discharge segments.
+
+    The ramping capability  requested from the stage problem enters as a test for ability of the detailed
+system to ramp up in (3.17l) and down in (3.17m). The selection of time steps + for up-ramping and -
+
+can e.g. be done according to an assumed daily load profile, where one selects one time step per day for up-
+
+PROJECT NUMBER            REPORT NUMBER     VERSION               19 of 48
+
+502003757                 2025:00598        1
+ramping and one for down-ramping. The ability of the detailed system to procure reserve capacity  requested
+from the stage problem is formulated in (3.17n) and (3.17o). The capacity requirement is symmetric.
+
+    Slack variables (0, , , , ) are included to ensure feasibility of the LP problem itself. A particular
+
+challenge arises with seasonal-dependent minimum boundaries on discharge, bypass and reservoir volume.
+Note that a slack variable 0 in (3.17b) is needed to ensure that the initial resource state is sufficient to meet
+the detailed requirements. Slack variables 0 and  will in combination with careful tuning of  ensure that
+
+such water requirements can always be met.
+
+3.4.3 Pumped Storage Plants
+
+The formulation in (3.17) does not involve pumped-storage plants. These can be added by subtracting energy
+used for pumping from (3.17e). Consequently more generation capacity can be made available at the imme-
+diate cost of less production. This representation allows pumping motivated by both seasonal and short-term
+benefits. The seasonal aspect is taken care of when the subsystems end volume is increased on behalf of re-
+duced net energy production. The short-term aspect can e.g. be motivated by delivering increased ramping
+capability.
+
+3.4.4 Computing Feasibility Cuts
+
+Once the LP problem in (3.17) is solved, one can determine whether the subsystem decisions ( ,  ,  ,  ) are
+feasible provided the state (-1,  ). If the objective is zero, no slack variables  have been used and we can
+declare the subsystem decisions as feasible. On the contrary, if slack variables are used, we create a feasibility
+cut for the non-feasible subsystem operating point:
+
+                  (  -   )  +  (    -   )              +-1()+-( )  +  )(--)
+                            +    (                                 -
+
+                                -1 -                                         (3.18)
+                                                                             (3.19)
+Collecting parameters on the right-hand side so that:
+
+                                        +  +  +  + -1 +   ,
+where  = - +  +  +  +  + -1 + 
+
+3.5 Visualization of Feasibility Spaces
+
+With feasibility cuts of type (3.19) it is pos(sible to v)isualize the resulting feasible polyhedron in 3D by discretizing
+three out of the four decision variables , , ,  and finding the binding cuts for each discrete combination.
+Fig. 3.5 shows a screen dump from a visualization program made by a Summer Researcher at SINTEF Energi in
+2024. It shows feasibility spaces computed for a hydropower cascade under different conditions. Some visual
+patterns typically seen are discussed below:
+
+    · As energy production increases, the volume storage decreases. At high energy production output, the
+       decrease is more intense due to lower efficiency at high power output. The concave PQ-curves are
+       represented in the feasibility check in (3.1).
+
+    · As ramping capability increases, energy production decreases. This is explained by the fluctuating pro-
+       duction profile required in the feasibility check in (3.1). Again, when energy production is close to max-
+       imum output, the efficiency is reduced.
+
+PROJECT NUMBER  REPORT NUMBER                          VERSION               20 of 48
+
+502003757       2025:00598                             1
+                Figure 3.5: Feasibility space visualized.
+
+3.6 Assumptions and Further Work
+
+The use of feasibility spaces to approximate the detailed hydropower system relies on a series of assumptions:
+
+    · Hydropower operation has no explicit cost components. As discussed in the previous sections, the al-
+       ternative cost of stored energy is accounted for in the SDDP algorithm, and the cost of operating pumps
+       can be accounted for in (3.17).
+
+    · Subsystem capabilities are expressed per stage. As shown in [18] capabilities can be expressed per time
+       step within the stage, but this modeling comes at the expense of significantly increased computational
+       effort. Making subsystem decision per stage challenges the capability of representing intra-stage vari-
+       ations such as ramping. An approximate solution was presented in Section 3.3.1.
+
+    · Disaggregation is approximated. The aggregated system state, including the initial storage and inflow for
+       the subsystem, needs to be disaggregated to the detailed problem in (3.17). Moreover, the aggregated
+       energy storage at the end of the stage needs to be computed based on the detailed storage volumes.
+       This topic was discussed in Section 3.4.1.
+
+The work on feasibility spaces has been documented in [18] and [19], including mathematical descriptions and
+numerical analyses. Some possibilities for further work are listed below:
+
+    · Further testing and validation is needed. For example, one could test to what extent feasibility cuts may
+       capture the impact of new constraints, planned revisions, pumped storage plants, etc.
+
+    · Improve the distribution of the subsystem's energy storage to the detailed hydro storages in the feas-
+       ibility check. The process of balancing stoarge levels across complex hydropower storages is, to a large
+       extent, controlled by the operator in real life. This process can borrow from concepts developed for the
+       detailed drawdown part of the EMPS model [20].
+
+    · Improve the distribution of the subsystem's energy inflow to detailed hydro storages in the feasibility
+       check. This process is uncertain and cannot be planned. One could explore feasibility spaces that are
+       robust towards different and unfortunate distributions of inflow.
+
+    · Further study and possibly improve on the aggregate capabilities of hydropower representation on sub-
+       system level.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION                     21 of 48
+
+502003757       2025:00598     1
+Chapter 4
+
+Residual Demand Cost Function
+
+With the high variability in the power system caused by increasing amounts of wind and solar power, there
+is a growing need for fine time resolution in scheduling models. As this variability will impact the economic
+dispatch, and consequently the marginal cost of supplying demand, it should also be considered when valuating
+water. With modeling at a finer time resolution comes higher computation times, and thus a need for careful
+modeling.
+
+    So far we have treated the stage decision problem as an LP according to (3.11) where the hydropower system
+is approximated by feasibility cuts as described in Chapter 3. Hydropower subsystems will mainly allow flexible
+operation within a decision stage (week). Recall that their storages are state variables in the stochastic dynamic
+programming scheme, and we can therefore assume that they most of the time can accommodate variations
+within the week without reaching their storage boundaries. This leads to the idea of optimizing the use of
+hydropower for the whole week against a residual demand cost function (RDCF) which represents 'everything
+else' being part of the economic dispatch problem. The separation between hydropower system itself and the
+RDCF for hydro is done by use of two-stage Benders decomposition, serving to valuate hydropower capabilities.
+
+    In this work we follow the decomposition principle first discussed in [21] and later explored in [22] and
+[23]. The concept is illustrated in Fig. 4.1, indicating abstraction of the residual demand for hydro by means of
+decomposition. The decomposition allows us to represent the RDCF as a function of the hydropower decision
+variables, expressed as linear inequalities, or cost cuts, as explained in the following.
+
+4.1 Derivation of the Residual Demand Cost Function
+
+The idea is to express the RDCF  of operating the system in a given stage as a function of the sum hydropower
+
+production for the subsystems (). This cost function is illustrated in one dimension in Fig. 4.2. The "true" cost
+of operating the system is reduced with higher hydropower production according to a blue curve in the figure.
+
+The convexity follows from the linear formulation of the complete problem in (3.11).
+
+We define a cost function  where the objective and constraints comprise the stage problem as formulated
+
+in (3.11), except  from the hydropower    arenpdrearseenfrteaetiloynd.iTvihdeevdepcetorrtiomf ehysdteroppsoowtehrapt roductions   per stage enters
+the problem in     (4.1) as requirements                                                                                         =  for   .
+
+                   () = min ,   ()                                                                                               (4.1)
+
+This function can be described by Benders cuts, as illustrated in Fig. 4.2. We will refer to these cuts as cost cuts
+
+in the following.                         (  )
+
+                                           +   -                                                                                 (4.2)
+
+                                          
+
+PROJECT NUMBER     REPORT NUMBER             VERSION                                                                             22 of 48
+
+502003757          2025:00598                1
+Figure 4.1: Illustration of decomposition between the hydropower system and its residual demand.
+
+The stage problem can be further simplified from (3.11) in (4.3).
+
+                                     (  )
+                (-1, -1) = min  + +1
+                                                                       (4.3a)
+
+                . (3.11b) - (3.11e)
+
+                 +  +  = ,-1 +                                         (4.3b)
+
+                +                                                  ,   (4.3c)
+                 +   
+                                                                       (4.3d)
+
+                                     
+                +1 +  +                                                (4.3e)
+                                                                   
+
+                                     
+
+                                                                       (4.3f)
+
+                  
+
+The problem in (4.3) seeks the volume and production that minimizes the sum of the RDCF () and the FCF ()
+while respecting the weekly reservoir balances and the feasibility cuts. Note the lightweight form of the stage
+problem in (4.3) compared to the original formulation in (2.7). In summary, the new stage problem represents:
+
+· Hydropower per subsystem by feasibility cuts in (4.3c) expressed in terms of energy storage  and energy
+   production  for that subsystem.
+
+· The residual demand for hydro by cost cuts in (4.3d) expressed in terms of energy production  for all
+   subsystems.
+
+· The future value of stored energy in hydropower subsystems by FCF cuts in (4.3e) expressed in terms of
+   energy storage .
+
+    Since equations (4.3c), (4.3d), and (4.3e) are all linear inequalities of relatively low dimensionality, but
+possibly with a high number of cuts in each set, proper cut management may be a powerful technique for
+reducing computation time when solving instances of (4.3).
+
+PROJECT NUMBER        REPORT NUMBER        VERSION                     23 of 48
+
+502003757             2025:00598           1
+                Figure 4.2: Illustration of residual demand cost function and creation of cuts.
+
+4.2 Graphical Interpretation
+
+Fig. 4.3 illustrates the FCF and RDCF functions in the dimension of one state. Note that the  axis is reverted
+compared to Fig. 4.2 for illustration purposes. The stapled gray line shows the total cost as a function of energy
+
+storage () and production (). Typically, the RDCF will not span the entire volume since it will not be possible
+to use the maximum volume for energy production within one single stage. Thus, the blue curve in Fig. 4.3
+
+should bee seen as an illustration only. Moreover, we make the assumption that the production of one unit 
+corresponds to the loss of one unit of storage , disregarding the impact of spillage and bypass.
+
+    The optimal production will minimize the sum of immediate and expected future costs. This optimum can
+
+be found by evaluating the KKT optimality conditions. In the case of one hydro subsystem and no binding
+
+constraints:     = 0   + +1 = 0
+
+                                                                                                 (4.4)
+
+Reformulating and exploiting that  = -1 eventually leads to (4.6).
+
+                                                          
+
+                                + +1 ×  = 0                                                      (4.5)
+                                 
+
+                                 = +1                                                            (4.6)
+                                 
+
+    We seek a decision where the marginal residual demand for hydropower equals the expected marginal
+cost of storing water, as illustrated in Fig. 4.4. This decision leads to the water value  () at the beginning
+
+                                                                                                                                              
+
+of the decision period for the state being considered (unless other boundaries or constraints are faced). Note
+
+that this is the main principle used in traditional algorithms for water value calculations used in the EMPS
+
+model [24]: One seeks to 'operate along a constant water value'.
+
+PROJECT NUMBER  REPORT NUMBER   VERSION                                                          24 of 48
+
+502003757       2025:00598      1
+Figure 4.3: Illustration of how the optimal use of water is found by use of the two cost functions.
+
+4.3 Improved Formulation
+
+With the formulation in (4.3), the sum of hydropower generation per stage can be freely distributed to time
+steps in the detailed problem in (4.8). Consequently, we run the risk of overestimating the capability of the
+hydropower subsystem to adapt to rapid variations in net demand in the residual market problem.
+
+    It is possible to constrain operation of hydropower by use of more detailed feasibility cuts where the cap-
+abilities of the hydropower subsystems are expressed in terms of decision variables (, , , ). The cost cuts
+from (4.3d) can then be expanded to (4.7). Since  ,  ,  are all  0, high values of , ,  will be sought
+
+                                                                                       
+
+in (4.7) to seek a low immediate cost. While the production  has a direct relationship with the FCF through
+the reservoir balance in (4.3b), the ramping capability  and reserve capacity  are constrained only through
+feasibility cuts in (4.3c).
+
+                                 
+                 +  +  +                                                                             (4.7)
+                                          
+
+                                 
+
+A basic version of the residual market problem solved to find the cut parameters in (4.7) is expressed in (4.8).
+Note that additional features that can be expressed as linear or piece-wise linear functions are easily added to
+this problem without compromising the properties of the decomposition scheme.
+
+PROJECT NUMBER  REPORT NUMBER    VERSION    25 of 48
+
+502003757       2025:00598       1
+                                           Figure 4.4
+
+( ,  ,  ) =
+
+                                   -             + ]            (4.8a)
+
+                  min       [                                   (4.8b)
+                                                                (4.8c)
+                                                                (4.8d)
+
+                   =                                        
+
+
+
+ =                                                         
+
+=                                                           
+
+                     +       -              + 
+
+                               
+
+                  +        -         -                      ,   (4.8e)
+
+                     +         -                            ,   (4.8f)
+                                                            ,   (4.8g)
+-    - ,-1                                                  ,   (4.8h)
+                                                            ,   (4.8i)
+                       -                                    ,   (4.8j)
+                                                            ,   (4.8k)
+  
+
+ +   
+
+0                        
+
+                       
+
+0    
+
+-     
+
+PROJECT NUMBER              REPORT NUMBER       VERSION         26 of 48
+
+502003757                   2025:00598          1
+4.4 Computational Tests
+
+This section report on basic numerical tests that were conducted for the purpose of understanding and building
+trust in the decomposition technique described so far in this chapter. From the two examples provided below,
+we can see that as the residual demand cost issue becomes more complex to account for interconnected
+systems and detailed time resolution, there is an opportunity for enhanced computational performance.
+
+4.4.1 Example 1
+
+To demonstrate the use of cost cuts, we established a test system comprising one hydropower reservoir and
+station, several thermal generators and a fixed demand, as illustrated in Fig. 4.5. All units are in 'energy' or
+'money/energy'. We define a scheduling horizon of 8 stages and with uncertainty in inflow. The inflow may take
+two equally probable values for each stage, either 5 or 15. This leads to a scenario tree comprising 28 - 1 = 255
+nodes and 28-1 = 128 scenarios. Demand has a fixed value of 20 per stage, and maximum hydropower storage
+and production capacities are both 30. 20 thermal generators are included, each with maximum generation
+capacity of 1 and gradually increasing marginal costs {1.0, 2.0, ..., 20.0}. We included spillage and curtailment
+variables to ensure robustness, although not needed in our experiments. An initial reservoir volume of 5 and
+a first stage inflow of 10 are assumed.
+
+                                                    Figure 4.5: Test system
+
+    Solving this problem as an extensive form stochastic program gives the objective of 429.3125. The problem
+has 24 variables (20 thermal , curtailment , reservoir , discharge , and spillage ) and 2 constraints
+(reservoir and power balance) per node, giving a total of 6120 variables and 510 constraints.
+
+    Next we solve the stochastic program using two versions of the Benders decomposition algorithm. The
+first one, which we refer to as Standard, uses the classical multi-stage Benders decomposition algorithm, see
+e.g. [3]. For each node, the following LP problem is solved both in the forward and backward iterations:
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  27 of 48
+
+502003757       2025:00598     1
+                     20                          (4.9a)
+                min  + 
+                                                 (4.9b)
+                       =1
+                                                 (4.9c)
+                       +  +  = 0 + 
+                                                 (4.9d)
+                       20                 1      (4.9e)
+                 +  +  =                         (4.9f)
+                                                 (4.9g)
+                          =1
+
+                            +   
+                            0    1
+                            0    
+
+                               0    
+
+We refer to (4.9) as the node problem. It has 25 variables (including ) and 2 basic constraints (reservoir and
+power balance). Benders cuts of type (4.9d) are added in the backward recursion. These cuts are shared among
+all nodes in the same stage.
+
+    In the second decomposition version, which we refer to as CostApprox, the residual market is approximated
+using cost cuts of type (4.10d) that are generated in the forward iteration. For each node visited in the forward
+iteration, the node problem is divided into a reduced node problem in (4.10) and a market problem in (4.11).
+
+                min  +                           (4.10a)
+                                                 (4.10b)
+                 +  +  = 0 +                     (4.10c)
+                                                 (4.10d)
+                   +                    
+                 +                               (4.10e)
+                                                 (4.10f)
+                               0    
+
+                               0    
+
+The reduced node problem has 5 variables and one basic constraint (reservoir balance). In addition, value
+cuts in (4.10c) and cost cuts in (4.10d) are added in the backward recursion and forward simulation, corres-
+pondingly. The cost cuts are generated by solving the market problem in (4.11) for realizations of .
+
+                                    20           (4.11a)
+                               min               (4.11b)
+
+                                      =1
+
+                                           =   
+
+                       20                        (4.11c)
+                 +  +  =                         (4.11d)
+
+                          =1
+
+                            0    1
+
+    As will be further discussed in Chapter 5, the creation of cost cuts comes as a natural addition to the forward
+iteration. The iterative procedure between (4.10) and (4.11) ­ where the former creates sampled values of 
+and the latter creates corresponding cost cuts (4.10d) ­ can be carried out until convergence. However, this is
+not necessary from a mathematical point of view since we are approximating the objective in (4.9) from below.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION           28 of 48
+
+502003757       2025:00598     1
+    The convergence of the Standard and CostApprox decomposition algorithms are shown in Fig. 4.6. CostApprox-
+1 refers to the computation of only one cost cut per node in the forward iterations, while CostApprox-N refers
+to the process of iterating between (4.10) and (4.11) until convergence. All three decomposition approaches
+converge to the same optimal objective as the full stochastic program (429.3125) in 11 iterations.
+
+                                                                                                                                             Standard
+                                                                                                                                             CostApprox-1
+                                                                                                                                             CostApprox-N
+                Cost
+                    0 100 200 300 400 500 600
+
+                                               2              4  6           8  10
+
+                                                                 Iteration
+
+                           Figure 4.6: Convergence for Benders decomposition algorithms.
+
+    Some interesting observations can be made from the convergence plots in Fig. 4.6. Firstly, the Standard
+approach (black curve) obtains a tighter lower bound in the early iterations than CostApprox-1 (blue curve). All
+lower bounds will increase with iterations since we are gradually constraining the problem, but for CostApprox-
+1 this process is clearly slower than for the two other approaches. Secondly, the upper bound of CostApprox-1
+increases between iterations 3-5. This increase is due to the fact that we in the forward iteration are not solving
+the node LP problems to optimality, and thus underestimate the costs in the early iterations.
+
+    With the CostApprox algorithm, we seek to balance the RDCF and FCF functions in each node, as described
+in (4.10). The RDCF decreases as we produce more hydropower (or decrease reservoir volume). The FCF de-
+creases as we store more energy for later stages. All cuts computed for stages 2-3 and 4-5 are shown in Fig. 4.7
+and Fig. 4.8, respectively. The x-axis is treated as energy storage for the future cost cuts (blue) and for pro-
+duction (starting at full storage and no production). To find the balance points that minimize sum costs one
+would have to know the initial reservoir and inflow for the node. Note that the cost cut gradients reflect the
+marginal costs of various thermal generators in this case, while the steepest red line reflects the marginal cost
+of curtailment.
+
+    From Figs. 4.7 and 4.8 it is clear that some of the FCF cuts are redundant, in the sense that they are domin-
+ated by other cuts over the whole solution domain, which is due to the multi-stage nature of the problem. In
+contrast, the cost cuts are found as part of a two-stage decomposition approach and are thus always binding
+in their corresponding operating point.
+
+PROJECT NUMBER                                 REPORT NUMBER        VERSION         29 of 48
+
+502003757                                      2025:00598           1
+                                Stage 2                                                      Stage 3
+
+                                         Future Cost q   Cost                                                  Future Cost q
+                                         Immediate Cost      0 50 100 150 200 250 300                          Immediate Cost
+
+      300
+
+Cost  200
+
+      100
+
+      0
+
+                          0  5  10 15 20 25 30                                         0  5  10 15 20 25 30
+
+                                Energy                                                       Energy
+
+                                Figure 4.7: Cuts of type (4.10d) (red) and (4.10c) (blue) for stages 2 and 3.
+
+                                Stage 4                                                      Stage 5
+
+      50 100 150 200 250                 Future Cost q         200                                             Future Cost q
+                                         Immediate Cost                                                        Immediate Cost
+
+                                                               150
+
+Cost                                                     Cost  100
+
+                                                               50
+
+      0                                                        0
+
+                          0  5  10 15 20 25 30                                         0  5  10 15 20 25 30
+
+                                Energy                                                       Energy
+
+                                Figure 4.8: Cuts of type (4.10d) (red) and (4.10c) (blue) for stages 4 and 5.
+
+PROJECT NUMBER                  REPORT NUMBER            VERSION                                               30 of 48
+
+502003757                       2025:00598               1
+4.4.2 Example 2       200 400 600 800 1000
+
+We expand the problem in Example 1 to comprise 168 time steps within each of the 8 decision stages. Genera-
+tion capacities and loads are scaled according to the shorter decision stages, and a randomness is introduced
+to ensure load variation within the decision periods. The CostApprox-1 takes 57 seconds to solve while the
+Standard decomposition approach which spends 194 seconds. Hardware specifications are stated in Chapter
+6. The convergence plots are presented in Fig. 4.9.
+
+                                                                                                                               Standard
+                                                                                                                               CostApprox-1
+
+                Cost
+
+                      0
+
+                                            2  4              6  8          10  12
+
+                                                                 Iteration
+
+                           Figure 4.9: Convergence for Benders decomposition algorithms.
+
+    There are two notable differences in computational complexity between Standard and CostApprox-1 which
+serve to explain the large difference in computation time:
+
+    1. In CostApprox, the residual market is only explicitly modeled in the forward iteration, to create cost cuts.
+       The cost cuts are expressed in terms of sum hydro production per decision stage (and not per time step),
+       and these cuts represent the residual market in the backward recursion. Thus, the backward recursion
+       is substantially faster in CostApprox than in Standard.
+
+   2. The intra-stage reservoir balances are ignored in CostApprox. This is a simplification which is reasonable
+       for larger reservoirs. For cases where the intra-stage reservoir balances are temporarily violated, the
+       CostApprox thus overestimates the storage capability. As a test, the maximum reservoir capacity in
+       Example 2 was reduced to 20, giving a higher cost for Standard than for CostApprox. Moreover, spillage
+       was detected in Standard, but not in CostApprox.
+
+PROJECT NUMBER                                 REPORT NUMBER     VERSION            31 of 48
+
+502003757                                      2025:00598        1
+4.5 Short-Term Uncertainties
+
+The presentation so far has focused on representing uncertainty in inflow on a weekly level, according to
+an VAR1 model. Inflow is often considered the major source of uncertainty in hydro-dominated systems. It
+typically show a significant autocorrelation between weeks, necessitating inflows as state variables in SDDP.
+Moreover, inflow predictions within a decision stage (week) are considered to be appropriately accurate for
+our purpose.
+
+    Several other sources of uncertainty may be relevant to include in the scheduling. In this work we are
+particularly interested in representing the uncertainty in VRES (wind and solar power). Unlike for inflow, the
+variability in VRES is typically more difficult to predict for the near future, while longer term auto-correlations
+are muted. Thus, we argue that VRES uncertainty can be characterized as short-term, and wind and solar
+power can be neglected as state variables in the SDDP algorithm. Further statistical analyses should be done
+to support such statements for the system at hand, see e.g. [13] and [14] for related discussions.
+
+    Creation of cost cuts naturally fits in to the forward simulation phase, where the state trajectories are
+simulated according to sampled inflow scenarios. The process of creating cost cuts is illustrated in Fig. 4.10.
+First, StageProb, formulated as (5.1), is solved. Subsequently, the hydropower production is passed to the
+residual market problem CostProb, formulated as (4.8). Along the lines of [23], short-term uncertainties can
+be revealed in the second stage, solving CostProb for  different realizations of VRES. A total of  iterations
+between LP-FWD and LP-COST are performed.
+
+                                  Figure 4.10: LP problems solved in forward iterations.
+
+    Cost cuts can either be generated for each of the  scenarios (multi-cut) or as an aggregate cut where
+cut coefficients are probability-weighted. In the following we use the aggrgated cuts.
+The outlined approach for representing short-term uncertainties are based on two assumptions:
+
+    · The hydropower productions are part of the first-stage decision. Thus, these decisions are made with
+       information about VRES uncertainty, but are not tailored to a specific VRES scenario.
+
+    · VRES are not SDDP state variables. Thus, VRES realizations in a given decision stage do not depend on
+       realizations in the previous stage. Moreover, it is assumed that wind and inflow are uncorrelated.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  32 of 48
+
+502003757       2025:00598     1
+Under the assumptions above, cost cuts can be shared among different states in a given stage without further
+adjustments. Note that the two-stage stochastic approach allows for other types uncertainties to be repres-
+ented, as long as the two assumptions above can be made. Uncertain parameters entering the objective (such
+as prices) and the constraint matrix (such as topological changes) may therefore be considered.
+
+    The treatment of VRES uncertainty within the ReSDDP model is also described in [25], supported by nu-
+merical examples.
+
+4.6 Assumptions and Further Work
+
+The approximation of the residual demand for hydropower within long-term hydropower scheduling models
+by means of cost cuts is based on a set of assumptions:
+
+    · Hydropower operation can be optimized at coarse time resolution. Through this assumption we argue
+       that hydropower operation is flexible and sees no (or few) operational constraints within the week. While
+       this may be true for large and aggregated systems, many intra-week constraints exists and may be im-
+       portant for the formation of water values.
+
+    · Hydropower decisions are made before knowing short-term uncertainties. Following the representation
+       of short-term uncertainties described in Section 4.5, weekly decisions for the hydropower system are
+       made before knowing weekly VRES outcomes. This allows the cost cuts to embed short-term uncertainty.
+       The VRES realizations are known for the whole week at the time.
+
+    · The residual demand optimization problem is convex. The least-cost dispatch problem for the week
+       should be formulated as a convex optimization problem to allow for computation of cost cuts.
+
+    The work on approximations of the residual demand for hydro has been documented in [21­23,25], includ-
+ing mathematical descriptions and numerical analyses. Some possibilities for further work are listed below:
+
+    · Further investigating the representation of hydropower system. While the modeling of hydropower de-
+       cisions at a coarse time resolution is important for the computational performance, the need for ag-
+       gregation and the possibility of further constraining of its flexibility in the market problem should be
+       investigated.
+
+    · Further investigating the representation of the residual market problem. The majority of further ex-
+       perimentation with the ReSDDP model within the RES100 project will directly concern the addition of
+       new functionality in the market problem. New features such as demand response, batteries, and hydro-
+       gen will be implemented and studied. Other aspects, such as detailed grid constraints, (linearised) unit
+       commitment, and ramping constraints may also be included.
+
+    · Offline approximation of the residual demand function. The proposed scheme evaluates the market
+       problem in the forward SDDP iterations. This allows the residual demand function to be evaluated
+       around obtained operating points. Optionally, one could experiment with a priori estimation of this
+       function.
+
+    · Representation of short-term uncertainties. Studies to further investigate the impact of short-term un-
+       certainty should be carried out. Different uncertainty structures and types could be investigated.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  33 of 48
+
+502003757       2025:00598     1
+Chapter 5
+
+ReSDDP
+
+So far we have defined the long-term scheduling problem in Chapter 2, and described how decomposition by
+feasibility and cost cuts can be applied to isolate the computation of future cost functions for the hydropower
+subsystems, in Chapters 3 and 4, respectively. The future cost functions are computed in the SDDP algorithm.
+Both the feasibility and the cost cuts can be seen as spatial decomposition techniques, serving to reduce the
+dimensionality of the stage problem solved in the SDDP algorithm.
+
+    The resulting scheduling model will provide strategies, in the form of future expected cost functions per
+decision stage. These strategies are valid for the long-term storage capability provided by hydropower subsys-
+tems and can be used in more detailed simulation models. A desirable property of the outlined decomposition
+scheme is that it allows explicit representation of all detailed technologies and power system features into the
+computation of the FCFs:
+
+    · Hydropower details are embedded in the fasibility cuts
+
+    · Other technologies on supply and demand side as well as grid bottlenecks are reflected in the cost cuts
+
+This allows quantifying the impact of various features on the water values in a transparent manner, where the
+accuracy of the approximations can be controlled to a fine level.
+
+    The ReSDDP is modeled in Julia using the optimization package JuMP [26]. The computer code is main-
+tained at the Gitlab repository at https://gitlab.sintef.no/energy/res100/.
+
+5.1 Approximated Stage Problem
+
+As discussed in Chapter 2, the SDDP algorithm repeatedly solves a stage problem in a forward simulation and
+backward recursion. The detailed stage problem was described in Chapter 2 as (2.7). With the introduction of
+feasibility cuts and cost cuts the detailed stage can be approximated as:
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  34 of 48
+
+502003757       2025:00598     1
+ (-1 ,              -1)  =       (  +       )                       (5.1a)
+                            min        +1                           (5.1b)
+                                                                    (5.1c)
+-1 = -1                                                             (5.1d)
+                                                                    (5.1e)
+-1 = -1                                                             (5.1f)
+                                                                    (5.1g)
+ = -1 +                                                             (5.1h)
+                                                        ,   
+ =  +                                                               (5.1i)
+
+ +  +  = ,-1 +                                                
+
+  +  +  +   + ,-1 +   
+ +  +  +   
+
+                                           
+
++1 +  +   
+
+                            
+
+0                                                                   (5.1j)
+
+                                                                    (5.1k)
+
+  
+
+0                                                                   (5.1l)
+
+0                                                                   (5.1m)
+
+    The first two constraints, (5.1b) and (5.1c), serve the purpose of finding the dual values for the state variables
+storage () and inflow (), respectively. The next two, (5.1d) and (5.1e), displays the computation of inflow
+that enters the reservoir balance in (5.1f). The feasibility cuts derived in Chapter 3 are described in (5.1g). The
+cost cuts derived in Chapter 4 are described in (5.1h). FCF cuts describing the future expected cost function are
+presented in (5.1i). Finally, variable boundaries are stated in (5.1j)-(5.1m).
+
+    The problem formulated in (5.1) has few variables since decisions are aggregated both in space and time.
+That is, decisions are made per hydropower subsystem (as opposed to per module) and for the entire de-
+cision stage  (as opposed to per time step ). The major computational complexity is associated with cuts in
+(5.1g)-(5.1i). All cut types serve to approximate the stage problem, and the quality of the approximation can be
+controlled as elaborated in [18] for feasibility cuts and [23] for cost cuts. Generally, a fine approximation re-
+quires a high number cuts, challenging the computational complexity of (5.1). Finding the appropriate number
+of cuts in sets , , and  to properly approximate the respective functions becomes an important challenge.
+
+5.2 Cut Management
+
+FCF cuts of type (5.1i) are computed in the SDDP backward recursion. These cuts are not necessarily tight since
+we have decomposed the overall problem into multiple stages. Efficient treatment of Benders cuts within the
+SDDP algorithm is important to achieve reasonable computation times for large-scale problems. Several tech-
+niques are suggested in the literature, see e.g. [27]. A well-known technique is often referred to as relaxation
+(or dynamic cut selection in [27]). It involves: (i) solving the decision problem without any cuts; (ii) checking
+if cuts are violated by inserting trial decisions; and (iii) adding the most violated cut(s). Such relaxation tech-
+niques can be very efficiently implemented in compiled programming languages, but at the time of writing
+we did not see a significant speed-up when implementing relaxation in our Julia/JuMP code. Thus, we do not
+consider cut relaxation for neither of the cut types in this work. Another technique is to remove redundant cut
+according to the elimination procedure outlined in [28] (Section 4.3).
+
+    The feasibility cuts in (5.1g) and cost cuts in (5.1h) are derived from two-stage Benders decomposition ap-
+proaches and are therefore always tight in the states for which they were created. In other words, and unlike
+the case for FCF cuts in a multi-stage decomposition procedure, creating the cut once for a given state is suffi-
+cient. This opens for the possibility of creating the feasibility and cost cuts before running the SDDP algorithm.
+
+PROJECT NUMBER              REPORT NUMBER      VERSION              35 of 48
+
+502003757                   2025:00598         1
+As an example, the creation of feasibility cuts was made both prior to running SDDP (static) or as part of the
+forward simulation (dynamic) in [18]. The static approach requires either an enumeration of the state space or
+a qualified best guess of which states that are likely to be visited in the SDDP run. The ReSDDP implementation
+currently allows feasibility cuts to be computed on beforehand by use of enumeration. Since feasibility cuts are
+computed per subsystem in isolation, the state space to enumerate is relatively modest. Conversely, cost cuts
+involves decision variables for all hydropower subsystems and are therefore considerably more challenging to
+create based on enumeration.
+
+    In summary, the creation and management of cuts in ReSDDP is implemented as follows:
+
+    · FCF cuts are computed in the backward recursion. These cuts are accumulated, i.e., the number of cuts
+       gradually increases per backward recursion.
+
+    · Feasibility cuts are computed before running the SDDP algorithm. The number of feasibility cuts is con-
+       stant throughout the SDDP run.
+
+    · Cost cuts are computed as part of the forward iteration. A user-defined number  of feasibility cuts
+       are computed per forward scenario and per decision stage.
+
+    To allow experimentation with cut management, the ReSDDP model can be run in continuation mode.
+Then, a previously established set of FCF and cost cuts are read as a starting point, and further iterations are
+run to improve the established strategy. In continuation mode one can choose to turn off further computation
+of cost cuts.
+
+5.3 Algorithm
+
+The algorithm is outlined in Algorithm 1, where  is the number of decision periods (weeks),  the number
+of sampled inflow scenarios,  the number of cost cuts to be computed,  the number of VRES scenarios
+considered, and  the number of inflow branches used in the backward recursion. In practical case studies
+the convergence check is replaced by a visual inspection of the lower bound stabilization and the gap closure
+between upper and lower bounds after a predefined number of iterations.
+
+    Note that  can be set to an arbitrary number. If both  and  is low, the immediate cost function
+will be underestimated in the early iterations, and one may find that the simulated cost increases along with
+SDDP iterations. This behavior was discussed in when presenting the numerical examples in Chapter 4, and
+shown in Fig. 4.6.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  36 of 48
+
+502003757       2025:00598     1
+while NotConverged do
+    Forward Simulation
+
+    for  = 1, ..,  do
+         for  = 1, ..,  do
+             for  = 1, ..,  do
+                  Solve StageProblem in (5.1) to obtain ( ,  ,  )
+                  for  = 1, ..,  do
+                       Update and solve CostProblem in (4.8) to obtain (, , , )
+                  end
+                  Store cost cut
+             end
+             Store state trajectory
+         end
+
+    end
+
+    Collect Bounds and Check Convergence
+
+    Backward Recursion
+
+    for  = 1, ..,  do
+         for  = 1, ..,  do
+             for  = 1, ..,  do
+                  Solve StageProblem in (5.1) to obtain (, , )
+             end
+             Store FCF cut
+         end
+
+    end
+
+end
+                                        Algorithm 1: ReSDDP Algorithm.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION                                           37 of 48
+
+502003757       2025:00598     1
+Chapter 6
+
+Computational Experiments
+
+This section documents computational experiments that has been performed with the ReSDDP model on a
+small-scale test system. The intention is to give an overview of the computational performance and the type
+of results that one can expect from the model. It should not be read as a detailed analysis of the results. In a
+different study documented in [25], results from ReSDDP applied to the Northern European system for a 2050
+scenario are presented.
+
+    The first part of the experiments are done without the use of feasibility cuts. In Section 6.6 the experiment
+is repeated with feasibility cuts to show the impact of more details in the hydropower system. All experiments
+are run with cost cuts.
+
+6.1 Data and Setup
+
+The test system comprises 4 price areas: 3 with hydropower and one without. An overview of the grid topo-
+logy and annual production (hydro, wind, solar), other market interactions (price-sensitive demand, thermal
+generation), and price-insensitive demand is provided in Table 6.1. The test system is set up with 50 weather
+years representing scenarios for inflow, wind, and solar power. Wind, solar power and comes at hourly resolu-
+tion, while inflow is at weekly resolution. The data set is available at https://gitlab.sintef.no/energy/
+res100/datasets/-/tree/main/4area_res100.
+
+                Area no  Connected to   Hydro  Wind  Solar        Net market  Demand
+                    1          2, 3      2.85  1.64  3.56            -2.32      5.00
+                    2          1, 3      2.26  0.00  0.00            0.00       4.09
+                    3          1, 2      3.36  0.00  0.00             0.05      4.00
+                    4           3       0.00   7.09  0.00            -0.90      4.50
+                                         8.47  8.73  3.56             -3.17     17.58
+                 SUM
+
+Table 6.1: Topology, and average annual production (hydro, wind and solar) and demand for the test system.
+Energy given in TWh.
+
+We ran the ReSDDP model according to the following fixed set up:
+    · 156 week horizon ()
+    · Weekly decision stages
+    · 40 sampled inflow scenarios () in the forward simulation
+    · 5 VRES scenarios ()
+
+PROJECT NUMBER           REPORT NUMBER         VERSION                                 38 of 48
+
+502003757                2025:00598            1
+    · 7 points discretizing the residual () in the backward recursion50000
+    · Maximum 50 iterations
+    Three main cases were considered, each with different time discretization within the week: Cases T8, T3,
+and T1, having 8-, 3-, and 1-hour time resolution within the week, respectively. After computing strategies for
+each case, a final simulation on 50 fixed inflow and VRES scenarios was performed.
+    The model was run using the dual simplex algorithm in CPLEX 20.1 on a Intel Core i9-13900K processor with
+24 cores, maximum turbo frequency of 5.8 GHz and 32 GB RAM. A total of 21 threads were made available for
+the program at each run.
+
+6.2 Convergence
+
+In the following we study the convergence properties of the model. Note that a visual approach is taken,
+leaving deeper analyses of the formal convergence properties for further studies. Fig. 6.1 shows the upper
+(stapled) and lower boundaries (solid drawn) for all cases. Naturally, the operational cost increases with finer
+time resolution.
+
+                                                                                                                                  T8
+                                                                                                                                  T3
+                                                                                                                                  T1
+
+Cost [kEUR]
+    10000 30000
+
+                -10000  10             20  30             40                          50
+
+                                           Iteration no.
+
+                        Figure 6.1: Cost gap as a function of SDDP iteration number.
+
+    While the lower boundaries seem to gradually stabilize with increasing iteration counter, the upper bounds
+vary considerably. The variability expresses sampling uncertainty: Using a higher number of forward samples
+will decrease variability. To study the impact of using a higher number of forward scenarios, a new variant of
+
+PROJECT NUMBER          REPORT NUMBER      VERSION                                        39 of 48
+
+502003757               2025:00598         1
+case T1 was run, using 400 forward samples. Fig. 6.2 shows the boundaries obtained with 40 (grey) and 400
+(black) forward samples. As expected, the variability of the upper bound is considerable lower in the case with
+400 scenarios, due to less sampling uncertainty. However, due to the extreme computation time, we do not
+recommend running ReSDDP model with so many forward scenarios on a desktop computer.
+
+                                                                                                                           NS=40
+                                                                                                                           NS=400
+                50000
+
+Cost [kEUR]
+    10000 30000
+
+                -10000  10             20  30             40  50
+
+                                           Iteration no.
+
+  Figure 6.2: Cost gap as a function of SDDP iteration number for case T1 with 40 and 400 forward samples.
+
+    While finer parametrization of the SDDP model (more backward openings and forward sampled scenarios)
+and more iterations may be needed to reach a formal optimum, initial experience from this system indicates
+that good and relatively stable results are obtained with the current set-up.
+
+6.3 Computation Time
+
+The overall computation time is shown in column four in Tab. 6.2. A first observation is that computations for
+this test system can be done within reasonable computation times using a modern desktop computer. In the
+standard SDDP algorithm, majority of the workload is carried out in the backward recursion. In the ReSDDP
+algorithm it is the other way around. With increasing time resolution, solving cost problems in the forward iter-
+ations will dominate the computational time. Recall, that the stage problems solved in the backward recursion
+only uses, and do not compute, cost cuts.
+
+    Fig. 6.3 shows the accumulated time per case spent on forward simulation (stapled) and backward recur-
+sion (solid). We emphasize that there is significant potential for improving computational speed by considering:
+(i) cut management techniques, such as relaxation or filtering of non-redundant FCF cuts; (ii) advanced parallel
+processing schemes; and (iii) the use of compiled languages.
+
+PROJECT NUMBER          REPORT NUMBER      VERSION                40 of 48
+
+502003757               2025:00598         1
+                            Case Forward         Backward Total
+
+                                Average [min] Average [min] [min]
+
+                            T1         2.21      0.41       128
+
+                            T3         0.89      0.36       61
+
+                            T8         0.67      0.47       56
+
+Table 6.2: Computation times, average per iteration and total per case (in minutes).
+
+                        T8
+                        T3
+                        T1
+
+                1.5
+
+Time [hours]    1.0
+
+                0.5
+
+                0.0
+
+                     0      10               20  30         40     50
+
+                                             Iteration no.
+
+Figure 6.3: Accumulated computation time (in hours) for forward and backward iterations.
+
+6.4 Simulation Results
+
+A total of 50 inflow scenarios were sampled from the stochastic inflow model and combined with the 50 avail-
+able wind scenarios, ignoring possible correlation between inflow and wind. A final simulation was then con-
+ducted along these scenarios using the the computed strategies for cases T1, T3, and T8. The finest time
+resolution (one hour) was used in all simulations, and we simulate the two first years in the planning horizon.
+Reservoir trajectories for all simulated scenarios are shown for case T1 in Figs. 6.4. The reservoir trajectories
+for both of the other cases are similar.
+
+    Duration curves for simulated prices for area 3 are shown in Fig. 6.5. The curves are capped at 100 e/MWh
+to emphasize the lower part. Prices above 100 e/MWh occurs for all cases, typically reaching the curtailment
+price of 400 e/MWh. The figure indicates that the use of T1 or T3 strategies does not impact the simulated
+prices much.
+
+PROJECT NUMBER          REPORT NUMBER            VERSION                                  41 of 48
+
+502003757               2025:00598               1
+                 1500                                                           1500                                                                    500 1000 1500 2000 2500 3000
+
+Reservoir [GWh]  1000                                          Reservoir [GWh]  1000                                                   Reservoir [GWh]
+
+                 500                                                            500
+
+                 0                                                              0                                                                       0
+
+                         0     5000      10000      15000                             0   5000  10000                       15000                                                     0   5000       10000     15000
+
+                                         Step                                                   Step                                                                                                 Step
+
+                                                    Figure 6.4: Simulated reservoir trajectories for case T1.
+
+                 80 100                                                                   T1                     80 100                                                                                               T1
+
+                                                                                          T3                                                                                                                          T3
+
+                                                                                          T8                                                                                                                          T8
+
+Price [EUR/MWh]  60                                                                             Price [EUR/MWh]  60
+
+                 40                                                                                              40
+
+                 20                                                                                              20
+
+                 0                                                                                               0
+
+                            0        20         40         60                         80  100                            0         20                                                 40  60               80  100
+
+                                                Percentage                                                                                                                               Percentage
+
+Figure 6.5: Simulated power prices for areas 3 (left) and 4 (right) as duration curves. Prices are capped at 100
+e/MWh.
+
+6.5 Water Values
+
+How does fine time resolution impact the strategy (water values)? This question can be addressed by invest-
+igating the computed strategies for each of the three cases. Two different techniques can be applied for this
+purpose, as outlined below.
+
+    First, we fix reservoir storages to discrete values and assume average inflow. The FCF cuts in (5.1i) can then
+be transformed into +1   , where  is a constant. Consequently, the cut with highest  will be binding,
+and cut coefficients for this cut are interpreted as the water values for the considered combination of fixed
+reservoir storages. As an assumption, we let the relative reservoir volumes increase proportionally to find the
+water values for increasing storage volumes.
+
+    Fig. 6.6 shows the water values found for all three cases for subsystem 3 for weeks 1, 10, and 20 in the
+second year of the scheduling period. A first observation is that the values are consistent in the sense that
+they decrease with increasing storage volume. Although this behavior is expected, it is not guaranteed when
+using the approach described above. For both weeks 1 and 10 we observe strong incentives to avoid empty-
+
+PROJECT NUMBER                                      REPORT NUMBER                               VERSION                                                                                                        42 of 48
+
+502003757                                           2025:00598                                  1
+ing the reservoir, with water values approaching the rationing price (400 e/MWh). The relatively low water
+values at low reservoir volumes for week 20 can be explained by the lack of cuts computed for this reservoir
+state. In other words, extremely low reservoir volumes are not considered realistic a few weeks into the snow
+melting season. Approaching the upper part of the reservoir leads to low water values in all weeks, signaling
+a pronounced spillage risk. Differences between the three cases seems muted, but remember that axis scales
+are coarse to capture all values. As a general trend, water values in the most critical zones (i.e. around 50%
+filling in week 1 and 20% in weeks 10 and 20) are higher with finer time resolution.
+
+                       400                          T1                          400                          T1                          5 10 15 20 25 30                          T1
+
+                                                    T3                                                       T3                                                                    T3
+
+                                                    T8                                                       T8                                                                    T8
+
+Water value [EUR/MWh]  300                               Water value [EUR/MWh]  300                               Water value [EUR/MWh]
+
+                       200                                                      200
+
+                       100                                                      100
+
+                       0                                                        0                                                        0
+
+                            0  20  40  60       80  100                              0  20  40  60       80  100                                           0  20  40  60       80  100
+
+                                   Storage [%]                                              Storage [%]                                                           Storage [%]
+
+                               Figure 6.6: Water values for subsystem 3, for weeks 1 (left), 10 (middle), and 20 (right).
+
+    Further insight is provided by considering how the water values for a subsystem depends on its own and
+one of the other subsystem's reservoir volumes. Such 3D plots are provided in Fig. 6.7 for weeks 1 and 20 in
+the second year of the scheduling period.
+
+                                       Figure 6.7: Water values for subsystem 3, for weeks 1 (left) and 20 (right).
+
+    As a second technique for visualizing water values, we extracted cut coefficients for non-redundant FCF
+cuts for selected stages. Redundant cuts were removed by applying the elimination procedure outlined in [28]
+(Section 4.3). The ranges of possible cut coefficients for all subsystems for weeks 1 and 20 in the second year
+of the scheduling horizon are shown in Figs. 6.8.
+
+PROJECT NUMBER                                      REPORT NUMBER                               VERSION                                                                        43 of 48
+
+502003757                                           2025:00598                                  1
+                                q
+
+                                        q
+                                        q                                             q
+                                q       q
+                                q       q
+
+                                                                                      q
+
+                                q                                                     q
+
+                                                                                      q
+                                qq                                                    q
+                                q       q                                             q
+                                                                                      q
+                                qqqqqq                                                qq
+                                        qq                                            q
+                                q                                                     q
+                                        q
+
+                                        q                                             qq
+                                q       qq                                            qq
+
+                                q       qqqq                                          q                                                                 q
+
+                                q       qq                                            qq
+                                qq                                                    q
+
+                                q       qqq                                                                                                             qq
+
+                                        q
+
+                                q       q                                                                                                       q       q
+                                        q
+                                        q                                                                                                       qq
+                                q
+                           200
+                                qq      q                                                                            5 10 15 20 25 30                   qqq
+
+                                qqq                                                                                                    qqqqq
+                                                                                                                                       qq
+                                q                                                                                                               q       q
+                                                                                   q                                                                    qqq
+                                                                                                                                                qq      q
+                                        q                                                                                                       q
+
+Cut coefficient [EUR/MWh]  150                                                            Cut coefficient [EUR/MWh]                    q        qqq     qq
+
+                                                                                                                                       q        qq      q
+                                                                                                                                       qqqqqqq  q       q
+
+                                                                                                                                       qqqqq    qqq
+                                                                                                                                                q
+
+                                                                                                                                       q        q
+
+                           100                                                                                                         q        qqqqqq
+                                                                                                                                       q
+                                                                                                                                       qq
+
+                                                                                                                                       q        qqqq
+                                                                                                                                       q
+
+                                                                                                                                       qq
+
+                                                                                                                                       q
+
+                           50
+
+                           0                                                                                         0
+
+                                T8      T3                                            T1                                               T8       T3      T1
+
+Figure 6.8: Possible water values in weeks 1 (left) and 20 (right). The boxes hold values between the 75th and
+25th percentiles, indicating the mean value by a horizontal line.
+
+6.6 Feasibility Cuts
+
+We repeated cases T1 but this time with the use of feasibility cuts. Feasibility cuts were computed prior to
+the SDDP run and used throughout the iterations. A 3-hour time resolution was used when computing feas-
+ibility cuts, and the subsystem decisions related to energy, volume, and ramping capability were discretized
+in 5 segments. The need for reserve capacity was not considered, and all time-dependent and environmental
+constraints were deactivated. A total 42, 40, and 35 feasibility cuts were created for each of the three systems.
+As a consequence, the total computation time increased with approximately 30 % compared to the values
+reported in Table 6.2.
+
+    The strategies were simulated using the same 50 scenarios as for the cases without feasibility cuts. We
+compare simulation results for case T1 with and without feasibility cuts in Fig. 6.9 and 6.10.
+
+    The duration curves for production for the three hydropower subsystems are shown in Fig. 6.9. This figure
+shows that, although the total energy production per subsystem seems similar, the use of feasibility cuts (black
+curves) leads to a more constrained operation for subsystems 2 and 3.
+
+    Duration curves for simulated power prices for areas 3 and 4 are shown in Fig. 6.10. The use of feasibility
+cuts further constrains the operation of hydropower, which in turn contributes to a higher price level.
+
+PROJECT NUMBER                          REPORT NUMBER                                     VERSION                                                            44 of 48
+
+502003757                               2025:00598                                        1
+Generation [MW]                                        FEAS                                                                                               FEAS                         800                                  FEAS
+    0 100 200 300 400 500 600                          NOFEAS                                                                                             NOFEAS                                                            NOFEAS
+
+                                                                                    Generation [MW]                                                                   Generation [MW]  600
+                                                                                         0 100 200 300 400 500
+                                                                                                                                                                                       400
+
+                                                                                                                                                                                       200
+
+                                                                                                                                                                                       0
+
+                     0     20  40  60              80  100                                                      0   20       40                   60  80  100                               0   20      40  60          80  100
+
+                               Percentage of time                                                                       Percentage of time                                                          Percentage of time
+
+                           Figure 6.9: Duration curves for production for subsystems 1 (left), 2 (middle), and 3 (right).
+
+                 40                                                                                                 FEAS                          40                                                                    FEAS
+                                                                                                                    NOFEAS                                                                                              NOFEAS
+
+                 30                                                                                                                               30
+
+Price [EUR/MWh]  20                                                                                                              Price [EUR/MWh]  20
+
+                 10                                                                                                                               10
+
+                 0                                                                                                                                0
+
+                        0      20      40              60                                                       80      100                           0           20                        40      60      80              100
+
+                                       Percentage                                                                                                                                           Percentage
+
+Figure 6.10: Simulated power prices for areas 3 (left) and 4 (right) for case T1 with (black) and without (blue)
+feasibility cuts. Prices are capped at 40 e/MWh.
+
+PROJECT NUMBER                                         REPORT NUMBER                                                             VERSION                                                                                45 of 48
+
+502003757                                              2025:00598                                                                1
+Chapter 7
+
+Summary
+
+This report documents the methodological basis for the ReSDDP model. It first introduces the operational
+planning problem and describes the SDDP algorithm. Subsequently, further decomposition through feasibility
+cuts and cost cuts are presented, leading to the ReSDDP model algorithm outlined in Chapter5. Finally, the
+model was applied to a simple test system to demonstrate its computational capabilities and show some of
+the result types that one can extract from it.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  46 of 48
+
+502003757       2025:00598     1
+Bibliography
+
+ [1] A. Helseth, A. C. G. Melo, Q. M. Ploussard, B. Mo, M. E. P. Maceira, A. Botterud, and N. Voisin, "Hydropower
+      Scheduling Toolchains: Comparing Experiences in Brazil, Norway, and USA and Implications for Synergistic
+      Research," Journal of Water Resources Planning and Management, vol. 149, no. 7, 2023.
+
+ [2] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic optimization applied to energy planning,"
+      Mathematical Programming, vol. 52, pp. 359­375, 1991.
+
+ [3] J. R. Birge and F. Louveaux, Introduction to Stochastic Programming, 2nd ed. Springer, 2011.
+
+ [4] M. Haugen and A. Helseth, "Primod ­ A fundamental short-term model for power system analyses and
+      multimarket price forecasting," SINTEF Energy Research, techreport 2021:00376, SINTEF Energy Research
+      report no. 2021:00376, 2021.
+
+ [5] A. Helseth, M. Haugen, H. Farahmand, B. Mo, S. Jaehnert, and I. Stenkløv, "Assessing the benefits of
+      exchanging spinning reserve capacity within the hydro-dominated Nordic market," Electric Power Systems
+      Research, vol. 1999, no. 107393, 2021.
+
+ [6] A. Helseth, S. Jaehnert, and A. L. Diniz, "Convex Relaxations of the Short-Term Hydrothermal Scheduling
+      Problem," IEEE Transactions on Power Systems, vol. 36, no. 4, pp. 3293­3304, 2021.
+
+ [7] M. V. F. Pereira, "Optimal stochastic operations scheduling of large hydroelectric systems," Electrical Power
+      & Energy Systems, vol. 11, no. 3, pp. 161­169, 1989.
+
+ [8] M. V. F. Pereira and L. M. V. G. Pinto, "Stochastic optimization of a multireservoir hydroelectric system: A
+      decomposition approach," Water Resources Research, vol. 21, no. 6, pp. 779­792, 1985.
+
+ [9] M.Pereira, N.Campodónico, and R.Kelman, "Application of stochastic dual DP and extensions to hydro-
+      thermal scheduling," PSR, Tech. Rep. PSR TR 012/99, 1999.
+
+[10] T. Homem-de-Mello, V. L. de Matos, and E. C. Finardi, "Sampling strategies and stopping criteria for
+      stochastic dual dynamic programming: a case study in long-term hydrothermal scheduling," Energy Sys-
+      tems, vol. 2, pp. 1­31, 2011.
+
+[11] A. Shapiro, "Analysis of stochastic dual dynamic programming method," European Journal of Operational
+      Research, vol. 209, no. 1, pp. 63­72, 2011.
+
+[12] V. L. de Matos and E. C. Finardi, "A computational study of a stochastic optimization model for long term
+      hydrothermal scheduling," International Journal of Electrical Power and Energy Systems, vol. 43, no. 1, pp.
+      1443­1452, 2012.
+
+[13] A. Helseth, A. Gjelsvik, B. Mo, and U. Linnet, "A model for optimal scheduling of hydro thermal systems
+      including pumped-storage and wind power," IET Generation, Transmission & Distribution, vol. 7, no. 12,
+      pp. 1426 ­ 1434, 2013.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  47 of 48
+
+502003757       2025:00598     1
+[14] M. E. P. Maceira, A. C. G. Melo, J. F. M. Pessanha, C. B. Cruz, V. A. Almeida, and T. C. Justino, "Combining
+      monthly wind and inflow uncertainties in the stochastic dual dynamic programming ­ Application to the
+      Brazilian interconnected system," Energy Systems, 2023.
+
+[15] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochastic medium-term hydrothermal
+      scheduling under spot price uncertainty," in Proc. 13th Power System Computation Conference, Trond-
+      heim, Norway, 1999.
+
+[16] A. Gjelsvik, B. Mo, and A. Haugstad, Handbook of Power Systems I. Springer, 2010, ch. Long- and
+      medium-term operations planning and stochastic modelling in hydro-dominated power systems based
+      on stochastic dual dynamic programming, pp. 33­55.
+
+[17] K. S. Gjerden, A. Helseth, B. Mo, and G. Warland, "Hydrothermal scheduling in Norway using stochastic
+      dual dynamic programming; a large-scale case study," in In proc. of IEEE PowerTech, Eindhoven, The Neth-
+      erlands, 2015.
+
+[18] A. Helseth and B. Mo, "Hydropower Aggregation by Spatial Decomposition--An SDDP Approach," IEEE
+      Transactions on Sustainable Energy, vol. 14, no. 1, pp. 381­392, 2023.
+
+[19] A. Helseth, "Approximating hydropower systems by feasibility spaces in stochastic dual dynamic program-
+      ming," Electric Power Systems Research, vol. 234, no. 110615, 2024.
+
+[20] A. Haugstad, "Tappefordelingsmodellen i Vansimtap," SINTEF Energi, Tech. Report TRA 4421, 1996.
+
+[21] C. N. Metello, "Analytical representation of immediate cost functions in SDDP," M.Sc. Thesis, Pontifical
+      Catholic University of Rio de Janeiro, 2016.
+
+[22] A. Fernandes, M. T. Oliveira, A. L. M. Marcato, E. J. Oliveira, I. C. S. Junior, and E. Oliveira, "Representa-
+      tion of Wind Energy Scenarios in the Mid-Term Hydrothermal Systems Operation Scheduling," Journal of
+      Control, Automation and Electrical Systems, vol. 30, p. 413­423, 2019.
+
+[23] C. A. Júnior, B. Dias, and A. Diniz, "Integrated Two-Stage Benders Decomposition and Dual Dynamic Pro-
+      gramming for Hydrothermal-Wind Planning With Intra-Stage Cost Functions," IEEE Transactions on Sus-
+      tainable Energy, 2024.
+
+[24] A. Gjelsvik, T. A. Røtting, and J. Røynstrand, "Long-term scheduling of hydro-thermal power systems," in
+      Hydropower 92, E. Brock and D. Lysne, Eds., Lillehammer, 1992, pp. 539­546.
+
+[25] A. Helseth and B. Mo, "Considering Short-Term Variability and Uncertainty in Long-Term Hydropower
+      Scheduling," vol. DOI: 10.36227/techrxiv.173747756.68315820/v1, 2025.
+
+[26] I. Dunning, J. Huchette, and M. Lubin, "JuMP: A modeling language for mathematical optimization," SIAM
+      Review, vol. 59, no. 2, pp. 295­320, 2017.
+
+[27] V. L. de Matos, A. B. Philpott, and E. C. Finardi, "Improving the performance of Stochastic Dual Dynamic
+      Programming," Journal of Computational and Applied Mathematics, vol. 290, pp. 196­208, 2015.
+
+[28] A. Shapiro, W. Tekaya, M. P. Soares, and J. Paulo da Costa, "Worst-Case-Expectation Approach to Optim-
+      ization Under Uncertainty," Operations Research, vol. 61, no. 6, pp. 1435­1449, 2013.
+
+PROJECT NUMBER  REPORT NUMBER  VERSION  48 of 48
+
+502003757       2025:00598     1
+Technology for a better society
+

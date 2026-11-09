@@ -1,0 +1,464 @@
+Stochastic scheduling for a price-maker hydro
+     producer considering forward trading
+
+   Hubert Abgottspon                                                           Go¨ran Andersson
+Power Systems Laboratory                                                   Power Systems Laboratory
+ ETH Zurich, Switzerland                                                    ETH Zurich, Switzerland
+abgottspon@eeh.ee.ethz.ch                                                  andersson@eeh.ee.ethz.ch
+
+   Abstract--This paper presents a short- and medium-term                  works [1], [2] we have shown how to integrate a hourly
+scheduling for a price-maker pumped storage power plant.                   based deterministic optimization within a stochastic dynamic
+Considered are stochastic hourly and seasonal water inflows,               programming scheme considering different market products.
+stochastic prices and detailed operational constraints. The model
+can choose between production of energy in the own turbines                   The self-scheduling problem is becoming more complicated
+and pumps or bidding energy in the day-ahead market or in the              if the influence of the generation company on market prices is
+Forward market. Proposed is a multistage stochastic program                studied. This influence is important when analyzing Forward
+with a quadratic recourse problem, which is dynamically solved.            contracts. By nature hydro producers are in long position and
+The results of such an optimization, water values and optimal              they try to hedge this position by Forward contracts. Most
+Forward bids, can be used as decision support in daily operation.          prominent reasons for this is first due to limited liquidity
+A simulation of this operation throughout a year illustrates the           of market products and second because of their price in-
+use of the optimization on a realistic setting.                            fluence on day-ahead and spot markets. Such problems are
+                                                                           typically solved by considering a market clearing process
+   Index Terms--hydro power, scheduling, short-term planning,              where each market participant either bid their marginal costs
+medium-term planning, stochastic programming, Forward con-                 or act strategically. Apart from modeling issues this solution
+tracts, pool market, price-maker.                                          concept becomes quickly computationally intractable if there
+                                                                           is considered hourly based bidding with some stochastic
+                          I. INTRODUCTION                                  variables for a time horizon of several months. In this work
+                                                                           suggested is therefore an alternative, where by assuming a lin-
+   If a hydro power plant is operated in a portfolio with thermal          ear dependency between amount and price of the commodities
+power plants, a scheduling optimization typically deploys the              price influences are modeled. It will be shown how such an
+hydro plant in order to minimize the thermal production costs.             approach remains tractable.
+For generation companies which operate only hydro storage
+power plants this is not possible. In this case the future profit,            Overall the goal of this work is to propose a modeling
+which can be achieved by the revenue of sold energy out of                 concept, which is able to solve the bidding problem for a
+stored water on different markets as well as zero or constant              price-maker hydro power plant, with pumping capabilities
+operating costs, is estimated. These opportunity costs - the so            and seasonal water inflows, considering forward contracts and
+called water values - depend not only on the current amount                stochastic water inflows for a time horizon of one year. It
+of stored water but also on the future water inflows as well as            will be shown, how such an optimization could be used as
+the achievable future profits. Water inflows and future profits            decision support. Further simulations illustrate this use on a
+are uncertain and not fully known in advance so a stochastic               realistic setting.
+programming problem occurs.
+                                                                              Proposed is a multi-stage stochastic program. For each
+   In a deregulated market environment the self-scheduling                 stage, the optimal amount of a Forward contract is found,
+problem is a bidding problem, where the producer can choose                taken into account hourly recourse actions. For these recourse
+among several market products to bid. This problem is so                   actions stochastic inflows are considered and the algorithm es-
+complex that it is usually solved in different steps. First a              timates the profits which can be achieved within the respective
+medium-term planning for determining the monthly/yearly                    stages by taking into account both a day-ahead market and the
+production strategy is formulated. Then a short-term plan-                 physical constraints of the power plant. Hourly priced forward
+ning for optimizing the production over the next days is                   curves are taken as clearing prices for the day-ahead market.
+performed, where different market products are considered.                 However the algorithm assumes linear dependence on the price
+For the medium-term planning a coarser model with longer                   depending on the bidding amount. With this approach water
+time steps is used. Especially for a hydro producer with                   values are calculated as well as an optimal bidding strategy
+pumping capabilities such a medium-term planning neglects                  for each stage.
+the profit which can be achieved on a hourly basis. In previous            Most important contribution of this paper is the consideration
+                                                                           of a price-maker in this bidding problem easily applicable to
+   This work was carried out within the scope of the project "Hydro Power
+Planning", supported by KTI (Swiss Innovation Promotion Agency), project
+11635.2 and Axpo AG.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+a self-scheduling of a hydro power plant operator, considering                    here-and-now decisions (stagewise for t )
+day-ahead and a Forward market. Second contribution is the
+simulation of this bidding process for one year in a realistic                 daily
+setting.                                                                                            monthly
+
+   For an overview of stochastic programming in the energy                                                                                t
+sector [3] can be recommended. A review about stochastic
+dynamic programming in hydro power planning is given in                                   wait-and-see decisions (hourly for intra stage )
+[4].
+In [5] an hourly day ahead market and a monthly financial           Fig. 1. Multi-stage program with varying time length between stages and
+Future market are considered. Stochasticity on the pool prices      therefore also varying amount of hourly wait-and-see decisions.
+is introduced via scenarios. Large scale linear programming,
+which has the advantage of easily incorporating risk measures       any knowledge about the realization of the random variables,
+and minimizations, is used. Because of the well-known "curse        the water inflows in this case. So they are referred as here-and-
+of dimensionality" [6], computational tractability is a problem.    now-decisions. The prices for the forward contracts however
+So in their example they consider only two periods with             are known beforehand. The are modeled as linearly depending
+five price scenarios in the recourse stage and three different      on the amount of traded contracts.
+forward contracts, which is by far a too simplified view for        Within the time stage recourse actions can be performed.
+incorporating hourly and seasonal water inflows as in our case.     Those actions are made with perfect information and the
+In [7] the focus is on constructing bid curves by a large scale     random variables are known, so they are denoted as wait-
+mixed integer linear program. A finer model is used on near         and-see-decisions. In contrast to previous works, there are
+term and then a coarser one going forward. Whereas the finer        two decisions to make for each hourly intra-stage time step:
+model models e.g. non-convex efficiency curves and hourly           production and pool decisions. Production decisions take into
+time resolution, the coarser one is very simplified with price-     account all technical constraints of the power plant whereas
+segments. Again the problem is to be computationally tractable      pool decisions are about fulfilling the forward contracts obli-
+because no decomposition was considered.                            gations (which could have been settled earlier) as well as
+                                                                    bidding the production on the day-ahead market. The goal
+   The mentioned approaches haven't dealt with limited liq-         of the recourse action is maximum profit. The prices on the
+uidity in their models. The most interesting ones that does are     day ahead market depend linearly on the bid. This results in a
+as follows:                                                         quadratic problem. The outcome of this intra-stage problem is
+In [8] game theory is used to study a duopolistic case where        an estimation of the profit which can be achieved for a given
+by applying stochastic dynamic programming they compute             amount of water to discharge from the basins.
+the water values of these two utilities. However this approach      It should be noted, that production of energy and pumping is
+would be not suitable to consider hourly bidding for yearly         not part of the objective function. The idea is that the algorithm
+time horizon.                                                       can choose between generating energy with water stored in the
+In [9], [10] an optimal scheduling of a price-maker pumped          basins or buy it on the day-ahead market.
+hydro storage producers was performed. By using residual
+demand curves the influence on the pool market prices was              Fig. 1 shows the decision framework. The time length
+modeled. This mixed-integer problem results in short-term           between the stages will vary depending on available Forward
+bidding strategies as well as mid-term reservoir management.        contracts. Therefore also the problem size of the recourse
+Apart from issues in modeling the competition as a demand           action will change. Because the cumulated profit will be
+curve, Forward contract were considered only as predefined          strictly increasing in time, a decomposition is meaningful.
+and fixed. The authors in [11] used a similar approach, how-        By also discretizing the state and decision space the well-
+ever they considered stochastic water inflows but no forward        known stochastic dynamic programing scheme can by applied
+contracts. They applied stochastic dual dynamic programming         (introduced in [12] and [13], first for hydro power planning
+in order to find a long-term operation strategy.                    problems in [14]).
+
+   The remainder of the paper is organized as follows: First,       B. Mathematical model
+the model is explained both conceptually and mathematically.
+Afterwards the Swiss energy market environment is explained            Table I gives an overview and explanation of the used
+briefly and the data used in the case study is motivated. This      variables. Let t,x be the expected future profit for state x and
+case study then illustrates the outcomes of the model and           time stage t, also referred as profit-to-go. This profit-to-go can
+simulates its usage on a realistic setting.                         be recursively calculated:
+
+                              II. MODEL                             t,x = max  1  ytT,x  ·H·yt,x  +yt,x      ·ct  +E    [Qt,x,  +  t+1,x]  (1)
+                                                                               2                                     t
+A. Model characteristics
+
+   The overall model is similar to those in [1], [2], [5]. Forward
+contracts can be traded at the beginning of every time stage,
+e.g. daily or monthly. Those decisions have to be made without
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+                        TABLE I
+                       VARIABLES
+
+Variable     Explanation                                                Fig. 2. Discretization of the state and decision variables. The problem reduces
+tT           time stage                                                 to a shortest path problem which can be solved recursively.
+xX           state variable (discretized basin filling [m3])
+  t          random data (water inflows [m3])                                  30                                                                                                                                                     6
+t,x          profit-to-go [e]                                                  20
+yt,x         here-and-now decision (Forward contract bid [MW])                 10                                                                                                                                                     4
+H, ct        quadratic return for yt,x
+Qt,x,        optimal value of recourse actions [e]                               0  profit out of pool market [kEuro]                                                                                                                 2
+ T           hourly intra-stage time steps [h]                               -10                                                                                                                profit out of Forward market [kEuro]
+t,x,         hourly recourse decision (production / pool / basin)            -20
+G, ft        quadratic return for t,x,                                       -30
+At,x, bt,x,  equality constraints (technical and financial)                  -4-0300
+lbt, ubt     lower / upper bound
+                                                                        a)
+                                                                                                                                                                                                                                      0
+
+                                                                                                                                                                                                                                      -2
+
+with E being the expected value considering random data                                                                                                                                                                               -4
+         t
+                                                                                                                                                                                                                                      -6
+ for this stage. Note, that H, ct are predefined because
+power Futures prices, which depend linear on yt,x, are known                          -200  -100  0  100                           200  300                                                                                           --1800  -80  -60  -40  -20  0  20  40  60              80  100
+beforehand. This results in a quadratic objective function.
+Qt,x, is the optimal value of a deterministic maximization                                  traded energy in the pool market [MW]            b)                                                                                                    traded energy in the Forward market [MW]
+problem depending on time, state and realized random data.
+                                                                        Fig. 3. Linear dependent prices for a) pool and b) Forward prices (orange)
+This problem has a quadratic objective function with linear             and constant price (brown). This results in profit quadratically depending on
+                                                                        traded amount.
+equality constraints:
+
+Qt,x,        = max  1  Tt,x,  · G · t,x, + ftT t,x,                (2)          III. DATA REQUIREMENTS AND ACQUISITION
+                    2
+                                                                           The model is applied to a realistic example of a hydro
+                         At,x · t,x, = bt,x,                            pumped storage power plant located in the Swiss Alps. The
+                                                                        power plant is built up of two stages. The first stage consists
+                         lbt  t,x,  ubt                                 of an upper basin, which acts as seasonal storage and a lower
+                                                                        much smaller basin. In between two turbines and two pumps
+   t,x, is a vector containing both state variables (if needed)         are able to move water up or down. In the second stage the
+and decision variables. The right hand side of the constraints,         water out of the smaller basin can be used in two turbines.
+bt,x,, depends on realized random data while At,x is not. So            Both basins are fed by water inflows from precipitation and
+it is assumed that the actual realization of the random data is         from glaciers. Total installed generation capacity is 240 MW,
+known. Therefore this is a deterministic problem. Constraints           pumping capacity 46 MW and total storage is about 200 GWh
+to fulfill are first technical constraints like assuring a certain      or 100 millions of m3.
+amount of water to discharge and others associated to the plant         The length of the time stages t  T as well as of the intra-
+topology. Secondly also financial constraints like satisfying           stage time steps   T are given by the market products:
+the contracted energy are part of the equality constraints.             daily, weekly and monthly steps for the length of t depending
+The variable bounds lbt, ubt depend on time t since turbine             on available Forward products and hourly steps for  because
+and pump capacities may vary e.g. because of scheduled                  of the hourly pool market. Because the available Forward
+maintenance.                                                            products are overlapping in time there is taken first daily
+                                                                        products for one month and then available weekly and monthly
+   By discretizing both state variable (basin filling) as well as       products.
+the amount of water to discharge the problem reduces to a               The bigger seasonal basin is chosen as state variable x in the
+shortest path problem (Fig. 2). The algorithm has to find the           here-and-now decision problem since it collects all necessary
+optimal amount of water to discharge for each basin filling             past information. The smaller basin acts as state variable in the
+which is found by solving the recourse problem. Similarly               wait-and-see decision problems allowing to formulate techni-
+also the optimal amount of a Forward contract is found for              cal constraints. In both reservoirs stochastic water inflows are
+each basin filling. This procedure has to be repeated for every         considered, estimated out of historical data.
+time step t recursively.
+                                                                           The power plant is operated within a deregulated market
+   Outcome at the end is the expected profit-to-go depending            environment with several market products available. Most
+on time stage and basin filling. The derivation of it results in        importantly are day-ahead market, over-the-counter (OTC) and
+the opportunity costs, the water values. A forward simulation,          ancillary services market. Forward contracts, which are traded
+which applies the optimal decisions for given starting basin            OTC, are mostly based on standard power Future contracts
+fillings, finds the optimal amount of Forward contracts to sell
+for each time stage.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+                                                                                                                                                       1
+
+80                                                                                                                                                     0.8                                                                          200
+                                                                                                                                                                                                                                    150
+70                                                                                                                                                                                                    0.6                           100turbines / pumps / Forward contracts [MW], inflows [MWh],turbines 2nd stage [MW]
+                                                                                                                                                                                                                                     50pool price / water value [Euro/MWh]              turbines 1st stage [MW]
+60                                                                                                                                                     water value (0-1)                                                                                                                pumps 1st stage [MW]
+                                                                                                                                                                                                      0.4                             30980                                                                                                                                                                        2nd stage basin [m3]Forward contracts [MW]
+                                                         50                                                                                                                                                                                                                             inflow 2nd basin [MWh]
+                                                                                                                                                                                                                                                                                        pool price [Euro/MWh]
+profit-to-go [MEuro] 40                                                                                                                                                                                                                                                                 water value [Euro/MWh]
+                                                                                                                                                                                                                                                                                        2nd stage basin [m3]
+30                                                                                                                                                     0.2
+
+20                                                                                                                                                                       0
+                                                                                                                                                                    -0.2
+10
+                                                                                                                                                                                 0
+0                                                            daily                                                                                                                      0.2
+0
+                                                                                                                                                                                                  0.4
+                                                             10                                                                                     0
+                                                                                                                                     0.2               basin level (0-1) 0.6
+time stage 20                                                       30 monthly                                        0.4                                                                                           0.8
+                                                                                                      0.6
+                                                                                 40 1  0.8                                                                                                                               1                                                                                                                                                                                                                40
+                                                                                                                                                                                                                               1.2                                                                                                                                                                                                        30
+                                                                                             basin level (0-1)                                                                                                                                                                                                                                                                                                                            20
+                                                                                                                                                                                                                                                                                                                                                                                                                                          10
+Fig. 4. a) Profit-to-go for all basin levels and time stages. Note, that the first                                                                                                                                                           4000  4020  4040  4060         4080  4100  4120  4140                                                                                                                                     41600
+stages have daily step size and therefore the profit relatively does not change
+much. b) Water values out of the profit-to-go function at the first time stage.                                                                                                                                                                                      hours
+They can be used directly for comparison with the day-ahead market prices.
+
+with financial settlement. Since the power plant is usually                                                                                                                                                                         Fig. 5. Snapshot of one week of the forward simulation. Production depends
+operated in peak hours, peak Futures make the most sense                                                                                                                                                                            on current water value and pool price. However 2nd stage basin limits
+to consider. So EEX Phelix German peak Future prices are                                                                                                                                                                            generation and pumping capabilities by a large extend.
+taken as estimation of a Forward contract bid price. The day-
+ahead price is estimated by an hourly priced forward curve                                                                                                                                                                          A. Optimization results
+(HPFC) which is constructed by the industry partner and which
+is arbitrage-free to the Future products.1                                                                                                                                                                                             Fig. 4 a) shows the expected profit-to-go for all time stages
+Fig. 3 shows the profit for given pool and Future prices de-                                                                                                                                                                        and upper basin fillings. Important is the strictly increasing
+pending on the bidding amount. Because of the modeled linear                                                                                                                                                                        profit over time as well as the concavity within a stage in
+dependencies between prices and amount the profit depends                                                                                                                                                                           respect to the basin filling. Since the first few time stages
+quadratically on the bidding amount. The linear dependency                                                                                                                                                                          correspond to daily stages the profit won't change much. For
+has to be estimated by experience or historical data. For                                                                                                                                                                           these stages the derivation of the profit-to-go function with
+the case study this influence was made constant throughout                                                                                                                                                                          respect to the basin filling is of more importance. These water-
+all time stages although it would make sense to adjust the                                                                                                                                                                          values are shown in Fig. 4 b) for the first stage. The water
+influence depending on time. Note, if no price dependency                                                                                                                                                                           values express how much profit is expected for an additional
+would be modeled, there would be not much affinity present                                                                                                                                                                          amount of water stored in the upper basin. They can be used
+to trade Forward contracts from a profit maximization point                                                                                                                                                                         directly for comparison with the day-ahead market prices.
+of view.
+                                                                                                                                                                                                                                       Another outcome of the optimization is the optimal amount
+   As optimization start, 1st April 2009 was chosen in order to                                                                                                                                                                     of Forward contracts to buy or sell depending both on time
+have enough historical data available. The water inflows for                                                                                                                                                                        stage and basin level. Important are only the values at the
+hydro power plants located in the Alps have great seasonality                                                                                                                                                                       actual basin levels. Those are unknown therefore a forward
+with high inflows in late string and summer and no inflows in                                                                                                                                                                       simulation is used to find expected basin levels. This simula-
+winter. This means the optimization starts with zero amount                                                                                                                                                                         tion is based on the found water values, expected day-ahead
+of water stored in the basins but also that the residual water                                                                                                                                                                      prices and optimal Forward bids. It mimics the operation of
+in the basins at the end of the optimization one year later is                                                                                                                                                                      the power plant and expected basin levels over time are found.
+given no value.                                                                                                                                                                                                                     By iterating over all time stages the following simulation is
+                                                                                                                                                                                                                                    proposed:
+   All optimizations were done in Matlab R2012a with CPLEX
+12.4 as solver for the quadratic program. The stochastic                                                                                                                                                                               1) Find actual reservoir level, water value and positions.
+dynamic program problem can be formulated embarrassingly                                                                                                                                                                               2) For all hourly intra-stage time steps: Heuristic on how
+parallel, so that one optimization run took no longer than 4
+minutes with a standard computer, with a quad-core 2.3 GHz                                                                                                                                                                                 to deploy turbines and pumps.
+Intel Core i7 processor and 8 GB of RAM. However, if the                                                                                                                                                                            At the beginning the actual reservoir level is taken as input
+special structure of the dynamic program is not exploited in                                                                                                                                                                        and the corresponding water value is calculated. The positions
+the algorithm, it can easily take hours to solve.                                                                                                                                                                                   are for the financial balance, specifying the Forward contracts
+                                                                                                                                                                                                                                    obligations per time stage. Afterwards for each hourly intra-
+                          IV. CASE STUDY                                                                                                                                                                                            stage time step a heuristic deploys turbines and pumps. For
+                                                                                                                                                                                                                                    this the estimated water values are compared with the day-
+   The case study is divided into two parts. First, the results                                                                                                                                                                     ahead market prices: If the water value is lower than the
+out of one optimization run is revealed. These results are then                                                                                                                                                                     market price, turbines are fully deployed, and if they are higher
+used for simulating the operation of the hydro plant for actual                                                                                                                                                                     pumps are fully deployed. Of course this deployment is not
+realized data which is explained in the second part.                                                                                                                                                                                always possible since it has to take into account all technical
+                                                                                                                                                                                                                                    details like correct efficiencies, expected water inflows and
+   1Note, that the arbitrage-free condition may get lost depending on how the                                                                                                                                                       basin balances. Good insights in daily practice of the power
+price influence was modeled. However this may be desired.                                                                                                                                                                           plant is needed in order to accomplish this heuristic. At the
+                                                                                                                                                                                                                                    end the financial balance has to be evaluated, considering
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+                             100                                                                                                           start
+                                                                                                 next month with adjusted positions
+peak Forward contracts [MW]  90
+
+                             80
+
+                             70
+
+                             60
+
+                             50
+
+                             40                                                                                            HPFC
+                                                                                                          stoch. water inflows
+                             30                                                                           power Future prices                                                                                           SDP
+
+                             20                                                                                            HPFC                                                                                                  water values
+                                                                                                      expected water inflows                                                                                                     optimal Forward contract bids
+                             10                                                               optimal Forward contract bids
+                                                                                                                                                                                                                        FW
+                             0                                                                                 hist. spot prices
+                                                                                                            hist. water inflows                                                                                                  expected basin levels
+                             0                                                                bids for expected basin levels                                                                                                     bids for expected basin levels
+
+                                  5                                                                                                                                                                                     FW2
+
+                                     10                                                                                                                                                                                          basin levels after one month
+                                                                                                                                                                                                                                 remaining positions
+                                         15
+
+                                  time stage  20
+
+                                                  25
+
+                                                      30
+
+                                                          35
+
+                                                              40
+
+                                                                  45
+
+Fig. 6. Example of optimal peak power Forward bids for expected basin
+levels. Note that since the hydro power plant is in a long position, no bids
+are bought. However this could change for later optimization runs, if already
+sold bids are bought back.
+
+Forward obligations and produced/used energy on one side                       Fig. 7. For every month one optimization is done with updated data. The
+and bidding on the day-ahead market on the other side. For                     first forward simulation is for determining expected basin levels for optimal
+the day-ahead prices again the linear dependency on traded                     bidding, the second forward simulation is for simulating the production for
+amount is assumed.                                                             one month with actual data.
+
+   Fig. 5 shows the results of one week for the forward                            0.8                                                                                                                                               25
+simulation. For this week 100 MW of peak Forward contracts                                                                                                                                                                           20
+were sold. For better readability not all results are shown                        0.7                                                                                                                                               15      profit per simulation run
+and turbines and pumps are combined stage-wise. As one                                                                                                                                                                               10      cumulated profit
+can see, the fully deployment of turbines and pumps is not
+always possible. One reason for this is the 2nd stage basin,                   filling of 1st stage basin (0-1)0.6                                                                                                                     5
+which is relatively small and because of that limits turbine                                                                                                                                              profit [MEuro]               0
+and pump capabilities in both stages depending on actual                           0.5                                                                                                                                               -50
+filling and water inflows. Interesting is also the fifth day,
+where the obligation of forward contracts are not met and                          0.4                                                                                                                                  b)
+therefore relatively cheap energy are bought back in the day-
+ahead market.                                                                      0.3
+
+   Note that the meaning of the forward simulation is not a                        0.2
+hourly bidding strategy for the whole year, which would be
+unrealistically. The results are expected basin fillings and with                  0.1
+these values the optimal bids for the Forward market can be
+evaluated. Fig. 6 shows an example of these optimal bids for                       00   2  4  6                8  10  12  14                                                                                                              2  4  6                       8  10  12
+expected basin levels. These values can be used as decision
+support for the trading group in the respective company.                       a)             simulation runs                                                                                                                                   simulation runs
+
+B. Simulation of the bidding process                                           Fig. 8. Results out of bidding process simulation: a) Filling of 1st stage
+                                                                               basin: The basin is used up to 80% of its maximum capacity. b) (Cumulated)
+   Fig. 7 shows a flow chart, which describes how the operation                profit for each simulation run.
+of the power plant was mimicked. Remember that the proposed
+scheduling considers only one snapshot of the whole bidding                       2) Find expected basin levels and power Forward bids.
+problem, that is what would be the present most optimal                               Inputs are expected spot prices and water inflows as
+bidding strategy without taken into account that this strategy                        well as calculated water values and optimal Forward bids
+could be changed afterwards. In order to evaluate how the                             from the first step. Note that in this forward simulation
+strategy would change over time, if new information are                               no stochasticity has to be taken into account.
+available the following procedure is proposed:
+                                                                                  3) The second forward simulation mimics the application
+   1) Find expected water values and optimal power Forward                            of the found optimal peak power Forward bids and water
+       bids for all discretized basin levels (1st stage basin) and                    values. For this simulation actual historical data is used
+       time stages. Inputs are stochastic spot prices (out of                         both for spot prices and water inflows. The outcome of
+       HPFC), stochastic water inflows (from historical data)                         this simulation are resulting basin levels of the 1st stage
+       and actual available power Future prices.                                      as well as remaining financial positions and achieved
+                                                                                      profit.
+
+                                                                               This procedure is repeated, in our case monthly, with a
+                                                                               receding horizon. Beginning is again 1st April 2009 and the
+                                                                               end is one year later. The time horizon of the optimization
+                                                                               and the forward simulations are therefore one month up to
+                                                                               one year. Each Forward contract amount were discretized into
+                                                                               11 values. Total computation time for the whole simulation
+                                                                               was 35 minutes.
+
+                                                                                  Fig. 8 shows the overall results of the bidding process
+                                                                               simulation. On one side the filling of the 1st stage basin, the
+                                                                               upper bigger one and also state variable, is shown normalized
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+position out of traded Forward contracts [MW]                                   and optimal Forward bids, can be used as decision support.
+                                                                                Further as second main contribution a simulation revealed this
+                                                                                use on a realistic setting.
+
+                                               hours                                                         REFERENCES
+
+                                                      simulation runs            [1] H. Abgottspon, M. Bucher, and G. Andersson, "Stochastic dynamic pro-
+                                                                                      gramming for unified short- and medium-term planning of hydro power
+Fig. 9. Positions out of traded Forward contracts. Note, that traded contracts        considering market products," in 12th IEEE International Conference
+are only in the peaks hours and that the higher the simulation run the less           on Probabilistic Methods Applied to Power Systems (PMAPS), 2012.
+hours are able to trade. One can see an increase of short positions.
+                                                                                 [2] H. Abgottspon and G. Andersson, "Approach of integrating ancillary
+to its capacity. Such a filling was expected, since the basin                         services into a medium-term hydro optimization," in XII SEPOPE: Sym-
+is empty at the beginning and inflows occurs only in the first                        posium of Specialists in Electric Operational and Expansion Planning,
+months. So the basin acts as seasonal storage in order to be                          2012.
+able to produce energy throughout the whole year. Fig. 8 b)
+outlines the profit which is achieved in the day-ahead market                    [3] S. W. Wallace and S.-E. Fleten, "Stochastic programming models in
+and by trading Forward contracts. At the beginning the profit                         energy," in Stochastic Programming, ser. Handbooks in Operations
+is negative, since Forward contracts were bought so the power                         Research and Management Science, A. Ruszczynski and A. Shapiro,
+plant went even more in a long position.2 However afterwards                          Eds. Elsevier, 2003, vol. 10, pp. 637 ­ 677.
+profit is achieved throughout the year with a tendency to more
+profit in the summer than in winter time which was also                          [4] J. W. Labadie, "Optimal operation of multireservoir systems: State-of-
+expected because of non-storable water inflows.                                       the-art review," Journal of Water Resources Planning and Management,
+If no trading in the Forward market was allowed (not shown                            vol. 130, no. 2, pp. 93­111, March 2004.
+in figures) total profit sum up to 20 millions of Euro compared
+to 24 millions in the former case. So the simulation shows that                  [5] A. Conejo, R. Garcia-Bertrand, and M. Carrion, "Forward trading for
+trading in the Forward market results to an increase of profit                        an electricity producer," in Third International Conference on Electric
+of about 20%. Note, that historical achieved revenue out of                           Utility Deregulation and Restructuring and Power Technologies, 2008,
+sold energy were about 20 to 30 millions of Euro, making the                          pp. 89 ­93.
+simulated ones realistic estimations.
+                                                                                 [6] M. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic optimization
+   Fig. 9 finally shows the positions of Forward contracts. At                        applied to energy planning," Mathematical Programming, vol. 52, pp.
+the beginning there are even long positions but the less time                         359­375, 1991, 10.1007/BF01582895.
+left until settlement the more the positions are in short. This
+is of course reasonable since the storage power plant is long                    [7] S.-E. Fleten, d. Haugstvedt, J. A. Steinsbo, M. M. Belsnes, and F. Fleis-
+by nature and short positions are needed in order to hedge its                        chmann, "Bidding hydropower generation: Integrating short- and long-
+operation.                                                                            term scheduling," in 17th Power Systems Computation Conference, 2011.
+
+                                                                                 [8] J. Barqu`in and J. Garcia-Gonzalez, "Water value in competitive mar-
+                                                                                      kets: Dynamic programming and game theory." Sixth Int. Conf. on
+                                                                                      Probabilistic Methods Applied to Power Systems, 2000.
+
+                                                                                 [9] C. Baslis and A. Bakirtzis, "Optimal yearly scheduling of generation and
+                                                                                      pumping for a price-maker hydro producer," in Energy Market (EEM),
+                                                                                      2010 7th International Conference on the European, 2010, pp. 1 ­6.
+
+                                                                                [10] C. Baslis and A. Bakirtzis, "Mid-term stochastic scheduling of a price-
+                                                                                      maker hydro producer with pumped storage," IEEE Transactions on
+                                                                                      Power Systems, vol. 26, no. 4, pp. 1856 ­1865, nov. 2011.
+
+                                                                                [11] B. Flach, L. Barroso, and M. Pereira, "Long-term optimal allocation of
+                                                                                      hydro generation for a price-maker company in a competitive market:
+                                                                                      latest developments and a stochastic dual dynamic programming ap-
+                                                                                      proach," Generation, Transmission Distribution, IET, vol. 4, no. 2, pp.
+                                                                                      299 ­314, 2010.
+
+                                                                                [12] P. Masse, Les Reserves et la Regulation de l'Avenir. Paris: Hermann,
+                                                                                      1946.
+
+                                                                                [13] R. Bellman, Dynamic Programming. Princeton, New Jersey: Princeton
+                                                                                      University Press, 1957.
+
+                                                                                [14] J. D. C. Little, "The use of storage water in a hydroelectric system,"
+                                                                                      Journal of the Operations Research Society of America, vol. 3, no. 2,
+                                                                                      pp. 187­197, 1955.
+
+                           V. CONCLUSION
+
+   This paper presented as first contribution a modeling con-
+cept which is able to solve the bidding problem for a price-
+maker power plant. The concept was applied to a pumped
+storage hydro plant with seasonal and hourly operational
+constraints in a deregulated market environment. Time horizon
+was one year and considered were stochastic water inflows and
+day-ahead prices as well as Forward contracts.
+Proposed was a multistage stochastic program with a quadratic
+recourse problem, which was dynamically solved. It was
+shown how the results of such an optimization, water values
+
+   2Note, that financial and operational risks were not considered explicitly
+but were taken care by the risk-neutral stochastic optimization.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 18:50:40 UTC from IEEE Xplore. Restrictions apply.
+

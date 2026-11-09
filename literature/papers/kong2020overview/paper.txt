@@ -1,0 +1,1115 @@
+                                   Electric Power Systems Research 178 (2020) 106027
+                                         Contents lists available at ScienceDirect
+
+                             Electric Power Systems Research
+
+                             journal homepage: www.elsevier.com/locate/epsr
+
+An overview on formulations and optimization methods for the unit-based T
+short-term hydro scheduling problem
+
+Jiehong Konga, Hans Ivar Skjelbreda,, Olav Bjarte Fossob
+
+a Department of Energy Systems, SINTEF Energy Research, 7034 Trondheim, Norway
+b Department of Electric Power Engineering, Norwegian University of Science and Technology, 7491 Trondheim, Norway
+
+ARTICLE INFO                 ABSTRACT
+
+Keywords:                    The short-term hydro scheduling (STHS) problem aims at determining the optimal power generation schedules
+Hydropower generation        for either a single hydropower plant or an integrated system of cascaded watercourses during a time horizon
+Mathematical programming     from a single day to one week. Traditionally, an aggregated plant concept is usually adopted in the formulation
+Optimization                 of the STHS problem. The hydro-turbine generator units in a plant are aggregated as one equivalent unit.
+Short-term hydro scheduling  Nowadays, more and more hydro producers participate in both energy and capacity markets. It highlights the
+Hydro unit commitment        need for the precise calculation for energy conversion and available capacity of each unit. Formulating the STHS
+                             problem on individual units can accurately capture the physical and the operational characteristics of the unit. In
+                             this overview, a detailed classification of mathematical programming approaches to model and solve the unit-
+                             based STHS problem is presented. The various modeling techniques proposed in the publications since 2000 are
+                             categorized by their objectives and constraints. This provides a comprehensive comparison and discussion for
+                             each specific issue in the formulation of STHS. We anticipate this overview to be a starting point for finding more
+                             computationally solvable and effective methods to handle the challenges in the unit-based STHS problem.
+
+1. Introduction                                                            based [2]. Most STHS problems in the literature [3­8], especially in the
+                                                                           short-term scheduling of hydrothermal system [9] or hydro-thermal-RE
+    Traditionally, short-term hydro scheduling (STHS) aims at de-          interconnected power system [10­12], are plant-based. That is to say,
+termining the optimal generation schedules for the available hydro         an aggregated plant concept is adopted in the problem formulation,
+resources for the coming hours and days by utilizing the water potential   where the hydro-turbine generator units in a hydropower plant are
+in the most economical way. STHS is usually employed to support spot       aggregated as one equivalent unit. One advantage of using the ag-
+bids in the day-ahead market and to provide a final dispatch plan after    gregated plant concept is that it reduces the potential STHS problem
+the market clearing process [1].                                           size significantly.
+
+    Nowadays, with the rapid development of wind and solar tech-               However, participation in both energy and capacity markets high-
+nology, non-dispatchable renewable energy (RE) sources play a notable      lights the need for the precise calculation for energy conversion and
+part in the power production mix of many countries. Because of its         available capacity of each unit. It requires a more accurate and detailed
+storability, flexibility, and controllability, hydropower is of critical   representation of the hydropower generation, considering the impact of
+importance in ensuring system safety. A significant fraction of the ca-    head variation, hydraulic losses, efficiency curves, and restricted op-
+pacity of the hydro units serves as an operating reserve to meet frequent  erational zones on the power produced by each unit. The results from
+fluctuations in the power system.                                          the model should not only indicate the dispatch of each unit but also the
+                                                                           available capacity.
+    The basic hydro generation model is either plant-based or unit-
+
+  Abbreviations: AL, augmented lagrangian; B&B, branch and bound; DP, dynamic programming; FP, fixed speed pump; HPF, hydropower production function; HSC,
+hydraulic short-circuit; HUC, hydro unit commitment; IAL, inexact augmented lagrangian; I/O, input/output; LP, linear programming; LR, lagrangian relaxation;
+MCP, market clearing price; MILP, mixed integer linear programming; MINLP, mixed integer nonlinear programming; MIQP, mixed integer quadratic programming;
+N/A, not available; NLP, nonlinear programming; PSHP, pumped storage hydropower plant; PSO, particle swarm optimization; RE, renewable energy; RPG, Rosen's
+projected gradient; SQP, sequential quadratic programming; STHS, short-term hydro scheduling; UC, unit commitment; ULD, unit load dispatch; VP, variable speed
+pump
+
+   Corresponding author.
+    E-mail addresses: Jiehong.kong@sintef.no (J. Kong), hansivar.skjelbred@sintef.no (H.I. Skjelbred), olav.fosso@ntnu.no (O.B. Fosso).
+
+https://doi.org/10.1016/j.epsr.2019.106027
+Received 28 April 2019; Received in revised form 23 August 2019; Accepted 5 September 2019
+Available online 17 September 2019
+
+0378-7796/ © 2019 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY license
+
+(http://creativecommons.org/licenses/by/4.0/).
+J. Kong, et al.                                                                                                       Electric Power Systems Research 178 (2020) 106027
+
+Nomenclature                                                                           Ci,s           Start-up cost of unit i in plant s ()
+                                                                                                      Load obligation in period t (MW)
+Sets and indexes1                                                                      Dt             Forecasted market price of electricity in period t (/MWh)
+                                                                                       MtSELL         Marginal water value of reservoir k at the end of the
+                                                                                       WkE,Nt¯ D
+                                                                                                                                            ¯
+T                Set of time periods, index t T
+                                                                                                      scheduling horizon t (/MWh)
+K                Set of reservoirs, index k K
+
+Uk               Set of all direct upstream hydraulic objects for reservoir k,         Variables
+
+                 index u Uk
+
+S                Set of hydropower plants, index s S                                   i,s,t {0,1} Status of unit i in plant s in period t (1 on, 0 off)
+
+Ns               Set of penstocks in plant s, index n Ns                               µi,s,t {0,1} Start-up decision of unit i in plant s in period t (1 if it is
+                                                                                       started up in period t, 0 otherwise)
+Is               Set of hydro-turbine generator units in plant s, index i Is
+
+In,s             Set of units that connect to the same penstock n in plant s,          vk,t           Water volume of reservoir k at the end of period t (m3)
+
+                 index i In,s                                                          qkB,tYPASS     Water released via bypass gate of reservoir k in period t
+                                                                                                      (m3/s).
+Parameters                                                                             qkT,Ot TAL     Total regulated water release of reservoir k in period t
+                                                                                                      (m3/s)
+¯                                                                                      hsG,tROSS      Gross head of plant s in period t (m)
+t                                                                                      hiN,sE,tT
+                 Number of the time periods of the scheduling problem                                 Net head of unit i in plant s in period t (m)
+
+    T            Length of each time period (hour, h)
+
+   u,k           Water delay time from upstream hydraulic object u to                    hiP,sE,tN    Penstock head loss of unit i in plant s in period t (m)
+                                                                                                      Water discharge of unit i in plant s in period t (m3/s)
+VkI,N0IT         reservoir k (h)                                                       qi,s,t         Power output of unit i in plant s in period t (MW)
+                 Initial water storage of reservoir k (cubic meter, m3)                pi,s,t
+                                                                                       ptSELL         Power sold to the market in period t (MW)
+VkE,tN¯ D        Target water storage of reservoir k at the end of sche-
+
+                 duling horizon (m3)
+VkMIN, VkMAX Minimum and maximum water volume of reservoir k
+(m3)                                                                                   State-dependent functions
+QkBYPASS
+           _MAX      Maximum controllable spillage of reservoir k (m3/s)               lk,t 1 (vk,t 1) The water level of reservoir k as a function of the water
+
+QkN,tI           Forecasted natural inflow into reservoir k in period t (m3/           storage of the reservoir (m)
+                                                                                        hsI,Nt TAKE (lk,t 1, qkT,Ot TAL) Intake head loss of plant s as a function of
+                 s)
+                                                                                       the water level of upstream reservoir k and the total regulated water
+Es               Energy conversion factor for plant s (megawatt-hour per
+
+                 cubic meter, MWh/m3)                                                  release of the upstream reservoir k (m)
+                                                                                        hsT,tAIL (lk+1,t 1, qkT,Ot TAL) Tailrace head loss of plant s as a function of
+Ls               Water level of outlet line of plant s (m)
+                                                                                       the water level of downstream reservoir k + 1 and the total regulated
+G                Conversion constant including the gravity acceleration
+
+                 and water density makes the appropriate unit conversions              water release of the upstream reservoir k (m)
+                 from (m) and (m3/s) to (MW), the default setting is                   qkO,tVER (lk,t 1) Unregulated water release (overflow) of reservoir k in
+                 9.81 10 3 (kg m2/s2)                                                  period t as a function of the water level of the reservoir (m3/s)
+                                                                                       GEN
+   n,s           Loss factor of penstock n in plant s, taking into account the         i,s   (pi,s,t  )     Generator efficiency of unit i in plant s as a function of
+
+             length, diameter, curvature, and roughness of the pen-                    the production (%)
+             stock's inner walls (s2/m5)                                               TURB  (hiN,s,EtT
+PiM,s IN, PiM,s AX Minimum and maximum production of unit i in plant s                 i,s               ,  qi,s,t )  Turbine efficiency of unit i in plant s as a func-
+
+                                                                                       tion of the net head and water discharge of the unit (%)
+                                                                                       QiM,s,ItN (hiN,sE,tT), QiM,t AX (hiN,s,EtT) Minimum and maximum water discharge
+(MW)
+PsMIN, PsMAX Minimum and maximum production of plant s (MW)                                         of unit i in plant s in period t as a function of the net head
+QsMIN, QsMAX Minimum and maximum discharge of plant s (MW)                             (m3/s)
+
+    i,s,0        Initial status of unit i in plant s (1 on, 0 off)
+
+    Therefore, the traditional modeling method based on aggregated                     trying to determine the respective dispatch of the committed units
+plant level must be supplemented by the unit-based modeling in the                     [13­16]. In the literature, these two problems can be combined and
+optimization ("unit-based" refers to "the individual hydro-turbine                     unified as a hydro unit commitment (HUC) problem [17­23].
+generator unit" in this paper). Unit-based STHS can accurately capture
+the physical as well as the operational characteristics of the unit.                       From the perspective of a problem statement, STHS may be posed as
+Furthermore, recent advances in hardware and software packages have                    a single problem, for example as for those generating companies with
+significantly overcome earlier computational difficulties. In most si-                 only hydropower plants, or it may be a subproblem integrated within a
+tuations, the STHS problems formulated by the sophisticated and de-                    larger problem where thermal units and/or wind power generators are
+tailed mathematical programming approaches can be solved within a                      involved [24].
+reasonable time.
+                                                                                           Mathematically, the STHS problem is formulated as a large-scale,
+    STHS is related to two problems, which can be specified as (1) the                 discrete, nonlinear, and non-convex problem. A wide range of optimi-
+unit commitment (UC) problem seeking to specify, for each period, the                  zation techniques has been proposed for addressing this complex pro-
+on/off status of the units; and (2) the unit load dispatch (ULD) problem               blem. These optimization methods can be generally divided into two
+                                                                                       main groups: exact methods and heuristic methods.
+  1 Note that the hydraulic objects in the cascaded watercourse are indicated in
+sequence. However, a reservoir can be associated with a plant or be inter-                 The authors of Ref. [25] presented a bibliographical survey and a
+connected by a junction/gate. Therefore, we separate the sets and indexes of           methodology-based classification of the classical exact methods and
+reservoirs and plants. If not specifically mentioned, reservoir k always refers to     modern heuristic algorithms applied to solve short-term thermal UC
+the direct upstream reservoir of plant s and reservoir k + 1 refers to the direct      and economic power load dispatch problems together with hydro
+downstream reservoir of plant s.                                                       schedules. They also discussed the advantages and limitations of the
+                                                                                       methodologies. In Ref. [26], exact approaches for the HUC problem
+                                                                                       were summarized. Reference [9] offered a comprehensive review of the
+
+                                                                                    2
+J. Kong, et al.                                                                                                         Electric Power Systems Research 178 (2020) 106027
+
+application of heuristic methods to determine the optimal short-term             the load demand while satisfying the physical and operational con-
+scheduling of hydrothermal systems.                                              straints of the system. In this context, the most economical schedules
+                                                                                 are presumed to be the efficient use of water and to minimize start-ups
+    Moreover, the authors of Ref. [7] provided a chronological overview          and shut-downs of units.
+of STHS approaches proposed in the past 20 years, focusing on the main
+contributions of the methodology for each particular hydro system                    In deregulated power systems such as Scandinavia [1], Spain
+configuration. The review in Ref. [27] presented the operational aspects         [33,36] and Canada [37,38], a market clearing process takes place to
+of reservoir-based as well as small run-of-river hydropower plants.              distribute electricity production among different producers by con-
+                                                                                 sidering offers and demands from the participants. The market clearing
+    Though the STHS problem seeks to find the optimal dispatch plan              price (MCP) is determined by the intersection of the supply and demand
+within a relatively short period, it still faces uncertainties regarding the     curves. All selling bids under the MCP and all purchase bids over the
+market price and natural inflow for the coming hours and days.                   MCP are accepted. The hydro producers maximize their profits by
+Reference [28] outlined stochastic-programming-based formulations of             trading electricity in a competitive electricity market under the as-
+the multi-market STHS and bidding problems. In addition, the pene-               sumption that they do not have the market power to influence the
+tration of the intermittent RE in the power system significantly in-             market price.
+creases the uncertainty in system operation. Authors in Ref. [12]
+summarized the latest short-term scheduling methods to model and                 2.1.1. Objective 1: maximizing the total revenue
+evaluate the effect of RE for the safe and stable operation of the hydro-            Revenue maximization is widely used in the competitive electricity
+thermal-RE power system.
+                                                                                 market [6,18,24,31­33,36­40]. It is achieved by selling power in the
+    The overview in this paper principally addresses the modeling                market, as expressed in Eq. (1).
+techniques for individual hydro units and the corresponding solution
+methodologies proposed in the papers since 2000. The focus of this               Max f1 =       MtSELL T ptSELL                 (1)
+paper is on the exact approaches, and heuristic methods are not dis-
+cussed here. Uncertainties in the forecast of natural inflow and market                     tT
+price and the power generation of RE are not considered. The detailed
+explanation of the computationally efficient deterministic models will           2.1.2. Objective 2: minimizing the total operational cost
+serve as a solid scientific reference for including the stochastic nature of         When the value of stored water is ignored, the hydropower pro-
+the STHS problem as well as for the optimal scheduling in a hydro-
+thermal-RE interconnected power system.                                          duction costs are negligible [31]. The most significant costs having a
+                                                                                 real impact on STHS are the start-up and shut-down costs of the units
+    Besides, the traditional layout of a literature review first presents a      [33]. Since both start-up and shut-down of units have a negative in-
+general set of objectives and constraints of the STHS problem and then           fluence on the maintenance costs and service life of a machine, the
+enumerates the contributions of each paper; see for instance                     economic STHS calls for a consideration of reducing the number of
+[7,9,25,26]. However, in this overview, the modeling techniques pro-             start-ups and shut-downs of the units [13,18,21,24,29,31,32,34,38­40].
+posed in the literature are categorized by their objectives and con-             Therefore, the start-up cost of each unit should be minimized (the shut-
+straints. This provides a comprehensive comparison and discussion for            down cost can be added if needed), as presented in Eq. (2). The unit
+each specific issue in the formulation of STHS.                                  start-up cost can be calculated based on the history of expenses in
+                                                                                 maintenance and repairs concerning the number of start-ups [29], or be
+    It is worth noting that, in contrast to the plant-based aggregation          estimated as a function of the nominal output power of the unit [41]. In
+where water input and power output are formulated at plant level and             some cases, the start-up cost is not expressed in the form of monetary
+each unit in the aggregated plant is assumed to have the same char-              units () but in terms of water release (m3) required to start up one unit
+acteristics [3­6,8], another type of aggregation has recently been de-           [19].
+veloped [21,23,29,30]. Instead of working directly with individual
+units in the model, combinations of units in operation are used. Since           Min f2 =                 Ci,s µi,s,t
+the formulations in these papers still keep the details of unit char-
+acteristics, they are taken as unit-based STHS problems. Furthermore,                       t T s S i Is                        (2)
+although papers [31­33] are modeled on the plant level, it is assumed
+that each plant operates with only one generating unit, or its equiva-           2.1.3. Objective 3: minimizing the value of energy used or spilled
+lent, with a Hill chart given by turbine manufacturer. Therefore, they               If the electricity market is centrally controlled, the load obligation is
+are included in this overview.
+                                                                                 predefined and no, or only a limited amount of, power can be sold to
+    The remainder of the paper is organized as follows: Section 2 pro-           the spot market. In this case, the main objective is to minimize the value
+vides a comprehensive discussion of the various modeling techniques in           of water utilized by turbines or spilled [38], as expressed in Eq. (3a).
+the mathematical formulations of the STHS problem. Section 3 sum-                Water value WkE,Nt¯ D refers to the opportunity cost of storing water for
+maries the implementation of optimization methods and solvers for                later generation versus using it now (See Subsection 2.2.8 for details).
+STHS. The conclusion is given in Section 4.                                      In other words, the objective is to maximize the potential energy for
+                                                                                 future income, which leads to an alternative form as Eq. (3b). If water
+2. Mathematical formulations                                                     value is not considered in the STHS, then Eq. (3a) can be represented
+                                                                                 just by the volume of water released from storage [19] or Eq. (3b) can
+    This section contains a discussion of the various choices for mod-           be expressed by water stored at the end of the planning horizon [23].
+eling objectives and constraints in detail, with the definitions presented
+in Nomenclature.                                                                 Min f3a =      WkE,tN¯ D Es (VkI,N0IT  vk,t¯)
+
+2.1. Objectives                                                                             kK                                  (3a)
+
+    The objectives of the STHS problem are heavily dependent on the              Max f3b =      WkE,tN¯ D Es vk,t¯              (3b)
+system characteristics and operational requirements. In a centralized
+system such as Brazil [34,35], the hourly generation target for each                        kK
+hydropower plant is given by the system operator, and there is no
+corresponding electricity price. The STHS problem focuses on searching           2.1.4. Other objectives
+for the most economical schedules among the generating units to meet                 When determining optimal operation for a single hydropower plant
+
+                                                                                 with multiple available units, the objective can be to maximize the
+                                                                                 power generated for a given flow [14,17,29], to minimize the total
+
+                                                                              3
+J. Kong, et al.                                                                                                         Electric Power Systems Research 178 (2020) 106027
+
+discharge of the units for a given load [15,19,20,22,34,35], or to             vk,t = vk,t 1
+maximize the efficiency of the whole power plant energy conversion
+[16]. If the power loss is the focus, the objective becomes to minimize        + 3600 T QkN,tI +                        (quT,Ot TAuL,k + quO,tVERu,k (lu,t 1) )
+the losses in the hydro generation process due to tailrace elevation,
+penstock loss, and turbine-generator efficiency variations [13,21]. In                             u Uk
+Ref. [33], the authors presented an objective function to maximize the
+weighted technical efficiency where the power generated by each plant          qkT,Ot TAL qkO,tVER (lk,t 1)
+per period is taken as the weighting factor.                                                                                                                   (6)
+
+    Certain combinations of the objectives are neither desirable nor           qkT,Ot TAL =        qi,s,t + qkB,tYPASS                                           (7)
+feasible. The selection of objectives depends on the characteristics of
+the electricity market and the operating conditions. If there are two or                     i Is
+more competing objectives in a model, it becomes a multi-objective
+optimization problem. In this case, no single solution exists that si-             These constraints are linearly coupled in time and space. The water
+multaneously optimize each objective. Instead, a set of Pareto optimal         storage of reservoir k at the end of period t is the storage at the be-
+(also known as "non-dominated" or "Pareto efficient") solutions exist.         ginning of the period plus the volume of inflow minus outflow in period
+How to solve a multi-objective optimization problem mainly refers to           t. The volume of flow is decided by the length of the time period T (i.e.
+two aspects: (1) how to find a representative set of Pareto optimal so-        time resolution), and the constant "3600" represents 3600 s in one
+lutions that can approximate the entire Pareto front; and (2) how to           hour. In most recent works dealing with cascaded hydro systems, the
+select the most preferred solution among all Pareto optimal solutions          water balance equality constraints are expressed in terms of volume
+[42].                                                                          (m3). However, in the early publications such as [2,37,49], the con-
+                                                                               straints are represented based on flow (m3/s).
+    The most popular method for the multi-objective optimization of the
+pure STHS problem is to convert the multi-objective problem into a                 The inflow includes the forecasted natural inflow and the water
+single-objective optimization problem by using weighting coefficients          discharged from the upstream reservoirs or other hydraulic objects (e.g.
+[43,44] or by treating some of the objectives as constraints [45]. In Ref.     gate, junction, and creek intake). Due to the cascaded hydraulic con-
+[46], the authors developed an STHS model for peak shaving of mul-             figuration, the fraction of water released upstream will contribute to the
+tiple power grids. It is a typical multi-objective min-max problem. The        inflow of downstream reservoirs after a certain time delay. It is an
+objective function for one power grid has to compromise with the               important physical element of a cascaded watercourse, also known as
+others, and a fuzzy optimization method is adopted to evaluate the             "river routing effects" [38]. Water delay time can be a multiple of the
+Pareto optimal solutions. In Ref. [47], the authors included flood con-        time resolution [19], a real number constant [23,39], an integer vari-
+trol in STHS and investigated a tri-objective optimization model. The          able [50], or a continuous variable [51].
+multi-objective evolutionary algorithm based on the decision maker's
+preference and the decomposition technique is developed.                           The outflow consists of regulated and unregulated water release.
+                                                                               The regulated water release refers to the total discharge of the units and
+    In the short-term scheduling of hydrothermal systems [48] or               the flow going through the bypass gates, as expressed in Eq. (7). In the
+hydro-thermal-RE hybrid systems [12], more advanced heuristic algo-            literature, the flow that can be controlled precisely by adjusting gate
+rithms for solving multi-objective optimization are presented since            openings is also called the spillage of the plant [22­24,52]. This flow
+more conflicting concerns such as environmental emissions are in-              can be regulated to balance the minimum outflow constraints and the
+volved. However, the deeper discussion is out of the scope of this paper.      transmission capacity limits [3]. The controlled spillage from a re-
+The authors in Ref. [12] gave a thorough summary of the traditional            servoir into a downstream area also occurs during the wet season [20].
+and emerging heuristics for solving the multi-objective scheduling of          However, spillage should be avoided as much as possible, since no
+the hybrid power systems.                                                      electricity is produced in this case [38].
+
+    Commonly seen objective function components for STHS in a                      By contrast, the unregulated water release is associated with the
+competitive electric power system, as shown in Eq. (4), include the            uncontrollable flow, which occurs when a reservoir runs full, and the
+revenue from selling power, the start-up costs, and the value of energy        water spills over the top of the dam. The overflow description can be
+stored in the reservoirs at the end of the study. The penalty costs as-        represented by a piecewise linear function [2,37,53], such that below
+sociated with violation of various limits are optionally included in the       the reservoir starting spill level, the spill flow is zero, while above the
+objective function if necessary.                                               spill level the flow is proportional to the level over the full storage of
+                                                                               the reservoir.
+Max F = f1 f2 + f3b  (4)
+                                                                                   In some areas, the evaporation rate at reservoirs has to be accounted
+2.2. Constraints                                                               for. It depends on the surface area of the reservoir and the storage
+                                                                               volume [3]. In addition, there is the use of reservoir water without the
+    The optimization problem is subjected to a variety of constraints,         purpose of generating energy, such as urban water supply, irrigation,
+including                                                                      and navigation [54]. If necessary, these factors should be included in
+                                                                               the reservoir balance constraint.
+
+2.2.1. Constraint 1: water balance of the reservoirs                           2.2.2. Constraint 2: storage limits of the reservoir and operational limits of
+    The hydrological balance of a cascaded reservoir k associated with         controllable spillage
+
+plant s in each period t is formulated in Eqs. (5)­(7).                            Eq. (8) restricts the allowable capacity of the reservoir
+                                                                               [2,15,18­20,22,23,29,32­34,38­40]. The storage limits refer to the
+vk,0 = VkI,N0IT      (5)                                                       minimum operating level and the maximum flood level. Target oper-
+                                                                               ating limits can also be added for a designated period, typically the end
+                                                                               of the study. In this context, it can be seen as a volume coupling to
+                                                                               long/mid-term planning (See Subsection 2.2.8 for details). It is practical
+                                                                               to add penalty variables and costs to avoid unregulated spillage or
+                                                                               running out of water [2]. Eq. (9) represents the operational limits of the
+                                                                               controllable spillage of the reservoir [18,20,38].
+
+                                                                               VkMIN vk,t VkMAX                                                                  (8)
+
+                                                                            4
+J. Kong, et al.                                                                                                                      Electric Power Systems Research 178 (2020) 106027
+
+0 qkB,tYPASS QkBYPASS_MAX                                                    (9)   1) Penstock/main tunnel head loss is related to the friction of water on
+                                                                                       the penstock wall. It can be represented as a quadratic function of
+2.2.3. Constraint 3: head variation and flow-related head losses                       the flow going through the penstock [13]. Loss factor n,s depends
+    The net head of a turbine is primarily dependent on reservoir level                on the length, diameter, curvature, and roughness of the penstock's
+                                                                                       inner walls [16,54]. In some simplified models, it is assumed that
+variation (i.e. the gross head) and flow-related head losses (Fig. 1).                 penstock head loss is either constant [19] or calculated as a per-
+    The gross head, as expressed in Eq. (10), is the difference between                centage of the power output [3,24] or a percentage of the net head
+                                                                                       [59], regardless of the flow going through the tunnel. In most STHS
+the water level of the upstream reservoir, i.e. the forebay level, and                 problems where penstock head loss is considered as a quadratic
+downstream reservoir (if the water level of downstream reservoir k + 1                 function of the turbined flow [13,17,21­23,34,39,52,60], there is a
+is higher than the outlet line of the plant s).                                        common premise that the penstock loss for one specific unit only
+                                                                                       depends on the water flow processed by this unit. It is correct only if
+hsG,tROSS = lk,t 1 (vk,t 1) MAX [lk+1,t 1 (vk+1,t 1), Ls]                    (10)      each unit is fed by an independent penstock from the reservoir.
+                                                                                       However, in some areas, multi-level shared penstock (also known as
+    Whether the head variation caused by the change in water volume                    "common penstock/tunnel/conduit") configuration often exists
+should be considered depends on the size of the reservoir. For large                   [1,61­63]. A hydropower plant consists of a main tunnel branching
+reservoirs, little change in the water level is observed during a short-               into several separate penstocks, through which the flowing water
+term scheduling horizon (only a few days or even a single day)                         reaches multiple units. As illustrated in Fig. 1, the main tunnel and
+[13,21,52]. It is valid to assume that the variation on the water level is             Penstock2 marked in red are shared penstocks, whereas Penstock1 is
+negligible. However, for the medium- or small-sized reservoirs with                    an independent penstock. Few approaches accounting for loss in
+daily or hourly regulation capability, head variation should be con-                   shared penstocks in STHS have been presented in the literature. In
+sidered [5,6,32]. The head variation (also known as "the head effect")                 Ref. [14], the authors considered the ULD problem that addresses
+has a direct impact on the unit's efficiency and operating limits, con-                the optimal distribution of the production among a set of online
+stituting one of the main difficulties in the modeling of the STHS pro-                units for a given flow. Accounting for losses in the shared penstock
+blem [36]. In some large-scale optimization problems, for the sake of                  introduces coupling net head variables. A decomposition algorithm
+computational tractability, the head is assumed to be fixed irrespective               is proposed and each subproblem is solved by dynamic program-
+of the characteristics of the reservoir [55].                                          ming (DP). In Ref. [16], the ULD problem is solved by maximizing
+                                                                                       the end pressure of the shared penstock. A gauge pressure sensor is
+    The water level relies on the water stored in the reservoir and can be             used to measure the flow at the end of the penstock. In Ref. [64], a
+formulated as a (piecewise) linear function [19,33,37,40,53] or poly-                  two-phase decomposition approach is presented. The UC sub-
+nomial function [17,20,22­24,34,38,43] of the water storage. In addi-                  problem is first solved by a hybrid algorithm that combines a
+tion, instead of utilizing the volume at the beginning of period t as                  heuristic searching method and a progressive optimal algorithm.
+shown in Eq. (10), it is common to use the average volume associated                   The ULD subproblem is then solved by DP. In Ref. [40], three
+with the beginning and end of one period to compute the water level                    heuristics are proposed to incorporate the power loss in shared
+[19,22,36,39,56,57].                                                                   penstocks in the STHS problem. The nonlinear penstock loss can be
+                                                                                       effectively transformed into the formulation framework of mixed
+    On the other hand, head losses lead to the reduction of the gross                  integer linear programming (MILP).
+head, which in turn affects the power generated at the turbines. There
+are three main types of flow-related head losses, i.e. penstock/main               2) Canal intake head loss is associated with the water level of the up-
+tunnel head loss, canal intake head loss, and tailrace head loss. The first            stream reservoir and the water flow passing through the plant. In
+type of loss is caused by water friction and the latter two are due to the             contrast to the other two types of losses, it is seldom mentioned in
+velocity of water flow [58]. Physically, these losses are not distances                the formulation of the STHS problem. In Ref. [35], the loss in canal
+measured from water levels. However, they can be converted into                        intake is modeled as a quadratic function of the total flow to the
+adequate quantities expressed in meters (Eq. (11)).                                    plant. In Ref. [40,53], intake loss is expressed as a function of the
+                                                                                       water level of the upstream reservoir and the total regulated water
+                                                                          2            release of the reservoir.
+
+hiN,sE,tT = hsG,tROSS                n,s qi,s,t +                qi ,s,t           3) Tailrace elevation can vary considerably with an accumulation of
+                                                                                       the total water discharge of the plant. It leads to a decrease in the
+                       n Ns |i In,s                i In,s \ {i}                        net head and has a negative effect on power generation. In the
+
+                 hsI,Nt TAKE (lk,t 1 (vk,t 1), qkT,Ot TAL)
+
+                 hsT,tAIL (lk+1,t 1 (vk+1,t 1), qkT,Ot TAL)                  (11)
+
+                                                   Fig. 1. Schematic illustration of head variation and flow-related head losses.
+                                                                                                            5
+J. Kong, et al.                                                                                                                 Electric Power Systems Research 178 (2020) 106027
+
+    literature, the tailrace effect is usually included as the downstream          illustration for the head-dependent turbine efficiency and generator
+    head variation. No analytical relationship between tailrace level and
+    total water release is available. It has to be determined from ex-             efficiency. In some cases, the unit's global efficiency is introduced and
+    perimental or measurement data [21]. It can be described by a
+    piecewise linear function [40,53,65] or polynomial function                    defined by the product of the efficiencies of turbine and generator
+    [13,14,17,19­24,35,36,43,52] of the total outflow from the plant. If
+    the hydraulic cohesive relationship exists, the tailrace elevation is          [21,29,33,52,67].
+    also influenced by the water level of the immediate downstream
+    reservoir [13,19,40,53,60]. The authors of Ref. [8] presented a de-            The level of detail included in the HPF depends on the time horizon,
+    tailed model of tailrace elevation that has a nonlinear dependence
+    on the downstream reservoir elevation and moves between two                    temporal resolution, system size, available data, and goals of the model
+    modes: encroached and not encroached.
+                                                                                   [8]. It may have a significant impact on the economic performance of
+    Head losses are additive along a path in the hydraulic network,
+depending on the flow in the different sections (canal, main tunnel,               the system [24]. Considering the trade-off between the accurate re-
+penstock, outlet) of the network from the upstream to the downstream
+water surfaces. Therefore, the net head available at a turbine is a                presentation of the HPF and the computational tractability of the pro-
+function of the flow of all the units. This multi-level configuration for
+the hydraulic network is represented as a tree structure presented in              blem, one approach is to simplify or even leave out the nonlinearity and
+Ref. [14].
+                                                                                   state-dependency in the formal optimization methods. For example, the
+    In addition, in some very detailed models, hydraulic efficiency and
+mechanical losses in the turbine, and mechanical and electrical losses in          turbine efficiency is a fixed value [3,14,24,59] or only flow-dependent
+the generator are also taken into account [34,35]. These data can be
+obtained from meters and sensors. Reference [35] provides a thorough               [29]; the generator efficiency is unchanging over a wide range of op-
+explanation of the measurement and calculation for these losses.
+                                                                                   eration [17] or even not mentioned [23,24,39].
+
+                                                                                   If the generator efficiency is included in the HPF, it is usually re-
+                                                                                                                                                     GEN
+                                                                                   presented as a concave function of power output                   i,s  (pi,s,t )  [13,40].  By
+
+                                                                                   contrast, the mathematical expression of the turbine efficiency is con-
+
+                                                                                   siderably more complicated. The turbine efficiency is typically de-
+
+                                                                                   scribed by Hill chart or Hill diagram, which is composed of a set of
+
+                                                                                   discrete triplets relating the turbine efficiency values, the net head, and
+
+                                                                                   the water discharge. These points are usually provided by the turbine
+
+                                                                                   manufacturer [17,34,40,52,68], obtained by in-site measurement
+
+                                                                                   [66,69], or taken from a real Hill chart presented in the literature
+
+                                                                                   [33,67].
+
+                                                                                   However, the original number of points presented in a Hill chart is
+
+                                                                                   not sufficient to obtain precise results. The hydro producers need a
+
+2.2.4. Constraint 4: hydropower production                                         continuous curve presenting turbine efficiency for the full working area
+    The core of the STHS problem is how to model the relationship
+                                                                                   of the unit. Curve fitting can be achieved by (1) applying a regression
+between water discharge (input) and electrical energy (output) [34].
+This relationship is defined by the hydropower production function                 technique from the set of triplets to build a high order polynomial for
+(HPF), as expressed in Eq. (12). It is a complex state-dependent, non-
+linear, and non-convex function. This function has been referred to in             the turbine efficiency (see next paragraph); (2) using an interpolation
+the literature as hydro unit generating input/output (I/O) characteristic
+[2,14,36], I/O curve [32], and unit performance curves [19,22,31].                 method to estimate the value from the set of triplets. Usually, linear
+
+                                                                                   interpolation is employed to calculate efficiency [23,57]. More pre-
+
+                                                                                   cisely, in Ref. [35], spline interpolation is first performed to increase
+
+                                                                                   the number of points when composing the Hill chart. The interval of
+
+                                                                                   power output is reduced from 1 MW to 0.25 MW and the interval of the
+
+pi,s,t = G  GEN  (pi,s,t  )  TURB  (hiN,s,EtT  ,  qi,s,t ) hiN,sE,tT qi,s,t  (12)  net head is reduced from 1 m to 0.25 m. Following this, in real-time
+            i,s              i,s
+                                                                                   operation, the actual value of efficiency is found through linear inter-
+
+    The definition of the net head hiN,sE,tT has already been provided             polation on the interpolated curve. This way, it is possible to obtain a
+above. Its complexity is highlighted in the net head formulation in Eq.
+(11). The turbine efficiency is associated with converting the net head            precise value of the turbine efficiency with a low computational cost.
+potential energy in the reservoir into mechanical energy in the turbine.
+Therefore, it depends on the net head and the turbined flow [66]. For a            The work in Ref. [68] evaluated the performance of linear interpolation
+given net head, the turbine efficiency can be as low as 60% at minimum
+discharge and as high as 95% at the best efficiency point [57]. After              and spline interpolation for turbine efficiency curves in terms of the
+reaching the best efficiency point, the turbine efficiency will decrease
+with the increase of discharge. In the same way, the generator effi-               dispatch schedules in the day-ahead market and the bidding strategy in
+ciency is related to the conversion of mechanical energy into electrical
+energy in the generator. It is typically higher than 95% and mono-                 the intraday market. The reported conclusion is that spline interpola-
+tonically increasing with the generator output [57]. Fig. 2 gives an
+                                                                                   tion is a promising alternative to linear interpolation for obtaining ac-
+
+                                                                                   tual turbine efficiency in STHS.
+
+                                                                                   In Refs. [17,20,21,33,34,52], the turbine efficiency
+                                                                                   TURB  (hiN,s,EtT
+                                                                                   i,s               ,  qi,s,t )  is described  by a  second  order  polynomial      of  the net
+
+                                                                                   head and turbined flow (or, equivalently, power output [21]), whereas
+
+                                                                                   in Ref. [67] the terms are added up to the fourth order. However, due to
+
+                                                  Fig. 2. Illustration for the head-dependent turbine efficiency and generator efficiency.
+                                                                                                                  6
+J. Kong, et al.                                                                                                         Electric Power Systems Research 178 (2020) 106027
+
+the nonlinearities of the original surface of the Hill chart, the nonlinear           QsMIN        qi,s,t + qkB,tYPASS  QsMAX
+regression for the coefficients can give high relative errors, which are
+not acceptable in the optimization. Therefore, the authors of Ref. [67]                       i Is                             (16)
+suggested assigning the points different weights to balance the dis-
+tribution of the available data, especially near the higher efficiency                    For some hydro units, mechanical vibration, cavitation phenomena,
+region. Furthermore, in Ref. [35], the authors divided the Hill chart                 and efficiency loss will result in certain operational forbidden zones.
+into many segments and the regressions are performed individually in                  Units will not be allowed to operate in these specific ranges. When
+each segment. In this context, the HPF is represented as a high order                 modeling the regularly shaped forbidden zone that is independent of
+nonconcave-nonconvex polynomial.                                                      the net head, one more index indicating the operating zone should be
+                                                                                      added to the status binary variable and lower and upper bounds on the
+    In contrast to explicitly considering the turbine efficiency and the              turbined water or generated power. A constraint establishing the co-
+net head as in Eq. (12), the HPF can also be formulated as a quadratic                herent relationship between operating zone and the on/off status of the
+function of water release and reservoir volume. This formulation is                   unit should also be added, implying that only a unique operating zone
+common when the STHS problem is modeled on an aggregated plant                        for each unit can be selected [17,23,34,39,52]. In contrast to the
+level [4­6,9]. However, it may lead to significant inaccuracies in the                aforementioned medium- and small-size units with a single regularly
+cases where there are multiple units in the plant [3], and, therefore, is             shaped forbidden zone, large-size units have multiple and irregularly
+not recommended when the unit-based STHS problem is considered.                       shaped forbidden zones varying with the net head, which can be ap-
+                                                                                      proximated by several simple polygons [22].
+    Another conventional technique to incorporate the nonlinearity of
+the HPF is to use a piecewise linear approximation                                    2.2.6. Constraint 6: operation status of the unit
+[2,18,19,22,31,32,38,39]. The breakpoints (i.e. the given pairs of water                  Eqs. (17) and (18) reflect the start-up decision of the unit, based on
+discharge and power output) of the function are usually specified in
+advance and represented by a two-dimensional table for fixed-head (i.e.               the commitment status of the units during two consecutive periods
+a single I/O curve [2,38]) or a three-dimensional matrix for head-sen-                [2,18,19,31,32,40]. Shut-down decisions can be straightforwardly in-
+sitive (i.e. a family of I/O curves [18,19,22,31,32,39]). The determi-                cluded [39]. If necessary, the constraint associated with the minimum
+nation of the breakpoints in the three-dimensional convex hull before                 and maximum numbers of online units for one plant at one period can
+optimization was presented in Refs. [3,23,29]. DP in Ref. [29] and UC                 be added [2].
+heuristic algorithms in Ref. [23] are used to compute the maximum
+power output for a discretization grid of water discharge and reservoir               i,s,0 = i,s,0                            (17)
+volume, respectively. In Ref. [40], the authors proposed a new method
+to dynamically update the breakpoints considering unit efficiency, head               µi,s,t  i, s, t  i,s,t 1                 (18)
+variation, and hydraulic losses, but requiring only one binary variable
+per unit and period.                                                                      Since frequent start-up shortens the lifetime of the unit as a result of
+                                                                                      mechanical stress, corresponding start-up costs are introduced to dis-
+2.2.5. Constraint 5: limits of power production and water discharge of the            courage frequent on/off operation of the unit, as expressed in Eq. (2). In
+unit                                                                                  addition, logic constraints can be added to force each unit to remain
+                                                                                      online for at least a certain time after it is switched on [19,20,22,39].
+    Eq. (13) determines the lower and upper output power limits of the                Alternatively, the authors of Ref. [30] chose to penalize the variations
+generator, whereas Eq. (14) corresponds to the permissible discharge                  of turbined flow in each plant. The penalization choice accelerates the
+range of the turbine (minimal and maximal flows). The physical limits                 MILP solving time by limiting the impact of the binary variables on the
+of unit output power are usually constant [14­16,18­22,24,35,40]                      objective.
+since dissipated power does not depend on the net head, and the ro-
+tational speed of turbines is constant [14]. Nevertheless, the discharge              2.2.7. Constraint 7: power balance
+range can be fixed [15,18,19,22,24,33,39,51] or head-dependent                            In a competitive electricity market, the power generated can be sold
+[13,19,20,23,32,34,35,40].
+                                                                                      to the market (and the power consumed can be bought from the market
+PiM,s IN i,s,t pi,s,t PiM,s AX i,s,t                               (13)               if there are pumped storage hydropower plants (PSHPs) in the system
+                                                                                      considered). This relationship is represented by the energy balance
+                                                                                      constraint for the plant in Eq. (19).
+
+QiM,s,ItN (hiN,sE,tT ) i,s,t qi,s,t QiM,s,At X (hiN,s,EtT ) i,s,t                               pi,s,t = ptSELL                (19)
+
+                                                                                      s S i Is
+
+                                                                   (14)
+
+    In real life, the operating limits for the hydro-turbine generator unit           2.2.8. Constraint 8: coupling to long-term/mid-term strategy
+are complex, associated with the net head, turbine discharge, and                         STHS should implement the long-term/mid-term strategy in the best
+generator output. If the net head is lower than certain value (e.g. the
+nominal value), the turbine is unable to make the generator achieve its               possible way during operation of the watercourse. Adequate signals
+maximum power output. If this is the case, the operating limit is                     must be transferred from the strategic level to the operational level.
+decided by the variable maximum discharged outflow as a function of                   There are three main coupling signals. Note that it is not necessary to
+the net head QiM,s,At X (hiN,s,EtT). On the other hand, if the net head is higher     give all the coupling signals at the same time. If the final reservoir
+than the nominal value, the turbine could easily reach the power level                contents are defined by a mid-term planning procedure, the future
+beyond the maximum output. If so, the operating limit should be im-                   value of stored water can be set to 0 [31].
+posed by the power limit on the generator capabilities PiM,s AX [34]. The
+unit minimum operating limit has the reverse behavior.                                1) Load coupling Dt by meeting load obligation, either for the whole
+                                                                                          system (especially in the ULD problem as the total load)
+    It is possible to set bounds on operational limits and the total water                [2,15,16,19,35,37], for different regions [23] or for each plant
+flow released in the plant [18,19,23,29,32,37­39], as expressed in Eqs.                   [20­22,34]. In a centralized system, the purpose of the objective
+(15) and (16), respectively. Although the limits are static as presented,                 function is to maximize the efficient use of water resources. The
+it is possible to modify the constraints to vary with time.                               target power defined by mid-term planning must be satisfied.
+                                                                                          Usually, Eqs. (19) and (20) can be combined as one constraint.
+PsMIN       pi,s,t  PsMAX
+
+       i Is                                                        (15)
+
+                                                                                   7
+J. Kong, et al.                                                                                                                  Electric Power Systems Research 178 (2020) 106027
+
+          pi,s,t = Dt                                                (20)      3) Price coupling WkE,Nt¯ D by adding the reservoir value at the end of
+                                                                                   scheduling horizon into the objective function [7,30,33,37,38,40],
+s S i Is                                                                           as expressed in Eq. (3b). It is worth mentioning that if the unit of
+                                                                                  WkE,Nt¯ D is given as /MWh rather than /m3, an energy conversion
+2) Volume coupling VkE,tN¯ D by keeping the storage volume of each re-             factor Es is needed to build the ending condition for each reservoir,
+    servoir at the end of scheduling horizon as close as possible to the           indicating the electricity that can be produced with each m3 of
+    target volume [2,32,36,37,51,52]. The final target storage can also            water. How to define the energy conversion factor is crucial. The
+    be set within a certain range [39,59]. In some cases, it requires the          higher up the reservoir is located, the larger this value should be
+    end water storage to be the same as the initial storage [6,24,31].             because more electricity can be produced with the same amount of
+                                                                                   water due to the cascade effect [38]. Nevertheless, the assumption
+vk,t¯ = VkE,Nt¯ D                                                    (21)          of the constant energy conversion factor is acceptable as shown in
+
+Table 1
+Summary of model formulation and solution method for unit-based STHS problems
+
+Author                       STHS problem Model formulation          Solution method                          Hydro system           Country of case study
+
+Shawwash et al. [37]         ULD       LP                            CPLEXa solver, an iterative procedure    Cascade                Canada
+                                       NLP                           DP                                       One plant              Brazil
+Arce et al. [13]             ULD       NLP                           Decomposition algorithm, DP              One plant              Canada
+                                       NLP                           1) DP;                                   One plant              China
+Breton et al. [14]           ULD                                     2) PSOb
+                                       NLP                           Preprocessing: DP;
+Cheng et al. [15]            ULD                                     DP, an iterative procedure
+                                       NLP                           Steepest Ascent Hill Climbing heuristic
+Perez-Diaz et al.[36]        UC + ULD  MILP                          CPLEX solver                             One plant              Spain
+
+Bortoni et al. [16]          ULD                                                                              One plant              Brazil
+Chang et al. [2]             UC + ULD                                                                         Cascade with pumped    New Zealand,
+                                                                                                              storage                Switzerland
+Conejo et al. [31]           UC + ULD  MILP                          CPLEX solver                             Cascade                Spain
+Garcia-Gonzalez et al. [32]  UC + ULD  MILP                          CPLEX solver, an iterative procedure     Cascade                Spain
+Borghetti et al. [18]        UC + ULD  MILP                          CPLEX solver                             One plant with pumped  N/A
+                                                                                                              storage
+De Ladurantaye et al. [38]   UC + ULD  MILP                          CPLEX solver, an iterative procedure     Cascade                Canada
+Tong et al. [39]             UC + ULD  MILP                          CPLEX solver                             Cascade                China
+Li et al. [19]               UC + ULD  MILP                          LINGOc (B&Bd), an iterative procedure    One plant              China
+Seguin et al. [29]           UC + ULD  1) NLP & MILP                 Preprocessing: DP;                       Cascade                Canada
+                                       2) MINLP                      1) IPOPTe, Xpressf solvers
+Cheng et al. [22]            UC + ULD                                2) BONMINg solver                        One plant              China
+Guedes et al. [23]           UC + ULD  MILP                          LINGO (B&B)                              Cascade                Brazil
+                                       MILP                          Preprocessing: UC heuristic algorithm;
+Marchand et al. [30]         UC + ULD                                GUROBIh solver                           Cascade                Canada
+Skjelbred et al. [40]        UC + ULD  MILP decomposed to LP & MILP  LR (CPLEX solver)                        Cascade                Norway
+Finardi and Silva [17]       UC + ULD  MILP                          CPLEX solver, an iterative procedure     One plant              Brazil
+Finardi and Silva [52]       UC + ULD  MINLP                         B&B, RPGi method                         Cascade                Brazil
+                                       MINLP decomposed to LP,       LR (CPLEX solver, SQPj algorithm)
+Diaz et al. [33]             UC + ULD  MILP, & NLP                                                            Cascade                Spain
+                                       MINLP                         CPLEX solver                             Cascade                Brazil
+Finardi and Scuzziato [34] UC + ULD    MINLP decomposed to LP &      LR, IALk
+                                       MINLP                                                                  Cascade                Brazil
+Lima et al. [24]             UC + ULD  MINLP                         1) Spatial B&B;
+                                                                     2) CPLEX, DICOPTl, BARONm solvers        One plant              Brazil
+Cordova et al. [35]          UC + ULD  MINLP                         N/An                                     Cascade                Brazil
+Finardi et al. [20]          UC + ULD  1) MINLP decomposed to LP &   1) LR (CPLEX solver, AOAo solver, IAL);
+                                       MINLP;
+Santo and Costa [21]         UC + ULD  2) MINLP;                     2) AOA solver;                           Cascade                Brazil
+                                       3) MILP                       3) CPLEX solver
+                                       MINLP                         DICOPT solver
+
+  a Solver for linear programming/mixed integer programming/quadratic programming from IBM ILOG [94].
+  b Particle swarm optimization.
+  c Optimization modeling software with built-in solvers for linear programming/nonlinear programming/quadratic programming/integer programming from
+
+LINDO Systems Inc. [95].
+  d Branch and Bound.
+  e Open source "Interior Point OPTimizer" solver for large-scale nonlinear optimization from COIN-OR [96].
+  f Linear programming/mixed integer programming/nonlinear solver from FICO optimization [97].
+  g Open source "Basic Open-source Nonlinear Mixed INteger programming" solver for mixed integer nonlinear programming from COIN-OR [98].
+  h Solver for linear programming/mixed integer programming/quadratic programming from Gurobi optimization [99].
+  i Rosen's Projected Gradient.
+  j Sequential Quadratic Programming.
+  k Inexact Augmented Lagrangian.
+  l "DIscrete and Continuous OPTimizer" solver for mixed integer nonlinear programming from the Engineering Design Research Center (EDRC) at Carnegie Mellon
+
+University [100].
+  m "Branch-And-Reduce Optimization Navigator" solver for nonlinear programming/mixed integer nonlinear programming from University of Illinois at Urbana-
+
+Champaign [101].
+  n Not Available.
+  o White box "AIMMS Outer Approximation" module for mixed integer nonlinear programming from AIMMS [102].
+
+                                                                           8
+                                                                                                                                                                                                                                   J. Kong, et al.
+
+   Table 2
+   Summary of the characteristics of optimization model for unit-based STHS problems.
+
+   Author                       Objective                                                   Penstock structure    Head variation  Head loss                                               Coupling to long/mid-term strategy
+
+9  Shawwash et al. [37]         Maximize the total profit                                   N/A                   No              Tailrace                                                Target volume, water value
+   Arce et al. [13]             Minimize the total power losses                             Independent           No              Penstock, Tailrace                                      N/A
+   Breton et al. [14]           Maximize the power generated for a given flow               Independent & Shared  No              Penstock, Tailrace                                      Target volume                            Electric Power Systems Research 178 (2020) 106027
+   Cheng et al. [15]            Minimize the total discharge of units for a given load      N/A                   No              No                                                      Target load
+   Perez-Diaz et al. [36]       Maximize the revenue                                        N/A                   Yes             Penstock, Tailrace                                      Target volume
+   Bortoni et al. [16]          Maximize the penstock end pressure (net head)               Shared                No              Penstock                                                Target load
+   Chang et al. [2]             Maximize the final water storage in the reservoirs          N/A                   No              No                                                      Target load, Target volume, water value
+   Conejo et al. [31]           Maximize the total profit                                   N/A                   Yes             No                                                      Target volume, water value
+   Garcia-Gonzalez et al. [32]  Maximize the total profit                                   N/A                   Yes             No                                                      Target volume
+   Borghetti et al. [18]        Maximize the total profit                                   N/A                   Yes             No                                                      Target volume
+   De Ladurantaye et al. [38]   Maximize the total profit                                   N/A                   Yes             No                                                      Water value
+   Tong et al. [39]             Maximize the total profit                                   Independent           Yes             Penstock, Tailrace                                      Target volume
+   Li et al. [19]               Minimize the total discharge of units for a given load      N/A                   Yes             Constant penstock, Tailrace                             Target load
+   Seguin et al. [29]           Maximize the power generated for a given flow               Independent           Yes             Penstock, Tailrace                                      Target volume
+   Cheng et al. [22]            Minimize the total discharge of units for a given load      Independent           Yes             Penstock, Tailrace                                      Target load
+   Guedes et al. [23]           Maximize the final water storage in the reservoirs          N/A                   Yes             Penstock, Tailrace                                      Target load
+   Marchand et al. [30]         Maximize the final value of water stored in the reservoirs  N/A                   Yes             Tailrace                                                Water value
+   Skjelbred et al. [40]        Maximize the total profit                                   Independent & Shared  Yes             Intake, Penstock, Tailrace                              Water value
+   Finardi and Silva [17]       Maximize the power generated for a given flow               Independent           Yes             Penstock, Tailrace                                      Target load
+   Finardi and Silva [52]       Maximize the total profit                                   Independent           No              Penstock, Tailrace                                      Target volume
+   Diaz et al. [33]             1) Maximize the total profit;                               Independent           Yes             No                                                      Water value
+                                2) Maximize the efficiency
+   Finardi and Scuzziato [34]   Minimize the total discharge of units for a given load      Independent           Yes             Penstock, Tailrace, Mechanical, Generator loss          Target load
+   Lima et al. [24]             Maximize the total profit                                   N/A                   Yes             Constant penstock, Tailrace                             Target volume
+   Cordova et al. [35]          Minimize the total discharge of units for a given load      Independent           No              Intake, Penstock, Tailrace, Mechanical, Generator loss  Target load
+   Finardi et al. [20]          Minimize the total discharge of units for a given load      Independent           Yes             Penstock, Tailrace, Mechanical, Generator loss          Target load
+   Santo and Costa [21]         Minimize the total power losses                             Independent           No              Penstock, Tailrace                                      Target load
+J. Kong, et al.                                                                Electric Power Systems Research 178 (2020) 106027
+
+    Eq. (3b) for large reservoirs while it incurs errors for small ones        draining from two reservoirs at the same time. Necessary constraints
+    [49].                                                                      should be introduced to guarantee the flexibility in the network as well
+    In addition, water value in Eq. (3b) is assumed to be an independent       as to obey the law of physics.
+    fixed value. In practice, this value can be expressed as a concave
+    piecewise linear function of the water volume in the cascaded re-          3. Optimization methods
+    servoirs (known as "cuts") [38]. This is usually provided by a long-/
+    mid-term hydro scheduling model that would integrate the sto-                  Exact methods based on mathematical programming take advantage
+    chastic nature of inflows, electricity prices, load, and non-dis-          of the analytical properties of the optimization problem to generate a
+    patchable RE in the power system [70,71].                                  sequence of points that converge to a globally optimal solution [89].
+                                                                               The efficiency in solving optimization problems, the solid mathematical
+    In Ref. [33], the authors showed in the case study that, in a free         foundation, and the availability of commercial solvers make exact
+ending volume model with water values, higher total profit can be              methods used by the majority of reported implementations [25].
+achieved. The water can be discharged freely in an optimal way and be
+stored in reservoirs with better water values. Therefore, a price cou-             Exact methods primarily include linear programming (LP), non-
+pling signal is expected to be more accurate and comprehensive than a          linear programming (NLP), MILP, mixed integer quadratic program-
+volume coupling signal.                                                        ming (MIQP), mixed integer nonlinear programming (MINLP), DP, and
+                                                                               Lagrangian relaxation (LR). The first five methods focus on the math-
+2.2.9. Other constraints                                                       ematical formulation of the problem, whereas the last two relate to
+    Environmental constraints imposed on reservoir management and              solution strategies to solve the problem.
+
+hydropower plant operation are usually given in the form of minimum                The unit-based STHS problems solved by the exact methods and
+environmental flows and, in some cases, in the form of maximum and             published in the scientific journals since 2000 are summarized below.
+minimum rates of change of flows, or ramping rates [72]. Ramping               Due to the page layout, the summary is split into two tables. Table 1
+constraints restrict the change of reservoir volume and plant discharge        lists the type of STHS problem, model formulation, solution methods,
+between two successive time intervals [2,18]. They can be imposed to           and hydro system the papers focus on. Table 2 outlines the character-
+reduce the rapid change in water level of reservoirs to avoid excessive        istics of the optimization model. For the authors who published many
+wear of the shores of the reservoirs [73].                                     papers regarding the same mathematical formulation or solution
+                                                                               methodology, the paper which includes the most features of the STHS
+    If one wants to keep the reservoirs/gates releasing the water or           problem is chosen. For example, Finardi and co-authors have brought
+plants/units running at a certain level, schedules or committed-to-run         many contributions in modeling the STHS problem as well as the unit-
+constraints can be activated. However, the use of this type of con-            based scheduling problem of hydrothermal systems [90­92] or hydro-
+straints requires a high level of knowledge of the entire hydro system.        thermal-RE hybrid systems [93] with a highly detailed level in the
+Too many schedules could lead to a problem without feasible solutions.         framework of MINLP. Five of their papers focusing on pure hydro
+                                                                               scheduling and representing the typical evolution of the mathematical
+    The STHS problem for a PSHP is analogous to that of a pure power           formulation and solution strategy are presented in Tables 1 and 2.
+generating plant [74]. For a reversible pump-turbine unit, one more
+binary variable should be introduced to indicate the operation status of       3.1. Linear, nonlinear and dynamic programming
+the pump. The exclusive constraints should be added to forbid si-
+multaneously pumping and generating [2,18]. For a given head, the                  Limited by the computing environment, the earlier mathematical
+rate of pumped water flow for a fixed speed pump (FP) is fixed, hence          formulation for the STHS problem is mostly LP [37,49]. Commercial
+the consumed power is fixed. It is somehow easier to model the FP in           solvers such as MINOS [103] and OSL [104] based on the classical
+STHS. Head variation is usually neglected in pumping mode [18,75]. By          simplex method and the interior point method are widely used to solve
+contrast, a variable speed pump (VP) can be operated within a certain          the LP model. However, LP formulation does not fully represent the
+range in both generating and pumping modes. Therefore, a plant with            physical characteristics of the hydro generation [105].
+VPs faces the same challenges in STHS as a pure power generating plant
+confronts [76]. Authors in Ref. [77] reviewed the trends and challenges            The nonlinearity and non-convexity of the hydro generation, re-
+in the scheduling models for PSHPs.                                            ferring to the HPF in Eq. (12), can be handled well in the framework of
+                                                                               NLP [13­16,36], especially for solving the ULD problem that addresses
+    When a hydro producer participates in both energy and capacity             the optimal distribution of the production among a set of online units
+markets, an optimal decision involves not only the optimal generation          within a plant. In that context, a DP algorithm is adopted to solve the
+scheduling of available units but also the reserved capacity for various       problem [13­15,36]. Actually, DP has been one of the most popular
+types of ancillary services. Adding operational reserve requirements           optimization techniques used to solve the STHS problem for a single
+into the STHS problem is prevalent. Initially, the reserve is simply ex-       hydropower plant with a small number of units and low installed ca-
+pressed as constraints such that the sum of power produced and re-             pacity [15]. In Ref. [29], DP is used in the preprocessing of optimization
+served should be no more than the maximum production, either on the            to maximize total power output for given water discharge, a reservoir
+plant level [17,19,52] or the entire system [2,30]. Nowadays, more             volume, and a given number of units. There is no approximation of the
+detailed constraints should be added to the optimization problem for           data.
+distributing reserve obligations considering response time, reserve
+types, and market regulations [38,78­82]. In the context of reserve-               However, DP has limitations when the number of discrete states
+driven operation strategies, one of the trends in operation of the PSHPs       becomes very large (e.g. the unit start-up and shut-down status). This
+is to employ hydraulic short-circuit (HSC) scheme as a means to provide        difficulty can be avoided if the number of units in operation is taken as
+spinning reserves [77]. HSC occurs in a plant when at least one unit           a state variable [13]. In Ref. [36], the authors used a state diagram
+operates in pumping mode and the others in generating mode, which              defined by carefully discretizing the feasible region to effectively in-
+increases the operational flexibility of the plant [83­85].                    clude units' start-up and shut-down in the STHS problem.
+
+    Aside from the above-mentioned reservoirs, plants, and units, other            Another disadvantage of DP is the so-called "curse of dimension-
+hydraulic objects such as gates, junctions [86], and pressure links [87]       ality". If there is a large number of units with huge installed generating
+are also important components in the hydro system. Gates are used to           capacity in a hydropower station, it is hard to apply DP to find the
+connect reservoirs (in this case they are also referred to as tunnels          solution [15]. Moreover, if there are two or more cascaded reservoirs in
+[49,88]), create a bypass of plants, and add routes for the spill. Junc-       the system, using DP-based methods to solve the STHS problem be-
+tions and pressure links are used to model the topology where a plant is       comes enormously challenging [36,39].
+
+                                                                           10
+J. Kong, et al.                                                                 Electric Power Systems Research 178 (2020) 106027
+
+3.2. Mixed integer linear programming                                           decreases the solution time. However, this method is based on the ex-
+                                                                                istence of a "complete" piecewise linear model with a very dense dis-
+    With the development of the mathematical and computational                  cretization grid (1000 breakpoints in the discharge axis) [3].
+techniques, additional details of the problem have been addressed. The
+discrete nature of the STHS problem such as the on/off status of the            3.3. Mixed integer nonlinear programming
+units or operational forbidden zones cannot be ignored. Binary integer
+variables, also called 0/1 variables, are introduced to the mathematical            If the STHS problem is modeled with more details, e.g. to find
+programming method. On the other hand, if the nonlinearity of the HPF           schedules for cascaded plants with multiple units considering head
+is approximated by piecewise linear functions, together with the dis-           variation in both forebay and tailrace, varying penstock, and mechan-
+crete nature, the STHS problem is formulated as an MILP model                   ical and electrical losses in turbine and generator, it becomes a MINLP
+[2,18,19,22,23,30­32,38­40].                                                    model [17,20,21,24,33­35,52].
+
+    MILP has good performance with respect to adding constraints and                If the number of units in a hydropower plant is not too large, the
+solution efficiency. It has been widely applied to solve large-scale STHS       MINLP problem can be solved in an enumerative way [35]. That is to
+problems with continuous and discrete variables [2]. In the earlier work        say, for each feasible combination of units that meets the power target
+[49], the non-convex part in the low power operating region is omitted,         requirement, the system solves the associated continuous nonlinear
+and the HPF is approximated by a two-segment piecewise linear I/O               optimization problem by means of an optimization subroutine and
+curve, with breakpoints at the best efficiency point and the maximum            determines the combination of units with the lowest water consump-
+discharge limit. In Ref. [2], binary variables are introduced to indicate       tion. The authors of [29] developed a two-phase optimization method.
+the unit on/off status, and hence the first point of the two-segment            First, it solves the relaxation of a MINLP program to find the volume,
+linear curve starts from the minimum discharge limit. Head variation            water discharge, and a number of active units at each period. Then it
+effect is first successfully modeled in Ref. [106] by developing a pie-         solves a MILP model to find the exact combination of units that max-
+cewise linear approximation of the nonlinear and non-convex I/O sur-            imizes the total production but also penalizes the start-up of units. The
+face of water discharge and reservoir volume. Almost at the same time,          comparison between the outputs of the two-phase method and the
+the authors in Ref. [31] used a pre-defined number of piecewise linear          MINLP model shows that the proposed method solves all the test cases
+non-concave I/O curves to represent the head effect. In both papers, the        in a computational time that is significantly lower than in the one-phase
+whole non-concave curve and head effect are considered through the              optimization process. The authors of [24] gave a clear and concise in-
+use of binary variables. In Ref. [18], the authors proposed a tight re-         troduction of available MINLP solvers that can address the determi-
+presentation of the head effect in which the linearization is enhanced          nistic global optimization of MINLP problems and presented a spatial B
+through two-dimensional considerations of both water storages and               &B algorithm to solve a detailed MINLP model.
+flow. Instead of including all the candidate I/O curves, an iterative
+procedure is introduced in Ref. [32] to update the head until con-              3.4. Lagrangian relaxation
+vergence is achieved. In Ref. [38], the nonlinear head effect is eval-
+uated using a successive linear programming method. The authors of                  Large-scale optimization problems are usually decomposed into a
+[19] used a case study of the Three Gorges Project, the world's largest         set of smaller subproblems that are mathematically solvable and com-
+and most complex hydropower system with 32 heterogeneous gen-                   putationally efficient. Decomposition methods are used to solve this
+erating units in operation, to demonstrate an accurate representation of        type of problem using an iterative-based methodology. Among the
+the unit HPF by a three-dimensional piecewise linear approximation. In          various decomposition techniques found in the literature, LR is one of
+Ref. [39], the authors discussed the effects of piecewise linearization of      the most successful methods to solve the large-scale STHS problems,
+the nonlinear functions and presented a method to ensure the solution           especially within the MINLP formulation framework [26]. Since the
+feasibility for the original nonlinear formulation of the HPF. In Ref.          units are usually coupled through power target requirements [30] and/
+[22], based on the discretized net head intervals, the HPF is approxi-          or water balance equations [20,34], these coupling constraints can be
+mated as a set of piecewise curves and the head-sensitive characteristic        relaxed by including them into the objective function and weighted by
+of multiple irregularly shaped forbidden zones is effectively handled by        Lagrangian multipliers. Following this, the corresponding dual problem
+several simple polygons.                                                        is decomposed into independent subproblems.
+
+    B&B and cutting plane are among the most common methods used                    In Ref. [20], the authors compared the solution quality and com-
+to solve the MILP problem. In the most real-world application, com-             putational performance when the problem is solved by LR and a MINLP
+mercial solvers such as CPLEX, GUROBI, and Xpress are employed to               solver using the AIMMS outer approximation (AOA) algorithm. In Ref.
+directly solve the problem. The authors of Ref. [107] discussed the             [30], the authors presented an effective three-phase solution method
+convexity issues of some standard commercial mixed integer pro-                 that takes advantage of both MILP and LR. This method obtains a good
+gramming solvers.                                                               solution much more quickly than commercial solvers and gives a
+                                                                                measure of the solution quality.
+    The main drawback of the mixed integer programming approach is
+the high computational burden, especially when it is applied to the                 LR decomposition technology comprises three major steps: (1)
+large-size STHS problem. Although the commercial solvers can obtain             dualization, (2) finding a solution to the dual subproblems, and (3)
+solutions at any desired precision level, the results are achieved at the       finding a feasible optimal or near-optimal solution to the primal pro-
+cost of higher calculational times. In some cases, it may even be very          blem. In the first step, two dualization methods are extensively used
+hard with direct approaches and standard commercial solvers [30].               [110]. One is to dualize complicating constraints that tie together the
+Providing an initial feasible integer solution to the problem can im-           problem. For the STHS problem, it is to dualize the spatial and temporal
+prove the B&B search methods and reduce the solution time [108].                coupling constraints, i.e. water balance expressed in Eq. (6) [52]. The
+                                                                                other is to duplicate the common variables involved in two (or more)
+    Furthermore, the effect of linearization of nonlinear functions will        subproblems and then to relax the equality constraints. In the second
+result in deviations between calculated values from MILP model and the          step, the dual subproblems are resolved and the Lagrangian multipliers
+real values [24] or infeasibility of the original problem [39]. An in-          are updated in each iteration by using a subgradient approach such as
+crease in the number of breakpoints can overcome the deviation be-              Bundle algorithm [52,111]. If the subproblem is still a MINLP problem,
+tween the piecewise linear model and the true nonlinear function, but           new decomposition can be introduced. In the last step, augmented La-
+also leads to increasing computational time. A dynamic approach in              grangian (AL) or inexact augmented Lagrangian (IAL) [34] is generally
+which breakpoints are included dynamically as the solving procedure             used to find a primal feasible solution.
+evolves was presented in Ref. [109]. This approach drastically
+
+                                                                            11
+J. Kong, et al.                                                                   Electric Power Systems Research 178 (2020) 106027
+
+    The problem for the LR approach is that although some complex                 Supervision.
+linking constraints can be relaxed by LR, the nonlinear and non-convex
+HPF makes it very difficult to obtain the true dual function. If this is the      Acknowledgements
+case, the algorithm convergence cannot be guaranteed [39]. In addi-
+tion, the processes to find a primal feasible solution are often based on             The authors wish to thank the four anonymous reviewers for their
+heuristics, depending on the particular problem structure [52].                   constructive comments.
+
+    Given the problem complexity, the specific purpose, and computa-                  This research did not receive any specific grant from funding
+tional capacities, each method has its own advantages and dis-                    agencies in the public, commercial, or not-for-profit sectors.
+advantages and is generally efficient in a particular operational context.
+However, there is no guarantee that any solution will be globally op-             References
+timal [20]. Comparing results from different methods is further com-
+plicated when the models have different constraints and levels of ac-                [1] O.B. Fosso, A. Gjelsvik, A. Haugstad, B. Mo, I. Wangensteen, Generation sche-
+curacy. For example, in [20], the authors tried to convert the MINLP                       duling in a deregulated system. The Norwegian case, IEEE Trans. Power Syst. 14
+formulation for the STHS problem into an MILP formulation by using a                       (1999) 75­80, https://doi.org/10.1109/59.744487.
+triangulation technique of piecewise linear approximation. Then the
+quadratic penstock head loss in the original formulation was assumed                 [2] G.W. Chang, M. Aganagic, J.G. Waight, J. Medina, T. Burton, S. Reeves,
+to be a constant value in the framework of MILP. It is thus neither fair                   M. Christoforidis, Experiences with mixed integer linear programming based ap-
+nor adequate to ascertain that one method outperforms another.                             proaches on short-term hydro scheduling, IEEE Trans. Power Syst. 16 (2001)
+                                                                                           743­749, https://doi.org/10.1109/59.962421.
+4. Conclusions
+                                                                                     [3] A.L. Diniz, M.E.P. Maceira, A four-dimensional model of hydro generation for the
+    Compared to the widespread publications of the STHS problem                            short-term hydrothermal dispatch problem considering head and spillage effects,
+formulated on an aggregated plant level, significantly fewer works in                      IEEE Trans. Power Syst. 23 (2008) 1298­1308, https://doi.org/10.1109/tpwrs.
+the literature address optimal scheduling for individual hydro-turbine                     2008.922253.
+generator units. However, it is important to consider the representation
+of each unit separately in order to model its efficiency accurately and              [4] J.P.S. Catalao, S. Mariano, V.M.F. Mendes, L. Ferreira, Scheduling of head-sensi-
+obtain practical solution. Moreover, the participation of hydro produ-                     tive cascaded hydro systems: a nonlinear approach, IEEE Trans. Power Syst. 24
+cers in both energy and capacity markets and the quick adaptation to                       (2009) 337­346, https://doi.org/10.1109/tpwrs.2008.2005708.
+the changeable markets emphasize the necessity for and importance of
+unit-based modeling.                                                                 [5] J.P.S. Catalao, H.M.I. Pousinho, V.M.F. Mendes, Mixed-integer nonlinear approach
+                                                                                           for the optimal scheduling of a head-dependent hydro chain, Electr. Power Syst.
+    In this overview, a detailed classification of different approaches to                 Res. 80 (2010) 935­942, https://doi.org/10.1016/j.epsr.2009.12.015.
+model and solve the unit-based STHS problem is presented. Given the
+possible objectives and constraints, various modeling techniques pro-                [6] J.P.S. Catalao, H.M.I. Pousinho, V.M.F. Mendes, Hydro energy systems manage-
+posed in the publications since 2000 are discussed. The most common                        ment in Portugal: profit-based evaluation of a mixed-integer nonlinear approach,
+mathematical programming methods are summarized.                                           Energy 36 (2011) 500­507, https://doi.org/10.1016/j.energy.2010.10.014.
+
+    Although it is widely admitted that the realistic and detailed re-               [7] G.J. Osorio, J.C.O. Matias, J.P.S. Catalao, A review of short-term hydro scheduling
+presentation of the HPF is critical for obtaining reliable results, sim-                   tools, 2013 48th International Universities Power Engineering Conference (UPEC),
+plification cannot be avoided in most of the works reported in the lit-                    Dublin, Ireland, 2013, https://doi.org/10.1109/UPEC.2013.6714906.
+erature, even in those already highlighting the importance of
+developing accurate models to describe the HPF. For example, the                     [8] A. Hamann, G. Hug, S. Rosinski, Real-time optimization of the Mid-Columbia
+water level is kept static within the planning horizon irrespective of the                 hydropower system, IEEE Trans. Power Syst. 32 (2017) 157­165, https://doi.org/
+characteristics of the reservoir [55]; the turbine efficiency is a fixed                   10.1109/tpwrs.2016.2550490.
+value [3,14,24,59] or only flow-dependent [29]; the generator effi-
+ciency is unchanging over a wide range of operation [17] or even not                 [9] M. Nazari-Heris, B. Mohammadi-Ivatloo, G.B. Gharehpetian, Short-term sche-
+mentioned [23,24,39]; the penstock head loss is either constant [19] or                    duling of hydro-based power plants considering application of heuristic algo-
+calculated as a percentage of the power output [3,24] or a percentage of                   rithms: a comprehensive review, Renew. Sustain. Energy Rev. 74 (2017) 116­129,
+the net head [59], regardless of the flow going through the tunnel; and                    https://doi.org/10.1016/j.rser.2017.02.043.
+the units are always fed by independent penstocks
+[13,17,21­23,34,39,52,60]. These types of simplification neither reflect           [10] S. Das, A. Bhattacharya, A.K. Chakraborty, Fixed head short-term hydrothermal
+enough of the complexity of real-world operations nor match the re-                        scheduling in presence of solar and wind power, Energy Strategy Rev. 22 (2018)
+quirements from the hydro producers. Therefore, finding a computa-                         47­60, https://doi.org/10.1016/j.esr.2018.08.001.
+tionally solvable and effective way to handle these issues will be crucial
+in the future work for the unit-based STHS problem. It will also be                [11] X.B. Wang, J.X. Chang, X.J. Meng, Y.M. Wang, Short-term hydro-thermal-wind-
+valuable to conduct a quantitative comparison to indicate the effect of                    photovoltaic complementary operation of interconnected power systems, Appl.
+usual simplifications on the optimal results through a real-world case                     Energy 229 (2018) 945­962, https://doi.org/10.1016/j.apenergy.2018.08.034.
+study.
+                                                                                   [12] C.S. Li, W.X. Wang, D.S. Chen, Multi-objective complementary scheduling of
+Declaration of interests                                                                   hydro-thermal-RE power system via a multi-objective hybrid grey wolf optimizer,
+                                                                                           Energy 171 (2019) 241­255, https://doi.org/10.1016/j.energy.2018.12.213.
+    The authors declare that they have no competing interests.
+                                                                                   [13] A. Arce, T. Ohishi, S. Soares, Optimal dispatch of generating units of the Itaipu
+CRediT authorship contribution statement                                                   hydroelectric plant, IEEE Trans. Power Syst. 17 (2002) 154­158, https://doi.org/
+                                                                                           10.1109/59.982207.
+    Jiehong Kong: Conceptualization, Writing - review & editing,
+Supervision. Hans Ivar Skjelbred: Conceptualization, Writing - ori-                [14] M. Breton, S. Hachem, A. Hammadia, Accounting for losses in the optimization of
+ginal draft. Olav Bjarte Fosso: Supervision, Writing - review & editing,                   production of hydroplants, IEEE Trans. Energy Convers. 19 (2004) 346­351,
+                                                                                           https://doi.org/10.1109/tec.2004.827043.
+
+                                                                                   [15] C.T. Cheng, S.L. Liao, Z.T. Tang, M.Y. Zhao, Comparison of particle swarm opti-
+                                                                                           mization and dynamic programming for large scale hydro unit load dispatch,
+                                                                                           Energy Convers Manage. 50 (2009) 3007­3014, https://doi.org/10.1016/j.
+                                                                                           enconman.2009.07.020.
+
+                                                                                   [16] E.C. Bortoni, G.S. Bastos, T.M. Abreu, B. Kawkabani, Online optimal power dis-
+                                                                                           tribution between units of a hydro power plant, Renew. Energy 75 (2015) 30­36,
+                                                                                           https://doi.org/10.1016/j.renene.2014.09.009.
+
+                                                                                   [17] E.C. Finardi, E.L. da Silva, Unit commitment of single hydroelectric plant, Electr.
+                                                                                           Power Syst. Res. 75 (2005) 116­123, https://doi.org/10.1016/j.epsr.2005.01.008.
+
+                                                                                   [18] A. Borghetti, C. D'Ambrosio, A. Lodi, S. Martello, An MILP approach for short-term
+                                                                                           hydro scheduling and unit commitment with head-dependent reservoir, IEEE
+                                                                                           Trans. Power Syst. 23 (2008) 1115­1124, https://doi.org/10.1109/tpwrs.2008.
+                                                                                           926704.
+
+                                                                                   [19] X. Li, T.J. Li, J.H. Wei, G.Q. Wang, W.W.G. Yeh, Hydro unit commitment via
+                                                                                           mixed integer linear programming: a case study of the Three Gorges Project,
+                                                                                           China, IEEE Trans. Power Syst. 29 (2014) 1232­1241, https://doi.org/10.1109/
+                                                                                           tpwrs.2013.2288933.
+
+                                                                                   [20] E.C. Finardi, F.Y.K. Takigawa, B.H. Brito, Assessing solution quality and compu-
+                                                                                           tational performance in the hydro unit commitment problem considering different
+                                                                                           mathematical programming approaches, Electr. Power Syst. Res. 136 (2016)
+                                                                                           212­222, https://doi.org/10.1016/j.epsr.2016.02.018.
+
+                                                                                   [21] T.D. Santo, A.S. Costa, Hydroelectric unit commitment for power plants composed
+                                                                                           of distinct groups of generating units, Electr. Power Syst. Res. 137 (2016) 16­25,
+                                                                                           https://doi.org/10.1016/j.epsr.2016.03.037.
+
+                                                                                   [22] C.T. Cheng, J.Y. Wang, X.Y. Wu, Hydro unit commitment with a head-sensitive
+                                                                                           reservoir and multiple vibration zones using MILP, IEEE Trans. Power Syst. 31
+
+                                                                              12
+J. Kong, et al.                                                                                 Electric Power Systems Research 178 (2020) 106027
+
+       (2016) 4842­4852, https://doi.org/10.1109/tpwrs.2016.2522469.                                   Syst. Res. 121 (2015) 357­367, https://doi.org/10.1016/j.epsr.2014.11.015.
+[23] L.S.M. Guedes, P.D. Maia, A.C. Lisboa, D.A. Gomes Vieira, R.R. Saldanha, A unit            [49] M.R. Piekutowski, T. Litwinowicz, R.J. Frowd, Optimal short-term scheduling for a
+
+       commitment algorithm and a compact MILP model for short-term hydro-power                        large-scale cascaded hydro system, IEEE Trans. Power Syst. 9 (1994) 805­811,
+       generation scheduling, IEEE Trans. Power Syst. 32 (2017) 3381­3390, https://doi.                https://doi.org/10.1109/59.317636.
+       org/10.1109/tpwrs.2016.2641390.                                                          [50] X.L. Ge, L.Z. Zhang, J. Shu, N.F. Xu, Short-term hydropower optimal scheduling
+[24] R.M. Lima, M.G. Marcovecchio, A.Q. Novais, I.E. Grossmann, On the computa-                        considering the optimization of water time delay, Electr. Power Syst. Res. 110
+       tional studies of deterministic global optimization of head dependent short-term                (2014) 188­197, https://doi.org/10.1016/j.epsr.2014.01.015.
+       hydro scheduling, IEEE Trans. Power Syst. 28 (2013) 4336­4347, https://doi.org/          [51] X.L. Ge, S. Xia, W.J. Lee, C.Y. Chung, A successive approximation approach for
+       10.1109/tpwrs.2013.2274559.                                                                     short-term cascaded hydro scheduling with variable water flow delay, Electr.
+[25] I.A. Farhat, M.E. El-Hawary, Optimization methods applied for solving the short-                  Power Syst. Res. 154 (2018) 213­222, https://doi.org/10.1016/j.epsr.2017.08.
+       term hydrothermal coordination problem, Electr. Power Syst. Res. 79 (2009)                      034.
+       1308­1320, https://doi.org/10.1016/j.epsr.2009.04.001.                                   [52] E.C. Finardi, E.L. da Silva, Solving the hydro unit commitment problem via dual
+[26] R. Taktak, C. D'Ambrosio, An overview on mathematical programming approaches                      decomposition and sequential quadratic programming, IEEE Trans. Power Syst. 21
+       for the deterministic unit commitment problem in hydro valleys, Energy Syst. 8                  (2006) 835­844, https://doi.org/10.1109/tpwrs.2006.873121.
+       (2017) 57­79, https://doi.org/10.1007/s12667-015-0189-x.                                 [53] H.I. Skjelbred, J. Kong, Operational hydropower simulation in cascaded river
+[27] V.K. Singh, S.K. Singal, Operation of hydro power plants-a review, Renew. Sustain.                systems for intraday re-planning, 2018 20th Power Systems Computation
+       Energy Rev. 69 (2017) 610­619, https://doi.org/10.1016/j.rser.2016.11.169.                      Conference (PSCC), Dublin, Ireland,, 2018, https://doi.org/10.23919/PSCC.2018.
+[28] E.K. Aasgård, Stochastic programming for short-term hydropower scheduling and                     8442510.
+       bidding, PhD Thesis, Available: Department of Industrial Economics and                   [54] I.G. Hidalgo, D.G. Fontane, J.E.G. Lopes, J.G.P. Andrade, A.F. de Angelis,
+       Technology Management, Norwegian University of Science and Technology,                          Efficiency curves for hydroelectric generating units, J. Water Resour. Plan.
+       Trondheim, Norway, 2019http://hdl.handle.net/11250/2584984.                                     Manage.-ASCE 140 (2014) 86­91, https://doi.org/10.1061/(asce)wr.1943-5452.
+[29] S. Seguin, P. Cote, C. Audet, Self-scheduling short-term unit commitment and                      0000258.
+       loading problem, IEEE Trans. Power Syst. 31 (2016) 133­142, https://doi.org/10.          [55] Z. Wang, G.Y. He, X.Q. Chen, S.X. Zhou, A novel model of large-scale hydro-
+       1109/tpwrs.2014.2383911.                                                                        thermal power system optimal scheduling, 2004 IEEE PES Power Systems
+[30] A. Marchand, M. Gendreau, M. Blais, G. Emiel, Fast near-optimal heuristic for the                 Conference & Exposition, New York, NY, USA,, 2004, https://doi.org/10.1109/
+       short-term hydro-generation planning problem, IEEE Trans. Power Syst. 33 (2018)                 PSCE.2004.1397506.
+       227­235, https://doi.org/10.1109/tpwrs.2017.2696438.                                     [56] P. Ilak, S. Krajcar, I. Rajsl, M. Delimar, Pricing energy and ancillary services in a
+[31] A.J. Conejo, J.M. Arroyo, J. Contreras, F.A. Villamor, Self-scheduling of a hydro                 day-ahead market for a price-taker hydro generating company using a risk-con-
+       producer in a pool-based electricity market, IEEE Trans. Power Syst. 17 (2002)                  strained approach, Energies 7 (2014) 2317­2342, https://doi.org/10.3390/
+       1265­1272, https://doi.org/10.1109/tpwrs.2002.804951.                                           en7042317.
+[32] J. Garcia-Gonzalez, E. Parrilla, A. Mateo, Risk-averse profit-based optimal sche-          [57] I.G. Hidalgo, D.G. Fontane, M. Arabi, J.E.G. Lopes, J.G.P. Andrade, L. Ribeiro,
+       duling of a hydro-chain in the day-ahead electricity market, Eur. J. Oper. Res. 181             Evaluation of optimization algorithms to adjust efficiency curves for hydroelectric
+       (2007) 1354­1369, https://doi.org/10.1016/j.ejor.2005.11.047.                                   generating units, J. Energy Eng.-ASCE 138 (2012) 172­178, https://doi.org/10.
+[33] F.J. Diaz, J. Contreras, J.I. Munoz, D. Pozo, Optimal scheduling of a price-taker                 1061/(asce)ey.1943-7897.0000074.
+       cascaded reservoir system in a pool-based electricity market, IEEE Trans. Power          [58] G.A. Aggidis, A. Zidonis, Hydro turbine prototype testing and generation of per-
+       Syst. 26 (2011) 604­615, https://doi.org/10.1109/tpwrs.2010.2063042.                            formance curves: Fully automated approach, Renew. Energy 71 (2014) 433­441,
+[34] E.C. Finardi, M.R. Scuzziato, Hydro unit commitment and loading problem for                       https://doi.org/10.1016/j.renene.2014.05.043.
+       day-ahead operation planning problem, Int. J. Electr. Power Energy Syst. 44              [59] A.L. Diniz, Test cases for unit commitment and hydrothermal scheduling pro-
+       (2013) 7­16, https://doi.org/10.1016/j.ijepes.2012.07.023.                                      blems, 2010 IEEE PES General Meeting, Providence, RI, USA,, 2010, https://doi.
+[35] M.M. Cordova, E.C. Finardi, F.A.C. Ribas, V.L. de Matos, M.R. Scuzziato,                          org/10.1109/PES.2010.5589757.
+       Performance evaluation and energy production optimization in the real-time op-           [60] P. Lu, J.Z. Zhou, C. Wang, Q. Qiao, L. Mo, Short-term hydro generation scheduling
+       eration of hydropower plants, Electr. Power Syst. Res. 116 (2014) 201­207,                      of Xiluodu and Xiangjiaba cascade hydropower stations using improved binary-
+       https://doi.org/10.1016/j.epsr.2014.06.012.                                                     real coded bee colony optimization algorithm, Energy Convers. Manage. 91 (2015)
+[36] J.I. Perez-Diaz, J.R. Wilhelmi, L.A. Arevalo, Optimal short-term operation sche-                  19­31, https://doi.org/10.1016/j.enconman.2014.11.036.
+       dule of a hydropower plant in a competitive electricity market, Energy Convers.          [61] C.D. Vournas, A. Zaharakis, Hydro turbine transfer-functions with hydraulic
+       Manage. 51 (2010) 2955­2966, https://doi.org/10.1016/j.enconman.2010.06.                        coupling, IEEE Trans. Energy Convers. 8 (1993) 527­532, https://doi.org/10.
+       038.                                                                                            1109/60.257069.
+[37] Z.K. Shawwash, T.K. Siu, S.O.D. Russell, B.C. The, Hydro short term hydro sche-            [62] L.N. Hannett, J.W. Feltes, B. Fardanesh, W. Crean, Modeling and control tuning of
+       duling optimization model, IEEE Trans. Power Syst. 15 (2000) 1125­1131,                         a hydro station with units sharing a common penstock section, IEEE Trans. Power
+       https://doi.org/10.1109/59.871743.                                                              Syst. 14 (1999) 1407­1412, https://doi.org/10.1109/59.801904.
+[38] D. De Ladurantaye, M. Gendreau, J.Y. Potvin, Optimizing profits from hydro-                [63] B.B. Xu, F.F. Wang, D.Y. Chen, H. Zhang, Hamiltonian modeling of multi-hydro-
+       electricity production, Comput. Oper. Res. 36 (2009) 499­529, https://doi.org/                  turbine governing systems with sharing common penstock and dynamic analyses
+       10.1016/j.cor.2007.10.012.                                                                      under shock load, Energy Convers. Manage. 108 (2016) 478­487, https://doi.org/
+[39] B. Tong, Q.Z. Zhai, X.H. Guan, An MILP based formulation for short-term hydro                     10.1016/j.enconman.2015.11.032.
+       generation scheduling with analysis of the linearization effects on solution feasi-      [64] S.L. Liao, H.Y. Zhao, G. Li, B.X. Liu, Short-term load dispatching method for a
+       bility, IEEE Trans. Power Syst. 28 (2013) 3588­3599, https://doi.org/10.1109/                   diversion hydropower plant with multiple turbines in one tunnel using a two-stage
+       tpwrs.2013.2274286.                                                                             model, Energies 12 (2019) 1476­1493, https://doi.org/10.3390/en12081476.
+[40] H.I. Skjelbred, J. Kong, O.B. Fosso, Dynamic incorporation of nonlinearity into            [65] E.B. Hreinsson, Efficiencies and objectives in short term hydro scheduling, 2016
+       MILP formulation for short-term hydro scheduling, Int. J. Electr. Power Energy                  IEEE Power and Energy Society General Meeting (PESGM), Boston, MA, USA,
+       Syst. (2019) in press.                                                                          2016, https://doi.org/10.1109/PESGM.2016.7741694.
+[41] O. Nilsson, D. Sjelvgren, Hydro unit start-up costs and their impact on the short          [66] H.A. Menarin, H.A. Costa, G.L.M. Fredo, R.P. Gosmann, E.C. Finardi, L.A. Weiss,
+       term scheduling strategies of Swedish power producers, IEEE Trans. Power Syst.                  Dynamic modeling of Kaplan turbines including flow rate and efficiency static
+       12 (1997) 38­43, https://doi.org/10.1109/59.574921.                                             characteristics, IEEE Trans. Power Syst. 34 (2019) 3026­3034, https://doi.org/10.
+[42] A.M. Zhou, B.Y. Qu, H. Li, S.Z. Zhao, P.N. Suganthan, Q.F. Zhang, Multiobjective                  1109/tpwrs.2019.2899815.
+       evolutionary algorithms: a survey of the state of the art, Swarm Evol. Comput. 1         [67] A.L. Diniz, P.P.I. Esteves, C.A. Sagastizabal, A mathematical model for the effi-
+       (2011) 32­49, https://doi.org/10.1016/j.swevo.2011.03.001.                                      ciency curves of hydroelectric units, 2007 IEEE PES General Meeting, Tampa, FL,
+[43] M.T.L. Barros, F.T.C. Tsai, S.L. Yang, J.E.G. Lopes, W.W.G. Yeh, Optimization of                  USA,, 2007, https://doi.org/10.1109/PES.2007.385632.
+       large-scale hydropower system operations, J. Water Resour. Plan. Manage.-ASCE            [68] H.I. Skjelbred, J. Kong, A comparison of linear interpolation and spline inter-
+       129 (2003) 178­188, https://doi.org/10.1061/(asce)0733-9496(2003)                               polation for turbine efficiency curves in short-term hydropower scheduling pro-
+       129:3(178).                                                                                     blems, 2018 29th IAHR Symposium on Hydraulic Machinery and Systems, Kyoto,
+[44] S. Soares, C.T. Salmazo, Minimum loss predispatch model for hydroelectric power                   Japan,, 2018, https://doi.org/10.1088/1755-1315/240/8/082002.
+       systems, IEEE Trans. Power Syst. 12 (1997) 1220­1227, https://doi.org/10.1109/           [69] T. Sousa, J.A. Jardini, R.A. de Lima, In site hydroelectric power plant unit effi-
+       59.630464.                                                                                      ciency measurement, 2010 IEEE PES Transmission and Distribution Conference
+[45] Q.F. Liang, L.E. Johnson, Y.S. Yu, A comparison of two methods for multiobjective                 and Exposition, New Orleans, LA, USA,, 2010, https://doi.org/10.1109/TDC.
+       optimization for reservoir operation, Water Resour. Bull. 32 (1996) 333­340,                    2010.5484627.
+       https://doi.org/10.1111/j.1752-1688.1996.tb03455.x.                                      [70] K.S. Gjerden, H.I. Skjelbred, B. Mo, Increased information flow between hydro-
+[46] X.Y. Wu, C.T. Cheng, J.J. Shen, B. Luo, S.L. Liao, G. Li, A multi-objective short                 power scheduling models through extended cut sharing, 2016 5th International
+       term hydropower scheduling model for peak shaving, Int. J. Electr. Power Energy                 Workshop on Hydro Scheduling in Competitive Electricity Markets, Trondheim,
+       Syst. 68 (2015) 278­293, https://doi.org/10.1016/j.ijepes.2014.12.004.                          Norway, 2016, https://doi.org/10.1016/j.egypro.2015.12.361.
+[47] Y.T. Qi, J.G. Luo, Y.X. Wei, Q.G. Miao, Maximizing hydropower generation in                [71] M. Alvarez, S.K. Ronnberg, J. Bermudez, J. Zhong, M.H.J. Bollen, Reservoir-type
+       flood control operation using preference based multi-objective evolutionary al-                 hydropower equivalent model based on a future cost piecewise approximation,
+       gorithm, International Conference on Sustainable Development on Energy and                      Electr. Power Syst. Res. 155 (2018) 184­195, https://doi.org/10.1016/j.epsr.
+       Environment Protection (SDEEP), Yichang, P.R. China,, 2017, https://doi.org/10.                 2017.09.028.
+       1088/1755-1315/86/1/012037.                                                              [72] J.I. Perez-Diaz, J.R. Wilhelmi, Assessment of the economic impact of environ-
+[48] A. Ahmadi, M.S. Masouleh, M. Janghorbani, N.Y.G. Manjili, A.M. Sharaf,                            mental constraints on short-term hydropower plant operation, Energy Policy 38
+       A.E. Nezhad, Short term multi-objective hydrothermal scheduling, Electr. Power                  (2010) 7960­7970, https://doi.org/10.1016/j.enpol.2010.09.020.
+
+                                                                                            13
+J. Kong, et al.                                                                                 Electric Power Systems Research 178 (2020) 106027
+
+[73] J.P.S. Catalao, H.M.I. Pousinho, V.M.F. Mendes, Scheduling of head-dependent                [89] M.H. Lin, J.F. Tsai, C.S. Yu, A review of deterministic optimization methods in
+       cascaded reservoirs considering discharge ramping constraints and start/stop of                   engineering and management, Math. Probl. Eng. 2012 (2012) 1­15, https://doi.
+       units, Int. J. Electr. Power Energy Syst. 32 (2010) 904­910, https://doi.org/10.                  org/10.1155/2012/756023.
+       1016/j.ijepes.2010.01.022.
+                                                                                                 [90] E.C. Finardi, E.L. da Silva, C. Sagastizabal, Solving the unit commitment problem
+[74] C.H. Chen, N.M. Chen, P.B. Luh, Head dependence of pump-storage-unit model                          of hydropower plants via Lagrangian Relaxation and Sequential Quadratic
+       applied to generation scheduling, IEEE Trans. Power Syst. 32 (2017) 2869­2877,                    Programming, Comput. Appl. Math. 24 (2005) 317­341, https://doi.org/10.1590/
+       https://doi.org/10.1109/tpwrs.2016.2629093.                                                       S0101-82052005000300001.
+
+[75] M. Chazarra, J.I. Perez-Diaz, J. Garcia-Gonzalez, A. Helseth, Modeling the real-            [91] R.N. Rodrigues, E.L. da Silva, E.C. Finardi, F.Y.K. Takigawa, Solving the short-term
+       time use of reserves in the joint energy and reserve hourly scheduling of a pumped                scheduling problem of hydrothermal systems via Lagrangian Relaxation and
+       storage plant, 2016 5th International Workshop on Hydro Scheduling in                             Augmented Lagrangian, Math. Probl. Eng. 2012 (2012), https://doi.org/10.1155/
+       Competitive Electricity Markets, Trondheim, Norway,, 2016, https://doi.org/10.                    2012/856178.
+       1016/j.egypro.2015.12.357.
+                                                                                                 [92] F.Y.K. Takigawa, E.L. da Silva, E.C. Finardi, R.N. Rodrigues, Solving the hydro-
+[76] J. Kong, H.I. Skjelbred, H. Abgottspon, Short-term hydro scheduling of a variable                   thermal scheduling problem considering network constraints, Electr. Power Syst.
+       speed pumped storage hydropower plant considering head loss in a shared pen-                      Res. 88 (2012) 89­97, https://doi.org/10.1016/j.epsr.2012.02.005.
+       stock, 2018 29th IAHR Symposium on Hydraulic Machinery and Systems, Kyoto,
+       Japan,, 2018, https://doi.org/10.1088/1755-1315/240/4/042011.                             [93] W. van Ackooij, E.C. Finardi, G.M. Ramalho, An exact solution method for the
+                                                                                                         hydrothermal unit commitment under wind power uncertainty with joint prob-
+[77] J.I. Perez-Diaz, M. Chazarra, J. Garcia-Gonzalez, G. Cavazzini, A. Stoppato, Trends                 ability constraints, IEEE Trans. Power Syst. 33 (2018) 6487­6500, https://doi.
+       and challenges in the operation of pumped-storage hydropower plants, Renew.                       org/10.1109/tpwrs.2018.2848594.
+       Sustain. Energ. Rev. 44 (2015) 767­784, https://doi.org/10.1016/j.rser.2015.01.
+       029.                                                                                      [94] CPLEX, https://www.ibm.com/analytics/cplex-optimizer, 2018, (Accessed 24
+                                                                                                         August 2018).
+[78] S.J. Deng, Y.X. Shen, H.B. Sun, Optimal scheduling of hydro-electric power gen-
+       eration with simultaneous participation in multiple markets, 2006 IEEE PES Power          [95] LINGO, https://www.lindo.com/index.php/products/lingo-and-optimization-
+       Systems Conference and Exposition, Atlanta, GA, USA,, 2006, https://doi.org/10.                   modeling, 2018, (Accessed 12 October 2018).
+       1109/psce.2006.296160.
+                                                                                                 [96] IPOPT, https://projects.coin-or.org/Ipopt, 2018, (Accessed 12 October 2018).
+[79] S.J. Kazempour, M.P. Moghaddam, G.R. Yousefi, Self-scheduling of a price-taker              [97] Xpress, https://www.fico.com/en/products/fico-xpress-optimization, 2018,
+       hydro producer in day-ahead energy and ancillary service markets, 2008 IEEE
+       Electrical Power and Energy Conference, Vancouver, Canada,, 2008, https://doi.                    (Accessed 26 September 2018).
+       org/10.1109/EPC.2008.4763320.                                                             [98] BONMIN, https://projects.coin-or.org/Bonmin, 2018, (Accessed 15 October
+
+[80] P. Ilak, S. Krajcar, I. Rajsl, M. Delimar, Profit maximization of a hydro producer in               2018).
+       a day-ahead energy market and ancillary service markets, 2013 IEEE EUROCON,               [99] GUROBI, http://www.gurobi.com/, 2018, (Accessed 9 October 2018).
+       Zagreb, Croatia,, 2013, https://doi.org/10.1109/EUROCON.2013.6625066.                    [100] I.E. Grossmann, J. Viswanathan, A. Vecchietti, R. Raman, E. Kalvelagen, GAMS/
+
+[81] M. Chazarra, J. Garcia-Gonzalez, J.I. Perez-Diaz, M. Arteseros, Stochastic opti-                    DICOPT: A Discrete Continuous Optimization Package, (2003) https://www.
+       mization model for the weekly scheduling of a hydropower system in day-ahead                      amsterdamoptimization.com/pdf/dicopt.pdf.
+       and secondary regulation reserve markets, Electr. Power Syst. Res. 130 (2016)            [101] M. Tawarmalani, N.V. Sahinidis, A polyhedral branch-and-cut approach to global
+       67­77, https://doi.org/10.1016/j.epsr.2015.08.014.                                                optimization, Math. Program. 103 (2005) 225­249, https://doi.org/10.1007/
+                                                                                                         s10107-005-0581-8.
+[82] J. Kong, H.I. Skjelbred, Operational hydropower scheduling with post-spot dis-             [102] AOA, https://aimms.com/english/developers/resources/solvers/aoa, 2018,
+       tribution of reserve obligations, 2017 14th International Conference on the                       (Accessed 10 September 2018).
+       European Energy Market (EEM), Dresden, Germany,, 2017, https://doi.org/10.               [103] B.A. Murtagh, M.A. Saunders, MINOS 5.51 User's guide, Stanford University,
+       1109/eem.2017.7981874.                                                                            2003, https://web.stanford.edu/group/SOL/guides/minos551.pdf.
+                                                                                                [104] D.G. Wilson, B.D. Rudin, Introduction to the IBM optimization subroutine library,
+[83] J.I. Perez-Diaz, J.I. Sarasua, J.R. Wilhelmi, Contribution of a hydraulic short-cir-                IBM Syst. J. 31 (1992) 4­10, https://doi.org/10.1147/sj.311.0004.
+       cuit pumped-storage power plant to the load-frequency regulation of an isolated          [105] D.A.G. Vieira, L.S.M. Guedes, A.C. Lisboa, R.R. Saldanha, Formulations for hy-
+       power system, Int. J. Electr. Power Energy Syst. 62 (2014) 199­211, https://doi.                  droelectric energy production with optimality conditions, Energy Convers.
+       org/10.1016/j.ijepes.2014.04.042.                                                                 Manage. 89 (2015) 781­788, https://doi.org/10.1016/j.enconman.2014.10.048.
+                                                                                                [106] J. Garcia-Gonzalez, G.A. Castro, Short-term hydro scheduling with cascaded and
+[84] M. Chazarra, J.I. Perez-Diaz, J. Garcia-Gonzalez, Optimal energy and reserve                        head-dependent reservoirs based on mixed-integer linear programming, 2001
+       scheduling of pumped-storage power plants considering hydraulic short-circuit                     IEEE Power Tech Conference, Porto, Portugal,, 2001, https://doi.org/10.1109/
+       operation, IEEE Trans. Power Syst. 32 (2017) 344­353, https://doi.org/10.1109/                    PTC.2001.964906.
+       tpwrs.2016.2545740.                                                                      [107] Z. Yu, F.T. Sparrow, B. Bowen, F.J. Smardo, On convexity issues of short-term
+                                                                                                         hydrothermal scheduling, Int. J. Electr. Power Energy Syst. 22 (2000) 451­457,
+[85] H.I. Skjelbred, J. Kong, H. Abgottspon, Calculation of power compensation for a                     https://doi.org/10.1016/s0142-0615(00)00004-1.
+       pumped storage hydropower plant with hydraulic short-circuit operation, 2017             [108] E. Parrilla, J. Garcia-Gonzalez, Improving the B&B search for large-scale hydro-
+       HYDRO - Shaping the Future of Hydropower, Seville, Spain, 2017 https://www.                       thermal weekly scheduling problems, Int. J. Electr. Power Energy Syst. 28 (2006)
+       hydropower-dams.com/product/hydro-2017-event-proceedings/.                                        339­348, https://doi.org/10.1016/j.ijepes.2005.12.008.
+                                                                                                [109] T.N. Santos, A.L. Diniz, A comparison of static and dynamic models for hydro
+[86] F.B. Dorn, H. Farahmand, H.I. Skjelbred, M.M. Belsnes, Modelling minimum                            production in generation scheduling problems, 2010 IEEE PES General Meeting,
+       pressure height in short-term hydropower production planning, 2016 5th                            Providence, RI, USA,, 2010, https://doi.org/10.1109/PES.2010.5589895.
+       International Workshop on Hydro Scheduling in Competitive Electricity Markets,           [110] E.C. Finardi, M.R. Scuzziato, A comparative analysis of different dual problems in
+       Trondheim, Norway,, 2016, https://doi.org/10.1016/j.egypro.2015.12.359.                           the Lagrangian Relaxation context for solving the Hydro Unit Commitment pro-
+                                                                                                         blem, Electr. Power Syst. Res. 107 (2014) 221­229, https://doi.org/10.1016/j.
+[87] P. Aaslid, H.I. Skjelbred, S.S. Bale, Modelling tunnel network flow and minimum                     epsr.2013.10.015.
+       pressure height in short-term hydropower production planning, 2018 6th                   [111] W. de Oliveira, C. Sagastizabal, C. Lemarechal, Convex proximal bundle methods
+       International Workshop on Hydro Scheduling in Competitive Electricity Markets,                    in depth: a unified analysis for inexact oracles, Math. Program. 148 (2014)
+       Stavanger, Norway,, 2018, https://doi.org/10.1007/978-3-030-03311-8_8.                            241­277, https://doi.org/10.1007/s10107-014-0809-6.
+
+[88] M.M. Belsnes, J. Roynstrand, O.B. Fosso, Handling state dependent nonlinear
+       tunnel flows in short-term hydropower scheduling, 2004 International Conference
+       on Power System Technology (PowerCon), Singapore, Singapore,, 2004, https://
+       doi.org/10.1109/ICPST.2004.1460223.
+
+                                                                                            14
+

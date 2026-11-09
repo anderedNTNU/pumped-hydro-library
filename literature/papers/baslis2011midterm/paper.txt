@@ -1,0 +1,882 @@
+1856                                                                                IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 26, NO. 4, NOVEMBER 2011
+
+Mid-Term Stochastic Scheduling of a Price-Maker
+       Hydro Producer With Pumped Storage
+
+               Costas G. Baslis, Member, IEEE, and Anastasios G. Bakirtzis, Senior Member, IEEE
+
+   Abstract--A yearly stochastic self-scheduling model for a                        Forward contract volume, in MWh.
+price-maker hydro producer is presented. In the short term, the
+producer aims at maximizing profits in the day-ahead market.                        Fraction of the producer's quota for residual
+Residual demand curves model the producer's interaction with his                    demand curve step , in MWh.
+competitors and the load demand. A modification of the residual
+demand curve is proposed to enable the definition of optimal                        Index (set) of hydroplants.
+pumped-hydro bids. Multistage stochastic programming provides
+hedging against the mid-term uncertainty of inflows, load de-                       Index (set) of pumped storage plants           .
+mand, and competitors' offers. The proposed method models the
+impact of short-term profit maximization decisions on mid-term                      Index (set) of hydroplants/reservoirs
+scheduling within a compact stochastic mixed integer linear                         immediately upstream of hydroplant/reservoir .
+programming (MILP) approach. A test case with a three-stage,
+90-scenario stochastic tree and data of the Greek Power System                      Index (set) of residual demand curve steps.
+is presented. Results provide insight on both mid-term reservoir
+management and short-term market-based operation and indicate                       Probability of scenario .
+the feasibility of solving a very large-scale scheduling problem as
+a unique MILP using a commercial solver. The role of forward                        Power output of hydroplant , in MW.
+contracts in mitigating market power is also analyzed.
+                                                                                    Maximum power output of hydroplant , in MW.
+   Index Terms--Hydro producer, market power, mid-term sched-
+uling, price-maker, pumped storage, stochastic mixed-integer pro-                   Pumping load of pumped storage plant , in
+gramming.                                                                           MW.
+
+                            NOMENCLATURE                                            Maximum pumping load of pumped storage
+                                                                                    plant , in MW.
+                Cycle efficiency of pumped storage plant .
+                                                                                    Hydro producer's quota, equal to the producer's
+                Market clearing price for residual demand curve                     total accepted energy offer, for scenario , in
+                step , in $/MWh.                                                    MWh.
+
+                Residual demand curve, representing market                          Minimum producer quota for residual demand
+                clearing price as a stepwise monotonically                          curve step , in MWh.
+                non-increasing function of producer's quota, in
+                $/MWh.                                                              Hourly net inflow in reservoir , in (MCM).
+                                                                                    Index (set) of scenarios.
+                Forward contract price, in $/MWh.
+                                                                                    Specific consumption of hydroplant , in
+                Hourly remuneration or payment for the hydro                                      .
+                producer in the day-ahead market.
+                                                                                    Spillage over reservoir , in .
+                Unique scenario bundle for scenario at hour .                       Index (set) of time periods (hours).
+
+                Load demand, in MW.                                                 Effective volume of water stored in reservoir
+                                                                                    at the end of hour , in .
+                Expected annual profit, in $.
+                                                                                    Effective storage capacity of reservoir , in .
+   Manuscript received November 05, 2009; revised June 09, 2010 and October
+18, 2010; accepted January 28, 2011. Date of publication March 17, 2011; date       Target final effective volume for reservoir , in
+of current version October 21, 2011. This work was supported by the State                .
+Scholarships Foundation of Greece. Paper no. TPWRS-00864-2009.
+                                                                                    Initial effective volume of reservoir , in .
+   The authors are with the Department of Electrical and Computer Engineering,
+Aristotle University of Thessaloniki, GR-54124 Thessaloniki, Greece (e-mail:        Vector of the producer's continuous and binary
+cbaslis@ee.auth.gr; bakiana@eng.auth.gr).                                           decision variables.
+
+   Color versions of one or more of the figures in this paper are available online  Binary variable indicating the selection of
+at http://ieeexplore.ieee.org.                                                      residual demand curve step .
+
+   Digital Object Identifier 10.1109/TPWRS.2011.2119335
+
+                                                                                 0885-8950/$26.00 © 2011 IEEE
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+BASLIS AND BAKIRTZIS: MID-TERM STOCHASTIC SCHEDULING OF A PRICE-MAKER HYDRO PRODUCER WITH PUMPED STORAGE    1857
+
+I. INTRODUCTION                                                      among them, stochastic inflows are a key aspect in mid-term
+
+                                                                     planning, due to their seasonal cycling pattern [13], [14]. The
+
+O VER the last two decades, power systems worldwide                  proposed model includes inflow uncertainty in terms of a mul-
+        have undergone radical restructuring toward the es-          tistage scenario tree.
+tablishment of efficient and well-functioning competitive
+electricity markets. While specific legislative changes are still       Short-term price-maker self-scheduling models, which in-
+under debate, there is a growing need for new support and            clude uncertainty in the residual demand curve, have been
+decision tools that will help assess the operation and scheduling    proposed in [9] and [10]. In the mid-term, market uncertainty
+of independent power producers and power systems as a whole.         is mainly due to the unknown demand, unit availability, and
+                                                                     the response of the producer's competitors. In this paper, un-
+   In a mid-term perspective, given the fact that a number of        certainty in the residual demand curve is modeled along with
+market players are competing under profit maximization terms,        uncertain inflows through the aforementioned scenario tree.
+a wide class of market equilibrium models has been developed
+[1], [2]. The majority of them are theoretically based on Cournot       In general, the mid-term self-scheduling problem for a price-
+competition [3], [4], conjectural variation approaches [5], [6],     maker producer is a large-scale stochastic nonlinear and non-
+and supply function equilibria (SFE) [7].                            convex optimization problem. The related technical literature
+                                                                     is limited. In a recent effort [15], stochastic dual dynamic pro-
+   An important inherent property of these models is that they       gramming is applied to solve the problem in the long term,
+provide the interaction among the players' strategies; espe-         under inflow uncertainty. An approximation of the profit func-
+cially in a mid-term horizon, players are expected to respond        tion by its concave hull is though necessary for the implemen-
+to market conditions and properly adjust their policies [2].         tation of the solution algorithm; this might lead to consider-
+However, these market-wide models have certain drawbacks.            able deviations from the actual shape of the profit function. In
+Cournot-based models deal with competition in quantities;            this paper, the problem is formulated as a stochastic mixed-in-
+thus, resulting prices depend on demand only and they are            teger linear program (MILP) and solved using commercial op-
+frequently higher than those actually observed [1]. In addition,     timization software (GAMS/CPLEX [16], [17]). The proposed
+these models depend on demand elasticity, which in turn is           method is tested on a hypothetical hydro producer comprising
+difficult to calculate. On the other hand, SFE approaches are        the major hydroplants of the Greek Power System. The impact
+computationally hard to deal with, thus necessitating simpli-        of fixed forward contracts is also assessed. Results on reser-
+fications that result in poor modeling of important operation        voir management, market power, market clearing prices, and
+aspects. A promising alternative to both these methods, espe-        short-term generation and pumping strategies are presented.
+cially in the medium term, is the conjectural variation approach,
+which considers the conjectures made by a producer about the            The main contributions of this paper are:
+response of his rivals to changes in price [5] or the variation of     -- The optimal mid-term scheduling considering the impact
+the price with respect to his own production [6].
+                                                                           of the short-term profit-based operation under inflow and
+   Apart from the market-wide equilibrium models, there is a va-           residual demand uncertainty, for a price-maker hydro
+riety of one-firm profit-maximization models that focus on the             producer, within a unique stochastic MILP problem. The
+self-scheduling of a certain power producer, either price-taker            hourly time resolution captures the important influence
+[8], or price-maker [9], [10]. In the latter case, the producer's          of demand variations and competitors' offers on the
+interaction with the rest of the players is usually modeled by             producer's bidding strategy, while enabling the detailed
+residual demand curves [11]. The major advantage here is com-              modeling of the chronological reservoir operation.
+putational tractability, enabling the detailed and realistic mod-      -- The introduction of a proper modification of the residual
+eling of the physical generation and system operation. Such                demand curve, which is necessary in order to define the
+models are mainly used for short-term scheduling.                          optimal pumped-hydro bidding strategy in the DA market
+                                                                           and assess its impact on market prices. Although pumping
+   The scope of this paper is to present a mid-term self-sched-            corresponds to a small fraction of the producer's genera-
+uling method for a price-maker producer that compactly models              tion, its influence on price can be significant [18]. Tech-
+the impact of the short-term profit maximization decisions on              nical literature on optimal pumped-hydro bidding strate-
+the optimal mid-term operation. Mid-term and short-term oper-              gies is limited and focuses mainly on short-term operation
+ations are usually decoupled, with the latter being driven by spe-         and Cournot-based [18] or price-taker [19], [20] models.
+cific signals (e.g., water values) derived from the former [12]. As        In this paper, the MILP formulation of [21] for the deter-
+compared to these two-level approaches, the proposed method                ministic short-term profit maximization of a price-maker is
+aims at a much more detailed representation of the short-term              extended in order to include optimal pumped-hydro bids,
+operation within the mid-term framework, thus enabling the def-            through the modified RDC, within a mid-term stochastic
+inition of more realistic mid-term decisions. Our focus is on              programming approach.
+
+a hydro producer with significant generating capacity. Such a
+
+producer is able to strategically manage his cheap and flexible      II. MODEL DESCRIPTION AND FORMULATION
+hydro and pumped-storage plants in the short term, in order to
+
+manipulate market prices and maximize profit. Nevertheless, The scope of the proposed method is to define the optimal
+
+annual water resources are limited. Mid-term water manage- yearly self-scheduling of a price-maker hydro producer under
+
+ment is thus strongly affected by the short-term profit-based de- uncertainty. In this section, the basic model characteristics are
+
+cisions. In addition, various sources of uncertainty are present; analyzed.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+1858                                                               IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 26, NO. 4, NOVEMBER 2011
+
+A. Market Modeling--Residual Demand Curve
+
+The hydro producer participates in the day-ahead (DA) en-
+
+ergy market, by submitting hourly price-quantity supply offers
+
+to the independent system operator (ISO) for each hour of the
+
+following day. The DA market is organized as a series of uni-
+
+form-price single-sided sealed-bid hourly auctions. Single node
+
+pricing is assumed. Following the clearing of the DA market by
+
+the ISO, the hydro producer is paid for his hourly energy offers
+
+that have been accepted at the corresponding system marginal
+
+price.
+
+The hydro producer is considered to be a price-maker and,
+
+therefore, can influence prices through his bidding strategy.
+
+This can be modeled on an hourly basis with the corre-
+
+sponding residual demand curve (RDC), which represents
+
+market clearing price (MCP) as a function of the producer's
+
+total accepted energy offer, also known as quota. The RDC
+
+models MCP as a monotonically non-increasing function of
+
+the producer's quota; it is also a stepwise curve, due to the
+
+stepwise nature of the supply offers [21]. In general, the RDC
+
+provides the interaction of the price-maker producer with all
+
+his competitors, the demand, and the energy market legislation.
+
+Since the price-maker hydro producer owns pumped-storage
+
+plants, the impact of pumping on market clearing prices must
+
+also be modeled. Therefore, a proper modification on the formu-
+
+lation of the RDC is introduced. First, the aggregated bid curve
+
+(ABC) is formulated by sorting the competitors' supply bids
+
+in ascending order, for the specific hour considered. Fig. 1(a)
+
+shows the ABC, as well as its intersection with load demand,
+
+which is assumed to be inelastic. Pumping will actually increase
+
+the load demand; the augmented load demand is calculated as
+
+the sum of the load demand and the producer's total pumping
+
+capacity. Fig. 1(b) shows the intersection of the ABC with the
+
+augmented load demand. The highlighted part of the ABC be-
+
+tween the actual and the augmented load demand in Fig. 1(b)
+
+provides market clearing prices for different values of the pro-
+
+ducer's pumping load (between zero and maximum pumping
+
+capacity). Without considering pumping, the RDC would be for-
+
+mulated as the mirror image of the part of the ABC up to the
+
+demand with respect to the perpendicular bisector of the in-
+
+terval  ; the resulting RDC would only comprise the steps          Fig. 1. (a) Aggregated bid curve and load demand. (b) Aggregated bid curve
+                                                                   and augmented load demand. (b) Modified residual demand curve. (c) Binary-
+denoted with the thin line in Fig. 1(c). The modification we pro-  variable-based linearization [21].
+
+pose is to also include the additional part of the ABC between
+
+the actual and the augmented load demand. As denoted with the
+
+bold line in Fig. 1(c), this part is placed in the negative quota
+
+axis of the RDC. In this way, the effect of pumping on market The objective of the hydro producer is to define the optimal
+
+clearing price is also considered. Pumping is modeled as nega- hourly quotas that maximize his profit:
+
+tive quota, meaning that the producer consumes (instead of pro-
+
+ducing) energy for water pumping, for which he now pays (in-
+
+stead of being compensated) at the resulting market price.                                              (1)
+
+Forward contracts are also included in the model, in order to
+
+evaluate their impact on the self-scheduling of the hydro pro-
+
+ducer. Forward contracts are not optimized; they are considered The objective (1) is a nonlinear function, due to the product of
+
+as input data with a known price ($/MWh) and volume two variables [quota and the resulting market clearing price
+
+        for each hour of the yearly horizon. The hydro             ]. In order to avoid nonlinearity, the problem is linearized
+
+producer purchases the contracted energy at the market clearing using proper binary variables, one for each step of the RDC,
+
+price and sells it at the predefined contract price.               Fig. 1(d). This linearization process has been developed in [21]
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+BASLIS AND BAKIRTZIS: MID-TERM STOCHASTIC SCHEDULING OF A PRICE-MAKER HYDRO PRODUCER WITH PUMPED STORAGE                     1859
+
+and is briefly described in Section II-E. Thus, the determin-
+istic nonlinear profit maximization problem is formulated as a
+mixed-integer linear program.
+
+B. Hydro Modeling
+
+Reservoir water balance is modeled on an hourly basis, in-
+
+cluding the explicit consideration of hydraulic coupling among Fig. 2. Three-stage scenario tree. Scenarios 5 and 6 are identical for the first
+cascaded hydroplants. As already mentioned, pumped storage and the second stage.
+
+plants are also modeled. Optimal pumping is calculated on profit
+
+maximization criteria only; no predefined rules for the operation    decisions are the basis of a well-hedged scheduling strategy;
+of pumped storage plants are assumed.                                when uncertainty is revealed, the producer will be able to
+                                                                     efficiently respond even to the worst scenario.
+   Hydro unit output power depends on turbine outflow and net
+head [22]. Many methods of modeling the hydro production                In the proposed model, stochastic reservoir inflows are
+function in detail and efficiently including it in relevant sched-   considered. Inflows are a key aspect in mid-term operation;
+uling schemes have been presented in the technical literature, for
+
+example, [8] and [23]. In this paper, similarly to most mid-term decisions on reservoir management are coupled in time and
+
+models [14], head dependencies are ignored. Hydro unit output thus highly dependent on the unknown future inflows. Under
+
+is considered to be a linear function of the turbine outflow rate, a strategy that is not well-hedged against inflow uncertainty,
+
+assuming a constant specific consumption.                            reservoirs are exposed to the danger of undesirable emptying
+
+Decisions on the final reservoir volume are generally guided or spillage, in the event of a highly dry or wet period, re-
+
+by the results of longer-term scheduling models [14], using ei- spectively [24]. Reservoir inflows (mainly originated from
+
+ther future cost functions or specific target values [24]. In hydro  rainfall and snow melting) have seasonal cycling characteris-
+systems comprising reservoirs with yearly utilization cycles,        tics and therefore they largely affect mid-term scheduling. In
+a good practice is to use the corresponding average historical       the short term, a price-maker hydro producer maximizes his
+level as a target value for the final reservoir volume. Such an      profit under the corresponding bidding strategy for the DA
+end-of-horizon constraint is included in our model.                  market. When load demand is high, the producer may decide
+
+C. Stochastic Formulation                                            to either release water and profit from the corresponding high
+                                                                     marginal prices or to withhold capacity in order to provoke
+
+Several stochastic parameters affect mid-term operation and price spikes. Since reservoir inflows are the unique source of
+
+scheduling in power systems, including inflows, fuel prices, load energy for the hydro producer, a mid-term scheduling model
+
+demand, unit availability, and producers' market behavior. As that considers the stochastic nature of inflows is very important
+
+operating decisions have to be made in advance, before the re- for the aforementioned water usage strategy in terms of profit
+
+alization of the stochastic parameters is observed, an optimal maximization. Such a mid-term model can also capture the
+
+decision strategy that hedges against unknown future must be seasonal characteristics of load demand (e.g., summer peaks),
+
+defined. In this way, some initial decisions are made in view of that greatly influence the producer's short-term strategy.
+
+the yet unknown outcome of the stochastic parameters; as future The rest of the unknown parameters, namely unknown fuel
+
+reveals, the producer's policy is properly adapted.                  prices, load demand, as well as competitors' unit availability and
+
+Stochastic programming models have been extensively used bidding strategies, can be compactly modeled by a stochastic
+
+in a wide range of real-life problems in order to calculate residual demand curve [9], [10]. In this paper, a scenario is de-
+
+optimal decision strategies that hedge against uncertainty. fined by the combined uncertainties of inflows and residual de-
+
+Uncertainty is usually considered to be fully described by a mand curves.
+
+finite number of possible realizations of the unknown param- A three-stage scenario tree with inflow and demand uncer-
+
+eters along the planning horizon (with their corresponding tainty is used, Fig. 3. The proper selection of the number and du-
+
+probabilities) called scenarios. The scenarios are combined to ration of the stages strongly depends on the properties of the un-
+
+form the scenario tree. Stages are used to define when a new re- derlying uncertain parameters as well as the starting time point
+
+alization of the stochastic parameter is observed and the related and the duration of the planning horizon [26]. The three-stage
+
+information is available for decision making. Fig. 2 illustrates a scenario tree of Fig. 3 adapts to a power system with two high
+
+three-stage scenario tree, with six scenarios in total. The sum- inflow and two high demand periods; each of the second and the
+
+mation of the unconditional probabilities of the six scenarios third stage include a main inflow and a main demand period.
+
+is equal to 1. Optimal decisions are based on the information A deterministic first stage of one month is adopted, as
+
+available at the time of decision and should not anticipate any forecasts are considered to be accurate within this period. The
+
+certain realization of the stochastic parameters in the future. second stage comprises the next four months. Five inflow re-
+
+Therefore, if two or more scenarios are identical up to time alizations are modeled, namely high (H), medium-high (MH),
+
+period (Fig. 2), all decisions regarding these scenarios must medium (M), medium-low (ML), and low (L). Each inflow
+
+also be identical, for all time periods up to . This requirement realization is combined with three demand realizations consid-
+
+is known as the principle of non-anticipativity [25] and is of ered, namely high (h), medium (m), and low (l), to formulate
+
+vital importance in stochastic programming. Non-anticipative the 15 second-stage branches of the scenario tree. A specific
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+1860                                                                 IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 26, NO. 4, NOVEMBER 2011
+
+                                                                     parent realization in the second stage, thus modeling the pos-
+                                                                     sible correlation between second- and third-stage stochastic pa-
+                                                                     rameters. Therefore, the designation of a third-stage branch in
+                                                                     Fig. 3 is relevant to its parent second-stage branch; third-stage
+                                                                     branches with the same designation (e.g., "H" for high inflows)
+                                                                     do not necessarily refer to realizations of the same magnitude.
+                                                                     The formulation of third-stage stochastic RDCs follows the pro-
+                                                                     cedure already explained for the second stage.
+
+                                                                        The proposed model can accommodate a more representative
+                                                                     scenario tree, derived from more accurate seasonal forecasting
+                                                                     techniques [26]. Estimating the residual demand curves is also a
+                                                                     cumbersome task that requires processing of historical demand
+                                                                     and competitors' behavior data [9]. Scenario reduction, based on
+                                                                     probability metrics, is another important tool for constructing a
+                                                                     tractable, yet representative, smaller-sized scenario tree [27].
+
+                                                                     D. Scope of the Stochastic Mid-Term Scheduling Model
+
+                                                                     The proposed model is developed as a mid-term scheduling
+
+                                                                     tool and does not aim at defining the optimal short-term op-
+
+                                                                     eration of the producer. If one seeks to solve the stochastic
+
+                                                                     short-term problem, he must take into account hourly RDC sce-
+
+                                                                     narios for the next day and define the optimal multi-step, non-
+
+                                                                     decreasing bid curves that hedge against day-ahead uncertainty,
+
+                                                                     as in [9]. In our approach, RDC uncertainty is considered in the
+
+                                                                     mid-term and refers to the increasing/decreasing trend of de-
+
+                                                                     mand within each stage and the expected mid-term adjustment
+
+                                                                     of the competitors' strategies to the observed inflow and de-
+
+                                                                     mand conditions. For a specific scenario, stage, and hour, one
+
+                                                                     corresponding hourly RDC is used in order to describe the re-
+
+Fig. 3. Yearly three-stage 90-scenario tree.                         spective hourly market conditions; that is, within each stage,
+                                                                     the producer holds a deterministic view over the market pa-
+
+                                                                     rameters of this stage. Thus, as analyzed in [28], the optimal
+
+inflow/demand realization is modeled through a scale factor          bidding strategy is defined by one price-quantity pair for each
+which modifies the expected hourly inflow/demand curve of            hour. Hence, the producer's bidding strategy over the mid-term
+the second stage. In order to formulate the stochastic RDC, we       horizon consists of one such price-quantity pair for each hour
+express the correlation between the observed inflow and de-          of each scenario. In fact, what is defined through the RDC is
+mand realization and the conjectured reaction of the producer's      the optimal quantity offer; the optimal bid price can then be any
+competitors to it. For this purpose, the competitors' expected       price which is lower than or equal to the market price derived
+bid prices are properly modified by using a corresponding scale      from the RDC [29].
+factor. In general, higher/lower bid prices are expected during
+dry/wet periods. On the other hand, competitors are expected            The hourly time resolution is adopted because profit is made
+to submit higher/lower bid prices with higher/lower demand           on an hourly basis, where a slight change in the producer's of-
+realizations (for example, under a lower demand scenario, they       fered quantity may have a big impact on hourly market price and
+are likely to act more competitively and thus lower their bid        profit. In addition, it enables modeling the hourly chronological
+prices, in order to maintain their market share). Stochastic RDC     reservoir operation. Alternatively, the aggregation of time pe-
+realizations are thus formulated for the second stage, based on      riods with similar market conditions can be chosen, in order to
+the respective demand realization and the conjectured modifi-        reduce the problem size and increase the stochastic modeling
+cation of the competitors' bid prices, following the process of      detail. An example of monthly aggregate RDCs in a mid-term
+Section II-A.                                                        price-maker problem can be found in [15].
+
+   Finally, the duration of the third stage is longer, equal to the     The adopted hourly detail also allows a deeper insight on
+remaining seven months. For each one of the 15 second-stage          how pumping influences market prices and increases the pro-
+parent nodes there are six branches, as defined by the com-          ducer's profit. Pumping cycles are usually daily or weekly;
+                                                                     since they are price-sensitive though, they also depend on the
+                                                                     specific seasonal demand and inflow conditions. In addition,
+
+bination of three possible inflow realizations (high, medium, when a pumped-storage plant is coupled with a large upstream
+
+low) and two demand realizations (high, low), Fig. 3. These reservoir, the seasonal regulation of the latter may largely affect
+
+third-stage realizations can be calculated with respect to their pumping (e.g., as with excessive upstream water flow).
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+BASLIS AND BAKIRTZIS: MID-TERM STOCHASTIC SCHEDULING OF A PRICE-MAKER HYDRO PRODUCER WITH PUMPED STORAGE                   1861
+
+E. Stochastic Profit Maximization Problem Formulation                               TABLE I
+   The objective of the producer is to maximize the expected                 HYDRO SYSTEM DATA
+
+annual profit. The stochastic mixed integer linear problem is
+formulated as follows:
+
+                                                                        (2)
+
+                                                                             Market clearing prices for each step of the curve, , are
+
+                                                     (3)                     known in advance and therefore no product of unknown vari-
+                                                                             ables exists in the profit function (3). Price is implicitly defined
+
+                                                            by the activation of the corresponding binary variable . The
+                                                     (4) required payment for the purchase of the forward contract en-
+
+                                                                             ergy from the ISO is modeled in the same fashion; the contracted
+
+                                                     (5) energy , which is a known parameter, is multiplied with the
+                                                            implicitly defined market price; see (3). The producer's forward
+
+                                                     (6) contract revenue is a constant term and is included in (2).
+                                                               Following the modification of the RDC proposed in this
+
+                                                     (7) paper, a minor adjustment of the linearization process of [21] is
+                                                            necessary. In particular, the minimum quota parameters
+
+                                                                             which correspond to pumping, i.e., to the left-most, negative
+
+                                                                             quota segments of the modified RDC, Fig. 1(d), must be neg-
+
+                                                                             ative in order to enable negative (pumping) quotas through
+
+                                                                             (5) and (7). On the contrary, the respective minimum quota
+
+                                                                             parameters in [21] are strictly nonnegative.
+
+                                                     (8) Hourly reservoir water balance is expressed in (8), ignoring
+
+                                                            water travel time between reservoirs. The rest of the hydro
+                                                     (9) producer's operating constraints include hydroplant maximum
+
+                                                     (10) power output (9), maximum pumping limit (10), reservoir
+                                                     (11) volume upper bound (11), initial value (12), and final value
+
+                                                             (13).
+                                                     (12) Non-anticipativity is expressed in (14). A scenario bundle is
+
+                                                     (13) defined as a subset of the scenario space containing scenarios
+
+                                                     (14) that are identical up to a certain time [25]. For example, in Fig. 2,
+                                                             a bundle is the subset comprising scenarios 5 and 6, as the latter
+
+   Hydro producer profit is expressed in (2)­(7). For each sce-              share the same information up to the end of stage 2 (bold solid
+nario, profit is multiplied by the scenario probability. The pro-            line). At a certain time , each scenario belongs to exactly
+ducer is compensated for his produced energy at the market                   one bundle, denoted as . According to (14), if two scenarios
+clearing price. When pumping, the producer buys at the market                belong to the same bundle at time , i.e., are identical up to ,
+clearing price. On the other hand, the producer buys his con-                the corresponding operating decisions should be identical, too.
+
+tracted energy from the ISO at the market clearing price and, in             III. TEST RESULTS
+turn, sells it at the respective forward contract price.
+
+Profit is derived from the modified residual demand curve, The proposed method was applied to a hydro system config-
+
+Fig. 1(d). Producer's quota is expressed in (4); pumping is mod- uration comprising all major hydroplants and reservoirs of the
+
+eled as negative quota. Constraints (5)­(7) correspond to the Greek Power System. As presented in Table I, the hypothetical
+
+binary-variable-based linearization of the profit maximization hydro producer owns ten hydroplants, including two pumped
+
+problem [21]. In brief, for a given hour and scenario , only one storage plants, in five river basins and four major blocks of
+
+binary variable  can be activated, thus indicating the selec- reservoirs in cascade. The producer's total generating capacity
+
+tion of the corresponding RDC step , (6). Given the selected is 2720 MW (total system capacity is about 9500 MW), whereas
+
+step, constraint (5) determines the exact value of the producer's pumping capacity is 720 MW. The cycle efficiency of pumped
+
+quota , as follows. The minimum quota for step is defined storage plants is assumed to be 75%.
+
+by the parameter , whereas the nonnegative continuous The yearly planning horizon starts in October; the first stage
+
+variable         represents the additional fraction of the quota comprises October, the second stage includes the next four
+
+within the step . The upper bound of       is the difference months, from November to February and the third stage refers
+
+between the minimum quota parameters of the next     and to the last seven months, from March to September. This stage
+
+the current step, (7); if step is not selected       , configuration was based on the hydrologic and load demand
+
+then the upper bound of  is zero and thus         .                          pattern of Greece. High inflows are observed in winter and
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+1862                                                         IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 26, NO. 4, NOVEMBER 2011
+                                                                                                    TABLE VI
+                    TABLE II
+      MEAN INFLOW CHARACTERISTICS                                                 COMPETITORS' BID PRICE MODIFICATION
+
+                   TABLE III                                Fig. 4. Typical residual demand curves for low and high demand hours (left
+      SYSTEM LOAD CHARACTERISTICS                           and right shape, respectively).
+
+                   TABLE IV                                                                         TABLE VII
+            INFLOW REALIZATIONS                                                       FORWARD CONTRACT TEST CASES
+
+              TABLE V
+      DEMAND REALIZATIONS
+
+spring months; the former are included in the second stage
+
+and the latter in the third stage (summer and autumn are much into account realistic data from the Greek Power System (all
+
+drier). On the other hand, peak load is observed during summer competitors are thermal producers and their bids were assumed
+
+and is included in the third stage, while winter demand is higher to reflect the marginal cost of their units).
+
+than autumn and spring and is included in the second stage. For each scenario and each hour of the planning horizon,
+
+Average inflow information is shown in Table II; yearly inflows one separate RDC was calculated from the corresponding sce-
+
+are 4 TWh, twice the total storage capacity of the reservoirs. nario-dependent competitors' offers and hourly demand. Two
+
+A chronological average inflow curve was derived from the such curves are presented in Fig. 4 for low and high demand
+
+typical hydrology of Greece. Final reservoir target volume hours. When demand exceeds the competitors' total installed
+
+      was set equal to the initial value              , for all capacity, the first RDC step is equal to the competitors' supply
+
+scenarios . A typical yearly chronological demand curve was deficit and is priced at the price cap (175 $/MWh). RDCs of
+
+formulated from data published by the Hellenic TSO [30]. A up to eight price levels were used in our tests. This number
+
+basic overview is shown in Table III. Note that system reserves was considered sufficient for representing the main generating
+
+are low; peak load is 8.9 GW while total capacity is 9.5 GW. unit technologies of the Greek Power System. In energy markets
+
+Both the inflow and the demand curves served as the basis with a higher degree of diversification of generating technolo-
+
+for the formulation of the 90-scenario stochastic tree (Fig. 3), gies, large number of pricing zones or intense strategic behavior
+
+following the procedure presented in Section II-C. For each among the participants, a larger number of price levels may be
+
+possible inflow/demand realization, a corresponding scale required. Time block aggregation or reduction of the scenario
+
+factor was used to modify the average inflow/demand curve, tree would probably be necessary in such a case, since there
+
+as presented in Tables IV and V. In order to express the high is a trade-off regarding the detailed modeling of chronological
+
+dependence of (third-stage) spring inflows on (second-stage) market operation, the uncertainty, and the RDC.
+
+winter inflows within a specific scenario, the scale factor of the A scenario is defined by the combination of inflow and
+
+third-stage inflow realization shown in Table IV was multiplied residual demand uncertainties; thus, the unconditional scenario
+
+with the scale factor of its parent second-stage realization. probability is calculated as the product of the conditional prob-
+
+This product was then used as the actual scale factor for the abilities of the respective realizations, presented in Tables IV
+
+third-stage inflows of the specific scenario. The same approach and V. Finally, three test cases of fixed forward contracts were
+
+was adopted for the third-stage demand realizations.        examined, as in Table VII. The producer delivers the specified
+
+The conjectured response of the producer's competitors to contract energy at the corresponding contract price.
+
+each inflow and demand realization, which was discussed in The model was implemented in GAMS/CPLEX 12 on an
+
+Section II-C, is modeled using the scale factors of Table VI. Intel Core i7 2.8-GHz PC with 24 GB of RAM under 64-bit
+
+These factors were used in order to modify the estimated bid Windows 7. Table VIII presents information about the number
+
+price offers of the competitors during the corresponding stage. of constraints and variables in our model, as well as the ex-
+
+The estimation of the competitors' offers was made by taking ecution time for the no-contract test case. Similar run times,
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+BASLIS AND BAKIRTZIS: MID-TERM STOCHASTIC SCHEDULING OF A PRICE-MAKER HYDRO PRODUCER WITH PUMPED STORAGE  1863
+
+                                       TABLE VIII
+                               MODEL CHARACTERISTICS
+
+                                                                             Fig. 7. Short-term overview of hourly load demand, market clearing price,
+                                                                             hydro production, pumping, and capacity withholding.
+
+Fig. 5. Total reservoir storage at the end of each month for all scenarios.
+
+                                                                             Fig. 8. Annual price duration curves for scenarios HmHh, MmMh, and LmLh.
+
+Fig. 6. Monthly producer profits for scenarios HmHh, MmMh, and LmLh.            The optimal mid-term decisions of the producer are defined
+                                                                             within the framework of profit maximization. Since profit is
+
+                                                                             generated at the hourly market operation level, it is clear that the
+
+around 30 h, were required for the forward contract test cases optimal mid-term scheduling depends on the market behavior
+
+as well. Parallel processing within the CPLEX solver (by si- of the producer in the short term. A further insight is provided
+
+multaneously using more than one PC thread) can be used to in Fig. 7, which presents the producer's self-scheduling within
+
+accelerate the solution. However, this may increase memory re- a four-day first-stage (October) interval. Pumping is plotted as
+
+quirements. Obviously, the proposed stochastic model results negative production; it is scheduled during low demand hours
+
+in a very large-scale MILP problem with intense computing re- with prices around 25 $/MWh. Although peak load is moderate
+
+quirements. This is why large physical memory and a 64-bit op- (below 7 GW), price spikes of 140 $/MWh are observed as the
+
+erating system are of paramount importance (the memory ded- producer withholds capacity and benefits from the resulting in-
+
+icated to GAMS/CPLEX during the solution was almost never creased prices. In Fig. 7, circles are used to indicate the spe-
+
+below 15 GB, with a maximum of 20.2 GB). Despite the size of cific peak-load hours during which the producer reduces his pro-
+
+the problem (23 million variables, out of which 3.5 million are duction in order to provoke price spikes, defined here as prices
+
+integer), the solution obtained for all test cases was within an op- higher than 140 $/MWh. Thus, the mid-term scheduling of the
+
+timality gap of 0.3% (for the no-contract test case the gap was as producer is also guided by a capacity withholding strategy per-
+
+small as 0.01%). Therefore, the solution of the yearly stochastic formed in the short term.
+
+self-scheduling of a midsized price-maker hydro producer as a Capacity withholding is performed independently of the
+
+unique MILP problem without the use of decomposition tech- inflow realization, as Fig. 8 and Table IX show. The frequency
+
+niques [10] has proved to be a feasible choice.                              of price spikes is very high; even for the most favorable inflow
+
+Optimal reservoir management results are presented in Fig. 5, scenario, they are observed for about 2400 h--more than three
+
+where three scenarios, namely HmHh, MmMh, and LmLh, have months. In addition, although higher inflows result in higher
+
+been highlighted. Uppercase letters symbolize the inflow real- total production, the average production at price spikes remains
+
+izations while lowercase letters are used for the demand real- below 1 GW, while the installed capacity is 2.7 GW. This
+
+izations; second-stage realizations are marked first. Thus, the means that despite the increased inflows, the producer con-
+
+above three scenarios correspond to the highest (wet), average, tinues to withhold capacity during peak hours and consumes
+
+and lowest (dry) inflows under average and high demand in the the additional hydro resources during off-peak hours. This
+
+second and the third stage, respectively.                                    increased allocation of hydro generation to off-peak periods is
+
+As shown in Fig. 5, the general pattern of mid-term reservoir a mid-term manifestation of market power and has been widely
+
+management is to gradually increase water storage until the be- observed and analyzed in the technical literature [32]. For a
+
+ginning of summer (quite similarly to a centralized, cost-mini- price-taker hydro producer, an opposite management of water
+
+mization approach [31]). Maximum storage for almost all sce- resources would be optimal: he would be motivated to allocate
+
+narios is observed in May. The main seasonal motivation for more hydro generation to peak periods, thus profiting from the
+
+the hydro producer is to use the accumulated water in order to corresponding high prices.
+
+profit from the high prices due to the summer peak load (mainly Our analysis has so far focused on the effect of different in-
+
+observed in July and August). Monthly profits are presented in flow profiles; relevant comments can be made for the impact
+
+Fig. 6; profits in July and August are higher than in the rest of of uncertain residual demand as well. Fig. 9 presents monthly
+
+the year.                                                                    profits and optimal production and pumping for two scenarios
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+1864                                                                           IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 26, NO. 4, NOVEMBER 2011
+
+                                     TABLE IX
+PRICE SPIKE DURATION AND CORRESPONDING PROFIT AND PRODUCTION
+
+                                                                               Fig. 11. Price duration curves for the forward contract test cases (scenario
+                                                                               LmLh, lowest inflows, and high demand during summer).
+
+Fig. 9. Production, pumping, and profits for scenarios MhMh and MlMl.          Fig. 12. Total reservoir storage for forward contract test case B.
+
+                                                                                                                        TABLE X
+                                                                                     PUMPING STRATEGY UNDER HIGH VOLUME FORWARD CONTRACTS
+
+Fig. 10. Load demand levels and hydro production distribution for the forward
+contract test cases (scenario HmHh).
+
+of medium inflows but opposite demand realizations, namely
+
+MhMh and MlMl. Under low demand pumping is utilized to a
+
+much higher extent; especially during the second stage, a large
+
+part of the production is due to cycling the pumped water instead
+
+of releasing water from inflows. Storing the inflow resources in- high summer demand, more water is stored to be used during
+
+creases the reservoirs' content. As a result, more water is trans- summer peaks; stored volume at the end of the second stage in-
+
+ferred to the third stage, thus leading to high levels of third-stage creases. On the contrary, when scenario inflows are high enough
+
+hydro production. On the other hand, under high demand, the to mitigate summer price spikes and/or winter demand is high,
+
+producer achieves larger profits with lower production levels more water is consumed in the second stage in order to lower the
+
+due to the higher prices provoked.                                             respective prices; stored volume at the end of the second-stage
+
+To assess the impact of forward contracts on the mid-term volume is reduced.
+
+scheduling of the producer, three test cases of contracts were ex- Finally, an interesting example of how pumping strategy can
+
+amined, as in Table VII. The optimal distribution of hydro pro- be influenced by forward contracts of high volume is shown in
+
+duction along specific load levels is shown in Fig. 10. Produc- Table X. The column designated "Pumping" corresponds to the
+
+tion in the peak-load levels increases with the contract volume; optimal strategy obtained from test case C. For the two-night-
+
+in other words, more hydro resources are allocated from off- hour interval, the producer pumps at the high price of 64.59
+
+peak to peak-load periods. This is a clear indication of market $/MWh during the first hour and then uses the pumped energy
+
+power mitigation. Forward contracts motivate the price-maker (reduced by the cycle efficiency factor) for hydro production,
+
+producer to lower market clearing prices, at which prices he thus lowering the price of the second hour. In this way, although
+
+must now buy the contracted energy from the ISO. As contract paying for both the contracted and the pumped energy at the
+
+volume increases, the incentive for the producer to lower the high price of the first hour, he benefits from purchasing the con-
+
+price and behave more competitively becomes stronger. Under tracted energy at a significantly reduced price during the second
+
+test case C, where the producer is overcontracted, price spikes hour. In addition, due to a full pumping cycle being performed,
+
+are limited even for a very dry year with high summer demand no actual inflow resource is consumed. If an alternative "No
+
+(scenario LmLh), Fig. 11.                                                      Pumping" strategy were followed, then the producer would have
+
+Fig. 12 presents the optimal water management for the con- to purchase the contracted energy of the second hour at the high
+
+tract test case B; there is a larger deviation among the individual price, too; this would result in loss, as Table X shows. Therefore,
+
+scenario curves than in the no-contract case (Fig. 5). This is although it might appear as a paradox, under contracts of high
+
+due to the price reduction incentive, imposed by the contract, volume, it can be optimal to pump at high price and produce at
+
+which leads to two alternative ways of managing second-stage low price. However, this rather extreme behavior is observed to
+
+stored volume. For low inflow scenarios and/or scenarios with a limited extent, mainly under low inflow scenarios.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+BASLIS AND BAKIRTZIS: MID-TERM STOCHASTIC SCHEDULING OF A PRICE-MAKER HYDRO PRODUCER WITH PUMPED STORAGE  1865
+
+                           IV. CONCLUSION                                                [16] A. Brooke, D. Kendrick, A. Meeraus, and R. Raman, GAMS: A User's
+                                                                                               Guide. Washington, DC: GAMS Development, 1998.
+   A yearly self-scheduling model for a price-maker hydro
+producer that hedges against uncertain reservoir inflows and                             [17] ILOG CPLEX 11.0 User's Manual. Gentilly, France, ILOG SA,
+residual demand curves has been presented. The model was                                       2007.
+formulated and solved as a large-scale stochastic mixed-integer
+                                                                                         [18] C. Crampes and M. Moreaux, "Pumping water to compete in electricity
+program. A test case of a hypothetical hydro producer com-                                     markets," in Working Papers 08.13.257, LERNA. Toulouse, France:
+prising the major hydroplants of the Greek Power System was                                    University of Toulouse, 2008.
+solved, considering a three-stage scenario tree with 90 sce-
+narios. Results in the mid-term time scale present the optimal                           [19] E. Ni and P. B. Luh, "Optimal integrated bidding and hydrothermal
+                                                                                               scheduling with risk management and self-scheduling requirements,"
+reservoir management; in the short term, they illustrate the use                               IEEE Trans. Power Syst., vol. 19, no. 1, pp. 600­609, Feb. 2004.
+of market power through capacity withholding. The impact of
+fixed forward contracts on market power mitigation was also                              [20] N. Lu, J. H. Chow, and A. A. Desrochers, "Pumped-storage hydro-
+                                                                                               turbine bidding strategies in a competitive electricity market," IEEE
+assessed. The optimization of mid-term decisions considering                                   Trans. Power Syst., vol. 19, no. 2, pp. 834­841, May 2004.
+the short-term bidding strategy within a compact stochastic
+MILP approach, as well as the proposed modification of the                               [21] S. de la Torre, J. M. Arroyo, A. J. Conejo, and C. Contreras, "Price
+residual demand curve in order to define the producer's optimal                                maker self-scheduling in a pool-based electricity market a mixed-in-
+                                                                                               teger LP approach," IEEE Trans. Power Syst., vol. 17, no. 4, pp.
+pumped-hydro bids, are the main contributions of this paper.                                   1037­1042, Nov. 2002.
+The solution of a unique very large-scale MILP problem with
+a sophisticated commercial solver has proved to be a feasible                            [22] A. J. Wood and B. F. Wollenberg, Power Generation, Operation and
+choice. Advances in computer hardware may allow the solution                                   Control. New York: Wiley, 1996.
+
+of even larger problems, including more scenarios and RDC                                [23] A. L. Diniz and M. E. P. Maceira, "A four-dimensional model of hydro
+details, without the need to resort to decomposition approaches.                               generation for the short-term hydrothermal dispatch problem consid-
+                                                                                               ering head and spillage effects," IEEE Trans. Power Syst., vol. 23, no.
+                              REFERENCES                                                       3, pp. 1298­1308, Aug. 2008.
+
+     [1] E. P. Kahn, "Numerical techniques for analyzing market power in elec-           [24] M. V. F. Pereira, "Optimal stochastic operations scheduling of large
+          tricity," Elect. J., vol. 11, pp. 34­43, Jul. 1998.                                  hydroelectric systems," Int. J. Elect. Power Energy Syst., vol. 11, pp.
+                                                                                               161­169, 1989.
+     [2] M. Ventosa, A. Baíllo, A. Ramos, and M. Rivier, "Electricity market
+          modeling trends," Energy Policy, vol. 33, no. 7, pp. 897­913, May              [25] R. T. Rockafellar and R. J. Wets, "Scenarios and policy aggregation
+          2005.                                                                                in optimization under uncertainty," Math. Oper. Res., vol. 16, pp.
+                                                                                               119­147, Feb. 1991.
+     [3] T. J. Scott and E. G. Read, "Modelling hydro reservoir operation in a
+          deregulated electricity market," Int. Trans. Oper. Res., vol. 3, no. 3­4,      [26] J. Jacobs, G. Freeman, J. Grygier, D. Morton, G. Schultz, K. Staschus,
+          pp. 243­253, Aug. 1996.                                                              and J. Stedinger, "SOCRATES: A system for scheduling hydroelectric
+                                                                                               generation under uncertainty," Ann. Oper. Res., vol. 59, pp. 99­133,
+     [4] L. A. N. Barroso, M. H. C. Fampa, R. Kelman, M. V. F. Pereira, and P.                 1995.
+          Lino, "Market power issues in bid-based hydrothermal dispatch," Ann.
+          Oper. Res., vol. 117, pp. 247­270, Nov. 2002.                                  [27] N. Gröwe-Kuska, H. Heitsch, and W. Römisch, "Scenario reduction
+                                                                                               and scenario tree construction for power management problems," in
+     [5] C. J. Day, B. F. Hobbs, and J.-S. Pang, "Oligopolistic competition                    Proc. IEEE Power Tech Conf., Jun. 2003, vol. 3, pp. 23­26.
+          in power networks: A conjectured supply function approach," IEEE
+          Trans. Power Syst., vol. 17, no. 2, pp. 597­607, May 2002.                     [28] A. G. Bakirtzis, N. P. Ziogos, A. C. Tellidou, and G. A. Bakirtzis,
+                                                                                               "Electricity producer offering strategies in day-ahead energy market
+     [6] E. Centeno, J. Reneses, and J. Barquín, "Strategic analysis of electricity            with step-wise offers," IEEE Trans. Power Syst., vol. 22, no. 4, pp.
+          markets under uncertainty: A conjectured-price-response approach,"                   1804­1818, Nov. 2007.
+          IEEE Trans. Power Syst., vol. 22, no. 1, pp. 423­432, Feb. 2007.
+                                                                                         [29] C. K. Simoglou, P. N. Biskas, and A. G. Bakirtzis, "Optimal self-sched-
+     [7] R. J. Green and D. M. Newbery, "Competition in the British electricity                uling of a thermal producer in short-term electricity markets by MILP,"
+          spot market," J. Pol. Econ., vol. 100, pp. 929­953, Oct. 1992.                       IEEE Trans. Power Syst., to be published.
+
+     [8] A. J. Conejo, J. M. Arroyo, J. Contreras, and F. A. Villamor, "Self-            [30] Hellenic Transmission System Operator S.A. [Online]. Available:
+          scheduling of a hydro producer in a pool-based electricity market,"                  http://www.desmie.gr.
+          IEEE Trans. Power Syst., vol. 17, no. 4, pp. 1265­1271, Nov. 2002.
+                                                                                         [31] C. G. Baslis, S. E. Papadakis, and A. G. Bakirtzis, "Simulation of
+     [9] Á. Baíllo, M. Ventosa, M. Rivier, and A. Ramos, "Optimal offering                     optimal medium-term hydro-thermal system operation by grid com-
+          strategies for generation companies operating in electricity spot mar-               puting," IEEE Trans. Power Syst., vol. 24, no. 3, pp. 1208­1217, Aug.
+          kets," IEEE Trans. Power Syst., vol. 19, no. 2, pp. 745­753, May 2004.               2009.
+
+    [10] M. P. Nowak, R. Schultz, and M. Westphalen, "A stochastic integer               [32] J. Bushnell, "A mixed complementarity model of hydrothermal elec-
+          programming model for incorporating day-ahead trading of electricity                 tricity competition in the western united states," Oper. Res., vol. 51, pp.
+          into hydro-thermal unit commitment," Optimiz. Eng., vol. 6, pp.                      80­93+172, Jan. 2003.
+          163­176, Jun. 2005.
+                                                                                                                    Costas G. Baslis (S'09­M'11) received the Dipl.
+    [11] G. B. Sheblé, Computational Auction Mechanisms for Restructured                                            Electr. Eng. and Ph.D. degrees from the Department
+          Power Industry Operation. Norwell, MA: Kluwer, 1999.                                                      of Electrical Engineering, Aristotle University of
+                                                                                                                    Thessaloniki, Thessaloniki, Greece, in 2003 and
+    [12] J. Reneses, E. Centeno, and J. Barquín, "Coordination between                                              2010, respectively.
+          medium-term generation planning and short-term operation in elec-
+          tricity markets," IEEE Trans. Power Syst., vol. 21, no. 1, pp. 43­52,                                        His research interests are in power system planning
+          Feb. 2006.                                                                                                and economics.
+
+    [13] A. Ramos, S. Cerisola, Á. Baíllo, and J. M. Latorre, "Stochasticity in                                     Anastasios G. Bakirtzis (S'77­M'79­SM'95) re-
+          electric energy systems planning," Lecture Notes Econ. Math. Syst.,                                       ceived the Dipl. Eng. Degree from the Department of
+          vol. 581, pp. 217­239, 2006.                                                                              Electrical Engineering, National Technical Univer-
+                                                                                                                    sity, Athens, Greece, in 1979 and the M.S.E.E. and
+    [14] S. W. Wallace and S. E. Fleten, "Stochastic programming models in en-                                      Ph.D. degrees from Georgia Institute of Technology,
+          ergy," in Stochastic Programming, Handbooks in Operations Research                                        Atlanta, in 1981 and 1984, respectively.
+          and Management Science, A. Rusczynski and A. Shapiro, Eds. New
+          York: Elsevier, 2003, vol. 10, pp. 637­677.                                                                  Since 1986, he has been with the Electrical Engi-
+                                                                                                                    neering Department, Aristotle University of Thessa-
+    [15] B. C. Flach, L. A. Barroso, and M. V. F. Pereira, "Long-term optimal                                       loniki, Thessaloniki, Greece, where he is currently
+          allocation of hydro generation for a price-maker company in a compet-                                     Professor and Director of the Power Systems Labo-
+          itive market: Latest developments and a stochastic dual dynamic pro-                                      ratory. His research interests are in power system op-
+          gramming approach," IET Gen. Transm. Distrib., vol. 4, pp. 299­314,        eration, planning, and economics.
+          Feb. 2010.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on October 28,2026 at 22:18:07 UTC from IEEE Xplore. Restrictions apply.
+

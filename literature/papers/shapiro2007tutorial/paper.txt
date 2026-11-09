@@ -1,0 +1,1710 @@
+     A Tutorial on Stochastic Programming
+
+                 Alexander Shapiro and Andy Philpott
+
+                                       March 21, 2007
+
+1 Introduction
+
+This tutorial is aimed at introducing some basic ideas of stochastic programming. The in-
+tended audience of the tutorial is optimization practitioners and researchers who wish to
+acquaint themselves with the fundamental issues that arise when modeling optimization
+problems as stochastic programs. The emphasis of the paper is on motivation and intuition
+rather than technical completeness (although we could not avoid giving some technical de-
+tails). Since it is not intended to be a historical overview of the subject, relevant references
+are given in the "Notes" section at the end of the paper, rather than in the text.
+
+    Stochastic programming is an approach for modeling optimization problems that involve
+uncertainty. Whereas deterministic optimization problems are formulated with known pa-
+rameters, real world problems almost invariably include parameters which are unknown at
+the time a decision should be made. When the parameters are uncertain, but assumed to lie
+in some given set of possible values, one might seek a solution that is feasible for all possible
+parameter choices and optimizes a given objective function. Such an approach might make
+sense for example when designing a least-weight bridge with steel having a tensile strength
+that is known only to within some tolerance. Stochastic programming models are similar in
+style but try to take advantage of the fact that probability distributions governing the data
+are known or can be estimated. Often these models apply to settings in which decisions are
+made repeatedly in essentially the same circumstances, and the objective is to come up with
+a decision that will perform well on average. An example would be designing truck routes for
+daily milk delivery to customers with random demand. Here probability distributions (e.g.,
+of demand) could be estimated from data that have been collected over time. The goal is
+to find some policy that is feasible for all (or almost all) the possible parameter realizations
+and optimizes the expectation of some function of the decisions and the random variables.
+
+    School of Industrial and Systems Engineering, Georgia Institute of Technology, Atlanta, Georgia 30332-
+0205, USA, e-mail: ashapiro@isye.gatech.edu.
+
+    Department of Engineering Science, University of Auckland, Auckland, New Zealand, e-mail:
+a.philpott@auckland.ac.nz.
+
+                                                          1
+    Stochastic programming can also be applied in a setting in which a one-off decision
+must be made. Here an example would be the construction of an investment portfolio to
+maximize return. Like the milk delivery example, probability distributions of the returns on
+the financial instruments being considered are assumed to be known, but in the absence of
+data from future periods, these distributions will have to be elicited from some accompanying
+model, which in its simplest form might derive solely from the prior beliefs of the decision
+maker. Another complication in this setting is the choice of objective function: maximizing
+expected return becomes less justifiable when the decision is to be made once only, and the
+decision-maker's attitude to risk then becomes important.
+
+    The most widely applied and studied stochastic programming models are two-stage (lin-
+ear) programs. Here the decision maker takes some action in the first stage, after which a
+random event occurs affecting the outcome of the first-stage decision. A recourse decision
+can then be made in the second stage that compensates for any bad effects that might have
+been experienced as a result of the first-stage decision. The optimal policy from such a
+model is a single first-stage decision and a collection of recourse decisions (a decision rule)
+defining which second-stage action should be taken in response to each random outcome. As
+an introductory example we discuss below the classical inventory model.
+
+Example 1 (Inventory model) Suppose that a company has to decide an order quantity
+x of a certain product to satisfy demand d. The cost of ordering is c > 0 per unit. If the
+demand d is bigger than x, then a back order penalty of b  0 per unit is incurred. The cost
+of this is equal to b(d - x) if d > x, and is zero otherwise. On the other hand if d < x, then
+a holding cost of h(x - d)  0 is incurred. The total cost is then
+
+G(x, d) = cx + b[d - x]+ + h[x - d]+,         (1.1)
+
+where [a]+ denotes the maximum of a and 0. We assume that b > c, i.e., the back order
+cost is bigger than the ordering cost. We will treat x and d as continuous (real valued)
+variables rather than integers. This will simplify the presentation and makes sense in various
+situations.
+
+    The objective is to minimize the total cost G(x, d). Here x is the decision variable and the
+demand d is a parameter. Therefore, if the demand is known, the corresponding optimization
+problem can be formulated in the form
+
+min G(x, d).                                  (1.2)
+
+x0
+
+The nonnegativity constraint x  0 can be removed if a back order policy is allowed. The
+objective function G(x, d) can be rewritten as
+
+G(x, d) = max (c - b)x + bd, (c + h)x - hd ,  (1.3)
+
+which is piecewise linear with a minimum attained at x¯ = d. That is, if the demand d is
+known, then (no surprises) the best decision is to order exactly the demand quantity d.
+
+2
+For a numerical instance suppose c = 1, b = 1.5, and h = 0.1. Then
+
+G(x, d) =  -0.5x + 1.5d,    if x < d
+            1.1x - 0.1d,    if x  d.
+
+Let d = 50. Then G(x, 50) is the pointwise maximum of the linear functions plotted in
+Figure 1.
+
+100
+ 80
+ 60
+ 40
+ 20
+
+0    20    40 x 60          80  100
+
+Figure 1: Plot of G(x, 50). Its minimum is at x¯ = 50
+
+    Consider now the case when the ordering decision should be made before a realization
+of the demand becomes known. One possible way to proceed in such situation is to view
+the demand D as a random variable (denoted here by capital D in order to emphasize that
+it is now viewed as a random variable and to distinguish it from its particular realization
+d). We assume, further, that the probability distribution of D is known. This makes sense
+in situations where the ordering procedure repeats itself and the distribution of D can be
+estimated, say, from historical data. Then it makes sense to talk about the expected value,
+denoted E[G(x, D)], of the total cost and to write the corresponding optimization problem
+
+           min E[G(x, D)].                                          (1.4)
+
+           x0
+
+    The above formulation approaches the problem by optimizing (minimizing) the total cost
+on average. What would be a possible justification of such approach? If the process repeats
+itself then, by the Law of Large Numbers, for a given (fixed) x, the average of the total cost,
+over many repetitions, will converge with probability one to the expectation E[G(x, D)].
+Indeed, in that case a solution of problem (1.4) will be optimal on average.
+
+    The above problem gives a simple example of a recourse action. At the first stage, before
+a realization of the demand D is known, one has to make a decision about ordering quantity
+x. At the second stage after demand D becomes known, it may happen that d > x. In that
+
+           3
+case the company can meet demand by taking the recourse action of ordering the required
+quantity d - x at a penalty cost of b > c.
+
+    The next question is how to solve the optimization problem (1.4). In the present case
+problem (1.4) can be solved in a closed form. Consider the cumulative distribution function
+(cdf) F (z) := Prob(D  z) of the random variable D. Note that F (z) = 0 for any z < 0.
+This is because the demand cannot be negative. It is possible to show (see the Appendix)
+that
+
+                                                                                                        x  (1.5)
+
+                     E[G(x, D)] = b E[D] + (c - b)x + (b + h) F (z)dz.
+
+                                                                                                      0
+
+Therefore, by taking the derivative, with respect to x, of the right hand side of (1.5) and
+equating it to zero we obtain that optimal solutions of problem (1.4) are defined by the
+equation (b + h)F (x) + c - b = 0, and hence an optimal solution of problem (1.4) is given
+by the quantile 1
+
+                                 x¯ = F -1 () ,                                                            (1.6)
+
+where    :=  b-c  .
+             b+h
+Suppose for the moment that the random variable D has a finitely supported distribu-
+
+tion, i.e., it takes values d1, ..., dK (called scenarios) with respective probabilities p1, ..., pK.
+In that case its cdf F (·) is a step function with jumps of size pk at each dk, k = 1, ..., K.
+Formula (1.6), for an optimal solution, still holds with the corresponding -quantile, coin-
+
+ciding with one of the points dk, k = 1, ..., K. For example, the considered scenarios may
+represent historical data collected over a period of time. In such case the corresponding
+
+cdf is viewed as the empirical cdf giving an approximation (estimation) of the true cdf, and
+
+the associated -quantile is viewed as the sample estimate of the -quantile associated with
+
+the true distribution. It is instructive to compare the quantile solution x¯ with a solution
+corresponding to one scenario d = d¯, where d¯ is, say, the mean (expected value) of D. As it
+was mentioned earlier, the optimal solution of such (deterministic) problem is d¯. The mean
+d¯ can be very different from the -quantile x¯. It is also worthwhile mentioning that typically
+
+sample quantiles are much less sensitive than the sample mean to random perturbations of
+
+the empirical data.
+
+In most real settings, closed-form solutions for stochastic programming problems such as
+
+(1.4) are rarely available. In the case of finitely many scenarios it is possible to model the
+
+stochastic program as a deterministic optimization problem, by writing the expected value
+
+E[G(x, D)] as the weighted sum:
+
+                                                 K                                                         (1.7)
+
+                     E[G(x, D)] = pkG(x, dk).
+
+                                               k=1
+
+    1Recall that, for   (0, 1), the (left side) -quantile of the cumulative distribution function F (·) is defined
+as F -1() := inf{t : F (t)  }. In a similar way the right side -quantile is defined as sup{t : F (t)  }.
+The set of optimal solutions of problem (1.4) is the (closed) interval with end points given by the respective
+left and right side -quantiles.
+
+                                 4
+The deterministic formulation (1.2) corresponds to one scenario d taken with probability
+one. By using the representation (1.3), we can write problem (1.2) as the linear programming
+problem
+
+                                        min t                                  (1.8)
+
+                                         x,t
+
+                                        s.t. t  (c - b)x + bd,
+                                               t  (c + h)x - hd,
+                                               x  0.
+
+Indeed, for fixed x, the optimal value of (1.8) is equal to max{(c-b)x+bd, (c+h)x-hd}, which
+is equal to G(x, d). Similarly, the expected value problem (1.4), with scenarios d1, ..., dK,
+can be written as the linear programming problem:
+
+  min                                         K    pktk
+                                              k=1
+x,t1,...,tK
+                                     tk  (c - b)x + bdk, k = 1, ..., K,        (1.9)
+  s.t.                               tk  (c + h)x - hdk, k = 1, ..., K,
+                                     x  0.
+
+The tractability of linear programming problems makes approximation by scenarios an at-
+tractive approach for attacking problems like (1.4). In the next section we will investigate
+the convergence of the solution of such a scenario approximation as K becomes large. It
+is also worth noting here the "almost separable" structure of problem (1.9). For fixed x,
+problem (1.9) separates into the sum of optimal values of problems of the form (1.8) with
+d = dk. Such decomposable structure is typical for two-stage linear stochastic programming
+problems.
+
+    We digress briefly here to compare the exact solution to (1.4) with the scenario solution
+for the numerical values c = 1.0, b = 1.5, and h = 0.1. Suppose that D has a uniform
+distribution on the interval [0, 100]. Then for any x  [0, 100],
+
+                                                                                                                            x
+
+                        E[G(x, D)] = b E[D] + (c - b)x + (b + h) F (z)dz
+
+                                                                                                                          0
+
+                                        = 75 - 0.5x + 0.008x2
+
+ as shown in Figure 2.
+    Suppose the demand is approximated by a finitely supported distribution with two equally
+
+likely scenarios d1 = 20, d2 =80. Then
+
+                                                            1  2
+                                                            2
+                                     E[G(x, D)]          =          G(x, dk),
+
+                                                               k=1
+
+which is shown plotted in Figure 3 in comparison with the plot for uniformly distributed D.
+
+Figure 3 also shows the same construction with three scenarios d1 = 20, d2 = 50, d3 = 80,
+                               2     1     2
+with respective probabilities  5  ,  5  ,  5  .  This illustrates how more scenarios in general yield a
+
+                                                            5
+75
+74
+73
+72
+71
+70
+69
+68
+
+    0  10  20  3x0  40  50  60
+
+                     Figure 2: Plot of E[G(x, D)]. Its minimum is at x¯ = 31.25.
+
+better approximation to the objective function (although in this case this has not made the
+approximate solution any better). The plot for three scenarios also illustrates the fact that
+if the scenarios are based on conditional expectations of D over respective intervals [0, 40],
+(40, 60], and (60, 100] (with corresponding probabilities) and G(x, D) is convex in D, then
+the approximation gives a lower bounding approximation to E[G(x, D)] by virtue of Jensen's
+inequality.
+
+    This example raises several questions. First, how should we approximate the random
+variable by one with a finitely-supported probability distribution? Second, how should we
+solve the resulting (approximate) optimization problem? Third, how can we gauge the
+quality of the approximate solution? In the next section we will discuss these issues in the
+context of two-stage linear stochastic programming problems. One natural generalization of
+the two-stage model, which we discuss in section 3, extends it to many stages. Here each
+stage consists of a decision followed by a set of observations of the uncertain parameters
+which are gradually revealed over time. In this context stochastic programming is closely
+related to decision analysis, optimization of discrete event simulations, stochastic control
+theory, Markov decision processes, and dynamic programming. Another class of stochastic
+programming models seeks to safeguard the solution obtained against very bad outcomes.
+Some classical approaches to deal with this are mean-variance optimization, and so-called
+chance constraints. We briefly discuss these in section 4, and explore the relationship with
+their modern counterparts, coherent risk measures and robust optimization.
+
+2 Two-stage stochastic programming
+
+In this section we discuss the two-stage stochastic programming approach to optimization
+under uncertainty. The basic idea of two-stage stochastic programming is that (optimal)
+
+                                                          6
+100
+
+90
+
+80
+
+70
+
+     0  20  40 x 60  80                                        100
+
+     Figure 3: Scenario approximations of E[G(x, D)].
+
+decisions should be based on data available at the time the decisions are made and should
+not depend on future observations. The classical two-stage linear stochastic programming
+problems can be formulated as
+
+        min g(x) := cTx + E[Q(x, )] ,                               (2.1)
+
+        xX
+
+where Q(x, ) is the optimal value of the second-stage problem
+
+        min qTy subject to T x + W y  h.                            (2.2)
+
+          y
+
+Here x  Rn is the first-stage decision vector, X is a polyhedral set, defined by a finite
+number of linear constraints, y  Rm is the second-stage decision vector and  = (q, T, W, h)
+contains the data of the second-stage problem. In this formulation, at the first stage we have
+to make a "here-and-now" decision x before the realization of the uncertain data , viewed
+as a random vector, is known. At the second stage, after a realization of  becomes available,
+we optimize our behavior by solving an appropriate optimization problem.
+
+    At the first stage we optimize (minimize) the cost cTx of the first-stage decision plus the
+expected cost of the (optimal) second-stage decision. We can view the second-stage problem
+simply as an optimization problem which describes our supposedly optimal behavior when
+the uncertain data is revealed, or we can consider its solution as a recourse action where the
+term W y compensates for a possible inconsistency of the system T x  h and qTy is the cost
+of this recourse action.
+
+            7
+    The considered two-stage problem is linear since the objective functions and the con-
+straints are linear. Conceptually this is not essential and one can consider more general
+two-stage stochastic programs. For example, if the first-stage problem is integer (combina-
+torial), its feasible set X could be discrete (finite).
+
+    Let us take a closer look at the above two-stage problem. Its formulation involves the
+assumption that the second-stage data2  can be modelled as a random (not just uncer-
+tain) vector with a known probability distribution. As mentioned in the inventory example
+this would be justified in situations where the problem is solved repeatedly under random
+conditions which do not significantly change over the considered period of time. In such sit-
+uations one may reliably estimate the required probability distribution and the optimization
+on average could be justified by the Law of Large Numbers.
+
+    The other basic question is whether the formulated problem can be solved numerically. In
+that respect the standard approach is to assume that random vector  has a finite number of
+possible realizations, called scenarios, say 1, ..., K, with respective (positive) probabilities
+p1, ..., pK. Then the expectation can be written as the summation
+
+                                       K          (2.3)
+
+             E[Q(x, )] = pkQ(x, k),
+
+                                      k=1
+
+and, moreover, the two-stage problem (2.1)--(2.2) can be formulated as one large linear
+programming problem:
+
+  min cTx +        K    qkTyk                     (2.4)
+                   k=1
+x,y1,...,yK
+
+s.t. x  X, Tkx + Wkyk  hk, k = 1, ..., K.
+
+In the above formulation (2.4) we make one copy yk, of the second stage decision vector, for
+
+every scenario k = (qk, Tk, Wk, hk). By solving (2.4) we obtain an optimal solution x¯ of the
+first-stage problem and optimal solutions y¯k of the second-stage problem for each scenario
+
+k, k = 1, ..., K. Given x¯, each y¯k gives an optimal second-stage decision corresponding to a
+realization  = k of the respective scenario.
+
+Example 2 (Inventory model) Recall the inventory model with K scenarios. This can
+be written as
+
+  min        0x +  K    pk  tk
+                   k=1
+x,t1,...,tK
+             (c - b)x - tk  -bdk, k = 1, ..., K,  (2.5)
+  s.t.       (c + h)x - tk  hdk, k = 1, ..., K,
+             x  0.
+
+The first-stage decision is x, and the second-stage decisions are tk, k = 1, ..., K.
+
+    2We use the same notation  to denote a random vector and its particular realization. Which one of these
+two meanings will be used in a particular situation will be clear from the context.
+
+                        8
+    When  has an infinite (or very large) number of possible realizations the standard ap-
+proach is then to represent this distribution by scenarios. As mentioned above this approach
+raises three questions, namely:
+
+   1. how to construct scenarios;
+
+   2. how to solve the linear programming problem (2.4);
+
+   3. how to measure quality of the obtained solutions with respect to the `true' optimum.
+
+    The answers to these questions are of course not independent: for example, the number
+of scenarios constructed will affect the tractability of (2.4). We now proceed to address the
+first and third of these questions in the next subsections. The second question is not given
+much attention here, but a brief discussion of it is given in the Notes section at the end of
+the paper.
+
+2.1 Scenario construction
+
+In practice it might be possible to construct scenarios by eliciting experts' opinions on the
+future. We would like the number of constructed scenarios to be relatively modest so that the
+obtained linear programming problem can be solved with reasonable computational effort.
+It is often claimed that a solution that is optimal using only a few scenarios provides more
+adaptable plans than one that assumes a single scenario only. In some cases such a claim
+could be verified by a simulation. In theory, we would want some measure of guarantee that
+an obtained solution solves the original problem with reasonable accuracy. We also would
+like to point out that typically in applications only the first stage optimal solution x¯ has
+a practical value since almost certainly a "true" realization of the random (uncertain) data
+will be different from the set of constructed (generated) scenarios.
+
+    A natural question for a modeler to ask is: "what is a reasonable number of scenarios to
+choose so that an obtained solution will be close to the `true' optimum of the original prob-
+lem". First, it is clear that this question supposes the existence of some good methodology
+to construct scenarios - a poor procedure may never get close to the optimum, no matter
+how many are used. If one seeks to construct scenarios, say by using experts, then it quickly
+becomes clear that, as the number of random parameters increases, some automated pro-
+cedure to do this will become necessary. For example, suppose that the components of the
+random vector   Rd are independent of each other and we construct scenarios by assigning
+to each component three possible values, by classifying future realizations as low, medium
+and high. Then the total number of scenarios is K = 3d. Such exponential growth of the
+number of scenarios makes model development using expert opinion very difficult already
+for reasonably sized d (say d = 25).
+
+    Even assuming an automated scenario generation process, with K = 325  1012, say,
+the corresponding linear program (2.4) becomes too large to be tractable. The situation
+becomes even worse if we model i as random variables with continuous distributions. To
+
+                                                          9
+make a reasonable discretization of a (one dimensional) random variable i we would need
+considerably more than 3 points. At this point the modeler is faced with two somewhat con-
+
+tradictory goals. On one hand, the number of employed scenarios should be computationally
+
+manageable. Note that reducing the number of scenarios by a factor of, say, 10 will not help
+much if the true number of scenarios is K = 1012, say. On the other hand, the constructed
+
+approximation should provide a reasonably accurate solution of the true problem. A possible
+
+approach to reconcile these two contradictory goals is by randomization. That is, scenarios
+
+could be generated by Monte-Carlo sampling techniques.
+
+    Before we discuss the latter approach, it is important to mention boundedness and fea-
+
+sibility. The function Q(x, ) is defined as the optimal value of the second-stage problem
+
+(2.2). It may happen that for some feasible x  X and a scenario k, the problem (2.2) is
+unbounded from below, i.e., Q(x, k) = -. This is a somewhat pathological and unrealistic
+situation meaning that for such feasible x one can improve with a positive probability the
+
+second-stage cost indefinitely. One should make sure at the modeling stage that this does
+
+not happen.
+
+    Another, more serious, problem is if for some x  X and scenario k, the system Tkx +
+Wky  hk is incompatible, i.e., the second-stage problem is infeasible. In that case the
+standard practice is to set Q(x, k) = +. That is, we impose an infinite penalty if the
+second-stage problem is infeasible and such x cannot be an optimal solution of the first-stage
+
+problem. This will make sense if such a scenario results in a catastrophic event. It is said that
+
+the problem has relatively complete recourse if such infeasibility does not happen, i.e., for
+
+every x  X and every scenario k, the second-stage problem is feasible. It is always possible
+to make the second-stage problem feasible (i.e., exhibit complete recourse) by changing it to
+
+min qTy + t subject to T x + W y - te  h, t  0,  (2.6)
+
+ y,t
+
+where  > 0 is a chosen constant and e is a vector of an appropriate dimension with all
+its coordinates equal to one. In this formulation the penalty for a possible infeasibility is
+controlled by the parameter .
+
+2.2 Monte Carlo techniques
+
+We now turn our attention to approaches that reduce the scenario set to a manageable size
+by using Monte Carlo simulation. That is, suppose that the total number of scenarios is
+very large or even infinite. Suppose, further, that we can generate a sample 1, ..., N of N
+replications of the random vector . By this we mean that each j, j = 1, ..., N , has the same
+probability distribution as . Moreover, if j are distributed independently of each other, it
+is said that the sample is iid (independent identically distributed). Given a sample, we can
+approximate the expectation function q(x) = E[Q(x, )] by the average
+
+                                                                                           N
+
+                                          q^N (x) = N -1 Q(x, j),
+
+                                                                                         j=1
+
+                                                         10
+and consequently the "true" (expectation) problem (2.1) by the problem
+
+                                  1  N
+                                  N
+        min  g^N (x)  :=  cTx  +          Q(x, j)      .                     (2.7)
+
+        xX                           j=1
+
+    This rather simple idea was suggested by different authors under different names. In
+
+recent literature it has became known as the sample average approximation (SAA) method.
+Note that for a generated sample 1, ..., N , the SAA problem (2.7) is of the same form as
+the two-stage problem (2.1)--(2.2) with the scenarios j, j = 1, ..., N, each taken with the
+
+same probability pj = 1/N. Note also that the SAA method is not an algorithm, one still
+has to solve the obtained SAA problem by an appropriate numerical procedure.
+
+Example 3 (Inventory model continued) We can illustrate the SAA method on the
+instance of the inventory example discussed in section 1. Recall that
+
+        G(x, D) =     -0.5x + 1.5D,       if x < D
+                       1.1x - 0.1D,       if x  D,
+
+where D has a uniform distribution on [0, 100]. In Figure 4, we show SAA approximations
+for three random samples, two with N = 5 ( j =15, 60, 72, 78, 82, and j = 24, 24, 32, 41,
+62), and one with N = 10 (j = 8, 10, 21, 47, 62, 63, 75, 78, 79, 83). These samples were
+
+randomly generated from the uniform [0, 100] distribution and rounded to integers for the
+
+sake of simplicity of presentation. The true cost function is shown in bold.
+
+100                   N=5 (sample 1)
+ 90
+ 80     N=10
+ 70
+ 60                                  N=5 (sample 2)
+ 50
+     0  20            40 x 60                      80                   100
+
+        Figure 4: SAA approximations of E[G(x, D)].
+
+                          11
+    We now can return to the question above: "how large should we choose the sample size
+N (i.e., how many scenarios should be generated) in order for the SAA problem (2.7) to give
+a reasonably accurate approximation of the true problem (2.1)". Monte Carlo simulation
+methods are notorious for slow convergence. For a fixed x  X and an iid sample, the
+variance of the sample average q^N (x) is equal to Var[Q(x, )]/N . This implies that, in
+stochastic terms, the sample average converges to the corresponding expectation at a rate of
+Op(N -1/2). That is, in order to improve the accuracy by one digit, we need to increase the
+sample size by the factor of 100.
+
+    It should be clearly understood that it is not advantageous to use Monte Carlo techniques
+when the number d of random variables is small. For d  2 it would be much better to use
+a uniform discretization grid for numerical calculations of the required integrals. This is
+illustrated by the example above. For d  10 quasi-Monte Carlo methods usually work
+better than Monte Carlo techniques3. The point is, however, that in principle it is not
+possible to evaluate the required expectation with a high accuracy by Monte Carlo (or any
+other) techniques in multivariate cases. It is also possible to show theoretically that the
+numerical complexity of two-stage linear programming problems grows fast with an increase
+of the number of random variables and such problems cannot be solved with a high accuracy,
+like say 10-4, as we expect in deterministic optimization.
+
+    The good news about Monte Carlo techniques is that the accuracy of the sample average
+approximation does not depend on the number of scenarios (which can be infinite), but
+depends only on the variance of Q(x, ). It is remarkable and somewhat surprising that the
+SAA method turns out to be quite efficient for solving some classes of two-stage stochastic
+programming problems. It was shown theoretically and verified in numerical experiments
+that with a manageable sample size, the SAA method (and its variants) solves the "true"
+problem with a reasonable accuracy (say 1% or 2%) provided the following conditions are
+met:
+
+  (i) it is possible to generate a sample of realizations of the random vector ,
+
+ (ii) for moderate values of the sample size it is possible to efficiently solve the obtained
+       SAA problem,
+
+ (iii) the true problem has relatively complete recourse,
+
+ (iv) variability of the second-stage (optimal value) function is not "too large".
+
+    3Theoretical bounds for the error of numerical integration by quasi-Monte Carlo methods are proportional
+to (log N)dN -1, i.e., are of order O (log N )dN -1 , with the proportionality constant Ad depending on d.
+For small d it is "almost" the same as of order O(N-1), which of course is better than Op(N -1/2). However,
+the theoretical constant Ad grows superexponentially with increase of d. Therefore, for larger values of d
+one often needs a very large sample size N for quasi-Monte Carlo methods to become advantageous. It is
+beyond the scope of this paper to discuss these issues in detail. The interested reader may be referred to
+[22], for example.
+
+                                                         12
+    Usually the requirement (i) does not pose a serious problem in stochastic programming
+applications, and there are standard techniques and software for generating random sam-
+ples. Also modern computers coupled with good algorithms can solve linear programming
+problems with millions of variables (see the Notes section at the end of the tutorial).
+
+    Condition (iii), on the other hand, requires a few words of discussion. If for some fea-
+sible x  X the second-stage problem is infeasible with a positive probability (it does not
+matter how small this positive probability is) then the expected value of Q(x, ), and hence
+its variability, is infinite. If the probability p of such an event (scenario) is very small, say
+p = 10-6, then it is very difficult, or may even be impossible, to verify this by sampling. For
+example, one would need an iid sample of size N significantly bigger than p-1 to reproduce
+such a scenario in the sample with a reasonable probability.
+
+    The sample average approximation problems that arise from the above process are large-
+scale programming problems. Since our purpose in this tutorial is to introduce stochastic
+programming models and approaches, we point to the literature for a further reading on that
+subject in the "Notes" section.
+
+2.3 Evaluating candidate solutions
+
+Given a feasible point x^  X, possibly obtained by solving a SAA problem, a practical
+problem is how to evaluate the quality of this point viewed as a candidate for solving the true
+problem. Since the point x^ is feasible, we clearly have that g(x^)  v, where v = minxX g(x)
+is the optimal value of the true problem. The quality of x^ can be measured by the optimality
+gap
+
+                                              gap(x^) := g(x^) - v.
+
+We outline now a statistical procedure for estimating this optimality gap. The true value g(x^)
+can be estimated by Monte Carlo sampling. That is, an iid random sample j, j = 1, ..., N ,
+
+of  is generated and g(x^) is estimated by the corresponding sample average g^N(x^) = cTx^ +
+
+q^N(x^). At the same time the sample variance
+
+                    1         N    Q(x^, j) - q^N(x^) 2 ,
+              N (N 
+^2N (x^)  :=           -  1)                               (2.8)
+
+                              j=1
+
+of q^N(x^), is calculated. Note that it is feasible here to use a relatively large sample size N 
+since calculation of the required values Q(x^, j) involves solving only individual second-stage
+problems. Then
+
+          UN(x^) := g^N(x^) + z^N(x^)                      (2.9)
+
+gives an approximate 100(1 - )% confidence upper bound for g(x^). This bound is justified
+by the Central Limit Theorem with the critical value z = -1(1 - ), where (z) is the cdf
+
+                              13
+of the standard normal distribution. For example, for  = 5% we have that z  1.64, and
+
+for  = 1% we have that z  2.33.
+    In order to calculate a lower bound for v we proceed as follows. Denote by v^N the
+
+optimal value of the SAA problem based on a sample of size N. Note that v^N is a function
+of the (random) sample and hence is random. To obtain a lower bound for v observe that
+
+E[g^N (x)] = g(x), i.e., the sample average g^N (x) is an unbiased estimator of the expectation
+g(x). We also have that for any x  X the inequality g^N (x)  infxX g^N (x) holds, so for
+
+any x  X, we have
+
+g(x) = E [g^N (x)]  E  inf      g^N  (x)  = E [v^N ] .
+
+                       xX
+
+By taking the minimum over x  X of the left hand side of the above inequality we obtain
+that v  E[v^N ].
+
+    We can estimate E[v^N ] by solving the SAA problems several times and averaging the
+
+calculated optimal values. That is, SAA problems based on independently generated samples,
+each of size N, are solved to optimality M times. Let v^N1 , ..., v^NM be the computed optimal
+values of these SAA problems. Then
+
+                       1      M
+                       M
+           v¯N,M  :=             v^Nj                               (2.10)
+
+                           j=1
+
+is an unbiased estimator of E[v^N ]. Since the samples, and hence v^N1 , ..., v^NM , are independent,
+we can estimate the variance of v¯N,M by
+
+                 1         M     v^Nj - v¯N,M 2 .
+           M (M -
+^2N,M  :=           1)                                              (2.11)
+
+                           j=1
+
+An approximate 100(1 - )% lower bound for E[v^N ] is then given by
+
+       LN,M := v¯N,M - t,^N,M ,                                     (2.12)
+
+where  = M - 1 and t, is the -critical value of the t-distribution with  degrees of
+freedom. In applications it often suffices to use small values of M , say M = 5 or M = 10.
+
+For a small number of degrees of freedom, the critical value t, is slightly bigger than
+the corresponding standard normal critical value z, and t, quickly approaches z as 
+increases. Since v  E[v^N ], we have that LN,M gives a valid lower statistical bound for v
+as well. Consequently
+
+       gap(x^) := UN(x^) - LN,M                                     (2.13)
+
+gives a statistically valid (with confidence at least 1 - 2) bound on the true gap(x^). It can
+be noted that the lower bound LN,M is somewhat conservative since the bias v - E[v^N ] of
+the SAA estimator of the true optimal value could be significant for not "too large" values
+
+of the sample size N.
+
+                       14
+Example 4 (Inventory model continued) We can illustrate this procedure on the in-
+stance of the inventory example (example 1) discussed in section 1. The following derivations
+are given for illustration purposes only. As discussed above, in the case of one dimensional
+random data it is much better to use a uniform discretization grid on the interval [0, 100]
+rather than a uniformly distributed random sample. Recall
+
+                     G(x, d) =     -0.5x + 1.5d,  if x < d
+                                    1.1x - 0.1d,  if x  d.
+
+and for x  [0, 100]
+
+                        E[G(x, D)] = 75 - 0.5x + 0.008x2
+
+which has a minimum of v = 67.19 at x¯ = 31.25. (We round all real numbers to two decimal
+places in this example.) Suppose we have a candidate solution x^ = 40. Then it is easy to
+compute the true value of this candidate:
+
+                                E[G(40, D)] = 67.80.
+
+To obtain statistical bounds on this value, we sample from D, to give d1, d2, . . . , dN. Con-
+sider the following (ordered) random sample of {1, 11, 26, 26, 36, 45, 45, 46, 50, 54, 56, 56,
+59, 62, 70, 98} (again this random sample is rounded to integers). With N  = 16, this gives
+
+an estimated cost of
+
+                        1   16
+                        16
+g^N  (x^)            =           G(40, dk)
+
+                            k=1
+
+                        1       5                 16
+                        16
+                     =             44 - 0.1dk + -20 + 1.5dk
+
+                            k=1                   k=6
+
+                     = 59.47,
+
+and ^2N(x^) = 31.13. Then an approximate 95% confidence upper bound for E[G(40, D)] is
+
+                                      UN(x^) = g^N(x^) + z0.05^N(x^)
+                                                 = 59.47 + 1.64 31.13
+                                                 = 68.65.
+
+    Computing a statistical lower bound is a bit more involved. Here we have solved (offline)
+M = 9 SAA problems (each with N = 5) to give v^N = 56.39, 35.26, 69.53, 77.97, 54.87,
+42.95, 68.52, 61.99, 78.93. The sample variance is ^N2 ,M = 24.80, and t0.05,8 = 1.86, which
+gives
+
+                                       LN,M = v¯N,M - t,^N,M
+                                                = 60.71 - 1.86 24.80
+                                                = 51.45
+
+                                                         15
+as an approximately 95% confidence lower bound for E[v^N ]. It follows that 68.65-51.45=17.20
+is an approximate 90% confidence bound on the true value of gap(x^). To try and reduce
+this, one might first try to increase N to a value larger than 5.
+
+3 Multi-stage stochastic programming
+
+The stochastic programming models that we have discussed so far have been static in the
+sense that we made a (supposedly optimal) decision at one point in time, while accounting
+for possible recourse actions after all uncertainty has been resolved. There are many sit-
+uations where one is faced with problems where decisions should be made sequentially at
+certain periods of time based on information available at each time period. Such multi-stage
+stochastic programming problems can be viewed as an extension of two-stage programming
+to a multi-stage setting. In order to demonstrate some basic ideas let us discuss an extension
+of the inventory model (example 1) to a multi-stage setting.
+
+Example 5 (Inventory model continued) Suppose now that the company has a plan-
+
+ning horizon of T periods of time. We view demand Dt as a random process indexed by the
+time t = 1, ..., T . In the beginning, at t = 1, there is (known) inventory level y1. At each
+period t = 1, ..., T the company first observes the current inventory level yt and then places
+an order to replenish the inventory level to xt. This results in order quantity xt - yt which
+clearly should be nonnegative, i.e., xt  yt. After the inventory is replenished, demand dt
+is realized and hence the next inventory level, at the beginning of period t + 1, becomes
+
+yt+1 = xt - dt. The total cost incurred in period t is
+
+      ct(xt - yt) + bt[dt - xt]+ + ht[xt - dt]+,       (3.1)
+
+where ct, bt, ht are the ordering cost, backorder penalty cost and holding cost per unit, re-
+spectively, at time t. The objective is to minimize the expected value of the total cost over
+the planning horizon. This can be written as the following optimization problem
+
+      T
+
+min       E ct(xt - yt) + bt[Dt - xt]+ + ht[xt - Dt]+  (3.2)
+
+xtyt  t=1
+
+s.t. yt+1 = xt - Dt, t = 1, ..., T - 1.
+
+    For T = 1 the above problem (3.2) essentially is the same as the (static) problem (1.4)
+(the only difference is the assumption here of the initial inventory level y1). However, for
+T > 1 the situation is more subtle. It is not even clear what is the exact meaning of the
+formulation (3.2). There are several equivalent ways to give precise meaning to the above
+problem. One possible way is to write equations describing dynamics of the corresponding
+optimization process. That is what we discuss next.
+
+    Consider the demand process Dt, t = 1, ..., T . We denote by D[t] = (D1, ..., Dt) the
+history of the demand process up to time t, and by d[t] = (d1, ..., dt) its particular realization.
+At each period (stage) t, our decision about the inventory level xt should depend only on
+
+         16
+information available at the time of the decision, i.e., on an observed realization d[t-1] of the
+demand process, and not on future observations. This principle is called the nonanticipativity
+constraint. We assume, however, that the probability distribution of the demand process
+is known. That is, the conditional probability distribution of Dt, given D[t-1] = d[t-1], is
+assumed to be known.
+
+    At the last stage t = T we need to solve the problem:
+
+min  cT (xT  -  yT )  +  E   bT [DT - xT ]+ + hT [xT - DT ]+ D[T -1] = d[T -1]  s.t. xT  yT . (3.3)
+
+ xT
+
+The expectation in (3.3) is taken conditional on realization d[T-1] of the demand process
+prior to the considered time T . The optimal value (and the set of optimal solutions) of
+
+problem (3.3) depends on yT and d[T -1], and is denoted VT (yT , d[T -1]). At stage t = T - 1
+we solve the problem
+
+min     cT -1(xT -1 - yT -1) + E bT -1[DT -1 - xT -1]+        D[T -2] = d[T -2]               (3.4)
+
+xT -1     +hT -1[xT -1 - DT -1]+ + VT xT -1 - DT -1, D[T -1]
+        xT -1  yT -1.
+s.t.
+
+Its optimal value is denoted VT -1(yT -1, d[T-2]). And so on, going backwards in time we write
+the following dynamic programming equations
+
+     Vt(yt,  d[t-1])  =  min    ct(xt - yt) + E bt[Dt - xt]+                                  (3.5)
+
+                         xtyt
+
+                                +ht[xt - Dt]+ + Vt+1 xt - Dt, D[t] D[t-1] = d[t-1] ,
+
+t = T - 1, ..., 2. Finally, at the first stage we need to solve the problem
+
+V1(y1)  =    min      c1(x1  -  y1)  +  E  b1[D1 - x1]+ + h1[x1 - D1]+ + V2 (x1 - D1, D1)  .
+
+             x1 y1
+
+                                                                                              (3.6)
+
+    Let us take a closer look at the above dynamic process. We need to understand how
+the dynamic programming equations (3.4)--(3.6) could be solved and what is the meaning
+of an obtained solution. Starting with the last stage t = T , we need to calculate the value
+functions Vt(yt, d[t-1]) going backwards in time. In the present case the value functions can-
+not be calculated in a closed form and should be approximated numerically. For a generally
+distributed demand process this could be very difficult or even impossible. The situation
+is simplified dramatically if we assume that the process Dt is stagewise independent, that
+is, if Dt is independent of D[t-1], t = 2, ..., T . Then the conditional expectations in equa-
+tions (3.3)--(3.5) become the corresponding unconditional expectations, and consequently
+value functions Vt(yt) do not depend on demand realizations and become functions of the
+respective univariate variables yt only. In that case by using discretizations of yt and the
+(one-dimensional) distribution of Dt, these value functions can be calculated with a high
+accuracy in a recursive way.
+
+                                           17
+    Suppose now that somehow we can solve the dynamic programming equations (3.4)--(3.6).
+
+Let x¯t be a corresponding optimal solution, i.e., x¯T is an optimal solution of (3.3), x¯t is an
+optimal solution of the right-hand side of (3.5) for t = T - 1, ..., 2, and x¯1 is an optimal
+solution of (3.6). We see that x¯t is a function of yt and d[t-1], for t = 2, ..., T , while the first-
+stage (optimal) decision x¯1 is independent of the data. Under the assumption of stagewise
+independence, x¯t = x¯t(yt) becomes a function of yt alone. Note that yt, in itself, is a function
+of d[t-1] = (d1, ..., dt-1) and decisions (x1, ..., xt-1). Therefore we may think about a sequence
+of possible decisions xt = xt(d[t-1]), t = 1, ..., T , as functions of realizations of the demand
+process available at the time of the decision (with the convention that x1 is independent
+of the data). Such a sequence of decisions xt(d[t-1]) is called a policy. That is, a policy
+is a rule which specifies our decisions, at every stage based on available information, for
+
+any possible realization of the demand process. By its definition any policy xt = xt(d[t-1])
+satisfies the nonanticipativity constraint. A policy is said to be feasible if it satisfies the
+
+involved constraints with probability one (w.p.1). In the present case a policy is feasible if
+
+xt  yt, t = 1, ..., T , for almost every realization of the demand process.
+    We can now formulate the optimization problem (3.2) as the problem of minimizing
+
+the expectation in (3.2) with respect to all feasible policies. An optimal solution of such a
+
+problem will give us an optimal policy. We have that a policy x¯t is optimal if and only if it
+is given by optimal solutions of the respective dynamic programming equations. Note again
+
+that in the present case under the assumption of stagewise independence, an optimal policy
+
+x¯t = x¯t(yt) is a function of yt alone. Moreover, in that case it is possible to give the following
+characterization of the optimal policy. Let xt be an (unconstrained) minimizer of
+
+ctxt + E bt[Dt - xt]+ + ht[xt - Dt]+ + Vt+1 (xt - Dt) , t = T, ..., 1,  (3.7)
+
+with the convention that VT+1(·) = 0. Then by using convexity of the value functions it is
+not difficult to show that x¯t = max{yt, xt } is an optimal policy. Such policy is called the
+basestock policy. A similar result holds without the assumption of stagewise independence,
+but then critical values xt depend on realizations of the demand process up to time t - 1.
+
+    As mentioned above, if the stagewise independence condition holds, then each value
+
+function Vt(yt) depends solely on the univariate variable yt. Therefore in that case we can
+accurately represent Vt(·) by a discretization, i.e., by specifying its values at a finite number
+of points on the real line. Consequently, the corresponding dynamic programming equations
+
+can be accurately solved recursively going backwards in time. The effectiveness of this
+
+approach starts to change dramatically with an increase in the number of variables on which
+
+the value functions depend. In the present case this may happen if the demand process is
+
+dependent across time. The discretization approach may still work with two, maybe three, or
+
+even four, variables. It is out of the question, however, to use such a discretization approach
+
+with more than, say, 10 variables. This is the so-called "curse of dimensionality", the term
+
+coined by Bellman. Observe that solving the dynamic programming equations recursively
+
+under stagewise independence generates a policy that might be more general than we require
+
+for the solution to (3.2). That is, the dynamic programming equations will define x¯t(yt) for
+all possible values of yt, even though some of these values cannot be attained from y1 by any
+
+18
+combination of demand outcomes (d1, ..., dt-1) and decisions (x1, ..., xt-1).
+    Stochastic programming tries to approach the problem in a different way by using a
+
+discretization of the random process D1, ..., DT in the form of a scenario tree. That is, N1
+possible realizations of the (random) demand D1 are generated. Next, conditional on every
+realization of D1, several (say the same number N2) realizations of D2 are generated, and so
+on. In that way N := N1 × ... × NT different sample paths of the random process D1, ..., DT
+are constructed. Each sample path is viewed as a scenario of a possible realization of the
+underline random process. There is a large literature of how such scenario trees could (and
+should) be constructed in a reasonable and meaningful way. One possible approach is to
+use Monte Carlo techniques to generate scenarios by conditional sampling. This leads to
+an extension of the SAA method to a multi-stage setting. Note that the total number of
+scenarios is the product of the numbers Nt of constructed realizations at each stage. This
+suggests an explosion of the number of scenarios with increase of the number of stages.
+In order to handle an obtained optimization problem numerically one needs to reduce the
+number of scenarios to a manageable level. Often this results in taking Nt = 1 from a certain
+stage on. This means that from this stage on the nonanticipativity constraint is relaxed.
+
+    In contrast to dynamic programming, stochastic programming does not seek Vt(yt) for
+all values of t and yt, but focuses on computing V1(y1) and the first-stage optimal deci-
+sion x¯1 for the known inventory level y1. This makes stochastic programming more akin to a
+decision-tree analysis than dynamic programming (although unlike decision analysis stochas-
+tic programming requires the probability distributions to be independent of decisions). A
+possible advantage of this approach over dynamic programming is that it might mitigate
+the curse of dimensionality in situations where the states visited as the dynamic process
+unfolds (or the dimension of the state space) are constrained by the currently observed state
+y1 (whatever the actions might be). In general, however, the number of possible states that
+might be visited grows explosively with the number of stages, and so multi-stage stochastic
+programs are tractable only in special cases.
+
+4 Risk averse optimization
+
+In this section we discuss the problem of risk. We begin by recalling the example of the
+two-stage inventory problem.
+
+Example 6 (Inventory model continued) Recall that
+
+G(x, D) =  (c - b)x + bD,   if x < D,
+           (c + h)x - hD,   if x  D.
+
+We have already observed that for a particular realization of the demand D, the cost G(x¯, D)
+can be quite different from the optimal-on-average cost E[G(x¯, D)]. Therefore a natural
+question is whether we can control the risk of the cost G(x, D) to be not "too high". For
+example, for a chosen value (threshold)  > 0, we may add to problem (1.4) the constraint
+
+           19
+G(x, D)   to be satisfied for all possible realizations of the demand D. That is, we want
+to make sure that the total cost will be at most  in all possible circumstances. Numerically
+this means that the inequalities (c - b)x + bd   and (c + h)x - hd   should hold for
+all possible realizations d of the uncertain demand. That is, the ordering quantity x should
+satisfy the following inequalities:
+
+bd -               x  hd +   for all realizations d of the uncertain demand D.          (4.1)
+b-c                   c+h
+
+This, of course, could be quite restrictive. In particular, if there is at least one realization d
+greater than  /c, then the system (4.1) is incompatible, i.e., the corresponding problem has
+no feasible solution.
+
+    In such situations it makes sense to introduce the constraint that the probability of
+G(x, D) being bigger than  is less than a specified value (significance level)   (0, 1). This
+leads to the so-called chance or probabilistic constraint which can be written in the form
+
+                             Prob{G(x, D) >  }  ,                                       (4.2)
+
+or equivalently
+
+                             Prob{G(x, D)   }  1 - .                                    (4.3)
+
+By adding the chance constraint (4.2) to the optimization problem (1.4) we want to optimize
+(minimize) the total cost on average making sure that the risk of the cost being large (i.e.,
+the probability that the cost is bigger than  ) is small (i.e., less than ). We have that
+
+Prob{G(x, D)   } = Prob            (c + h)x -                  D     (b - c)x +      .  (4.4)
+                                          h                                 b
+
+For x   /c the inequalities in the right hand side of (4.4) are consistent and hence for such
+x,
+
+Prob{G(x, D)   } = F               (b - c)x +                  -F  (c + h)x -     .     (4.5)
+                                          b                               h
+
+Even for small (but positive) values of , the chance constraint (4.3) can be a significant
+relaxation of the corresponding constraints (4.1).
+
+    In the numerical instance where D has uniform distribution on the interval [0, 100], and
+c = 1, b = 1.5, and h = 0.1, suppose  = 99. Then  /c = 99 is less than some realizations of
+the demand, and the system (4.1) is inconsistent. That is, there is no feasible x satisfying
+constraint G(x, d)   for all d in the range [0, 100]. On the other hand, (4.5) becomes
+
+Prob{G(x, D) > 99} = 1 - F                    0.5x + 99            +F  1.1x - 99
+                                                  1.5                      0.1
+
+                      =        1-   x     x--160160100,506  ,  0  x  90,
+                               1+  33020                       90 < x  99,
+                               1,  300                         99 < x < 100.
+
+                                          20
+                        1
+                      0.8
+                      0.6
+                      0.4
+                      0.2
+
+                      0 50          60           70 x 80                       90        100
+
+             Figure 5: Plot of Prob{G(x, D) > 99}. The horizontal line is  = 0.1.
+
+This function is plotted in Figure 5. It is easy to see that if we set  = 0.1, then the
+
+choices  of  x  that  satisfy  the  chance  constraint           lie  in  the  interval  [72,  90  9   ]  (where  the  plot
+                                                                                                   16
+of Prob{G(x, D) > 99} lie below 0.1 as shown by the horizontal line). With the chance
+
+constraint the optimal choice of x that minimizes E[G(x, D)] is thus x = 72. In contrast the
+
+solution x = 31.25 that minimizes expected cost has Prob{G(x, D) > 99}  0.24.
+
+In the example just described the chance constraint gives rise to a convex feasible region
+
+for the decision variable x. To see that this does not always happen, suppose now that the
+
+demand has density
+
+                                                  1       ,  0 < z  20,
+                                                             60 < z  100,
+                                    f (z)  :=    511000,     otherwise.
+
+                                                 0,
+
+If we choose x = 90 then G(90, d) exceeds 99 exactly when D  96, i.e., with probability
+0.08. If we now choose x = 95, then G(95, d) exceeds 99 exactly when D  55 or D  97.67,
+i.e. with probability 0.247. Now suppose we choose x = 92. Then G(92, d) exceeds 99
+exactly when D  22 or D  96.67, i.e. with probability 0.267. Thus x = 90 and x = 95
+both satisfy the chance constraint
+
+                                    Prob{G(x, D) > 99}  0.25
+
+but x = 92 (a convex combination of these points) does not. When  = 0.25, the feasible
+region of the chance-constrained problem fails to be convex. This can be illustrated by
+plotting Prob{G(x, D) > 99} as a function of x as shown in Figure 6.
+
+                                                             21
+  1
+0.5
+
+0    20  40  x   60                                          80  100
+
+Figure 6: Plot of Prob{G(x, D) > 99}. The horizontal line is  = 0.25.
+
+In general a chance (probabilistic) constraint has the form
+
+         Prob G(x, ) >   .                                             (4.6)
+
+Here G(x, ) is a real valued function of the decision vector x and random data vector , and
+  R and   (0, 1) are chosen constants. As discussed above, such chance constraints ap-
+pear naturally in a risk-averse approach where the event "G(x, ) >  " represents something
+undesirable and one wants to control this by making the probability of this event small.
+From the above example, one can see that optimization models with chance constraints are
+not guaranteed to be easily solved, because in general their feasible regions are not convex,
+and even if convex may be not efficiently computable. We proceed to give a discussion on
+how they might be approximated by tractable models.
+
+    Consider the random variable Zx := G(x, ) -  (in order to simplify notation we some-
+times drop the subscript x and simply write Z for a given value of x). Let FZ(z) := Prob(Z 
+z) be the cdf of Z. Since constraint (4.6) is equivalent to the constraint
+
+     Prob G(x, ) -   0  1 - ,
+
+we have that the point x satisfies this constraint if and only if FZ(0)  1 - , or equivalently
+if and only if FZ-1(1 - )  0.
+
+    In the finance literature, the (left-side) quantile FZ-1(1 - ) is called Value at Risk and
+denoted VaR1-(Z), i.e.,
+
+     VaR1-(Z) = inf {t : FZ(t)  1 - } .                                (4.7)
+
+             22
+Note that VaR1-(Z +  ) = VaR1-(Z) +  , and hence constraint (4.6) can be written in the
+following equivalent form
+
+                     VaR1-[G(x, )]   .                     (4.8)
+
+Example 7 In the above example (with the bimodal density function) we can show after
+some algebra 4 that
+
+                       131.25 - 0.5x,  0  x < 82.03,
+                       15.44 + 0.91x,  82.03  x < 92. 66,
+
+VaR0.75[G(x, D)]  =    146.25 - 0.5x,  92. 66  x < 95.16,
+                       x + 3.52,       95.16  x < 97.67,
+                       1.1x - 6.25,    97.67  x < 100.
+
+ We plot VaR0.75[G(x, D)] in Figure 7. It is easy to see that VaR0.75[G(x, D)] is not a
+convex function. Also comparing plots shows that VaR0.75[G(x, D)]  99 is equivalent to
+Prob{G(x, D) > 99}  0.25.
+
+130
+120
+110
+100
+ 90
+
+80 0  20               40  x  60        80  100
+
+                       Figure 7: VaR0.75[G(x, D)] for bimodal demand density
+
+    We now want to formally construct a convex approximation to VaR1-[G(x, )], thereby
+enabling convex approximations of chance constraints. To do this we will make use of the
+
+    4We assume as before that real numbers are rounded to two decimal places.
+
+                                                         23
+step function
+
+                                   1l(z) :=  1, if z > 0,
+                                             0, if z  0.
+
+We have that
+
+                                   Prob(Z > 0) = E [1l(Z)] ,
+
+and hence constraint (4.6) can also be written as the expected value constraint:
+
+                                   E [1l(Zx)]  .                                  (4.9)
+
+As we have observed in example 7, since 1l(·) is not a convex function this operation often
+yields a nonconvex constraint, even though the function G(·, ) might be convex for almost
+every .
+
+    Let  : R  R be a nonnegative-valued, nondecreasing, convex function such that
+(z)  1l(z) for all z  R. By noting that 1l(tz) = 1l(z) for any t > 0, we have that
+(tz)  1l(z) and hence the following inequality holds
+
+                                   inf E [(tZ)]  E [1l(Z)] .                      (4.10)
+
+                                   t>0
+
+Consequently, the constraint
+
+                                   inf E [(tZ)]                                   (4.11)
+
+                                   t>0
+
+is a conservative approximation of the chance constraint (4.6) in the sense that the feasible
+set defined by (4.11) is contained in the feasible set defined by (4.6).
+
+    Of course, the smaller the function (·) is, the better this approximation will be. It can
+be shown (see the Appendix) that (z) := [1 + z]+ is a best choice of such a function from
+this point of view (see Figure 8). For this choice of function (·), we have that constraint
+(4.11) is equivalent to
+
+                              inf{tE[t-1     +  Z ]+  -  }    0,
+
+                              t>0
+
+or equivalently
+
+                              inf  -1E[Z + t-1]+ - t-1         0.
+
+                              t>0
+
+Now replacing t with -t-1 we get the form:
+
+                              inf  t + -1E[Z - t]+           0.                   (4.12)
+
+                              t<0
+
+Consider the following inequality, which is obtained from (4.12) by removing the constraint
+"t < 0",
+
+                              inf  t + -1E[Z - t]+          0                     (4.13)
+
+                              tR
+
+                                                24
+Figure 8: Convex approximations to 1l(z). [1 + z]+ is shown in bold.
+
+Since the left hand side of (4.13) is less than or equal to the left hand side of (4.12), it follows
+
+that if Z satisfies (4.12), then Z also satisfies (4.13). Conversely, suppose that Z satisfies
+inequality (4.13). Then the minimum in the left hand side of (4.13) is attained at t  0
+(this is because E[Z - t]+ is always nonnegative). In fact, t is strictly less than 0 unless Z
+is identically zero. Therefore, the constraints (4.12) and (4.13) are equivalent.
+
+    The quantity
+
+CVaR1-(Z )       :=  inf  t + -1E[Z - t]+                             (4.14)
+
+                     tR
+
+is called the Conditional Value at Risk of Z at level 1 - . It can be verified that the
+
+minimum in the right hand side of (4.14) is attained at the set (interval) of (1 - )-quantiles
+of the distribution of Z, and in particular at t = VaR1-(Z). Therefore, CVaR1-(Z) is
+bigger than VaR1-(Z) by the amount of -1E[Z - t]+.
+
+    We may also observe that
+
+t + -1E[Z - t]+  =   -1 t +          (z     -  t)dFZ (z )
+                                t
+
+                 =   -1      z  dFZ  (z  )
+                          t
+
+                 = E[Z | Z  t],
+
+provided that FZ(·) is continuous at t. Therefore, CVaR1-(Z) may be thought of as the
+tail expectation conditioned on being larger than VaR1-(Z). This makes it easy to see that
+for any a  R,
+
+CVaR1-(Z + a) = CVaR1-(Z) + a.                                        (4.15)
+
+                     25
+Therefore, the constraint
+
+                                 CVaR1-[G(x, )]                                  (4.16)
+
+is equivalent to the constraint (4.12) and gives a conservative approximation of the chance
+constraint (4.6) (recall that (4.6) is equivalent to (4.8)). Also by the above analysis we have
+that (4.16) is the best possible convex conservative approximation of the chance constraint
+(4.6).
+
+Example 8 After some algebra it is possible to show in the example 7 that
+
+                             140.63 - 0.5x,              0  x < 82.03,
+                             0.06x2 - 10.38x +           82.03,  x < 92. 66,
+                                                545.96,
+
+CVaR0.75[G(x, D)]  =         0.78x + 28.83               92. 66  x < 95.16,
+                             -11.4x + 608.33 +           95.16  x < 97.66,
+                             1. 1x - 2.03,      0.06x2,  97.66  x < 100.
+
+This is plotted in Figure 9. Observe that it is convex, and that the convex set
+
+110
+105
+100
+
+ 95
+
+90 60                        70  80x                     90  100
+
+Figure 9: CVaR0.75[G(x, D)] for example with bimodal demand density. The horizontal line
+is  = 99.
+
+                                {x | CVaR0.75[G(x, D)]  99}
+                                     = (83.52, 88.85)
+                                      {x | Prob{G(x, D) > 99}  0.25}.
+
+                                 26
+ The function (Z) := CVaR1-(Z) has the following properties.
+(i) It is convex, i.e., if Z1 and Z2 are two random variables and t  [0, 1], then
+
+                                (tZ1 + (1 - t)Z2)  t(Z1) + (1 - t)(Z2).
+
+(ii) It is monotone, i.e., if Z1 and Z2 are two random variables such that with probability
+      one Z2  Z1, then (Z2)  (Z1).
+
+(iii) It is positively homogeneous, i.e., if Z is a random variable and t > 0, then (tZ) =
+      t(Z ).
+
+(iv) It has the (translation equivariance) property: (Z + a) = (Z) + a for any a  R.
+
+    Functions (Z), defined on a space of random variables, satisfying properties (i)--(iv) were
+called coherent risk measures in [2]. Properties (i) and (ii) ensure that if G(·, ) is convex for
+almost every , then the function f (x) := (G(x, )) is also convex. That is, coherent risk
+measures, and in particular CVaR, preserve convexity of G(·, ). This property is of crucial
+importance for the efficiency of numerical procedures.
+
+    Now let us consider the following optimization problem
+
+       min  E[G(x, )] subject to CVaR1-[G(x, )]   .                                (4.17)
+
+       xX
+
+Suppose that the set X is convex and for almost every  the function G(·, ) is convex. For
+example, in the case of two-stage linear programming with recourse we can take G(x, ) :=
+cTx + Q(x, ). By the above discussion, it follows that the problem (4.17) is convex. Under
+standard regularity conditions we have that problem (4.17) is equivalent to the problem
+
+       min  g(x) := E[G(x, )] + CVaR1-[G(x, )]  ,                                  (4.18)
+
+       xX
+
+where   0 is an optimal solution of the dual problem. By using definition (4.14) of
+CVaR1-, we can write problem (4.18) in the form
+
+              min   E[H  (x,  t)],                                                 (4.19)
+
+            xX, tR
+
+where
+
+                             H(x, t) := G(x, ) + t + -1[G(x, ) - t]+.
+By using the equality [a]+ = a + [-a]+ it is straightforward to verify that
+
+                              t + -1[Z - t]+ = [t - Z]+ + [Z - t]+ + Z,
+where  := -1 - 1. Consequently
+
+       H(x, t) = (1 + ) G(x, ) + [t - G(x, )]+ + [G(x, ) - t]+ ,
+
+                    27
+where  := /( + 1). Note that   [0, 1) and  > 0.
+    The computational complexity of problem (4.19) is almost the same as that of the ex-
+
+pected value problem:
+
+           min E[G(x, )].                                                (4.20)
+
+           xX
+
+The function H(·, ·) is convex if G(·, ) is convex, and is piecewise linear if G(·, ) is piecewise
+linear. If both these conditions hold, X is a polyhedral set, and  has a finite number of
+realizations then (4.19) can be formulated as a linear program.
+
+    The additional term in (4.18), as compared with (4.20), has the following interpretation.
+For a random variable Z define
+
+D[Z ]  :=  inf  E  {[t  -   Z ]+            +        [Z     -  t]+}   .  (4.21)
+
+           tR
+
+Note that the minimum in the right hand side of (4.21) is attained at the quantile t =
+
+VaR  (Z), and observe that /(1 + ) = 1 - .  We can view D[Z] as an (asymmetric)
+          1+
+
+measure of dispersion of Z around its (1 - )-quantile. We obtain that problem (4.19), and
+
+hence problem (4.18), are equivalent to the problem
+
+min    {E[G(x,       )]  +    D[G(x,                          )]}  .     (4.22)
+
+xX
+
+    It is possible to give yet another interpretation for the problem (4.22). Let Z = Z()
+be a random variable defined on a probability space (, F , P ). We have the following dual
+representation of the coherent risk measure (Z) = E[Z] + D[Z]:
+
+           (Z) = sup EF [Z],                                             (4.23)
+
+                         F A
+
+where A is a set of probability distributions on (, F) such that
+
+F  A iff (1 - )P (A)  F (A)  (1 + )P (A) for any A  F .
+
+In particular, if the set  = {1, ..., K} is finite with probability distribution P defined by
+probabilities p1, ..., pK, then a probability distribution p1 , ..., pK on  belongs to A iff
+
+                                (1 - )pk  pk  (1 + )pk, k = 1, ..., K.
+Consequently, problem (4.22) can be written in the following minimax form
+
+           min  sup     EF  [G(x,                      )].               (4.24)
+
+           xX   F A
+
+In the terminology of robust optimization, the set A can be viewed as an uncertainty set
+for the probability distributions and problem (4.24) as the worst-case-probability stochastic
+program.
+
+                        28
+    A popular traditional approach to controlling risk in optimization is to try to reduce vari-
+ability of the (random) cost G(x, ), and hence to make it closer to its average (expectation)
+E[G(x, )]. In classical statistics, variability of a random variable Z is usually measured by
+its variance or standard deviation. This suggests adding the constraint Var[G(x, )]   to
+problem (1.4), for some chosen constant  >0. Note that this constraint is equivalent to the
+corresponding constraint Var[G(x, )]   for the standard deviation of the total cost.
+
+    There are, however, several problems with this approach. Firstly, constraining either
+the variance or standard deviation of G(x, ) means that the obtained constraint set is
+not guaranteed to be convex unless G(x, ) is linear in x. Secondly variance and standard
+deviation are both symmetrical measures of variability, and, in the minimization case, we are
+not concerned if the cost is small; we just don't want it to be too large. This motivates the use
+of asymmetrical measures of variability (like the coherent risk measure (Z) = E[Z]+D[Z])
+which appropriately penalize large values of the cost G(x, ). The following example shows
+that the symmetry of variance and standard deviation is problematic even if the cost function
+is linear.
+
+Example 9 Suppose that the space  = {1, 2} consists of two points with associated
+probabilities p and 1 - p, for some p  (0, 1). Consider dispersion measure D[Z], defined on
+
+the space of functions (random variables) Z :   R, either of the form
+
+D[Z] := Var[Z] or D[Z] := Var[Z],
+
+and the corresponding (Z) := E[Z] + D[Z]. Consider functions Z1, Z2 :   R defined by
+Z1(1) = -a and Z1(2) = 0, where a is some positive number, and Z2(1) = Z2(2) = 0.
+Now, for D[Z] = Var[Z], we have that (Z2) = 0 and (Z1) = -pa + a p(1 - p). It
+follows that for any  > 0 and p < (1 + -2)-1 we have that (Z1) > (Z2). Similarly, for
+D[Z] = Var[Z] we have that (Z1) > (Z2) if a > -1 and p < [1 - (a)-1]-1. That is,
+although Z2 dominates Z1 in the sense that Z2()  Z1() for every possible realization of
+  , we have here that (Z1) > (Z2), i.e., (·) is not monotone.
+
+    Consider now the optimization problem
+
+min [G(x, )] s.t. x1 + x2 = 1, x1  0, x2  0,  (4.25)
+
+xR2
+
+with G(x, ) = x1Z1() + x2Z2(). Let x¯ := (1, 0) and x := (0, 1). We have here that
+G(x, ) = x1Z1(), and hence G(x¯, ) is dominated by G(x, ) for any feasible point x of
+problem (4.25) and any realization   . And yet x¯ is not an optimal solution of the
+
+corresponding optimization (minimization) problem since [G(x¯, )] = [Z1] is greater than
+[G(x, )] = (Z2).
+
+5 Notes
+
+The inventory model, introduced in example 1 (also called the Newsvendor Problem) is
+classical. This model, and its multistage extensions, are discussed extensively in Zipkin [37],
+to which the interested reader is referred for a further reading on that topic.
+
+                                                         29
+    The concept of two-stage linear stochastic programming with recourse was introduced in
+Beale [4] and Dantzig [8]. Although two-stage linear stochastic programs are often regarded
+as the classical stochastic programming modeling paradigm, the discipline of stochastic pro-
+gramming has grown and broadened to cover a wide range of models and solution approaches.
+Applications are widespread, from finance to fisheries management. There is a number of
+books and monographs where theory and applications of stochastic programming is dis-
+cussed. In that respect we can mention, for example, monographs [6, 26, 30, 36]. Chance
+constraints problems were introduced in Charnes, Cooper and Symonds [7]. For a thorough
+discussion and development of that concept we may refer to Pr´ekopa [26]. An introductory
+treatment is available in the on-line tutorial by Henrion [12].
+
+    Questions of how to construct scenarios and to measure quality of obtained solutions have
+been studied extensively in the stochastic programming literature. A way of reducing the
+number of scenarios by certain aggregations techniques are discussed in Heitsch and R¨omisch
+[11] and Pflug [25], for example. The approach to statistical validation of a candidate
+solution, discussed in section 2.3, was suggested in Norkin, Pflug and Ruszczyn´ski [23], and
+developed in Mak, Morton and Wood [17]. For a more recent work in that direction see
+Bayraksan and Morton [3].
+
+    The first mathematical discussion of risk aversion (using utility functions) is often at-
+tributed to Daniel Bernouilli [5]. The concept of utility was formally defined and expounded
+by von Neumann and Morgenstern [21]. The idea of using a mean-variance approach to
+stochastic optimization goes back to Markowitz [18]. Coherent risk measures were first in-
+troduced by Artzner et al [2]. A discussion of drawbacks of using variance or standard
+deviation as measures of dispersion in stochastic programming can be found in Takriti and
+Ahmed [33], for example. The approach of using CVaR for approximating chance constraints
+is due to Rockafellar and Uryasev [27]. We follow Nemirovski and Shapiro [20] to show
+that the CVaR approximation is the best convex approximation of a chance constraint. It
+is also suggested in [20] to use the exponential function (z) = ez, instead of the piecewise
+linear function [1 + z]+, for constructing convex conservative approximations, which has the
+potential advantage of treating the obtained constraints analytically.
+
+    The term "sample average approximation" method was coined in Kleywegt et al [15],
+although this approach was used long before that paper under various names. Statistical
+properties of the SAA method are discussed in Shapiro [31] and complexity of two and
+multi-stage stochastic programming in Shapiro and Nemirovski [32]. From a deterministic
+point of view, complexity of two-stage linear stochastic programming is discussed in Dyer
+and Stougie [9]. Rates of convergence of Monte Carlo and Quasi-Monte Carlo estimates of
+the expected values are discussed in Niederreiter [22]. Numerical experiments with the SAA
+method are reported in [16, 17, 35], for example.
+
+    The sample average approximation problems that arise from the sampling process of two
+(and multi) stage linear stochastic programs are large-scale linear programming problems.
+These can be attacked directly using commercial optimization software which is widely avail-
+able (see e.g. [10]). As the problems grow in size (with the number of scenarios) they become
+too large to solve using general-purpose codes. Of course for astronomically large numbers of
+
+                                                         30
+scenarios we cannot hope to solve any problem exactly, but at the boundary of tractability
+of general purpose codes we can exploit the special structure inherent in the formulation
+(2.4) to solve problems in a reasonable amount of time.
+
+    The mathematical programming literature on exploiting structure to solve large-scale
+linear programs is extensive. Since our purpose in this tutorial is to introduce stochastic
+programming models and approaches to readers, we give below only a brief (and selective)
+overview of this body of work. A more comprehensive picture is available in the monographs
+[6, 30, 14].
+
+    The formulation (2.4) has a structure that lends itself to the decomposition techniques
+developed to solve large-scale linear programming problems. These include variants of Ben-
+ders decomposition (also called the L-shaped method [34]), Lagrangian and augmented La-
+grangian decomposition ([28],[19]) interior-point methods [29], and operator splitting [24].
+
+    The SAA approach to solving stochastic linear programs may require the solution of a
+sequence of problems with increasing numbers of scenarios (e.g. if the error in the solution
+from the current SAA is deemed to be too large). In this case it makes sense to use informa-
+tion obtained in the solution of the problem to guide the solution to a larger SAA problem.
+This is the approach adopted by so-called internal sampling methods, e.g., the stochastic
+decomposition method developed by Higle and Sen [13].
+
+    When some or all of the decision variables must take integer values, the formulation (2.4)
+becomes an integer linear program, which in general lacks the convexity properties to enable
+decomposition techniques. To overcome this, stochastic integer programs are attacked using
+a variety of techniques that combine advances in large-scale integer programming with the
+special structure that arises in applications. A more comprehensive discussion of this is
+provided in the online tutorial by Ahmed [1].
+
+    It should be clearly understood that simple examples given in this paper are for illus-
+tration purposes only. It could be dangerous to make general conclusions based on such
+simple examples. Our intuition based on an analysis of one-dimensional models could be
+quite misleading in higher dimensional cases.
+
+6 Appendix
+
+6.1 Derivation of (1.5)
+
+Recall
+
+G(x, D) = cx + b max{D - x, 0} + h max{x - D, 0}.                                                 (6.1)
+
+Let g(x) = E[G(x, D)]. It is a convex continuous function. For x  0 we have
+
+                                                                                               x
+
+                                          g(x) = g(0) + g(z)dz,
+
+                                                                                             0
+
+                         31
+where at nondifferentiable points the derivative g(z) is understood as the right hand side
+derivative. Since D  0 we have that g(0) = bE[D]. Also observe that
+
+               d     E[max{D  -  x,   0}]  =  Prob(D     x)
+               dx
+
+and
+
+               d     E[max{x  -  D,   0}]  =  Prob(D     x)
+               dx
+
+so
+
+      g(z)  =  c  +  d   E  [b max{D  -  z,  0}  +  h  max{z  -  D,  0}]
+                     dz
+            = c - bProb(D  z) + hProb(D  z)
+
+            = c - b(1 - F (z)) + hF (z)
+
+            = c - b + (b + h)F (z).
+
+Thus
+
+                                                                                        x  (6.2)
+
+      E[G(x, D)] = bE[D] + (c - b)x + (b + h) F (z)dz.
+
+                                                                                      0
+
+6.2 Derivation of best convex approximation to chance constraints.
+
+Let  : R  R be a nonnegative valued, nondecreasing, convex function such that (z) 
+1l(z) for all z  R, and (0) = 1. Since  is convex, it is supported, at 0, by a linear
+function, i.e., there is a  R such that (z)  1 + az for all z  R. Moreover, since (z)
+is nondecreasing, it follows that a  0. If a = 0, then (z)  1 of course. So suppose that
+a > 0. Then since (z) is nonnegative, we have that (z)  max{0, 1 + az} = [1 + az]+ for
+all z. Note now that the function  is defined up to a scaling, i.e., the basic inequality (4.10)
+is invariant with respect to rescaling t  at. It follows that (z) := [1 + z]+ is a minimal
+value (and hence a best) choice of such function .
+
+Acknowledgements
+
+The authors would like to thank David Morton, Maarten van der Vlerk, and Bernardo
+Pagnoncelli for helpful comments on an earlier version of this tutorial.
+
+References
+
+ [1] Ahmed, S., Introduction to stochastic integer programming, http://www.stoprog.org.
+ [2] Artzner, P. Delbaen, F., Eber, J.-M. and Heath, D., Coherent measures of risk, Mathe-
+
+      matical Finance, 9, 203--228 (1999).
+
+                                                         32
+ [3] Bayraksan, G. and Morton, D., Assessing solution quality in stochastic programs, Math-
+      ematical Programming, 108, 495--514 (2006).
+
+ [4] Beale, E.M.L., On minimizing a convex function subject to linear inequalities, Journal
+      of the Royal Statistical Society, Series B, 17, 173--184 (1955).
+
+ [5] Bernouilli, D., Exposition of a new theory on the measurement of risk, 1738. (Translated
+      by L. Sommer in Econometrica 22 (1): 22-36, 1954)
+
+ [6] Birge, J.R. and Louveaux, F., Introduction to Stochastic Programming, Springer, 1997.
+
+ [7] Charnes, A., Cooper, W.W. and G.H. Symonds, Cost horizons and certainty equivalents:
+      an approach to stochastic programming of heating oil, Management Science, 4, 235--263
+      (1958).
+
+ [8] Dantzig, G.B., Linear programming under uncertainty, Management Science, 1, 197--206
+      (1955).
+
+ [9] Dyer, M. and Stougie, L., Computational complexity of stochastic programming prob-
+      lems, Mathematical Programming, 106, 423--432 (2006).
+
+[10] Fourer, R., Linear programming frequently asked questions, http://www-
+      unix.mcs.anl.gov/otc/Guide/faq/linear-programming-faq.html (2000).
+
+[11] Heitsch, H. and R¨omisch,W. Scenario reduction algorithms in stochastic programming,
+      Computational Optimization and Applications, 24, 187-206 (2003).
+
+[12] Henrion, R., Introduction to chance-constrained programming, http://www.stoprog.org.
+
+[13] Higle, J.L. and Sen, S. Stochastic Decomposition: A Statistical Method for Large Scale
+      Stochastic Linear Programming, Kluwer Academic Publishers, Dordrecht, 1996.
+
+[14] Kall, P. and Meyer, J., Stochastic Linear Programming, Models, Theory, and Compu-
+      tation. Springer, 2005.
+
+[15] Kleywegt, A. J., Shapiro, A. and Homem-de-Mello, T., The sample average approxima-
+      tion method for stochastic discrete optimization, SIAM J. Optimization, 12, 479-502
+      (2001).
+
+[16] Linderoth, J., Shapiro, A. and Wright, S., The empirical behavior of sampling methods
+      for stochastic programming, Annals of Operations Research, 142, 215-241 (2006).
+
+[17] Mak, W.K., Morton, D.P. and Wood, R.K., Monte Carlo bounding techniques for deter-
+      mining solution quality in stochastic programs, Operations Research Letters, 24, 47--56
+      (1999).
+
+[18] Markowitz, H.M., Portfolio selection, Journal of Finance, 7, 77--91 (1952).
+
+                                                         33
+[19] Mulvey, J.M. and Ruszczyn´ski, A., A new scenario decomposition method for large-scale
+      stochastic optimization, Operations Research, 43, 477--490 (1995).
+
+[20] Nemirovski, A. and Shapiro, A., Convex approximations of chance constrained pro-
+      grams, SIAM J. Optimization, 17, 969-996 (2006).
+
+[21] von Neumann, J. and Morgenstern, O., Theory of Games and Economic Behavior, 1944.
+
+[22] Niederreiter, H., Random Number Generation and Quasi-Monte Carlo Methods, SIAM,
+      Philadelphia, 1992.
+
+[23] Norkin, V.I., Pflug, G.Ch. and Ruszczyn´ski, A., A branch and bound method for
+      stochastic global optimization. Mathematical Programming, 83, 425--450 (1998).
+
+[24] Pennanen, T. and Kallio, M. A splitting method for stochastic programs, Annals of
+      Operations Research, 142, 259-268 (2006).
+
+[25] Pflug, G.Ch., Scenario tree generation for multiperiod financial optimization by optimal
+      discretization. Mathematical Programming B, 89, 251-271 (2001).
+
+[26] Pr´ekopa, A., Stochastic Programming, Kluwer, Dordrecht, Boston, 1995.
+
+[27] Rockafellar, R.T. and Uryasev, S.P., Optimization of conditional value-at-risk, The
+      Journal of Risk, 2, 21-41 (2000).
+
+[28] Rockafellar, R.T. and Wets, R.J-B., Scenarios and policy aggregation in optimization
+      under uncertainty, Mathematics of Operations Research, 16, 119-147 (1991).
+
+[29] Ruszczyn´ski, A., Interior point methods in stochastic programming, IIASA Working
+      paper WP-93-8, (1993).
+
+[30] Ruszczyn´ski, A. and Shapiro, A., (Eds.), Stochastic Programming, Handbook in OR &
+      MS, Vol. 10, North-Holland Publishing Company, Amsterdam, 2003.
+
+[31] Shapiro, A., Monte Carlo sampling methods, in: Ruszczyn´ski, A. and Shapiro, A.,
+      (Eds.), Stochastic Programming, Handbook in OR & MS, Vol. 10, North-Holland Pub-
+      lishing Company, Amsterdam, 2003.
+
+[32] Shapiro, A. and Nemirovski, A., On complexity of stochastic programming problems, in:
+      Continuous Optimization: Current Trends and Applications, pp. 111-144, V. Jeyakumar
+      and A.M. Rubinov (Eds.), Springer, 2005.
+
+[33] Takriti, S. and Ahmed, S., On robust optimization of two-stage systems, Mathematical
+      Programming, 99, 109-126 (2004).
+
+[34] Van Slyke, R. and Wets, R.J-B., L-shaped linear programs with applications to optimal
+      control and stochastic programming, SIAM J. on Appl. Math., 17, 638-663 (1969).
+
+                                                         34
+[35] Verweij, B., Ahmed, S., Kleywegt, A.J., Nemhauser, G. and Shapiro, A., The sample
+      average approximation method applied to stochastic routing problems: a computational
+      study, Computational Optimization and Applications, 24, 289--333 (2003).
+
+[36] Ziemba, W.T. and Wallace, S.W., Applications of Stochastic Programming, SIAM, 2006.
+[37] Zipkin, P.H. Foundations of Inventory Management, McGraw-Hill, 2000.
+
+                                                         35
+

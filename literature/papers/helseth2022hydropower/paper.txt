@@ -1,0 +1,968 @@
+                                                                                                                              Hydropower Scheduling with State-Dependent Discharge
+                                                                                                                                               Constraints: An SDDP Approach
+
+                                                                                                                                                 Arild Helseth1; Birger Mo2; Hans Olaf Hågenvik3; and Linn E. Schäffer4
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.  Abstract: Environmental constraints in hydropower systems serve to ensure sustainable use of water resources. Through accurate treatment
+                                                                                                                              in hydropower scheduling, one seeks to respect such constraints in the planning phase while optimizing the utilization of hydropower.
+                                                                                                                              However, many environmental constraints introduce state-dependencies and even nonconvexities to the scheduling problem, making them
+                                                                                                                              challenging to represent in stochastic hydropower scheduling models. This paper describes how the state-dependent maximum discharge
+                                                                                                                              constraint, which is widely enforced in the Norwegian hydropower system, can be embedded within the stochastic dual dynamic program-
+                                                                                                                              ming (SDDP) algorithm for hydropower scheduling without compromising computational time. In this work, a combination of constraint
+                                                                                                                              relaxation and time-dependent auxiliary lower reservoir volume bounds is applied, and the modeling is verified through computational experi-
+                                                                                                                              ments on two different systems. The results demonstrate that the addition of an auxiliary lower bound on reservoir volume has significant
+                                                                                                                              potential for improved system operation, and that a bound based on the minimum accumulated inflow in the constraint period is the most
+                                                                                                                              efficient. DOI: 10.1061/(ASCE)WR.1943-5452.0001609. This work is made available under the terms of the Creative Commons Attribution
+                                                                                                                              4.0 International license, https://creativecommons.org/licenses/by/4.0/.
+
+                                                                                                                              Introduction                                                                 Operational planning (or scheduling) models have been widely
+                                                                                                                                                                                                        used by Nordic hydropower producers for several decades. Meth-
+                                                                                                                              Hydropower is a dominant generation technology in the Nordic              ods and models for hydropower scheduling have been developed
+                                                                                                                              power system, accounting for 143 TWh=year or 96% of the total             along different methodological tracks, as documented in the re-
+                                                                                                                              power production in Norway in 2017 (Statistisk Sentralbyrå). In           views in (Labadie 2004; de Queiroz 2016; Macian-Sorribes and
+                                                                                                                              the future, the Nordic power system will have tighter connections         Pulido-Velazquez 2020; Pérez-Díaz et al. 2021; Giuliani et al.
+                                                                                                                              with Europe and an increasing proportion of intermittent renewable        2021) and benchmarked in Côté and Leconte (2015). The early
+                                                                                                                              generation from, for example, wind and solar power. Rapid and             works on scheduling of hydropower reservoirs used the principles
+                                                                                                                              unpredictable fluctuations in intermittent generation will offer new      of stochastic dynamic programming (SDP) (see Stage and Larsson
+                                                                                                                              possibilities for controllable generation, such as regulated hydro-       1961). SDP decomposes the multistage planning problem into a
+                                                                                                                              power, to be able to respond to these fluctuations.                       sequence of single-stage subproblems that can be solved by back-
+                                                                                                                                                                                                        ward induction (Tejada-Guibert et al. 1995; Kim and Palmer 1997;
+                                                                                                                                 In symphony with the ongoing power market changes, the                 Nandalal and Bogardi 2007). SDP algorithms are still widely
+                                                                                                                              physical and environmental requirements associated with hydro-            applied and have mild requirements to system representation
+                                                                                                                              power operation are changing, through proposed revisions of               (Giuliani et al. 2021), allowing representation nonconvexities.
+                                                                                                                              hydropower concessions and the implementation of EU Water                 Variants of the SDP model, such as sampling stochastic dynamic
+                                                                                                                              Framework Directive, for example. The directive strives to ensure         programming (SSDP) (Kelman et al. 1990; Côté and Arsenault
+                                                                                                                              sustainable use of water resources, balancing the multiple uses such      2019) and robust stochastic dynamic programming (RSDP) (Kim
+                                                                                                                              as water hydropower, irrigation, water supply, flood control, and         et al. 2021) has extended the applicability of this type of algorithm.
+                                                                                                                              recreation (European Commission). Consequently, hydropower                However, because state variables need to be discretized in the SDP
+                                                                                                                              producers need to both adjust their operational schedules according       algorithm, it suffers from the "curse of dimensionality," leading to
+                                                                                                                              to the new price patterns seen in the market and at the same time         computationally intractable problems when considering systems
+                                                                                                                              relate to new operational constraints. In this context, the hydro-        with a large number of state variables. The stochastic dual dynamic
+                                                                                                                              power producers need scheduling models that represent physical            programming (SDDP) introduced in Pereira and Pinto (1991) al-
+                                                                                                                              and environmental constraints in a precise and consistent manner.         lows solving the scheduling problem without discretizing the state
+                                                                                                                                                                                                        variables, and is therefore computationally tractable for systems
+                                                                                                                                  1Senior Research Scientist, SINTEF Energy Research, Sem Sælands       with multiple reservoirs. The SDDP algorithm can be classified
+                                                                                                                              vei 11, 7465 Trondheim, Norway (corresponding author). ORCID: https://    as a sampling-based variant of multistage Benders decomposition
+                                                                                                                              orcid.org/0000-0003-4877-442X. Email: arild.helseth@sintef.no             method (Birge and Louveaux 2011), requiring a convex problem
+                                                                                                                                                                                                        formulation, and is normally solved by using linear programming
+                                                                                                                                  2Chief Scientist, SINTEF Energy Research, Sem Sælands vei 11, 7465    (LP). Extensions of the SDDP algorithm have been frequently re-
+                                                                                                                              Trondheim, Norway. Email: birger.mo@sintef.no                             ported in recent literature (see Rebennack 2016; Poorsepahy-
+                                                                                                                                                                                                        Samian et al. 2016; Helseth et al. 2016; Street et al. 2017; Zou
+                                                                                                                                  3Research Scientist, SINTEF Energy Research, Sem Sælands vei 11,      et al. 2018). The SDDP algorithm is currently the most widely used
+                                                                                                                              7465 Trondheim, Norway. Email: hans.hagenvik@sintef.no                    method for medium-term hydropower scheduling in the Nordic
+                                                                                                                                                                                                        market (Helseth et al. 2018). In the Nordic context, medium-term
+                                                                                                                                  4Ph.D. student, Dept. of Electric Power Engineering, Norwegian Univ.  scheduling refers to the process of computing strategies for local
+                                                                                                                              of Science and Technology, 7491 Trondheim, Norway. Email: linn.e          or regional hydropower resources providing a long-term price
+                                                                                                                              .schaffer@ntnu.no
+
+                                                                                                                                  Note. This manuscript was submitted on October 21, 2021; approved on
+                                                                                                                              June 28, 2022; published online on September 14, 2022. Discussion period
+                                                                                                                              open until February 14, 2023; separate discussions must be submitted for
+                                                                                                                              individual papers. This paper is part of the Journal of Water Resources
+                                                                                                                              Planning and Management, © ASCE, ISSN 0733-9496.
+
+                                                                                                                              © ASCE  04022061-1                                                        J. Water Resour. Plann. Manage.
+
+                                                                                                                                      J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.  forecast. In particular, the extended algorithm to incorporate           a hydropower system while respecting all physical and legislative
+                                                                                                                              uncertainty in power price presented in Gjelsvik et al. (1999)           constraints. This is the typical market context for producers in the
+                                                                                                                              has become popular and is implemented in the software ProdRisk           liberalized Nordic market. The decision problem can be formulated
+                                                                                                                              (SINTEF 2022).                                                           as a multistage stochastic optimization problem, where the expect-
+                                                                                                                                                                                                       ation is typically taken over the stochastic variables' inflow and
+                                                                                                                                 Environmental constraints in water resources systems come in          market price. The combined SDP/SDDP algorithm presented in
+                                                                                                                              many flavors, depending physical and legislative conditions. The         Gjelsvik et al. (1999, 2010) is currently the most widely applied
+                                                                                                                              technical literature tend to emphasize on ecologically acceptable        algorithm for solving this type of scheduling problem in the Nordic
+                                                                                                                              flows, in terms of magnitude and rate of change (Pérez-Díaz and          market. It combines the classical SDDP algorithm described in
+                                                                                                                              Wilhelmi 2010; Chakrabarti et al. 2011; Olivares et al. 2015;            Pereira and Pinto (1991) with an outer layer based on SDP to in-
+                                                                                                                              Guisandez et al. 2016). The impact of minimum flows and maxi-            corporate the market price uncertainty.
+                                                                                                                              mum ramping rates certainly limits the flexibility of the hydro
+                                                                                                                              system, but from a modeling point of view these constraints fit well        The model presentation emphasizes on the SDDP part of the
+                                                                                                                              into algorithms relying on a convex model formulation, such as           algorithm, assuming a stochastic inflow and a deterministic price
+                                                                                                                              SDDP. Other environmental constraints involve state-dependencies,        sequence. By treating the price as deterministic, the authors attempt
+                                                                                                                              which are not easily treated in the SDDP algorithm, as reported in       to clarify the tight relationship between the studied constraint and
+                                                                                                                              Pereira-Bonvallet et al. (2016) and Helseth et al. (2020), and recently  the price pattern, without loss of generality. That is, the SDP-part of
+                                                                                                                              reviewed in Schäffer et al. (2020). The main complicating factor is      the algorithm can be easily added to the model formulation later on.
+                                                                                                                              the nonconvexities associated with such constraints. Ideally, the        It is assumed that the probability distributions of the inflow can be
+                                                                                                                              assessment of nonconvex environmental constraints within hydro-          discretized, and that problem can be decomposed into weekly de-
+                                                                                                                              power scheduling models should be performed using methodolo-             cision stages. Consequently, the realizations of the inflow for an
+                                                                                                                              gies that allow explicit modeling of the nonconvexities. A recent        entire week are known at the beginning of that week. The use of
+                                                                                                                              reformulation of the SDDP algorithm, known as stochastic dual            weekly decision stages is the standard approach when computing
+                                                                                                                              dynamic integer programming (SDDiP), has proven convergence              water values for producers in the Nordic market (Gjelsvik et al.
+                                                                                                                              also in the nonconvex case. SDDiP was first presented in Zou             2010; Helseth et al. 2018), and provides a compromise between
+                                                                                                                              et al. (2018), and has later been applied to hydropower scheduling       computational complexity and accuracy. There are no further time
+                                                                                                                              in Hjelmeland et al. (2018), and was further tested to deal with         steps within each decision stage t in the model applied in this work.
+                                                                                                                              state-dependent discharge constraints in Helseth et al. (2020).
+                                                                                                                              Although the numerical results were promising, the computation              For all stages in the planning horizon 1 · · · T a vector Xt is
+                                                                                                                              times of the SDDiP method are prohibitive, and it is therefore fair      defined, comprising all decision variables for that stage. Associated
+                                                                                                                              to claim that the algorithm is not generally suited for operational      with Xt there is a price vector t. The overall objective is then to
+                                                                                                                              use in its current form. Recent research on the application of SDP       find an operating strategy to obtain
+                                                                                                                              to nonconvex environmental constraints is presented in Schäffer
+                                                                                                                              et al. (2022).                                                                                XT  t Xt  þ  ðST     ð1Þ
+                                                                                                                                                                                                                     maxE                     Þ
+                                                                                                                                 This work concerns the widely applied SDDP algorithm, and
+                                                                                                                              investigates different approaches for representing a particular type                   t¼1
+                                                                                                                              of environmental constraint that comes in many flavors in hydro-
+                                                                                                                              power systems, namely the state-dependent maximum discharge. In          where E denotes the expectation operator; and ðSTÞ the end of
+                                                                                                                              particular, this work emphasizes on cases where the maximum dis-         horizon valuation of state variables in ST .
+                                                                                                                              charge capacity depends on the reservoir level. There are numerous
+                                                                                                                              examples of this type of constraint in the Norwegian and Swedish         Inflow Model
+                                                                                                                              hydropower systems, and two such cases from Norway are pre-
+                                                                                                                              sented in the "Computational Experiments" section. This type of          Inflows to the hydropower reservoirs are considered as uncertain in
+                                                                                                                              constraint is commonly motivated by the reservoir's abilities to         Eq. (1) and are represented by a stochastic model explained in the
+                                                                                                                              serve recreational purposes (tourism, lodging, fishing, canoeing,        following. A set of inflow time series Is; s  S are available as a
+                                                                                                                              etc.) in the summer season.                                              starting point. Each time series can be associated with one or multi-
+                                                                                                                                                                                                       ple reservoirs. These values are first normalized to remove seasonal
+                                                                                                                                 This paper elaborates on how the formulation of this constraint       variation and resemble a weakly stationary process
+                                                                                                                              can be approximated in the SDDP algorithm in a transparent man-
+                                                                                                                              ner and without compromising computation time. A problem relax-                        zst  ¼     Ist -  t         ð2Þ
+                                                                                                                              ation supported by a time-dependent auxiliary lower reservoir                                        t
+                                                                                                                              volume bound is proposed, and the performance of this approach
+                                                                                                                              is demonstrated in two separate case studies resembling Norwegian        where Ist is the vector of observed inflows for scenario s and stage t;
+                                                                                                                              hydropower systems. When properly defined, the auxiliary reser-          t the vector of average weekly inflows; and t the vector of standard
+                                                                                                                              voir bounds serve to tighten the problem relaxation, providing           deviations. Next, a vector autoregressive inflow model of first order
+                                                                                                                              improved SDDP strategies. Results in terms of water values, simu-
+                                                                                                                              lated reservoir trajectories, and expected profits are presented to      (VAR-1) is fitted to the normalized inflow according to Eq. (3)
+                                                                                                                              validate our approach. This work contributes with new knowledge
+                                                                                                                              on how to model this type of constraint within SDDP and quantify                       zt ¼ zt-1 þ t               ð3Þ
+                                                                                                                              its potential impact on scheduling strategies and simulation results.
+                                                                                                                                                                                                          In Eq. (3), the inflow zt is explained by the product of the cor-
+                                                                                                                              Model Description                                                        relation matrix  and the inflow from the previous stage zt-1 and
+                                                                                                                                                                                                       residuals t. To make sure that the inflow model always generates
+                                                                                                                              This study assumes a risk-neutral, price-taking hydropower pro-          nonnegative inflows to the mathematical model subsequently de-
+                                                                                                                              ducer aiming at maximizing the expected profit from operating
+                                                                                                                                                                                                       scribed, a three-parameter lognormal distribution is fitted to the
+
+                                                                                                                                                                                                       residuals as outlined in Maceira and Bezerra (1997) and de Matos
+
+                                                                                                                                                                                                       and Finardi (2012). For the interested reader, further discussions
+
+                                                                                                                                                                                                       on inflow modeling within the SDDP algorithms can be found in
+
+                                                                                                                                                                                                       Mbeutcha et al. (2021), and in particular approaches guaranteeing
+
+                                                                                                                              © ASCE  04022061-2                                                                                J. Water Resour. Plann. Manage.
+
+                                                                                                                                      J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                              nonnegative inflows in Poorsepahy-Samian et al. (2016) and Raso
+                                                                                                                              et al. (2017).
+
+                                                                                                                              Weekly Stage Problem
+
+                                                                                                                              In the further model formulation, a watercourse is referred to as a
+                                                                                                                              set of connected hydropower modules h  H. Each module h can
+                                                                                                                              have a set of upstream connected modules h and a downstream
+                                                                                                                              module receiving its discharged water. A power station can be as-
+
+                                                                                                                              sociated with h where the conversion from discharge to power is
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.  described by a piecewise linear PQ-curve, where water discharge
+
+                                                                                                                              through the station is modeled using one variable qDhmt per dis-
+                                                                                                                              charge segment m  Mh. These segments will be used in decreas-
+                                                                                                                              ing order according to their discharge efficiency hm, assuming that
+                                                                                                                              hm decreases with m, as illustrated with three segments in Fig. 1.
+
+                                                                                                                              A set of decision stages t with no further time steps within each
+
+                                                                                                                              decision stage is considered. The weekly stage problem for stage
+                                                                                                                              t can be formulated as in Eqs. (4a)­(4j). Symbols related to the
+
+                                                                                                                              inflow model formulation were previously described
+
+                                                                                                                                                           X           X                    
+
+                                                                                                                                              t ¼ max t pht - Cv-ht þ tþ1                            ð4aÞ
+
+                                                                                                                                                               hH      hH
+
+                                                                                                                              vht þ  X        qhDmt þ qSht -   X   X   qDumt  -       ½     szs;t-1
+                                                                                                                                                                                         t
+                                                                                                                                                                                 Fsh
+
+                                                                                                                                     mMh                       uh mMu
+
+                                                                                                                              ¼ vh;t-1 þ Fshðstst þ stÞ  vh s ¼ sðhÞ;  h  H
+
+                                                                                                                                                                                                     ð4bÞ
+
+                                                                                                                                                    pht -  X    hmqhDmt ¼ 0      hH                  ð4cÞ
+
+                                                                                                                                                           mMh
+
+                                                                                                                                              qhDmt - htQ¯ hDm  0  h  H; m  Mh                       ð4dÞ
+
+                                                                                                                                                    vht þ vh-t - htV~ ht  0  h  H                    ð4eÞ   Fig. 1. (Color) Illustration of a hydropower module comprising a
+                                                                                                                                                                                                            reservoir and a power station, with mathematical symbols.
+
+                                                                                                                                                           Vht  vht þ vh-t  V¯ ht                    ð4fÞ
+                                                                                                                                                                                              cC
+                                                                                                                                     X              X                                                            The objective in Eq. (4a) is to maximize profit from selling
+                                                                                                                              tþ1 - hvtcvht - ½ztcszs;t-1  tc þ ðtzcÞt                               ð4gÞ
+                                                                                                                                                                                                            power, subtracted the cost of violating the reservoir boundary in
+
+                                                                                                                                     hH                    sS                                               Eq. (4f). Temporal discounting for time preference is not consid-
+
+                                                                                                                                                                                                            ered in this work. The variables (left-hand side) are separated from
+
+                                                                                                                                                                                                            the parameters (right-hand side) in each constraint and the matrix
+
+                                                                                                                                                    zs;t-1 ¼ zÃs;t-1  sz  s  S                       ð4hÞ   notation is adapted to highlight the presence of the inflow state var-
+
+                                                                                                                                                                                                            iable. With this setup, it is easier to see how constraints are being
+
+                                                                                                                                                    pht; vht; vh-t; qDhmt; qSht  0                   ð4iÞ   updated before re-solving ("warm starting") the stage problem.
+
+                                                                                                                                                                                                            Reservoir balances are stated in Eq. (4b) where the normalized in-
+
+                                                                                                                                                                ht  f0; 1g                           ð4jÞ   flow state zt-1 is transformed back to physical inflow, according to
+                                                                                                                                                                                                            Eqs. (2) and (3). Production functions are described in Eq. (4c).
+                                                                                                                              where t is the power price; pht is the power generation; vh-t is a
+                                                                                                                              slack variable for the lower reservoir bound with a marginal cost C;          Eqs. (4d) and (4e) control the environmental constraint, saying that
+
+                                                                                                                                                                                                            discharge is not allowed if reservoir volume is lower than a prede-
+
+                                                                                                                              tþ1 is the future expected profit; vht is the reservoir volume; qhDmt         fined threshold volume V~ ht. If vht reaches the threshold V~ ht, the
+
+                                                                                                                              is the discharge at PQ-curve segment m; qSht is the spillage; h is the        binary variable ht can be        "switched  boonu"ntdoaraylloQ¯whDmdipsecrhdarigscehqarhDgmet
+                                                                                                                                                                                                            according to the maximum         discharge
+                                                                                                                              set of modules upstream h; Fsh is the scaling factor converting in-
+
+                                                                                                                              flow from series s to module h; hm is the discharge efficiency at the         segment m in Eq. (4d), as illustrated in Fig. 1.
+                                                                                                                              PQ-curve segment m; Q¯ Dhm is the maximum discharge limit for seg-
+                                                                                                                              ment m; ht is a binary variable indicating if the discharge water-                 Benders cuts are given in Eq. (4g), constraining the future ex-
+                                                                                                                              way is open (1) or not (0); Vht and V¯ ht are the lower and upper
+                                                                                                                                                                                                            pected profit. Although the copy constraints in Eq. (4h) are not an
+
+                                                                                                                              reservoir volume boundaries; V~ ht is the reservoir threshold; and            active part of the optimization problem, it is included here for ease
+
+                                                                                                                              ½vhttc,sztics,  and   c are coefficients for Benders cut c. The notation      of computing the dual value zs ¼ ðtÞ=ðzs;t-1Þ. All variables are
+                                                                                                                                              used  to indicate the s element of the vector resulting from  nonnegative except t. The slack variables v-ht are penalized with a
+                                                                                                                                                                                                            cost C ensuring that they are only used if unavoidable, as will be
+
+                                                                                                                              the multiplication within the brackets [ ]. Dual values vh and sz are         further discussed in this paper.
+
+                                                                                                                              obtained from Eqs. (4b) and (4h) and further applied in the SDDP                 The presence of the binary variable ht makes the problem in
+                                                                                                                                                                                                            Eqs. (4a)­(4j) a mixed integer linear programming (MIP) problem.
+                                                                                                                              algorithm as subsequently described.
+
+                                                                                                                              © ASCE                                                                 04022061-3                               J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                                   J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                              If ht is relaxed so that so that ht  ½0; 1, the problem of                 often referred to as backward openings and illustrated by the
+                                                                                                                              Eqs. (4a)­(4j) becomes an LP problem. This is a convex relaxation
+                                                                                                                              of the original formulation, facilitating the possibility of the SDDP      white dots in Fig. 2, one computes the optimal operation for
+
+                                                                                                                              algorithm to converge at an optimal policy for the relaxed problem         week T. From the solution of each of the K stage problems of
+
+                                                                                                                              formulation.                                                               Eqs. (4a)­(4j), contributions to cut coefficients are gathered as
+
+                                                                                                                                                                                                         the dual values  hv  from   E-qP. (4hbH) avhnvdÃh;t-sz1  f-roPm sESq. zs(z4Ãsh;t)-,1a. nTdhethsee
+                                                                                                                                                                                                         right-hand side  ct  ¼ tÃ
+
+                                                                                                                              Solution Procedure                                                         cut contributions are later averaged over all inflow samples to form
+
+                                                                                                                              By relaxing ht the overall optimization problem becomes convex             a Benders cut of type Eq. (4g). Thus, inflow realizations in a week
+                                                                                                                              and can be solved by SDDP, as discussed and illustrated in this
+                                                                                                                                                                                                         T for scenario sample i1 are used to construct one cut for stage
+                                                                                                                              section. The overall problem is decomposed into LP stage problems          T - 1, illustrated by the red horizontal line in Fig. 2. The residual
+
+                                                                                                                              defined by Eqs. (4a)­(4j), for each week and with given values of          vector t ¼ ½t1; : : : ; tK should be state independent, and thus, t
+                                                                                                                                                                                                         is uncorrelated from stage to stage. Therefore, the cut constructed
+                                                                                                                              inflows. The stage problems are solved repeatedly in the SDDP
+                                                                                                                                                                                                         for scenario i1 and for stage T - 1 will be valid for all the other
+                                                                                                                              algorithm and the reservoir balances in Eq. (4b) and Benders cuts          scenarios at stage T - 1, as illustrated by the red arrows and dashed
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.  in Eq. (4g) are updated according to changes in state variables. An        horizontal lines in Fig. 2. This is often referred to as cut sharing
+
+                                                                                                                              SDDP iteration comprises a forward simulation and a backward               (Infanger and Morton 1996) and is of crucial importance for the
+
+                                                                                                                              recursion as subsequently described.                                       convergence characteristics of the SDDP algorithm. One then re-
+
+                                                                                                                              Forward simulation: First, a sequence of inflow scenarios n ¼              peats the procedure for week T - 1, and so on, to obtain an updated
+
+                                                                                                                              1; : : : ; N covering the period of analysis from t ¼ 1; : : : ; T are     operating strategy.
+
+                                                                                                                              computed by randomly sampling residuals from the fitted three-             Convergence can be declared when the upper bound is inside
+
+                                                                                                                              parameter lognormal distribution and by use of Eq. (3). Sub-               the confidence interval of the expected simulated profit or when
+
+                                                                                                                              sequently, the weekly stage problem of Eqs. (4a)­(4j) is solved            the upper bound stabilizes (Shapiro 2011). If this condition fails,
+
+                                                                                                                              for each stage t along the simulated scenario i, and results are           new sample points are added and another backward recursion is
+
+                                                                                                                              collected and state variables are updated for the next stage. The          performed to refine the approximation at each time step. More
+
+                                                                                                                              simulated state at the end of the stage is used as the initial state for   details on the theory and applications behind the SDDP method and
+
+                                                                                                                              the next stage. The forward simulation provides an updated set of          its convergence can be found in Tilmant and Kelman (2007) and
+
+                                                                                                                              state trajectories, as illustrated by following the black (thicker) lines  Homem-de-Mello et al. (2011).
+
+                                                                                                                              and black dots in Fig. 2 forward in time for each scenario sample i.
+                                                                                                                              The forward simulation is used to obtain an upper bound Jþ in
+
+                                                                                                                              Eq. (5) representing the first stage profit plus the future expected       Relaxation
+                                                                                                                              profit seen from the first stage, and the lower bound J- in Eq. (6)
+                                                                                                                                                                                                         This section presents a discussion on how the environmental con-
+                                                                                                                              representing the expected simulated profit                                 straint controlled by Eqs. (4d), (4e), and (4j) can best be approxi-
+                                                                                                                                                                                                         mated to meet the convexity requirement of the SDDP algorithm
+                                                                                                                                                  X                                                      without compromising the computational performance. In the
+                                                                                                                                      Jþ ¼ ð1ph1 - Cv-h1Þ þ 1                        ð5Þ                 "Enhanced Relaxation" section, it is elaborated on that the use of
+                                                                                                                                                                                                         an auxiliary lower reservoir volume bound can be included to
+                                                                                                                                                  hH                                                     improve the approximation.
+
+                                                                                                                                      J-  ¼  1    XT   XI   X           -  Cv-iht Þ  ð6Þ                 Standard Relaxation
+                                                                                                                                             I                  ðtpiht                                   The relationships between the upper boundary (Q¯ D) applied to
+                                                                                                                                                  t¼1  i¼1                                               qD in Eq. (4d) and variables  and v are shown in Figs. 3(a and b),
+                                                                                                                                                            hH                                           respectively. From this figure, the discontinuity introduced in
+                                                                                                                                                                                                         Eq. (4e) becomes apparent.
+                                                                                                                                 Backward recursion: For each state trajectory obtained in the
+                                                                                                                              previous forward iteration, one starts from the state at the end              The dots in Figs. 3(a and b) indicate positions where  takes
+                                                                                                                              of week T - 1, and for each of the K sampled inflow realizations,          the value 0 or 1. If one restricts the solution space to binary values
+                                                                                                                                                                                                         of , the upper boundary on qD follow the solid drawn line in the
+                                                                                                                                                                                                         two figures. That is, Q¯ D equals Q¯ D when  ¼ 1 and 0 when
+                                                                                                                                                                                                          ¼ 0, and  can only be 1 when v  V~ . If one relaxes  to a con-
+                                                                                                                                                                                                         tinuous variable, the solution space is relaxed as shown with the
+                                                                                                                                                                                                         dashed black lines in Figs. 3(a and b). The upper boundary on
+                                                                                                                                                                                                         discharge gradually increases with an increasing  [Fig. 3(a)], and
+                                                                                                                                                                                                         a nonzero  is allowed whenever v > 0.
+
+                                                                                                                              Fig. 2. (Color) Illustration of a main iteration in the SDDP algorithm.    Enhanced Relaxation
+                                                                                                                              Circles indicate system states, and branches correspond to realizations
+                                                                                                                              of stochastic variables.                                                   In many practical applications of such constraints, the threshold V~
+                                                                                                                                                                                                         corresponds to a relatively high reservoir level that forms a target
+                                                                                                                                                                                                         level in the summer season, and consequently the relaxation dis-
+                                                                                                                                                                                                         cussed so far is not a tight approximation of the original formu-
+                                                                                                                                                                                                         lation. It may seem intuitive and tempting to tighten the relaxed
+                                                                                                                                                                                                         constraint Eq. (4e) by linearizing from the initial volume vh;t-1
+                                                                                                                                                                                                         as shown in Eq. (7)
+
+                                                                                                                              © ASCE                                                 04022061-4                                         J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                           J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                                                                                            (a)                                                                            (b)
+
+                                                                                                                                                                                                    Fig. 3. (Color) Upper bound on qD as function of (a) ; and (b) v.
+
+                                                                                                                                        vht þ vh-t - htðV~ ht - vh;t-1Þ  vh;t-1  h  H                                                 ð7Þ        of Eqs. (4a)­(4j) without compromising the SDDP convexity
+
+                                                                                                                                                                                                                                                 requirement.
+
+                                                                                                                                 Because vh;t-1 is a state variable, this would leave us with an                                                         Due to the cut sharing property of the SDDP algorithm, cuts
+                                                                                                                              expression comprising the product of the two variables ht and
+                                                                                                                              vh;t-1, which would violate the convexity requirement of the SDDP                                                  should be valid for a wide range of values of the state variables
+                                                                                                                              algorithm. The bilinear term (htvh;t-1) in Eq. (7) can, for example,
+                                                                                                                                                                                                                                                 vh;t-1. Typically, this range becomes narrower with an increasing
+                                                                                                                              be approximated using McCormick envelopes (Cerisola et al.                                                         number of SDDP iterations. However, to facilitate cut sharing, the
+
+                                                                                                                                                                                                                                                 parameters                            V  Ã       cannot   be  adjusted  dynamically.      Moreover,  the
+                                                                                                                                                                                                                                                                                          h;t-1
+
+                                                                                                                              2012). However, it can be shown that such approximation of                                                         auxiliary lower bound should be low enough to avoid constraining
+
+                                                                                                                              Eq. (7) leaves us with the challenge of finding a tight and valid                                                  system operation more than necessary, because this would conflict
+
+                                                                                                                              time-dependent lower bound estimate on vh;t-1. This lower bound                                                    with the purpose of the environmental constraint. Because inflow is
+
+                                                                                                                              estimate is referred to as an auxiliary and time-dependent lower                                                   uncertain, situations where the slack variable v-ht needs to be acti-
+
+                                                                                                                              reservoir  volume                            boundary      denoted          as  V  Ã      in  the  following.      vated at marginal cost C may occur, directly impacting the strate-
+                                                                                                                                                                                                                 h;t-1
+                                                                                                                                                                                                                                                 gies                        (cut  parameters).        Thus,   any    V  Ã      >   0  should  be  carefully
+                                                                                                                              Reformulating Eq. (7) gives                                                                                                                                                                h;t-1
+
+                                                                                                                                                                              htðV~ ht                                                           evaluated because it potentially impacts the water values according
+
+                                                                                                                                        vht   þ  vh-t                      -            -     V hÃ;t-1 Þ      V  Ã      hH            ð8Þ        to the penalty C, providing an overly strong incentive to store water.
+                                                                                                                                                                                                                 h;t-1
+
+                                                                                                                                                                                                                                                 From this discussion the authors recommend that the auxiliary and
+
+                                                                                                                              If    V  Ã        for                   the     reservoir       volume      is  defined,  the    linearization     time-dependent                               lower    reservoir   volume   bounds     V  Ã      are  defined
+                                                                                                                                       h;t-1                                                                                                                                                                                              h;t-1
+
+                                                                                                                              could start from these limits [and not vh;t-1 ¼ 0, as in Eq. (4e)]                                                 prior to running the SDDP model and that the procedure for defin-
+
+                                                                                                                              to provide a tighter relaxation. This is illustrated with the stapled                                              ing these parameters is transparent.
+                                                                                                                                                                                                                                                    The authors suggest basing the parameter VhÃ;t-1 on the mini-
+                                                                                                                              red line in Fig. 3(b), and implies changing Eqs. (4e)­(8). Note that
+                                                                                                                                                                                                                                                 mum accumulated inflow, starting from the first week of the
+                                                                                                                              with  ht  ¼    0  in                    Eq.     (8),  V  Ã      becomes     a   lower     bound  on  reservoir
+                                                                                                                                                                                       h;t-1
+                                                                                                                                                                                                                                      Ã
+                                                                                                                              volume.   The     challenge                           is  then  to    define    the  parameters      V  h;t-1  to  environmental constraint. Fig. 4 shows the development of
+
+                                                                                                                              be used with Eq. (8) that allows the tightest possible relaxation                                                  minðV                       Ã      ;  V~ tÞ  in  the  constraint  periods  (weeks     18­35     and  18­48)
+                                                                                                                                                                                                                                                                             h;t-1
+
+                                                                                                                                                                      150                                                                        Reservoir volume [Mm3]
+                                                                                                                                                                                                                                                     0 200 400 600 800 1000
+                                                                                                                                              Reservoir volume [Mm3]  100
+
+                                                                                                                                                                      50
+
+                                                                                                                                                                      0             Minimum                                                                                        Minimum
+                                                                                                                                                                                    Average                                                                                        Average
+                                                                                                                                                                                    Threshold                                                                                      Threshold
+                                                                                                                                                                                    Max. reservoir                                                                                 Max. reservoir
+
+                                                                                                                                                        0                               10          20             30          40     50                                     0            10           20         30            40     50
+
+                                                                                                                                              (a)                                                             Week                               (b)                                                        Week
+
+                                                                                                                                                Fig. 4. (Color) Minimum and average accumulated inflow in the constraint period: (a) System 1; and (b) System 2.
+
+                                                                                                                              © ASCE                                                                                                         04022061-5                                                               J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                                                                 J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                              for the two systems described in "Computational Experiments,"                                Weekly inflow [Mm3]
+                                                                                                                                                                                                                               0 5 10 15 20 25 30 35
+                                                                                                                              where    V  Ã       is  represented    by  the  minimum  (red  curve)    and  aver-
+                                                                                                                                          h;t-1
+
+                                                                                                                              age (gray curve) accumulated inflow. The inflow time series from
+
+                                                                                                                              which the minimum and average values are found comprise large
+
+                                                                                                                              (10,000) sets of scenarios sampled from the inflow model previ-
+
+                                                                                                                              ously described prior to running the actual SDDP model. If one
+
+                                                                                                                              lets  V  Ã      follow  the   minimum      accumulated         inflow  (colored  red
+                                                                                                                                       h;t-1
+
+                                                                                                                              in Fig. 4), the volume trajectories considered both in the forward
+
+                                                                                                                              simulation and backward recursion should be able to meet this aux-
+
+                                                                                                                              iliary lower bound in the vast majority of encountered states. Thus,
+
+                                                                                                                              the replacement of Eq. (4e) with Eq. (8) will improve the SDDP
+
+                                                                                                                              strategies.     If  V  Ã      follows  a  higher  trajectory,  such  as  the  average
+                                                                                                                                                     h;t-1
+
+                                                                                                                              accumulated inflow (colored gray in Fig. 4), the problem formu-
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.  lation will be further constrained. This may provide better approxi-
+
+                                                                                                                              mation of the environmental constraint, but may also lead to overly
+
+                                                                                                                              conservative strategies, as discussed further in "Computational                                                         0        10           20         30         40          50
+
+                                                                                                                              Experiments."                                                                                                                                 Week number
+
+                                                                                                                              Finally, it should be noted that a tighter relaxation will be
+
+                                                                                                                              possible for other types of scheduling models that do not rely                         Fig. 5. (Color) Comparing statistical inflow model against observa-
+                                                                                                                                                                                                                     tions for System 1.
+                                                                                                                              on the cut sharing property, such as scenario-based approaches
+
+                                                                                                                              (Helseth et al. 2018) or multistage Benders decomposition (Diniz
+
+                                                                                                                              et al. 2018).
+
+                                                                                                                              Computational Experiments                                                                    Price [EUR/MWh]                                                                    2018
+                                                                                                                                                                                                                               0 10 20 30 40 50 60                                                            2020
+
+                                                                                                                              Computational Setup and Organization                                                                                    0        10           20         30         40          50
+
+                                                                                                                              A computer model was established implementing the aforemen-                                                                                       Week no.
+                                                                                                                              tioned SDDP algorithm. The model was used to obtain and verify
+                                                                                                                              strategies (cuts) obtained using the different approximations previ-                                                          Fig. 6. Applied price scenarios.
+                                                                                                                              ously outlined for two Norwegian cascaded hydropower systems.
+                                                                                                                              The environmental regulation differs in the two systems, exempli-                            For each price scenario, four cases were run:
+                                                                                                                              fying flavors of the regulation regime.
+                                                                                                                                                                                                                     1. Reference (REF) using the formulation Eqs. (4a)­(4j) setting
+                                                                                                                                 A scheduling horizon of 3 years was applied with weekly de-
+                                                                                                                              cision stages. For each of the watercourses an initial reservoir vol-                        ht ¼ 1 in Eq. (4d) and ht ¼ 0 in Eq. (4e) (i.e., ignoring the
+                                                                                                                              ume equal to 50% of the maximum reservoir volume was assumed.                                environmental constraint).
+                                                                                                                              Inflow models were fitted for both systems using the corresponding
+                                                                                                                              inflow time series comprising 62 historical years. A total of 100                      2. Standard Relaxation (SLIN) using the formulation Eqs. (4a)­(4j)
+                                                                                                                              inflow scenarios were re-sampled in each forward iteration, and
+                                                                                                                              12 backward openings were used at each stage in the backward                              with ht  ½0; 1.
+                                                                                                                              iterations of the algorithm.                                                           3. Enhanced Relaxation Minimum (ELIN-MIN) using the formu-
+
+                                                                                                                                 Before applying the aforementioned fitted statistical model in                            lation Eqs. (4a)­(4j) with ht  ½0; 1, and replacing Eq. (4e)
+                                                                                                                              the SDDP model, it was compared against the historical observa-                                                                  Ã
+                                                                                                                              tions. Results from this comparison for the inflow series used in                            with  Eq.                  (8).  V  ht  is  set  equal  to  the  minimum           accumulated
+                                                                                                                              System 1 are shown in Fig. 5. The black lines are the 0 and
+                                                                                                                              100 percentiles (dashed) and the mean (solid drawn) obtained                                 inflow, obtained from a set of 10,000 sampled scenarios from
+                                                                                                                              when sampling 10,000 time sequences of one year from the stat-
+                                                                                                                              istical model. The blue lines are the 0 and 100 percentiles (dashed)                         the SDDP inflow model.
+                                                                                                                              and the mean (solid drawn) obtained from the historical data. The
+                                                                                                                              statistical model avoids negative values which is an important                         4. Enhanced Relaxation Average (ELIN-MED) with similar math-
+                                                                                                                              point in the experiments. Moreover, it provides the correct mean
+                                                                                                                              value and a good fit for the 0 percentile. Extremal inflow values                            ematical                   modeling     as  ELIN-MIN,       but  with  V  Ã   set  equal  to  the
+                                                                                                                              are not captured that well. In summary, we find that the stochastic                                                                                                    ht
+                                                                                                                              inflow model serves its purpose but has potential for improve-
+                                                                                                                              ments with respect to capturing the extremal (wet) values.                                   average accumulated inflow, obtained from the same sampled
+
+                                                                                                                                 The model was run with two deterministic price scenarios                                  scenarios as in ELIN-MIN.
+                                                                                                                              according to the weekly average NordPool system prices for
+                                                                                                                              the years 2018 and 2020 (Nord Pool), shown in Fig. 6, each of                                The sequence of model runs to prepare results for each of the
+                                                                                                                              them repeated over the scheduling horizon. Possible correlations
+                                                                                                                              between inflow and market prices are neglected in the computa-                         two considered systems is subsequently explained. For both price
+                                                                                                                              tional experiments. The model parameter C was tuned accord-
+                                                                                                                              ing to the maximum price level to avoid the use of vh-t while                          scenarios and for all four cases, the SDDP model was run to obtain
+                                                                                                                              producing.
+                                                                                                                                                                                                                     strategies [cuts of type Eq. (4g)] for each of them. Recall that the
+
+                                                                                                                              © ASCE                                                                           04022061-6                                                          J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                                J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                                                                                                  bound indicates that further runs of the algorithm do not signifi-
+                                                                                                                                                                                                  cantly improve the constructed policy, and may serve as a practical
+                                                                                                                                                                                                  convergence criterion.
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                                                                      System 1­Description and Results
+                                Expected profit [kEUR]
+                                     137000 138000 139000 140000 141000                                                                                                                           The first system description resembles the Bergsdalen watercourse
+                                                                                                                                                                                                  located in the western part of Norway. An illustration of the
+                                                                                                                                                                                                  topology and specification of some technical characteristics is pro-
+                                                                                                                                                                                                  vided in Fig. 7. For each reservoir shown in the figure the average
+                                                                                                                                                                                                  annual inflow and the storage capacity are stated, both in mm3.
+                                                                                                                                                                                                  Each power plant is identified with its installed capacity in MW.
+                                                                                                                                                                                                  An environmental constraint is associated with reservoir 2, stating
+                                                                                                                                                                                                  that no water should be discharged from the reservoir in between
+                                                                                                                                                                                                  weeks 18 to 35 if the reservoir volume is lower than 145 mm3.
+
+                                                                                                                               Fig. 7. Watercourse topology and technical data for System 1.      Strategy from SDDP Runs
+
+                                                                                                                            SDDP model is an optimization model based on LP where the non-        Fig. 8 shows the convergence process for both price scenarios and
+                                                                                                                            convex environmental constraints are relaxed. Then, for both price    for each of the four cases, comparing the upper bounds on expected
+                                                                                                                            scenarios and for each of the four cases, system operation was si-    profit as defined in Eq. (5) for the first 80 iterations. The total
+                                                                                                                            mulated by using the respective cuts from the SDDP runs. In the       computation time was approximately 90 minutes for all three cases
+                                                                                                                            simulations a fixed set of 4,000 out of sample inflow scenarios were  with the environmental constraint, while case REF was 10% faster.
+                                                                                                                            applied. For each inflow scenario and for each week in the sched-     Consequently, the different treatments of Eq. (8) do not imply
+                                                                                                                            uling horizon, the system simulation solved the MIP problem de-       notable differences in computational complexity. As expected, the
+                                                                                                                            scribed by Eqs. (4a)­(4j). Thus, the four different SDDP strategies   converged upper bounds are lowest for the most constrained cases.
+                                                                                                                            were tested using a common and presampled set of scenarios and a      Recall that case REF does not respect the environmental constraint
+                                                                                                                            common simulation model.                                              and thus provides a too optimistic expectation of the future profit.
+                                                                                                                                                                                                  The reduced expected profit seen in Fig. 8 when gradually tight-
+                                                                                                                               The SDDP and simulation models were implemented in Julia,          ening the approximation of the environmental constraint can be
+                                                                                                                            using the JuMP package (Dunning et al. 2017) and CPLEX 12.10          seen as the cost of a stricter constraint.
+                                                                                                                            solver for solution of the optimization problems. All tests were
+                                                                                                                            carried out on an Intel Core i7-9850H processor with maximum             Next, the strategies obtained for reservoir 2 from the four cases
+                                                                                                                            frequency of 4.60 GHz and 64 GB RAM. Parallel processing              were studied by inspecting their cuts from the SDDP runs. The ex-
+                                                                                                                            was not applied.                                                      pected marginal value of water (water value) at a given stage (week)
+                                                                                                                                                                                                  and state (reservoir volume) can be found as the coefficients (v) of
+                                                                                                                               The stabilization of the upper bound was used as the conver-       the binding cut for that stage and state. Note that water values pro-
+                                                                                                                            gence criterion for the SDDP model. As discussed in Shapiro           vide important information for the producers regarding the valua-
+                                                                                                                            (2011), the stabilization of the lower (for minimization problem)     tion of stored water applied in the shorter-term operational decision
+                                                                                                                                                                                                  making. Figs. 9 and 10 show the water values for reservoir 2 for
+                                                                                                                                                                                                  weeks 15 and 30, respectively. These values are plotted as a func-
+                                                                                                                                                                                                  tion of the volume in reservoir 2, while fixing all other reservoir
+                                                                                                                                                                                                  volumes to their corresponding expected values. The considered
+
+                                                                                                                                                                         REF                                              46000                         REF
+                                                                                                                                                                         SLIN                                                                           SLIN
+                                                                                                                                                                         ELIN-MIN                                                                       ELIN-MIN
+                                                                                                                                                                         ELIN-MED                                                                       ELIN-MED
+
+                                                                                                                                                                                                  Expected profit [kEUR]  45500
+
+                                                                                                                                                                                                                          45000
+
+                                                                                                                                               0  20  40             60                                      0                   20  40             60
+
+                                                                                                                                    (a)               Iteration no.                               (b)                                Iteration no.
+
+                                                                                                                                                  Fig. 8. (Color) Upper bound evolution for System 1: (a) price 2018; and (b) price 2020.
+
+                                                                                                                            © ASCE                                       04022061-7                                                      J. Water Resour. Plann. Manage.
+
+                                                                                                                                                      J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                                      Water value [kEUR/Mm3]                                            REF       Water value [kEUR/Mm3]                                             REF
+                                                                                                                                          43.5 44.0 44.5 45.0 45.5 46.0                                 SLIN          10.2 10.4 10.6 10.8 11.0 11.2                                  SLIN
+                                                                                                                                                                                                        ELIN-MIN                                                                     ELIN-MIN
+                                                                                                                                                                                                        ELIN-MED                                                                     ELIN-MED
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                      30                          40   50              60   70                                                10       20       30       40
+
+                                                                                                                                      (a)                                         Reservoir level                  (b)                                        Reservoir level
+
+                                                                                                                              Fig. 9. (Color) Water values as functions of the reservoir in week 15 for reservoir 2. The x-axis reflects the range of simulated system states for each
+                                                                                                                              case: (a) price 2018; and (b) price 2020.
+
+                                                                                                                                                              52                                        REF       Water value [kEUR/Mm3]                                             REF
+                                                                                                                                                                                                        SLIN          4 6 8 10 12 14 16                                              SLIN
+                                                                                                                                                                                                        ELIN-MIN                                                                     ELIN-MIN
+                                                                                                                                                                                                        ELIN-MED                                                                     ELIN-MED
+
+                                                                                                                                      Water value [kEUR/Mm3]  50
+
+                                                                                                                                                              48
+
+                                                                                                                                                              46
+
+                                                                                                                                                                         100  120  140             160  180                                          100      120      140      160      180
+
+                                                                                                                                      (a)                                         Reservoir level                 (b)                                         Reservoir level
+
+                                                                                                                              Fig. 10. (Color) Water values as functions of the reservoir in week 30 for reservoir 2. The x-axis reflects the range of simulated system states for each
+                                                                                                                              case: (a) price 2018; and (b) price 2020.
+
+                                                                                                                              reservoir intervals in the two figures reflect the bands of reservoir               Fig. 11(a) that the tightening of constraint Eq. (8) leads to a higher
+                                                                                                                              states visited in the final SDDP forward simulations for the week in                simulated average reservoir trajectory, reflecting the importance of
+                                                                                                                              question (these bands are shown in Fig. 11 for the case REF). Water                 being able to produce at high summer prices. With the low summer
+                                                                                                                              values differ most for 2018 prices, being generally higher and more                 prices for 2020, similar but far less pronounced differences can
+                                                                                                                              sensitive to reservoir volume in the most constrained cases for both                be seen.
+                                                                                                                              week 15 and 30. As a general note, the differences in water values
+                                                                                                                              for this system indicate that the improved representation of the                       The expected increases in annual profit compared to the REF
+                                                                                                                              environmental constraint will be more important to consider if                      case are shown in Table 1. Relative to the annual profit in the range
+                                                                                                                              one expects the price level to be relatively high in the constraint                 of EUR 30­50 million, the increases reported in Table 1 are
+                                                                                                                              period.                                                                             modest. However, one should keep in mind that the improvements
+                                                                                                                                                                                                                  can be harvested simply by improving the representation of Eq. (8)
+                                                                                                                              Simulation                                                                          and that producers will often hunt for such marginal improvements
+                                                                                                                                                                                                                  in a competitive market.
+                                                                                                                              In this section, the results obtained when simulating operation fol-
+                                                                                                                              lowing the different strategies are discussed. The simulated average                   In general, increased precision in constraint representation leads
+                                                                                                                              reservoir volume trajectories for reservoir 2 are shown in Figs. 11(a               to a higher expected profit. With 2018 prices, the enhanced relax-
+                                                                                                                              and b). The 0 and 100 percentiles for the REF case are included in                  ation based on the highest auxiliary lower reservoir volume bound
+                                                                                                                              the figure to indicate the variation. As expected, one observes in                  (ELIN-MED) provides the highest expected profit. For 2020 prices,
+                                                                                                                                                                                                                  the ELIN-MIN strategy is slightly more profitable. Because prices
+                                                                                                                                                                                                                  are lower in the summer season, reservoir levels according to the
+
+                                                                                                                              © ASCE                                                                    04022061-8                                                          J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                                       J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                                                         150                                                              150
+
+                                                                                                                                        Reservoir [Mm3]  100                                             Reservoir [Mm3]  100
+
+                                                                                                                                                         50                                                               50
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                             0                            REF                                 0                          REF
+                                                                                                                                                                                      REF (max,min)                                                  REF (max,min)
+                                                                                                                                                                                      SLIN                                                           SLIN
+                                                                                                                                                                                      ELIN-MIN                                                       ELIN-MIN
+                                                                                                                                                                                      ELIN-MED                                                       ELIN-MED
+
+                                                                                                                                                   0          20       40  60     80      100                                  0  20  40  60     80  100
+
+                                                                                                                                        (a)                                Stage                         (b)                              Stage
+
+                                                                                                                              Fig. 11. (Color) Simulated average reservoir volume for reservoir 2. The threshold V~ is shown as a horizontal line. Percentiles (0 and 100) are shown
+                                                                                                                              for case REF: (a) price 2018; and (b) price 2020.
+
+                                                                                                                              Table 1. Increase in expected annual profit for System 1 compared to case
+                                                                                                                              REF (in 103 )
+
+                                                                                                                              Case                            Price 2018          Price 2020
+
+                                                                                                                              SLIN                                205                 9
+
+                                                                                                                              ELIN-MIN                            252                 11
+
+                                                                                                                              ELIN-MED                            301                 8
+
+                                                                                                                              2020 price scenario are lower as well, due to the reduced incentive
+                                                                                                                              to generate power in this period. As a consequence, the lower res-
+                                                                                                                              ervoir bound applied in ELIN-MED constrains the SDDP strategy
+                                                                                                                              more than what is considered optimal, and thus leading to a lower
+                                                                                                                              simulated profit.
+
+                                                                                                                              System 2­Description and Results                                             Fig. 12. Watercourse topology and technical data for System 2.
+
+                                                                                                                              The second system resembles the main string of the Rjukan water-           · The maximum reservoir boundary of the physical reservoir is set
+                                                                                                                              course located in a mountainous area in Southern Norway. Note                 to zero in week 18 to ensure that all water is transferred to the
+                                                                                                                              that the full system comprises two strings and several additional             virtual reservoir when reaching that week.
+                                                                                                                              reservoirs. However, to ease the presentation this study emphasizes
+                                                                                                                              on the string comprising the reservoir with an environmental con-          · The maximum reservoir boundary of the virtual reservoir is set
+                                                                                                                              straint. The topology and technical data for this system are provided         to zero at the end of week 48 to ensure all water is transferred
+                                                                                                                              in Fig. 12. The environmental constraint is associated with the               back to the physical reservoir by then.
+                                                                                                                              upper reservoir, but is more complicated than in System 1. In the
+                                                                                                                              period between weeks 18 and 48, no discharge should take place if          · Water transfer between the physical and the virtual reservoir is
+                                                                                                                              the reservoir volume is lower than 734 mm3. However, according                only made possible in week 18 (from 1 to 1b) and week 48
+                                                                                                                              to an interpretation of the concession, the reservoir volume avail-           (from 1b to 1).
+                                                                                                                              able at the beginning of the constraint period could be discharged
+                                                                                                                              in the constraint period. The water available in week 18 will there-       · A copy of the power station is associated with the virtual res-
+                                                                                                                              fore be used differently and have a different value than water arriv-         ervoir, and additional constraints are imposed to ensure the sum
+                                                                                                                              ing to the reservoir at a later stage. The modeling of this constraint        production does not exceed the physical limitations of the origi-
+                                                                                                                              was facilitated by introducing a "virtual reservoir" (1b) in parallel         nal station.
+                                                                                                                              with the "physical reservoir" (1), as illustrated in the box in Fig. 12.
+                                                                                                                              Operation of the physical and virtual reservoirs are set to obey the       · Discharge from the physical reservoir 1 is constrained according
+                                                                                                                              following rules:                                                              to Eqs. (4e) or (8) in the constraint period, referring to the sum
+                                                                                                                              · All inflow to the upper reservoir enters the physical reservoir.            volume v~1 ¼ v1 þ v1b.
+                                                                                                                              · A separate volume constraint is introduced to ensure that the
+                                                                                                                                                                                                         · Discharge from the virtual reservoir 1b is not constrained by the
+                                                                                                                                 sum volume v~1 ¼ v1 þ v1b does not exceed the maximum                      environmental constraint.
+                                                                                                                                 boundary of the physical reservoir.
+
+                                                                                                                              © ASCE                                                      04022061-9                                             J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                           J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                                                                                                 520000                                REF       154000                                                   REF
+                                                                                                                                                                                                                                       SLIN                                                               SLIN
+                                                                                                                                                                                                                                       ELIN-MIN                                                           ELIN-MIN
+                                                                                                                                                                                                                                       ELIN-MED                                                           ELIN-MED
+
+                                                                                                                                                                         Expected profit [kEUR]  510000                                          Expected profit [kEUR]
+                                                                                                                                                                                                                                                     148000 150000 152000
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                                                                     500000
+
+                                                                                                                                                                                    0                       20         40          60                       0              20    40                   60
+
+                                                                                                                                                                         (a)                                        Iteration no.                (b)                             Iteration no.
+
+                                                                                                                                                                                                            Fig. 13. (Color) Upper bound evolution for System 2: (a) price 2018; and (b) price 2020.
+
+                                                                                                                              Strategy from SDDP Runs500 1000 1500 2000                                                                          use of the slack variable in the backward recursion, explaining the
+                                                                                                                                                                                                                                                 differences in upper bounds shown in Fig. 13.
+                                                                                                                              Fig. 13 shows the convergence process for all cases and for both
+                                                                                                                              price scenarios, comparing the upper bounds for all cases for the                                                     Figs. 15 and 16 show how the water values for reservoir 1 differ
+                                                                                                                              first 80 iterations. The total computation time was approximately                                                  between cases REF and ELIN-MIN for both the physical (1) and
+                                                                                                                              130 minutes for all three runs with the environmental constraint,                                                  the virtual (1b) reservoir in the beginning of the constraint period
+                                                                                                                              while case REF was 12% faster. As for System 1, the different treat-                                               (week 20). Each figure is accompanied with a probability density
+                                                                                                                              ments of Eq. (8) do not imply notable differences in computational                                                 plot of the two reservoir volumes according to the simulated values
+                                                                                                                              complexity, and the converged upper bounds are lowest for the                                                      in week 20. The water is valued significantly higher for both
+                                                                                                                              most constrained cases. The curves for ELIN-MED are substan-                                                       reservoirs in case ELIN-MIN, demonstrating the impact of the
+                                                                                                                              tially lower than the others. These large differences indicate that                                                environmental constraint. Water in the auxiliary reservoir can be
+                                                                                                                              the model is not always able to meet the auxiliary lower reservoir                                                 operated more freely in the constraint period for case ELIN-MIN
+                                                                                                                              boundary in the ELIN-MED case, imposing high penalties that are                                                    and is therefore valued higher than water in the physical reservoir
+                                                                                                                              reflected in the cuts.                                                                                             in both price scenarios. Note that the REF case values water in
+                                                                                                                                                                                                                                                 both reservoirs similarly because the environmental constraint is
+                                                                                                                                 The use of the slack variable vh-t recorded from the backward                                                   ignored, giving the model no incentive to prefer one of the reser-
+                                                                                                                              recursion per SDDP iteration is illustrated in Fig. 14 for cases                                                   voirs over the other.
+                                                                                                                              ELIN-MIN and ELIN-MED considering 2018 prices. The numbers
+                                                                                                                              should be related to the total number of LP problems solved in                                                     Simulation
+                                                                                                                              the backward recursion in a single iteration (156 × 100 × 7 ¼
+                                                                                                                              109.200). As expected, the ELIN-MED case imposes more frequent                                                     The simulated average reservoir volume trajectories for reservoir 1
+                                                                                                                                                                                                                                                 (the sum of 1 and 1b) are shown in Fig. 17. The four cases differ
+                                                                                                                                                                                                     ELIN-MED                                    significantly considering 2018 prices, with ELIN-MED strategies
+                                                                                                                                                                                                     ELIN-MIN                                    leading to the highest reservoir volumes. With 2020 prices, ELIN-
+                                                                                                                                                                                                                                                 MED still suggests high reservoir volumes, while differences be-
+                                                                                                                              Constraint violations                                                                                              tween the three other cases are muted.
+
+                                                                                                                                                     0                                                                                              The expected increases in annual profit compared to the REF
+                                                                                                                                                                                                                                                 case are shown in Table 2. The enhanced relaxation based on the
+                                                                                                                                                                                                         5      10     15          20            minimum auxiliary lower volume boundary (ELIN-MIN) provides
+                                                                                                                                                                                                                                                 the highest expected profit in both price scenarios, improving the
+                                                                                                                                                                                                            Iteration                            increased profit by EUR 458,000 and EUR 165,000 for price
+                                                                                                                                                                                                                                                 scenarios 2018 and 2020, respectively. The ELIN-MED cases pro-
+                                                                                                                              Fig. 14. Number of solved LP problems with constraint violation per                                                vided overly conservative strategies, due to the frequent use of pen-
+                                                                                                                              SDDP backward iteration.                                                                                           alties in the backward recursion illustrated in Fig. 14, leading to
+                                                                                                                                                                                                                                                 lost opportunities for power generation at favorable prices com-
+                                                                                                                                                                                                                                                 pared to ELIN-MIN. Moreover, by further inspecting the results,
+                                                                                                                                                                                                                                                 it was found that the ELIN-MED cases led to higher spillage than
+                                                                                                                                                                                                                                                 ELIN-MIN.
+
+                                                                                                                                                                                                                                                 Conclusions
+
+                                                                                                                                                                                                                                                 This work concerns the treatment of volume-dependent maximum
+                                                                                                                                                                                                                                                 discharge constraints in hydropower scheduling models based on
+
+                                                                                                                              © ASCE                                                                                                   04022061-10                                   J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                                                                       J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+                                                                                                                                      Water value [kEUR/Mm3]                            REF-PHYSICAL                    0.006               REF-PHYSICAL
+                                                                                                                                          55 60 65 70 75 80 85                          REF-VIRTUAL                                         REF-VIRTUAL
+                                                                                                                                                                                        ELIN-MIN-PHYSICAL                                   ELIN-MIN-PHYSICAL
+                                                                                                                                                                                        ELIN-MIN-VIRTUAL                                    ELIN-MIN-VIRTUAL
+
+                                                                                                                                                                                                           Probability
+                                                                                                                                                                                                               0.002 0.004
+
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.                                                                                            0.000
+
+                                                                                                                                                                  100  200  300         400  500                               0  200  400  600           800
+
+                                                                                                                                      (a)                              Reservoir level                     (b)                    Reservoir volume [Mm3]
+
+                                                                                                                              Fig. 15. (Color) Water values and simulated reservoir volumes for reservoirs 1 and 1b, in week 20, price 2018: (a) water values week 20; and
+                                                                                                                              (b) simulated reservoir volumes week 20.
+
+                                                                                                                                                              16                        REF-PHYSICAL                    0.012               REF-PHYSICAL
+                                                                                                                                                                                        REF-VIRTUAL                                         REF-VIRTUAL
+                                                                                                                                                                                        ELIN-MIN-PHYSICAL                                   ELIN-MIN-PHYSICAL
+                                                                                                                                                                                        ELIN-MIN-VIRTUAL                                    ELIN-MIN-VIRTUAL
+
+                                                                                                                                      Water value [kEUR/Mm3]  14
+
+                                                                                                                                                              12                                                        0.008
+
+                                                                                                                                                              10                                           Probability  0.004
+
+                                                                                                                                                              8
+
+                                                                                                                                                              6                                                         0.000
+
+                                                                                                                                                                  100  200  300         400  500                               0  200  400  600           800
+
+                                                                                                                                      (a)                              Reservoir level                     (b)                    Reservoir volume [Mm3]
+
+                                                                                                                              Fig. 16. (Color) Water values and simulated reservoir points for reservoirs 1 and 1b, in week 20, price 2020: (a) water values week 20; and
+                                                                                                                              (b) simulated reservoir points week 20.
+
+                                                                                                                              SDDP. This state-dependent environmental constraint introduces a                The computational experiments demonstrate the importance of
+                                                                                                                              pronounced nonconvexity in the scheduling problem formulation,               defining the auxiliary lower reservoir boundaries high enough to
+                                                                                                                              challenging the use of the SDDP algorithm. A combination of con-             provide a tight constraint relaxation, and low enough to prevent
+                                                                                                                              straint relaxation and auxiliary and time-dependent lower reservoir          exaggerated use of slack variables for the environmental constraint.
+                                                                                                                              volume boundaries is proposed to deal with this constraint without           Thus, the definition of these boundaries should serve to naturally
+                                                                                                                              sacrificing the advantageous computational performance of the                constrain the solution space while always being a relaxation of
+                                                                                                                              SDDP algorithm. If carefully defined, the auxiliary volume boun-             the original (MIP) formulation. For the general case, the authors
+                                                                                                                              daries serve to tighten the relaxation of the environmental con-             recommend using the minimum accumulated inflow over the con-
+                                                                                                                              straint, leading to a more accurate model representation.                    straint period as a time-dependent auxiliary lower reservoir vol-
+                                                                                                                                                                                                           ume bound.
+                                                                                                                                 The proposed modeling approach is applied to two hydropower
+                                                                                                                              systems resembling Norwegian watercourses, demonstrating the                    The authors find that the use of the proposed approach increases
+                                                                                                                              impact on water values and simulation results as well as the ex-             the expected annual profits with EUR 47,000 for System 1 and
+                                                                                                                              pected profit improvements, considering uncertainty in inflow and            EUR 458,000 for System 2 compared to the standard relaxation
+                                                                                                                              deterministic prices. The water values, which inform the producer            approach in a scenario with high prices in the constraint period.
+                                                                                                                              when and where to discharge water for power generation, are found            Although the type of constraint considered is typically active in
+                                                                                                                              to be sensitive to the environmental constraint.                             the low-load summer period, the ongoing transition to a low-carbon
+
+                                                                                                                              © ASCE                                                         04022061-11                                    J. Water Resour. Plann. Manage.
+
+                                                                                                                                                                            J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.REF                                         REF
+                                Reservoir [Mm3]   REF (max,min)                                                                                                         REF (max,min)
+                                                  SLIN                                                                                                                  SLIN
+                                     0 200 400 600 800 1000ELIN-MIN                                                                                                     ELIN-MIN
+                                                                                                                     Reservoir [Mm3]ELIN-MED                            ELIN-MED
+
+                                                                                                                          0 200 400 600 800 10000204060801000204060 80  100
+
+          (a)                          Stage                           (b)                                                                                   Stage
+
+Fig. 17. (Color) Simulated average reservoir volume for reservoir 1 (sum of 1 and 1b). The threshold V~ is shown as a horizontal line. Percentiles
+(0 and 100) are shown for case REF: (a) price 2018; and (b) price 2020.
+
+Table 2. Increase in expected annual profit compared to case REF                                                                                References
+(in 103 ) for System 2
+                                                                                                                                                Birge, J. R., and F. Louveaux. 2011. Introduction to stochastic program-
+Case                    Price 2018            Price 2020                                                                                            ming. 2nd ed. Berlin: Springer.
+
+SLIN                        2,107                 463                                                                                           Cerisola, S., J. M. Latorre, and A. Ramos. 2012. "Stochastic dual dy-
+                                                                                                                                                    namic programming applied to nonconvex hydrothermal models." Eur.
+ELIN-MIN                    2,565                 628                                                                                               J. Oper. Res. 218 (3): 687­697. https://doi.org/10.1016/j.ejor.2011.11
+                                                                                                                                                    .040.
+ELIN-MED                    2,329                 534
+                                                                                                                                                Chakrabarti, B. B., N. Newham, D. Goodwin, and C. Edwards. 2011.
+power system may lead to more frequent occurrences of high prices                                                                                   "Wind-hydro firming with environmental constraints in New Zealand."
+throughout the year, underlining the importance of considering                                                                                      In Proc., of IEEE Power and Energy Society General Meeting. Piscat-
+high constraint-period prices. Moreover, the results demonstrate                                                                                    away, NJ: IEEE Power & Energy Society. https://doi.org/10.1109/PES
+that the accuracy provided by using auxiliary lower reservoir                                                                                       .2011.6039133.
+bounds based on the average accumulated inflow is system depen-
+dent, and that this approach may lead to overly conservative strat-                                                                             Côté, P., and R. Arsenault. 2019. "Efficient implementation of sampling
+egies. In particular, results from System 1 show that a volume                                                                                      stochastic dynamic programming algorithm for multireservoir manage-
+bound based on the average accumulated inflow may in some cases                                                                                     ment in the hydropower sector." J. Water Resour. Plann. Manage.
+further improve results, while this was not found for System 2.                                                                                     145 (4): 05019005. https://doi.org/10.1061/(ASCE)WR.1943-5452
+                                                                                                                                                    .0001050.
+   Further validation of the presented approach is needed to pro-
+vide more robust estimates of result improvements. Further work                                                                                 Côté, P., and R. Leconte. 2015. "Comparison of stochastic optimization
+may involve validation using an SDDP model with stochastic mod-                                                                                     algorithms for hydropower reservoir operation with ensemble stream-
+eling of both price and inflow, and the application to different case                                                                               flow prediction." J. Water Resour. Plann. Manage. 142 (2): 04015046.
+studies. A detailed comparison between the proposed SDDP-based                                                                                      https://doi.org/10.1061/(ASCE)WR.1943-5452.0000575.
+modeling against other algorithms (such as SDP or SDDiP) for the
+presented systems could provide important knowledge regarding                                                                                   de Matos, V. L., and E. C. Finardi. 2012. "A computational study of a
+the importance of accurate treatment of the nonconvex environmen-                                                                                   stochastic optimization model for long term hydrothermal scheduling."
+tal constraint.                                                                                                                                     Int. J. Electr. Power Energy Syst. 43 (1): 1443­1452. https://doi.org/10
+                                                                                                                                                    .1016/j.ijepes.2012.06.021.
+Data Availability Statement
+                                                                                                                                                de Queiroz, A. R. 2016. "Stochastic hydro-thermal scheduling optimiza-
+All data and code that support the findings of this study are avail-                                                                                tion: An overview." Renewable Sustainable Energy Rev. 62 (Apr):
+able from the corresponding author upon reasonable request.                                                                                         382­395. https://doi.org/10.1016/j.rser.2016.04.065.
+
+Acknowledgments                                                                                                                                 Diniz, A. L., F. D. S. Costa, M. E. Maceira, T. N. dos Santos, L. C. B. dos
+                                                                                                                                                    Santos, and R. N. Cabral. 2018. "Short/mid-term hydrothermal dispatch
+This work was funded by The Research Council of Norway                                                                                              and spot pricing for large-scale systems--The case of Brazil." In Proc.,
+through Project No. 257588.                                                                                                                         20th Power System Computation Conf. Piscataway, NJ: IEEE. https://
+                                                                                                                                                    doi.org/10.23919/PSCC.2018.8442897.
+
+                                                                                                                                                Dunning, I., J. Huchette, and M. Lubin. 2017. "JuMP: A modeling lan-
+                                                                                                                                                    guage for mathematical optimization." SIAM Rev. 59 (2): 295­320.
+                                                                                                                                                    https://doi.org/10.1137/15M1020575.
+
+                                                                                                                                                Giuliani, M., J. R. Lamontagne, P. M. Reed, and A. Castelletti. 2021.
+                                                                                                                                                    "A state-of-the-art review of optimal reservoir control for managing
+                                                                                                                                                    conflicting demands in a changing world." Water Resour. Res. 57 (12):
+                                                                                                                                                    1­26. https://doi.org/10.1029/2021WR029927.
+
+                                                                                                                                                Gjelsvik, A., M. M. Belsnes, and A. Haugstad. 1999. "An algorithm for
+                                                                                                                                                    stochastic medium-term hydrothermal scheduling under spot price
+
+© ASCE                                                 04022061-12                                                                                                  J. Water Resour. Plann. Manage.
+
+                                       J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+Downloaded from ascelibrary.org by SINTEF Energi AS on 09/15/22. Copyright ASCE. For personal use only; all rights reserved.      uncertainty." In Proc., 13th Power System Computation Conf. ETH           Olivares, M. A., J. Haas, R. Palma-Behnke, and C. Benavides. 2015.
+                                                                                                                                  Zürich, Switzerland: Fachgruppe Energieübertragungssysteme.                   "A framework to identify Pareto-efficient subdaily environmental flow
+                                                                                                                              Gjelsvik, A., B. Mo, and A. Haugstad. 2010. "Long- and medium-term                constraints on hydropower reservoirs using a grid-wide power dispatch
+                                                                                                                                  operations planning and stochastic modelling in hydro-dominated               model." Water Resour. Res. 51 (1): 3664­3680. https://doi.org/10.1002
+                                                                                                                                  power systems based on stochastic dual dynamic programming."                  /2014WR016215.
+                                                                                                                                  In Handbook of power systems, 33­55. Berlin: Springer.
+                                                                                                                              Guisandez, I., J. I. Perez-Diaz, and J. R. Wilhelmi. 2016. "The influence of  Pereira, M. V. F., and L. M. V. G. Pinto. 1991. "Multi-stage stochastic
+                                                                                                                                  environmental constraints on the water value." Energies 9 (6): 1­21.          optimization applied to energy planning." Math. Program. 52 (10):
+                                                                                                                                  https://doi.org/10.3390/en9060446.                                            359­375. https://doi.org/10.1007/BF01582895.
+                                                                                                                              Helseth, A., M. Fodstad, and B. Mo. 2016. "Optimal medium-term hydro-
+                                                                                                                                  power scheduling considering energy and reserve capacity markets."        Pereira-Bonvallet, E., S. Püschel-Løvengreen, M. Matus, and R. Moreno.
+                                                                                                                                  IEEE Trans. Sustainable Energy 7 (3): 934­942. https://doi.org/10             2016. "Optimizing hydrothermal scheduling with non-convex irrigation
+                                                                                                                                  .1109/TSTE.2015.2509447.                                                      constraints." Energy Procedia 87 (12): 132­140. https://doi.org/10
+                                                                                                                              Helseth, A., B. Mo, and H. O. Hågenvik. 2020. "Nonconvex environmental            .1016/j.egypro.2015.12.342.
+                                                                                                                                  constraints in hydropower scheduling." In Proc., Int. Conf. on Probabi-
+                                                                                                                                  listic Methods Applied to Power Systems. Liege, Belgium. https://doi      Pérez-Díaz, J. I., M. Belsnes, and A. L. Diniz. 2021. "Optimization of
+                                                                                                                                                                                                                hydropower operation." Comprehensive Renewable Energy 6: 84­104.
+                                                                                                                                  .org/10.1109/PMAPS47429.2020.9183590.
+                                                                                                                              Helseth, A., B. Mo, A. L. Henden, and G. Warland. 2018. "Detailed long-       Pérez-Díaz, J. I., and J. R. Wilhelmi. 2010. "Assessment of the economic
+                                                                                                                                                                                                                impact of environmental constraints on short-term hydropower plant
+                                                                                                                                  term hydro-thermal scheduling for expansion planning in the Nordic            operation." Energy Policy 38 (12): 7960­7970. https://doi.org/10.1016
+                                                                                                                                  power system." IET Gener. Transm. Distrib. 12 (2): 441­447. https://          /j.enpol.2010.09.020.
+                                                                                                                                  doi.org/10.1049/iet-gtd.2017.0903.
+                                                                                                                              Hjelmeland, M. N., J. Zou, A. Helseth, and S. Ahmed. 2018. "Nonconvex         Poorsepahy-Samian, H., V. Espanmanesh, and B. Zahraie. 2016. "Im-
+                                                                                                                                  medium-term hydropower scheduling by stochastic dual dynamic inte-            proved inflow modeling in stochastic dual dynamic programming."
+                                                                                                                                  ger programming." IEEE Trans. Sustainable Energy 10 (1): 481­490.             J. Water Resour. Plann. Manage. 142 (12): 04016065. https://doi
+                                                                                                                                  https://doi.org/10.1109/TSTE.2018.2805164.                                    .org/10.1061/(ASCE)WR.1943-5452.0000713.
+                                                                                                                              Homem-de-Mello, T., V. L. de Matos, and E. C. Finardi. 2011. "Sampling
+                                                                                                                                  strategies and stopping criteria for stochastic dual dynamic program-     Raso, L., P. O. Malaterre, and J. C. Bader. 2017. "Effective streamflow
+                                                                                                                                  ming: A case study in long-term hydrothermal scheduling." Energy              process modeling for optimal reservoir operation using stochastic dual
+                                                                                                                                  Syst. 2 (14): 1­31. https://doi.org/10.1007/s12667-011-0024-y.                dynamic programming." J. Water Resour. Plann. Manage. 143 (4): 11.
+                                                                                                                              Infanger, G., and D. P. Morton. 1996. "Cut sharing for multistage stochastic      https://doi.org/10.1061/(ASCE)WR.1943-5452.0000746.
+                                                                                                                                  linear programs with interstage dependency." Math. Program. 75 (2):
+                                                                                                                                  241­256. https://doi.org/10.1007/BF02592154.                              Rebennack, S. 2016. "Combining sampling-based and scenario-based
+                                                                                                                              Kelman, J., J. R. Stedinger, L. A. Cooper, E. Hsu, and S. Q. Yuan. 1990.          nested Benders decomposition methods: Application to stochastic dual
+                                                                                                                                  "Sampling stochastic dynamic programming applied to reservoir oper-           dynamic programming." Math. Program. 156 (1): 343­389. https://doi
+                                                                                                                                  ation." Water Resour. Res. 26 (3): 447­454. https://doi.org/10.1029           .org/10.1007/s10107-015-0884-3.
+                                                                                                                                  /WR026i003p00447.
+                                                                                                                              Kim, G. J., Y. O. Kim, and P. M. Reed. 2021. "Improving the robustness of     Schäffer, L. E., A. Adeva-Bustos, T. H. Bakken, A. Helseth, and M. Korpås.
+                                                                                                                                  reservoir operations with stochastic dynamic programming." J. Water           2020. "Modelling of environmental constraints for hydropower opti-
+                                                                                                                                  Resour. Plann. Manage. 147 (7): 04021030. https://doi.org/10.1061             mization problems--A review." In Proc., Int. Conf. on the European
+                                                                                                                                                                                                                Energy Market (EEM). Piscataway, NJ: IEEE. https://doi.org/10.1109
+                                                                                                                                  /(ASCE)WR.1943-5452.0001381.                                                  /EEM49802.2020.9221918.
+                                                                                                                              Kim, Y. O., and R. N. Palmer. 1997. "Value of seasonal flow forecasts in
+                                                                                                                                                                                                            Schäffer, L. E., A. Helseth, and M. Korpås. 2022. "A stochastic dynamic
+                                                                                                                                  Bayesian stochastic programming." J. Water Resour. Plann. Manage.             programming model for hydropower scheduling with state-dependent
+                                                                                                                                  123 (6): 327­335. https://doi.org/10.1061/(ASCE)0733-9496(1997)               maximum discharge constraints." Renewable Energy 194 (July):
+                                                                                                                                  123:6(327).                                                                   571­581. https://doi.org/10.1016/j.renene.2022.05.106.
+                                                                                                                              Labadie, J. W. 2004. "Optimal operation of multireservoir systems: State-
+                                                                                                                                  of-the-art review." J. Water Resour. Plann. Manage. 130 (2): 93­111.      Shapiro, A. 2011. "Analysis of stochastic dual dynamic programming
+                                                                                                                                  https://doi.org/10.1061/(ASCE)0733-9496(2004)130:2(93).                       method." Eur. J. Oper. Res. 209 (1): 63­72. https://doi.org/10.1016/j
+                                                                                                                              Maceira, M. E. P., and C. V. Bezerra. 1997. "Stochastic streamflow model          .ejor.2010.08.007.
+                                                                                                                                  for hydroelectric systems." In Proc., 5th Conf. on Probabilistic Methods
+                                                                                                                                  Applied to Power Systems. Vancouver, BC, Canada: Tom Gutwin and           SINTEF. 2022. "Prodrisk." Accessed August 12, 2022. https://www.sintef
+                                                                                                                                                                                                                .no/en/software/prodrisk/.
+                                                                                                                                  B. C. Hydro.
+                                                                                                                              Macian-Sorribes, H., and M. Pulido-Velazquez. 2020. "Inferring efficient      Stage, S., and Y. Larsson. 1961. "Incremental cost of water power." Trans.
+                                                                                                                                                                                                                Am. Inst. Electr. Eng. 80 (3): 361­364.
+                                                                                                                                  operating rules in multireservoir waterresource systems: A review."
+                                                                                                                                  Water 7 (1): 1­24. https://doi.org/10.1061/(ASCE)WR.1943-5452             Street, A., A. Brigatto, and D. M. Valladão. 2017. "Co-optimization of en-
+                                                                                                                                  .0001333.                                                                     ergy and ancillary services for hydrothermal operation planning under a
+                                                                                                                              Mbeutcha, Y., M. Gendreau, and G. Emiel. 2021. "Benefit of PARMA                  general security criterion." IEEE Trans. Power Syst. 32 (6): 4914­4923.
+                                                                                                                                  modeling for long-term hydroelectric scheduling using stochastic dual         https://doi.org/10.1109/TPWRS.2017.2672555.
+                                                                                                                                  dynamic programming." J. Water Resour. Plann. Manage. 147 (3):
+                                                                                                                                  05021002. https://doi.org/10.1061/(ASCE)WR.1943-5452.0001333.             Tejada-Guibert, J. A., S. A. Johnson, and J. R. Stedinger. 1995. "The value
+                                                                                                                                                                                                                of hydrologic information in stochastic dynamic programming models
+                                                                                                                              Nandalal, K. D. W., and J. J. Bogardi. 2007. Dynamic programming based            of a multireservoir system." Water Resour. Res. 31 (10): 2571­2579.
+                                                                                                                                                                                                                https://doi.org/10.1029/95WR02172.
+                                                                                                                                  operation of reservoirs, applicability and limits. Cambridge, MA:
+                                                                                                                                                                                                            Tilmant, A., and R. Kelman. 2007. "A stochastic approach to analyze trade-
+                                                                                                                                  Cambridge University Press.                                                   offs and risks associated with large-scale water resources systems."
+                                                                                                                                                                                                                Water Resour. Res. 43 (6): 7. https://doi.org/10.1029/2006WR005094.
+
+                                                                                                                                                                                                            Zou, J., S. Ahmed, and X. A. Sun. 2018. "Stochastic dual dynamic integer
+                                                                                                                                                                                                                programming." Math. Program. 175 (1­2): 461­502. https://doi.org/10
+                                                                                                                                                                                                                .1007/s10107-018-1249-5.
+
+                                                                                                                              © ASCE                             04022061-13                                J. Water Resour. Plann. Manage.
+                                                                                                                                      J. Water Resour. Plann. Manage., 2022, 148(11): 04022061
+

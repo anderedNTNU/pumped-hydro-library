@@ -1,0 +1,406 @@
+Co-Optimizing Sales of Energy and Capacity in a
+           Hydropower Scheduling Model
+
+     Arild Helseth                       Martin N. Hjelmeland
+       Birger Mo           Norwegian University of Science and Technology
+
+     Marte Fodstad             Department of Electric Power Engineering
+SINTEF Energy Research                        Trondheim, Norway
+
+   Trondheim, Norway
+  arild.helseth@sintef.no
+
+   Abstract--This paper describes a model for optimal scheduling       way the water values are calculated, and existing scheduling
+of hydroelectric systems for a price-taking producer selling           tools and methods need to take this into account.
+energy and capacity to separate markets. The model is based on
+a combination of stochastic dynamic programming (SDP) and                 Numerous solution strategies has been applied to the hy-
+stochastic dual dynamic programming (SDDP), and treats inflow          dropower scheduling problem, see e.g. [1] for a thorough
+to reservoirs and energy prices as stochastic variables. It allows     review. Stochastic dynamic programming (SDP) has proved
+sales of capacity at a deterministic sequence of capacity reserve      to be well suited for systems with relatively few reservoirs,
+prices. Thus, the sales of energy and capacity is co-optimized         but will suffer from high computation times when considering
+within the SDDP framework.                                             realistic multi-reservoir systems. In order to avoid the curse
+                                                                       of dimensionality limiting the use of the SDP algorithm,
+   The presented model is tested on a Norwegian watercourse            an approach known as stochastic dual dynamic program-
+where the producer sells energy to the day-ahead market and            ming (SDDP) was presented in [2]. Unlike the case with SDP,
+capacity to the primary reserve markets. When adding the               there is no need to fully discretize the state space with the
+possibility to sell capacity in the model, the results show that less  SDDP algorithm. SDDP is a sampling-based variant of multi-
+water is used during winter and more during summer/autumn              stage Benders decomposition, where an outer approximation
+in order to sell capacity.                                             of a convex future expected cost function is constructed
+                                                                       iteratively for each time-stage by adding Benders cuts. Thus,
+   Index Terms--Hydroelectric power generation, Power genera-          the overall optimization problem can be decomposed into
+tion economics, Optimization.                                          small linear programming (LP) problems that can be solved
+                                                                       independently. Currently, SDDP seems to be the state-of-the-
+                          I. INTRODUCTION                              art method for solving the long- and medium-term schedul-
+                                                                       ing problem in regions where hydropower is the dominant
+   The future European electricity system will be more in-             technology for producing electric power, see e.g. [3] and
+tegrated across country borders, and include a larger share            [4]. Later research related to the SDDP algorithm has e.g.
+of renewable intermittent generation than what is the case             focused on convergence properties [5], strategic bidding [6],
+today. This development will e.g. be driven by a stronger              risk aversion [7], emission constraints [8] and integration of
+transmission grid, environmental targets set by the European           pumped-storage and wind power [9].
+Union and decisions on downscaling of nuclear generation
+capacity.                                                                 In a liberalized market, hydropower producers will typically
+                                                                       act as price-takers trying to optimize the utilization of hydro
+   The flexibility of hydropower allows for efficient balancing        reservoirs to maximize their expected profit. For this purpose,
+of intermittent production. By fully utilizing this flexibility,       [10] and [11] introduced a hybrid SDP/SDDP method. The
+hydropower producers can optimize the use and allocation of            basic idea is to combine the strengths of the SDP and
+available capacity in the different markets. Thus, the value of        the SDDP methods to retain the convexity of the problem
+flexible hydropower generation is likely to increase by partic-        while dealing with the curse of dimensionality. In this hybrid
+ipating in multiple markets. The importance of the different           method, the spot price forecasts are treated as discrete Markov
+types of market products may change significantly from what            Chains through SDP. Other state variables, such as reservoir
+hydropower producers in the Nordic market are familiar with.           levels and inflows, are continuously approximated in the SDDP
+Today, the producers primarily benefit from selling power in           scheme.
+the day-ahead (spot) market. However, the inherit flexibility of
+hydropower enables active contribution in balancing markets               In this paper a method for incorporating the possibility to
+as well, which in turn will challenge the way hydropower               sell capacity in the hybrid SDP/SDDP algorithm is proposed
+systems traditionally are operated and scheduled. The choice           and evaluated. Emphasis is put on the Norwegian primary
+of utilizing the capacity for production or as reserve will e.g.       reserve market which seems to offer a certain potential for ad-
+impact the strategic valuation and scheduling of resources.
+That is, the consideration of multiple markets will impact the
+
+   Funded by The Research Council of Norway Project No. 228731/E20
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+ditional revenue for hydropower producers, particularly in the
+
+low-load (summer) season. The proposed method is applied
+
+to a case study where the optimal schedule for a watercourse                                                                                          Sum
+
+is found considering participation in both the day-ahead and                                100 150 200 250 300                                       Day
+
+primary reserve markets.                                                                                                                              Week
+
+II. THE PRIMARY RESERVE MARKET                                      Reserved capacity [MW]
+
+   In the Nordic system, the transmission system operators                                  50
+(TSOs) are responsible for matching supply and demand of
+electricity in real time. In order to ensure this balance the                               0
+TSOs need to be able to acquire balancing services, both in
+terms of capacity and energy. By balancing services we refer                                                     0  50  100  150       200  250  300        350
+to primary, secondary and tertiary reserves. The Norwegian
+TSO (Statnett) acquires balancing services of all three types                                                                     Day no.
+through market-based approaches using the marginal pricing
+principle [12]. In the following we will focus on the market        Fig. 1. Sum of procured capacity in the weekly and daily FCR-N markets in
+for primary reserves.                                               2013. Data points are average values per day. Capacities in the two markets
+                                                                    are shown as dotted lines and the sum as a solid-drawn line.
+   Momentary imbalances between production and demand
+will firstly be regulated by use of primary regulation reserves,                            1000                                                 FCR-N day
+which may be traded in the primary reserve market. The                                                                                           Elspot
+system frequency is controlled by automatic activation of
+frequency-controlled reserves for normal operation (FCR-N).                                 800
+FCR-N contributes to both upward and downward regulation
+in the frequency band 49.90-50.10 Hz. Such reserves are             NOK/MW(h)               600
+currently assured by the droop setting in the turbine governors
+for generators exceeding 10 MVA. That is, generators that                                   400
+do not participate in the primary reserve market will still
+participate in the primary regulation. In previous years, Statnett                          200
+would ask Norwegian generators to increase the droop [13] in
+case of insufficient reserves. In that sense, primary control was                           0
+considered a free service and there was no market for this
+type of service. In 2008 two primary reserve markets were                                                        0  50  100  150       200  250  300        350
+established; a weekly and daily market. The weekly market
+concerns capacity procurement for 6 time blocks, whereas the                                                                      Day
+daily market concerns hourly procurement. These markets are
+operated by Statnett according to conditions stated in [14].        Fig. 2. Prices from the FCR-N daily market and the spot market for price
+                                                                    area NO2 in 2013.
+   Fig. 1 shows the average daily procured capacity in both
+of these markets in 2013. There is a strong seasonal pattern                             III. MODEL DESCRIPTION
+in the weekly market; Relatively large amounts of capacity
+are procured in the low-load season, between weeks 20 and              The overall optimization problem seeks to maximize the
+30. This pattern indicates that in low-load periods with low        profit of a hydropower producer selling both energy to the spot
+power prices, there are clear incentives for the TSO to ensure      market and reserves to the primary reserve market (denoted
+sufficient amounts of spinning reserve at an early phase. Thus,     FCR market in the following). The problem is solved by a
+volumes are moved from the daily to the weekly market to            combination of SDDP and SDP, using the algorithm described
+ensure that the system requirement is met in the summer             in [11]. The sum of weekly inflow to reservoirs and the
+season.                                                             weekly average spot price are considered stochastic variables.
+                                                                    A planning period of one year and a stochastic time-resolution
+   Fig. 2 shows both the FCR-N price in the daily market and        of one week is applied. That is, at the beginning of each week
+the spot price for the Norwegian price area NO2 in 2013.            all stochastic variables are known for that week. It is assumed
+The weekly FCR-N price follows the same pattern as the              that the producer is a price-taker in both the spot and FCR
+daily price, but is slightly higher at summer time. In the
+summer season there seems to be a potential for additional
+revenue through the FCR-N markets for producers in this area.
+Producers targeting this potential are more likely to keep their
+units spinning during summer time.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+                                                                     Fig. 4. Intra-week time resolution. Energy is sold per time step and capacity
+                                                                     per block.
+
+            Fig. 3. Stochastic model for weekly average spot price.  B. Time Resolution
+
+markets.                                                                Each week is divided into 21 time steps and capacity can be
+                                                                     sold in 3 blocks covering weekdays (night, day and evening),
+A. Price Modelling                                                   and 3 blocks covering weekends (night, day and evening). This
+                                                                     segmentation of time steps is in line with the current market
+   Both the price processes for the spot and FCR markets are         design for the Norwegian weekly primary reserve market [14].
+represented in the model. The spot market price is considered
+as an exogenous stochastic variable, and price forecasts can            The intra-week time resolution is illustrated in Fig. 4. At the
+typically be obtained from a long-term market model. Nor-            beginning of each week, all prices are known for that week.
+mally the weekly average spot price will show a strong serial        The spot price point, representing the weekly average spot
+correlation; thus, it is necessary to include a price state in       price level, is used to scale an average spot price profile, giving
+the model's system state description. As discussed in [11], the      one unique spot price for each of the 21 time steps. FCR prices
+price state violates the convexity requirement of the SDDP           are provided for each of the 6 reservation blocks. Decisions
+algorithm. This section briefly presents the price model used        regarding power production to the spot market are done for
+in SDDP applications, where the price process is modelled            each time step, whereas decisions on sales of capacity are done
+as a Markov chain using discrete states (price points), and          per reserve block. The capacity sold in block 1 covering the
+embedded in the SDDP algorithm as in ordinary dynamic                night period in weekdays should therefore be a joint decision
+programming.                                                         for all time steps belonging to block 1, as illustrated with r1
+                                                                     in Fig. 4.
+   The spot price model is illustrated in Fig. 3, indicating
+transitions from price point i in stage t - 1 to price points        C. Decomposed Problem Structure
+j and k in stage t. The transition probabilities ij(t) and
+ik(t) are computed prior to the optimization, as elaborated             In this section the decomposed problem structure for co-
+in [15]. Cuts from the SDDP algorithm are stored for each            optimzing sales of energy and capacity is described. Details
+price point in each time stage, and cannot be shared among           on how this decomposed problem fits in to the combined
+time stages. When making a cut for stage t - 1 and price             SDDP/SDP algorithm can be found in [11].
+point i, the decomposed optimization problem for stage t
+is solved for all NP price points in that stage, and the                The decomposed weekly decision problem is formulated
+contributions are averaged over the transition probabilities ip,     as an LP problem described by (1)-(7). For a given week t
+where p = 1, ..., NP .                                               we know the realization of stochastic variables for that week
+                                                                     (inflows and spot prices). The amount of energy sold to the
+   Assume that a set of scenarios are available, describing both     spot market and capacity to the FCR market is co-optimized
+the spot and FCR prices. Both price processes could then in          for the whole water course, and we assume that there are no
+principle be described in a discrete Markov chain, but now in        demand obligations.
+a two-dimensional state space. The transition matrix could be
+identified in a similar manner as for the spot price model, re-      max t +           kE     phk + bR       b rhb        (1)
+taining possible correlations between the two price processes.
+However, due to the fact that the Nordic/Norwegian market                     kK hH                   bB hH
+design for balancing markets has been subject to frequent
+improvements lately and there are few years of complete data,                                                       
+this work will use recent observations of FCR prices from the
+Norwegian primary reserve market as deterministic input.             vhk +          qhks + qhsk -            qjks + qjsk
+
+                                                                            sS (h)                 jh sS(j)
+
+                                                                     = vh,k-1 + Ihk , h  H, k  K                          (2)
+
+                                                                            phk =           hsqhks , h  H, k  K           (3)
+
+                                                                                    sS (h)
+
+                                                                            rhb(k)  -  1           0  , h  H, k  K        (4)
+                                                                                       k phk
+
+                                                                     rhb(k)   +     1  phk    Phmax   , h  H, k  K        (5)
+                                                                                    k
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+          t  hvhk + c , k = K ,   Li            (6)
+
+                 hH
+
+            0    rhb    2f Phmax  , h  H, b  B  (7)
+                             h
+
+Variables:
+
+   t Future expected revenue function, in e;
+
+   phk Generated electricity for station h, in MWh;
+
+   rhb Reserved capacity for station h, in MW;
+   vhk Reservoir level for reservoir h, in Mm3;
+   qhks Discharge through station h, segment s, in Mm3;
+   qhsk Spillage from reservoir h, in Mm3.
+
+Parameters:
+
+Ek Spot price in time step k, in e/MWh;                                            Fig. 5. Watercourse topology and technical data.
+Ihk Inflow to reservoir h, in Mm3;
+                                                                      Note that the model presentation is somewhat simplified
+b Total duration of reservation block b, in hours;                 compared to the actual implementation, omitting e.g. penalty
+                                                                   variables related to the water balance (2) needed to ensure
+k Duration of time step k, in hours;                               that the stochastic model has complete recourse. Furthermore,
+bR FCR price in block b, in e/MW;                                  inflows are sampled from a autoregressive model both in the
+hs Energy equivalent for station h, in MWh/Mm3;                    forward and backward iteration of the SDDP algorithm, so
+Phmax Maximum capacity in station h, in MW;                        that convergence is guaranteed.
+h Cut coefficient for reservoir h and cut , in e/Mm3;
+c Cut right-hand side for cut , in e;                                                        IV. CASE STUDY
+
+f Frequency band for FCR, 0.1 Hz;                                     The proposed SDDP/SDP scheduling model was tested on
+                                                                   a Norwegian watercourse comprising 7 hydropower reservoirs
+h Droop setting for station h, in percentage;                      with corresponding power stations, with a total capacity of 986
+K Last time step in week;                                          MW. An illustration of the topology and technical characteris-
+                                                                   tics is provided in Fig. 5. For each reservoir shown in the figure
+h Set of reservoirs upstream h;                                    the average annual inflow and storage capacity are stated,
+H Set of hydropower reservoirs/stations;                           both in Mm3. Each power station is identified with a number
+S(h) Set of discharge segments for station h;                      and its installed capacity in MW. The water course is located
+                                                                   within the Norwegian price area NO2, and it is assumed that
+K Set of time steps in week;                                       the operator will act as a price-taker when selling energy to
+                                                                   the spot market and spinning capacity to the primary reserve
+B Set of reservation blocks in week;                               market. A scheduling horizon of one year was applied with
+                                                                   weekly stochastic time resolution and 21 time steps within
+Li Set of cuts for a given price point i.                          each week. A set of spot price scenarios was obtained from
+                                                                   the EMPS model, which is a fundamental hydrothermal market
+The objective (1) is to maximize the income from both              model [16]. The discrete spot price model was calculated, as
+                                                                   discussed in Sec. III-A. FCR prices are from the Norwegian
+markets, subject to constraints (2)-(7). The water balance         weekly market (prices for the daily market are similar, and
+                                                                   shown in Fig. 2).
+equation for a specific reservoir h in a water course is
+                                                                      Two cases were defined; one where the producer was
+formulated in (2). For each plant, the energy phk is produced      allowed to sell in both markets (referred to as the dual-market
+in a time step k according to (3). Sold capacity rhb in block b    case), and one where only sales to the energy market was
+should be spinning and symmetric. The spinning requirement
+
+is taken care of in (4), ensuring that the producer do not
+
+offer more reserve capacity than what is already spinning in a
+
+station. Eqn. (5) ensures that the generation capacity sold in
+
+the two markets is within the station's installed capacity limit.
+
+The revenues obtained for the current decision period (week)
+
+are balanced against the future expected revenue function,
+
+which is constrained by cuts in (6). These cuts are built
+
+and accumulated in each backward iteration of the SDDP
+
+algorithm, and are treated by relaxation when solving the LP
+
+problem.
+
+All variables have non-negativity constraints and most of
+
+them have upper bounds. The reservation variable rhb is of
+special interest in this study, and is constrained as shown
+
+in (7). The capacity sold to the FCR market cannot exceed the
+
+physical limit dictated by the droop setting. Thus, the model
+
+takes a pre-defined droop setting h for each station as input,
+which in turn limits the station's market access according
+
+to (7).
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+                           Dual-market
+                           Single-market
+Power production [MW]
+    0 50 100 150 200 250 300                                                                                                                           Dual-market
+                                                                                                                                                       Single-market
+                                                                                                  Reservoir level [Mm3]
+                                                                                                       0 200 400 600 800 1000
+
+0  20  40  60              80                         100                                                                      0  200  400  600        800 1000
+
+       Percentage of time                                                                                                                   Time step
+
+   Fig. 6. Hydropower generation from station no. 5.                Fig. 7. Average reservoir trajectories for the sum of all reservoirs.
+
+allowed (referred to as the single-market case). A set of end-         The dual value of (2) is often referred to as the water value
+value cuts was used to account for the value of stored water at     for the given reservoir. For a given system state one should
+the end of the planning horizon. This set was similar in both       expect the water value to be higher in the dual-market case
+cases.                                                              since a higher revenue can be expected. Fig. 8 shows the
+                                                                    difference in average water values between the dual- and single
+   Model runs were carried out with 5 price points representing     market cases for all time steps for the 4 largest reservoirs in the
+the stochastic spot price, a total of 80 forward samples and 8      system. A similar pattern is revealed for these reservoirs; the
+backward samples in the SDDP algorithm and a maximum of             dual-market water value is lower during before spring flood
+100 iterations. The model was implemented in C++, using the         (around time step 400) and higher during summer and autumn.
+dual simplex algorithm from the Gurobi library [17]. All tests      This result can be related to the reservoir trajectories in Fig. 7.
+were carried on an Intel Core i7-Q740 processor with 1.73           The higher water value in early spring in the single-market
+GHz and 16 GB RAM. A single run required approximately              case is due to more aggressive use of water, i.e. running the
+42 hours, and the model demonstrated good convergence               stations at maximum output and following a lower reservoir
+properties.                                                         trajectory. At summer and autumn, more water is used in the
+                                                                    dual-market case to keep the units spinning, resulting in higher
+A. System Operation                                                 water values in this period.
+
+   Comparing the two cases, one observes significant dif-           B. Discussion
+ferences in the operation of hydropower stations. This is
+illustrated in Fig. 6, where the duration curves for production        The revenue in the dual-market case was on average 2.58%
+from station no. 5 for both cases are shown. Station 5 has its      higher than in the single-market case, which is too optimistic
+maximum efficiency at 79% (260 MW) and can, according               compared to the actual opportunities that producers see in
+to (7), offer 33 MW to the FCR market. Fig. 6 shows that the        today's market. The model overestimates the ability to trade
+station is kept spinning at 33 MW for a substantial amount of       in the primary reserve market for several reasons. First of
+time in order to sell capacity to the FCR market. Conversely,       all, it is assumed that the market always has room for the
+in time periods where the single-market case show generation        primary reserves being offered provided a pre-defined droop
+at maximum capacity, 33 MW is frequently withheld from              setting at each station. This assumption can be debated since
+spot and sold as FCR in the dual-market case.                       the TSO will only procure a limited total amount of reserves.
+                                                                    Secondly, since the presented optimization model is linear,
+   The change in hydropower generation can also been seen           we do not consider binary decisions regarding start/stop of
+when looking at the reservoir trajectories. Fig. 7 shows the        power stations. The LP model requires a piecewise linear
+average trajectories for the sum of all reservoirs for both cases.  and concave relationship between power output and water
+At the beginning of the year the reservoirs are emptied rapidly     discharge through the stations. Thus, stations are allowed
+due to high spot prices and low inflow. However, since capacity     to generate electricity at low rates at an artificially high
+is withheld for the FCR market, the curve is kept higher in         efficiency for the purpose of delivering reserves. Thirdly, the
+the dual-market case. Conversely, more water is used during
+summer time in the dual-market case.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+                   Reservoir 1                                   Reservoir 2                   [3] M. E. P. Maceira, V. S. Duarte, D. D. J. Penna, L. A. M. Moraes, and
+                                                                                                    A. C. G. Melo, "Ten years of application of stochastic dual dynamic
+-2.0 -1.0 0.0 1.0                               -40 0 40 80                                         programming in official and agent studies in Brazil - description of
+                                                                                                    the Newave program," in in Proc. 16th Power System Computation
+                   0 200 400 600 800 1000                        0 200 400 600 800 1000             Conference, Glasgow, 2008.
+                                   Reservoir 6                                   Reservoir 7
+                                                                                               [4] A. Gjelsvik, B. Mo, and A. Haugstad, Handbook of Power Systems
+-80 -40 0 40                                    -100 -60 -20 20                                     I. Springer, 2010, ch. Long- and medium-term operations planning
+                                                                                                    and stochastic modelling in hydro-dominated power systems based on
+                   0 200 400 600 800 1000                        0 200 400 600 800 1000             stochastic dual dynamic programming, pp. 33­55.
+
+Fig. 8. Difference in average water value for the 4 largest reservoirs. Dual-                  [5] A. Philpott and Z. Guan, "On the convergence of stochastic dual dy-
+market minus single-market. Water values are in e/Mm3.                                              namic programming and related methods," Operations Research Letters,
+                                                                                                    vol. 36, no. 4, pp. 450­455, 2008.
+implemented decision sequence seems to give the model too
+much freedom to operate in the two different markets. At the                                   [6] B. Flach, L. Barroso, and M. Pereira, "Long-term optimal allocation
+beginning of the week all prices in both markets are seen by                                        of hydro generation for a price-maker company in a competitive mar-
+the model, allowing it to deterministically optimize the use of                                     ket: latest developments and a stochastic dual dynamic programming
+resources for that week. Thus, the decisions regarding the two                                      approach," IET Generation, Transmission & Distribution, vol. 4, no. 2,
+markets are co-optimized as opposed to the sequential decision                                      pp. 299­314, 2010.
+making under uncertainty that takes place in reality.
+                                                                                               [7] A. Philpott and V. de Matos, "Dynamic sampling algorithms for multi-
+   The simulated water values are important results from this                                       stage stochastic programs with risk aversion," European Journal of
+analysis. In order to draw solid conclusions on the differences                                     Operational Research, vol. 218, no. 2, pp. 470­483, 2012.
+in water values between the two cases, the period of analysis
+should be extended to limit the impact of the end-value cuts.                                  [8] S. Rebennack, B. Flach, M. V. F. Pereira, and P. M. Pardalos, "Stochas-
+Moreover, the end-value cuts should be set independently for                                        tic hydro-thermal scheduling under CO2 emissions constraints," IEEE
+each case to reflect the differences in future expected profit.                                     Transactions on Power Systems, vol. 27, no. 1, pp. 58­68, 2012.
+
+                          V. CONCLUSIONS                                                       [9] A. Helseth, A. Gjeslvik, B. Mo, and U. Linnet, "A model for optimal
+                                                                                                    scheduling of hydro thermal systems including pumped-storage and
+   A hybrid SDP/SDDP model was presented, suitable for                                              wind power," IET Generation, Transmission & Distribution, vol. 7,
+solving the medium- and long-term hydro-thermal scheduling                                          no. 12, pp. 1426 ­ 1434, 2013.
+problem co-optimizing sales of energy and capacity. Tradi-
+tionally such models only consider the energy market. This                                    [10] A. Gjelsvik and S. W. Wallace, "Methods for stochastic medium-
+work demonstrates that a capacity market can be introduced                                          term scheduling in hydro-dominated power systems," SINTEF Energy
+by a modest extension of a previously presented scheduling                                          Research, Tech. Rep. TR A4438, 1996.
+model aimed at the energy market. Moreover, the added
+computational burden and model complexity is low.                                             [11] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+                                                                                                    tic medium-term hydrothermal scheduling under spot price uncertainty,"
+   Although the model extension is based on several simpli-                                         in Proc. 13th Power System Computation Conference, Trondheim, Nor-
+fications and overestimates the profit possible to obtain, we                                       way, 1999.
+believe it can provide useful additional insight for producers
+operating in multiple markets.                                                                [12] http://www.statnett.no/en/Market-and-operations/.
+                                                                                              [13] T. Kristiansen, "The Nordic approach to market-based provision of
+
+                                                                                                    ancillary services," Energy Policy, vol. 35, pp. 3681­3700, 2007.
+                                                                                              [14] Statnett, "Vilka°r for tilbud, aksept, rapportering og avregning i marked
+
+                                                                                                    for primærreserver," www.statnett.no, 2013.
+                                                                                              [15] B. Mo, A. Gjelsvik, A. Grundt, and K. Ka°resen, "Optimisation of
+
+                                                                                                    hydropower operation in a liberalised market with focus on price
+                                                                                                    modelling," in In proc. of IEEE Power Tech Conference, Porto, Portugal,
+                                                                                                    2001.
+                                                                                              [16] O. Wolfgang, A. Haugstad, B. Mo, A. Gjelsvik, I. Wangensteen, and
+                                                                                                    G. Doorman, "Hydro reservoir handling in norway before and after
+                                                                                                    deregulation," Energy, vol. 34, no. 10, pp. 1642­1651, 2009.
+                                                                                              [17] I. Gurobi Optimization, "Gurobi optimizer reference manual," 2015.
+                                                                                                    [Online]. Available: http://www.gurobi.com
+
+                            REFERENCES
+
+[1] J. W. Labadie, "Optimal operation of multireservoir systems: State-of-
+     the-art review," Journal of Water Resources Planning and Management,
+     vol. 130, no. 2, pp. 93­111, 2004.
+
+[2] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+     optimization applied to energy planning," Mathematical Programming,
+     vol. 52, pp. 359­375, 1991.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 21:01:03 UTC from IEEE Xplore. Restrictions apply.
+

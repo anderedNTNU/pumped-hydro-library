@@ -1,0 +1,543 @@
+                                         Medium-term optimization of pumped hydro storage
+                                                 with stochastic intrastage subproblems
+
+                                                                                        Hubert Abgottspon, Go¨ran Andersson
+                                                                                                      Power Systems Laboratory
+                                                                                                       ETH Zurich, Switzerland
+
+                                                                                         Email: {abgottspon, andersson}@eeh.ee.ethz.ch
+
+arXiv:1403.4819v1 [math.OC] 19 Mar 2014     Abstract--This paper presents a medium-term self-scheduling        This multi-stage stochastic program is decomposed into an
+                                         optimization of pumped hydro storage power plants with detailed       interstage and intrastage problem (similar ideas were applied
+                                         consideration of short-term flexibility. A decomposition of the       in [1]­[3]): The weekly interstage problem as master problem
+                                         problem into inter- and intrastage subproblems, where the             handles water management in the seasonal reservoirs, whereas
+                                         intrastage problems themselves are formulated as multi-stage          the intrastage subproblems ensure hourly water balances in the
+                                         stochastic programs, allows the detailed consideration of short-      daily operated reservoirs as well as day-ahead bidding.
+                                         term flexibility. The method is presented together with three alter-  In contrast to previous works the intrastage problems are
+                                         native approaches, where the short-term flexibility is considered     not considered deterministically but stochastically. From the
+                                         differently: (1) with aggregated peak and off-peak prices, (2)        modeling point of view this makes sense, since in a weekly
+                                         with price duration curves and (3) with deterministic intrastage      perspective hourly water inflows and market prices are not
+                                         subproblems. The methods are compared and evaluated in a              known beforehand. This approach is called, as proposed in
+                                         Monte Carlo operation simulation study. The study is performed        another context in [4], multihorizon stochastic programming.
+                                         on a realistic hydro power plant with consideration of revenue        Additionally the provision of spinning reserves is modeled as
+                                         from ancillary services.                                              a here-and-now decision within the intrastage problem similar
+                                                                                                               as presented in our previous work [2].
+                                            Index Terms--hydro power, medium-term self-scheduling,             Summarizing, the proposed model can be described as follows:
+                                         stochastic dynamic programming, multihorizon stochastic pro-
+                                         gramming, ancillary services.                                            1) interstage problem (master problem):
+
+                                                                   I. INTRODUCTION                                      · weekly water values depending on the filling of the
+                                                                                                                           seasonal reservoirs
+                                            The goal of a medium-term hydro optimization is to find
+                                         a seasonal operation strategy. One way to do it is to estimate                 · decisions about water release from seasonal reser-
+                                         future revenue, the profit-to-go, and to calculate production                     voirs without information about water inflows and
+                                         opportunity costs out of it, the water values. In Switzerland                     day-ahead prices
+                                         hydro power plants typically have storage reservoirs which
+                                         are operated seasonally connected to smaller daily operated              2) intrastage problem:
+                                         reservoirs. Therefore future revenues are also influenced by
+                                         short-term decisions either physically because of e.g. empty                   · hourly time steps
+                                         smaller reservoirs or directly because of the hourly energy                    · decisions about provision of spinning reserves, day-
+                                         market.
+                                         It is hardly possible to consider a hourly time resolution for                    ahead bidding and production operation
+                                         a medium-term optimization in a yearly time horizon both                       · stochastic water inflows are revealed weekly
+                                         computationally as well as because of modeling issues. So                      · stochastic market prices are revealed daily
+                                         aggregations and/or simplifications have to be made where
+                                         it is difficult not to under- or overvalue short-term flexibility.    The consideration of a market for spinning reserves leads to
+                                         One important aspect here is how and when information about           non-concave profit-to-go functions in the master problem (see
+                                         uncertain variables is disclosed in the model.                        also Fig. 1). Therefore it is difficult to apply an iteration algo-
+                                                                                                               rithm like stochastic dual dynamic programming. Additionally
+                                         A. Proposed model: Stochastic intrastage subproblems: A               only a few basins have to be considered in the master problem
+                                         multihorizon stochastic programming approach                          which eases one of the curses of dimensionality in stochastic
+                                                                                                               dynamic programming [5]. Further since the goal of this work
+                                            The proposed modeling approach is based on the obvious             is to evaluate different modeling methods the solution method
+                                         observations, that the water management in bigger reservoirs          is primarily not of interest. Out of these reasons stochastic
+                                         can be considered in a longer time scale than in smaller              dynamic programming is applied for the master problem: the
+                                         reservoirs and secondly, that the filling of smaller reservoirs       problem is decomposed in time and seasonal reservoirs as well
+                                         are less important for a revenue estimation. Therefore the            as the amount of water discharge from these reservoirs are
+                                         idea is that only for seasonal operated reservoirs water values       discretized.
+                                         are calculated. The optimization is done for weekly time              The multi-stage stochastic program in the intrastage problem
+                                         stages where for each time stage water values are calculated.         is difficult to decompose since the weekly discharge is given
+                                                                                                               which makes the stages in the intrastage problem depending
+on each other. The problem is therefore formulated as a                                    TABLE I
+deterministic equivalent and a solver based on the simplex                                VARIABLES
+method is used to solve it.
+                                                                   Variables              Explanation
+B. Evaluation of the proposed method against alternative                                  time stages, T = 52 [week]
+approaches                                                         t  T = {1, ..., T }    state and decision variables
+                                                                   x(t)                   realized data, possibly random
+   The second goal of this paper is the comparison and evalua-     t  t                   profit-to-go functions [e]
+tion of several methods of aggregations and simplifications for    t (xt-1 )              objective function coefficients
+being able to consider short-term flexibility in a medium-term     ct                     equality constraints (water and financial balances)
+hydro optimization. Apart from the method with stochastic          At, bt                 inequality constraints (frequency control reserves)
+intrastage subproblems the approaches are:                         Dt, dt                 lower / upper bounds
+                                                                   lbt, ubt               filling and spill of reservoirs [m3]
+   1) neglecting hourly short-term flexibility with peak and       v(t), s(t)             charges from upstream reservoirs/inflows [m3]
+       off-peak prices (usual approach)                            a(t)                   generating / pumping [MW]
+                                                                   u(t), p(t)             position on energy market [MW]
+   2) price duration curves (e.g. [1], [6])                        m(t)                   functions of used/produced energy to water flow
+   3) deterministic intrastage subproblems (e.g. [2], [3])         fu(u), fp(p)           binary: provision of frequency control reserves[0/1]
+                                                                   q(t)                   minimum generation [MW]
+The four methods are formulated in a way to allow the              qmin                   maximum frequency control reserves capacity [MW]
+application of stochastic dynamic programming for the consid-      qmax                   remuneration for frequency control reserves [e/MW]
+eration of stochastic inflows and market prices. The methods       cqt                    aggregated peak and off-peak prices [e/MW]
+are evaluated in an operation simulation where the policies        cpt eak, ctof f -peak  discretized sum of weekly water discharges [m3]
+suggested by the different optimizations are applied for a         Wt                     price duration curve (function)
+number of trial years.                                                                    hours of generating/pumping per week [h]
+The outcome of the evaluation depends on the market struc-         pdc                    hourly intrastage time steps [h]
+ture. Therefore results with- and without the consideration of     hu, hp                 hourly day-ahead prices [e/MWh]
+the revenue out of spinning reserves provision will be shown                              optimal value of intrastage problem [e]
+for a typical hydro power plant with storages.                       {1, ..., 168h}       weekly filling of seasonal reservoirs [m3]
+                                                                   cpt ool( )             hourly filling of daily reservoirs [m3]
+C. References and Contributions                                    Qt                     scenarios in a scenario tree
+                                                                   vbig (t)               bundle, same past intrastage decisions
+   Notable references for stochastic programming in the energy     vsmall( )              set of all bundles A in stage 
+sector and stochastic dynamic programming in particular are                               set of bundles for "children" of A
+[7]­[11]. The idea of inter- and intrastage problems for hydro     sS
+power planning were explicitly introduced in [1] and applied       A  S
+in [2], [3], [12], focusing on bidding or operational feasibility  
+respectively.                                                      U (A )
+The usual alternative modeling approaches are aggregation
+and/or bundling of market products (e.g. peak and off-peak         mathematically for all four methods. Afterwards in section
+products) like in [13] and to model different lengths of time      III the methods are evaluated and applied in an operation
+stages as in [12], [14]. Another possibility is shown in [15]      simulation. Some remarks conclude the paper.
+where Lagrangian relaxation was used to incorporate long-
+term guidelines into short-term and vice versa.                                                  II. MODEL
+Instead of applying approximations to the model another idea
+is to look for approximate solutions to a detailed model. In          The overall problem consists of finding a good operating
+[16] different techniques are reviewed on how to improve           policy for a hydro plant, the water values as production
+the convergence speed of stochastic dual dynamic program-          opportunity costs. The focus of this paper is the consideration
+ming algorithms and in [17], [18] water head effects were          of short-term flexibility where we describe in this section four
+convexified in order to use such methods. This would also          methods which deal with it differently. Additionally, revenue
+be applicable in this context (see also [19]). Depending on        out of spinning reserves are considered.
+the amount of state variables this may be the better approach      First model assumptions and limitations are discussed. Then
+however modeling issues would still be present.                    the basic mathematical model is introduced which is then
+                                                                   extended for each of the four methods.
+   The contributions of this paper are threefold: First, to the
+best of our knowledge the application of stochastic intrastage     A. Model assumptions and limitations
+subproblems is presented for the first time. Secondly, several
+approaches for how to account for short-term flexibility in a         It is assumed that the power plant is built up out of reservoirs
+medium-term hydro optimization are evaluated and compared.         where some are operated in seasonal cycles and others in daily
+Finally the approaches are extended by considering revenue         cycles. Further it is assumed, that the sum of the water inflows
+out of the provision of spinning reserves.                         for one year does not fluctuate much which is valid for power
+                                                                   plants in the Alps. Therefore the consideration of a yearly time
+   The remainder of the paper is organized as follows: In the      horizon is sufficient.
+next section the model is explained both conceptually and
+   As spinning reserves market the one for the provision                                                           price
+of secondary frequency control reserves is considered since
+economically it is the most interesting one in Switzerland. The                max generation   pos. sec. control
+current market rules require the bidding of symmetric power
+bands. If the bid is accepted the power band has to be provided      production set point       free power range
+for the tendered period of one week. The actual demand is                      min. generation
+requested automatically and it is assumed, that this request                              0 MW  neg. sec. control
+is symmetric within the tender period. Considered profit out
+of this market is the remuneration for holding the capacity          a)                                                revenue        cost
+whereas payments for energy delivery is neglected.                                                                     out of         because of
+When spinning reserves are provided then the turbines have                                                             generation     pumping
+to be continuously running at a certain set point (see Fig.
+1). To prevent, that the turbines are operated inefficiently, a                                                    b)              hu 168h - hp   168h time duration
+minimum generation amount is defined. So the provision of
+secondary control reserves reduces the production flexibility        Fig. 1. a) Generation of a turbine with provision of secondary frequency
+considerably, which should increase the benefit of a detailed        control reserves. Production flexibility is reduced considerably and the sub-
+model.                                                               stantial minimum of generation results to non-concave profit-to-go functions.
+                                                                     b) Schematic example of a price duration curve. Revenue out of generation
+   As stochastic variables both water inflows and market prices      as well as costs because of pumping are shown. Note that since the overall
+are considered. The time duration for the main steps is one          water discharge is fixed, with more pumping more generation is possible.
+week, since at the moment the considered spinning reserves are
+procured weekly in Switzerland. However weekly profit-to-go          The market position m(t) is maximized in the objective
+functions make also sense for a medium-term optimization of          function multiplied with the market prices. It is defined as:
+the chosen power plant.
+                                                                                                mt = ut - pt + qt · (qmin + qmax)                          (3)
+
+                                                                     The provision of secondary control reserves influences the
+                                                                     operation of the turbines. This is can be modeled as inequality
+                                                                     constraints (Dt, dt):
+
+                                                                     qt · (qmin + qmax)  ut  u - qt · qmax                                                 (4)
+
+B. Mathematical model                                                Note that the provision of spinning reserves is approximated
+
+   The hydro scheduling problem naturally leads to a multi-          by taking into account either no provision or the maximum
+stage stochastic program which can be formulated in a dy-
+namic way. Let t be the expected future profit, the profit-to-go     quantity for each turbine of the power plant. The remuneration
+functions, for the seasonal reservoirs. Then it can be stated:       for holding a capacity ctq is assumed to be known beforehand,
+                                                                     it is estimated as the minimum amount one can expect to get
+t(xt-1) = max          ctT  xt  +    E  [t+1]  (1)
+                                                                     accepted. This remuneration is part of the objective function.
+                                   t t
+                                                                     Finally the lower and upper bounds are:
+
+subject to:                                                          0  vt  v, vt  Rv , 0  st  s, st  Rv                                                   (5)
+
+Bt · xt-1 + At · xt = bt                                             0  ut  u, ut  Ru , 0  pt  p, pt  Rp
+
+Dt · xt  dt                                                          0  qt  1, qt  Zu , m  mt  m, mt  R
+
+lbt  xt  ubt                                                         The position mt is bounded to some upper and lower values
+xt  Rn, {0, 1}                                                       to prevent extreme positions and therefore market speculations
+                                                                     are prevented.
+xt specifies the state and decision variables at time stage t, i.e.  In the following paragraphs this basic model (1) is adapted for
+the fillings of the reservoirs as well as production and bidding     the four mentioned methods.
+decisions. t := (ct, At, Bt, bt, Dt, dt) defines the data vector
+where ct, bt are random and not known in advanced. These             C. Method 1: Neglecting hourly flexibility with weekly peak
+are market prices as well as water inflows.                          and off-peak prices
+E[..] denotes the expected value over sampled random data
+t  t and is maximized in order to find the profit-to-go                 The first method neglects hourly flexibility. Water inflows
+function. Note, that the stochastic data process 1, ..., T is
+Markovian, so the profit-to-go function t depends only on t          and market prices are estimated as expected values over the
+and not on the whole past process 1, ..., t.
+The stochastic program is subject to equality constraints,           whole next period. Two weekly prices are assumed, peak
+defined by Bt, At, bt. In more detail, these constraints ensure      prices ctpeak when energy generation is done and off-peak
+correct water and financial balance. The water balance is            prices ctoff-peak for pumping. Smaller basins are disregarded
+                                                                     and turbines and pumps are aggregated accordingly (see also
+modeled as follows:
+                                                                     Fig. 3 b)). This result to problem (1), where xt consists of
+vt = vt-1-st-fu(ut)+fp(pt)+at-qt·fu(qmin+qmax) (2)                   one value for each of the variables vt, st, at per aggregated
+                                                                     reservoir and one value for ut, pt, qt for each turbine and pump
+                                                                     respectively:
+
+                                                                     t(xt-1) = max              t  E               [ctpeak  ut     -  ctof f -peakpt  ...  (6)
+
+To keep notations simple a(t) denotes both water inflows as                                Wt      t
+well as charge from upstream reservoirs.
+                                                                                                + qt · qmax · cqt · 168h + t+1(xt)]
+subject to:                                                                  From the modeling point of view there are several approxi-
+      contraint (4) and bounds (5) as well as:                            mations with this formulation. The most severe is that similar
+                                                                          to the first method timing is not respected at all, which means
+          vt = vt-1 - Wt                                             (7)  it is not considered when and in which order the decisions are
+                                                                          taken within a week.1
+          fu(ut) - fp(pt) + st - at = Wt                             (8)  The advantage with this formulation is the consideration of
+                                                                          a reasonable representation of the opportunities in the hourly
+Note that by discretizing the weekly water discharge from the             day-ahead market.
+reservoirs Wt it is possible to apply the stochastic dynamic
+programming scheme. Note also, that random data consists of               E. Method 3: Deterministic intrastage subproblems
+peak and off-peak prices as well as water inflows at.
+The advantage with this formulation is the small computational               The idea of intrastage subproblems is already explained in
+burden although stochasticity is taken into account. For every            the introduction. For the third method these subproblems are
+time stage t and Wt there is only one single constraint of (4),           modeled deterministically.
+(7) and (8) (for each scenario).                                          Mathematically the multi-stage stochastic program with in-
+                                                                          trastage subproblems can be formulated in a similar way to
+D. Method 2: Price duration curves                                        (1):
+
+The price duration curve (example in Fig. 1 b)) is con-
+
+structed out of the proportion of hourly prices below a certain           t(vtb-ig1)   =  max           Qt,Wt + t+1(vtbig)               (10)
+
+price for some time duration. Since the revenue is something                               Wt        E
+
+                                                                                                   t t
+
+like price x quantity of sold energy it can be estimated by               where:
+
+integration of the price duration curve.
+
+In [1] such curves are multiplied by quantity-price offers                        Qt,Wt (vtb-ig1)  =     max       (ctpool)T mt( )  ...  (11)
+
+and integrated in respect to prices. Here another approach                                            u ,p ,s ,qt
+
+is followed, where the sum of the water discharge for the                              + ctq · qtT qmax · 168h
+
+next week is discretized. Then for a given water discharge an             subject to:
+
+optimization problem is formulated in order to find the time                  1. water balances:
+duration of pumping hpt and generating hut . For given price                     vtbig = vtb-ig1 - Wt
+                                                                                 vsmall = vsm-1all - s - fu(u ) + fp(p ) + a , 
+duration curves the expected short-term profit can be derived.
+                                                                                      [fu(u ) - fp(p ) - a ] + st = Wt
+It is assumed, that the power plant either produces or pumps
+                                                                                       
+fully or not for each hour which is a valid approximation
+                                                                              2. financial balance:
+in this context. Random data involve again prices and water
+                                                                                 m = u - p , 
+inflows. To estimate random price duration curves the hourly
+                                                                              3. secondary control provision:
+price process itself is sampled and the price duration curve is                  qt · (qmin + qmax)  u  u - qt · qmax
+
+constructed out of it. The problem can now be formulated as                   4. bounds similar to (5):
+                                                                                 lbt  u , p , s , qt, vtbig, vsmall, m  ubt
+follows:                                                                         u( ), p( ), s( ), vsmall( )  Rnx , m( )  R
+                                                                                 vtbig  Rn, qt  {0, 1}n
+                                         hut
+                                                                          Qt,Wt is the optimal value of the deterministic intrastage
+t(xt-1) = max E              ut ·             pdct( )d ...           (9)  subproblem. It is a function of the former state, realized
+                                                                          random data t as well as the discretized water release Wt.
+                      Wt tt           0                                   The purpose of the problem Q is to estimate the intrastage
+                                                                          profit in a realistic way, by hourly deploying Wt most op-
+               168h                                                       timally within the week. It is formulated as a two-stage
+                                                                          stochastic program. In the first stage the amount of secondary
+          -p·                pdct( )d ...                                 control reserves to bid is decided. This is done for each
+                                                                          turbine, which is qualified for this provision. Afterwards t
+               168h-htp                                                   is disclosed, so the water inflows and prices for the whole
+                                                                          week become known. Then actual hourly production decisions
+                                                 168h
+
+          + qt · (qmax + qmin)                         pdct( )d ...
+
+                                              0
+
+          + qmaxcqt · 168h + t+1(xt)
+
+subject to:                                                                  1For instances it may happen, that high market prices occur all at the
+         bounds (5) as well as:                                           beginning of a week where the reservoirs may be empty and generating not
+                                                                          possible which is not taken care of with the consideration of price duration
+        vt = vt-1 - Wt                                                    curves.
+        ut = u¯ - qt · (qmax + qmin)
+        htu fu(max(ut)) - htp fp(p) ...
+
+           + qtfu(qmax + qmin) · 168h + st - at = Wt
+
+The problem turns out to be challenging to solve. Therefore
+the price duration curves are assumed to be pice-wise linear
+which approximates the problem to a quadratic mixed-integer
+problem.
+             Method 3:                        Method 4:                                 reservoir 1                  aggr. reservoir
+deterministic intrastage problems  stochastic intrastage problems
+
+                                                                                             pumps 1&2     turbines 1&2                aggr. pump  aggr. turbine
+                                                                                   a)                           reservoir 2
+
+                                                                                                                turbines 3&4
+                                                                                                                                   b)
+
+Fig. 2. Decision trees with deterministic and stochastic intrastage subprob-       Fig. 3. a) Schematic overview of the considered hydro power plant. Reservoir
+lems. Whereas random data in the third method is revealed once for each            1 is the seasonal storage whereas reservoir 2 is the daily one. Turbines 3 and
+intrastage problem in the forth method it is revealed daily. Note that interstage  4 are qualified to deliver secondary frequency control reserves. b) Aggregated
+decisions do not depend directly on intrastage decisions of previous stages.       hydro power plant for the first and second method. Note, that also water
+                                                                                   inflows are aggregated and that an infinite lower basin for pumping is assumed.
+take place. As a consequence Qt,Wt is a deterministic, linear                      The aggregated turbine is able to provide frequency control reserves.
+maximization problem, with binary variables.
+                                                                                   Now the formulation of the stochastic intrastage subproblems
+   Note, that the operation of the power plant is considered in
+hourly resolution as opposed to the first and second method.                       looks similar to the deterministic one, however there are now
+Approximations made are first that the random data are
+assumed to be known one week in advanced, which is an opti-                        not only on variable per stage  but for each bundle A .
+mistic view. Further the fillings of the daily reservoirs vsmall
+are neglected in calculation of the profit-to-go functions as                      The problem can be written as follows: Aendere eventuell
+well as the water balance is not respected between consecutive
+weeks. So this means that the fillings of the daily reservoirs                     zwei Sachen hier: Erstenes t+1(vtb-ig1 - Wt) und zweitens
+are zero at the beginning and end of each week.
+                                                                                     E     cpt ool)T · mA  . Und dann schau noch, ob pumping /
+F. Method 4: Stochastic intrastage problems
+                                                                                   A 
+   Now the model from the previous method 3 is extended
+by considering stochastic instead of deterministic intrastage                      generating vs. used/produced energy indexes korrekt sind.
+subproblems which is one of the novel contributions of this
+paper. The idea is depicted in Fig. 2. Whereas in the third                                t(vtb-ig1)   =  max    E  QWt + t+1(vtbig)                      (12)
+method the random data is disclosed at the beginning of a                                                                                                  (13)
+week the day ahead prices are now revealed daily for one day.                                               Wt   
+This seems more realistic, that only market prices for the day
+ahead are known in advance. The water inflows however are                          where:
+still revealed weekly out of two reasons: to give a hint about
+the modeling flexibility and to keep computational burden low.                     QWt (vtb-ig1)     =     max       (cpt ool)T          E  [mA    ]  ...
+Note that the stochastic intrastage problems cannot be formu-
+lated in a dynamic way since the sum of the weekly discharge                                            u ,p ,s ,qt                    A 
+Wt has to be fulfilled for each scenario. So it is formulated
+and solved as a deterministic equivalent linear program.                                   + cqt · qtT qmax · 168h
+
+   The mathematical formulation for stochastic intrastage sub-                     subject to:
+problems changes in respect to how random data is disclosed
+if compared to (10) and (11). To keep notation simple the                           1. water balances:
+subproblems are described with the help of scenario trees. A                           vtbig = vtb-ig1 - Wt
+scenario is one possible realization path of the random data.                          vBsm all = vAsm-al1l - sB - fu(uB ) + fp(pB ) + aB , ...
+Let the set of all scenarios s be S and consider a bundle                                    A-1  -1, B  U (A-1), 
+A  S a subset of S with the same intrastage decisions up
+to some stage  . Finally let  be the set of all bundles in a                                 [fu(u ) - fp(p ) - a ] + st = Wt
+stage  and therefore A   . Further let the set of bundles
+U (A ) be:2                                                                                 
+
+                  U (A ) = {B  +1 | B  A }                                          2. financial balance:
+
+   2As an example consider Fig. 2: For each stochastic intrastage subproblem           mA = uA - pA , A   , 
+the cardinality of S is 4, which means there are 4 different scenarios. 4 is        3. secondary control provision:
+consisted of two bundles: 4 = 5 = 6 = {{1, 2}, {3, 4}}. Consider now
+the bundle A6 = {1, 2}. U (A6) then specifies the children of A6, the set              qt · (qmin + qmax)  u,A  u - qt · qmax , ...
+of bundles U (A6) = {{1}, {2}}.                                                              A   , 
+
+                                                                                    4. bounds similar to (5):
+                                                                                       lbt  uA , pA , sA , qt, vtbig, vAsm all, mA  ubt
+                                                                                       u(A ), p(A ), s(A ), vsmall(A )  Rnx  | |
+                                                                                       m(A )  R  | |, vtbig  Rn, qt  {0, 1}n
+
+                                                                                    Note, that the size of the variable vectors in the intrastage
+                                                                                   problem depends on the sum of the number of bundles for each
+                                                                                   time step  | |. For instances consider two day-ahead price
+                                                                                   scenarios per day. Each intrastage vector (for each reservoir
+                                                                                   etc.) then have 24 · (21 + 22 + ... + 27) = 6096 entries (for
+                                                                                   comparison the deterministic formulation would require only
+  1.4                                            60  350                              Method 1: neglecting hourly flexibility                              start                                                                                                                                                                       12       method 3: deterministic intrastage subproblems
+  1.2                                                                                 Method 2: price duration curves                                                                                                                                                                                                       max. filling        method 4: stochastic intrastage subproblems
+                                       51.3 min                                       Method 3: deterministic subproblems                               opt.
+     1                                               300                              Method 4: stochastic subproblems                                                                                                                                                                                                                   8
+  0.8                                            50                                                                                                    method 1...4                                                                                                                                                                      6
+  0.6                                                                                                                                                         water values
+  0.4   Matlab main process
+  0.2   Matlab worker
+        Matlab worker
+     0  Matlab worker
+        Matlab worker
+memory usage (GByte)a)       37.3 min                                250
+                                                                                                    solving time (min)40
+
+                                                                                                                water value (Euro/MWh)200
+                                                                                                                                                                                                                                                                                              filling of reservoir 1 (107m3)30
+                                                                                                                                   spot price samples  sim.                                                                                                                                                                   4
+                                                                     150                                                           inflow samples
+
+                                                 20
+                                                                     100
+
+                  7.8 min                        10  50
+
+        0.2 min   method 2   method 3  method 4  0   b) 00                1  2  3  4  5  6  7                      8  9 10                                                                 2
+        method 1
+                                                                                                                                                       weekly profit
+
+                                                                                   filling of reservoir 1 (107m3)                                      profit distribution                                                                                                                                                  b) 00
+
+                                                                                                                               a)                                                                                                                                                                                                           10  20  30     40  50                               60
+                                                                                                                                                                                                                                                                                                                                                    weeks
+
+Fig. 4. a) Time duration needed for solving the different optimization                                                         Fig. 5. a) Flowchart of the Monte Carlo operation simulation. b) Filling of
+methods and memory requirements of the optimizations. b) Water values                                                          seasonal reservoir 1 for each of the samples for water values from method
+(gradients of the profit-to-go functions) for the different methods for the first                                              3 and 4. Note that although the water values are similar the actual operation
+time stage. They depend on reservoir filling and weekly time stages. Note                                                      varies more.
+that the first two methods relatively undervalue short-term revenue whereas
+the third one overvalues it.
+
+24 · 7 = 168 entries).                                                                                                         this method (as well as solving time) will further increase
+Compared with the method 3 with deterministic intrastage                                                                       exponentially by increasing the amount of intra time stages,
+subproblems the method 4 is much more realistic from the                                                                       stochasticity or power plant complexity (state variables).
+modeling point of view. Computationally the same amount
+of subproblems have to be solved, however the size of these                                                                       2) Water values comparison: The results of the optimiza-
+subproblems differ.3                                                                                                           tion methods, the water values, are shown and compared in
+                                                                                                                               Fig. 4 b) for the first time stage. Notable is, that the more
+                          III. EVALUATION                                                                                      short-term dynamics are considered the higher the water value
+                                                                                                                               is. However because the third method assumes perfect weekly
+   There are no standardized hydro power plant models avail-                                                                   knowledge it overvalues the water value. Therefore method 4
+able for optimization studies as it is the case e.g. for electricity                                                           should give a more realistic estimation. The water values for
+grid analysis. The outcome of the evaluation is however de-                                                                    methods 3 and 4 are similar not only for the first time stage
+pending on the considered power plant. It seems obvious, that                                                                  but also for the others with roughly 80 % of them having a
+the more complicated structure and the more hourly dynamics                                                                    difference of less than 10 %.
+are present in the model, the better the proposed method with
+stochastic intrastage subproblems should perform. Chosen was                                                                      3) Simulation study: A comparison of the water values
+therefore a typical Swiss hydro power plant (Fig. 3) which is                                                                  does not answer the question how well an application of it
+not overly complicated however still consists of two different                                                                 would perform. A Monte Carlo simulation study shall estimate
+kinds of reservoirs, pumps and turbines as well as is qualified                                                                this performance of the different methods (Fig. 5 a)). In the
+to provide secondary frequency control reserves. Another                                                                       simulation part, the hydro power plant operation is mimicked
+option would have been to consider several different kind of                                                                   over one year. So for each week realistic hydro power plant
+power plants, but this was beyond the scope of this paper.                                                                     operation is simulated, based on the estimated weekly water
+                                                                                                                               values. The procedure is as follows:
+   The advantages and disadvantages from the modeling point
+of view are already explained in the previous section. Com-                                                                       1) sampling of correlated water inflows and market prices
+pared is now the computational burden of the methods, their                                                                       2) offering of secondary frequency control reserves
+proposed water values as well as a simulation study where the                                                                     3) hourly production decision heuristic
+water values are applied for several samples of water inflows
+and market prices.                                                                                                             Because of lack of sufficient amount of historical data distri-
+                                                                                                                               butions are estimated and water inflows and market prices are
+   1) Computational burden: The optimizations were done on                                                                     sampled out of it. Then it is decided, if secondary frequency
+a standard computer with 4 physical processor cores. CPLEX                                                                     control reserves are offered for the next week or not which
+dual simplex solvers was used for the linear and quadratic                                                                     is modeled as a mixed-integer problem. After that a heuristic
+programs whereas for the mixed-integer problem a branch-                                                                       performs hourly production decisions, which simulates what
+and-cut algorithm was used.                                                                                                    an operator would do in practice: First frequency control
+In Fig. 4 the time duration as well as the memory requirements                                                                 reserves obligations are fulfilled and then energy is generated
+needed for the different methods are depicted. The first method                                                                or used for pumping depending on a comparison of the filling
+is solved in 15 s which is 30 to 200 times faster than the other                                                               depended water values and market prices. This procedure is
+methods, which would be clearly a big advantage in daily use                                                                   repeated for every week and for 100 samples in a receding
+of such optimizations. It should be noted that it is only method                                                               horizon. Outcome of the simulation is a profit distribution.
+four that has higher memory requirements. Memory usage of                                                                      Fig. 5 b) shows for method 3 and 4 the resulting seasonal
+                                                                                                                               reservoir filling for all samples. The reservoirs maximum
+   3For example for two daily market price scenarios (which results to 27=128                                                  filling is exploited with both methods (without spilling). One
+weekly scenarios) one stochastically formulated intrastage subproblem was                                                      could argue, that the application of water values from method
+constructed and solved in 0.41 s whereas the deterministic variant required                                                    4 leads to a more conservative strategy i.e. releasing water
+only 0.12 s.                                                                                                                   earlier.
+                                                                        TABLE II
+COMPARISON OF OPTIMIZATION METHODS WITHOUT / WITH PROVISION OF SECONDARY FREQUENCY CONTROL RESERVES
+
+         expected profit               Method 1                 Method 2                Method 3                Method 4
+rel. standard deviation   weekly peak & off-peak prices  price duration curves  deterministic intrastage  stochastic intrastage
+
+             CV@R10%                34.24 / 34.99            29.13 / 30.44            34.80 / 35.85           33.40 / 39.14
+                                   2.19% / 2.53%            1.95% / 2.47%            2.36% / 3.99%           2.57% / 4.10%
+                                    32.66 / 33.27            27.90 / 29.03            33.27 / 33.47           31.82 / 36.28
+
+   Table II shows the expected profit, the relative standard               [2] H. Abgottspon and G. Andersson, "Approach of integrating ancillary
+deviation as well as the mean profit for the 10% worst                          services into a medium-term hydro optimization," in XII SEPOPE: Sym-
+scenarios (CV@R10%). The values are shown with and without                      posium of Specialists in Electric Operational and Expansion Planning,
+consideration of provision of control reserves.                                 2012.
+Method 1 leads to astonishingly good results. However the
+performance evaluation was based on market data, where peak                [3] N. Lo¨hndorf, D. Wozabal, and S. Minner, "Optimizing trading
+and off-peak price periods were clearly present which will or                   decisions for hydro storage systems using approximate dual dynamic
+already is not anymore the case.                                                programming," Operations Research, vol. 61, no. 4, pp. 810­823, 2013.
+Method 2 performs worse than expected. An explanation for
+it could be, that although the price process is considered in a            [4] M. Kaut, K. Midthun, A. Werner, A. Tomasgard, L. Hellemo, and
+detailed way the power plant itself is simplified considerably,                 M. Fodstad, "Multi-horizon stochastic programming," Computational
+which leads to using non-existing resources more efficiently.                   Management Science, pp. 1­15, 2013.
+This may result to policies which are less effective.
+Method 3 outperforms method 4 for optimizations without                    [5] W. B. Powell, Approximate Dynamic Programming. John Wiley &
+the consideration of secondary frequency control provision.                     Sons, Inc., 2011.
+Interesting is also the increased robustness if compared with
+method 1: the CV@R10% is considerably higher whereas the                   [6] M. Densing, "Dispatch planning using newsvendor dual problems and
+relative standard deviation as another risk measure would                       occupation times: Application to hydropower," European Journal of
+indicate slightly more risk.                                                    Operational Research, vol. 228, no. 2, pp. 321 ­ 330, 2013.
+Finally the proposed method 4 outperforms the other methods
+only if secondary control reserves provision is considered. But            [7] S. W. Wallace and S.-E. Fleten, "Stochastic programming models in
+in this case the increase of both expected profit and CV@R10%                   energy," in Stochastic Programming, ser. Handbooks in Operations
+is substantially by around 10 %.                                                Research and Management Science, A. Ruszczynski and A. Shapiro,
+                                                                                Eds. Elsevier, 2003, vol. 10, pp. 637 ­ 677.
+                         IV. CONCLUSIONS
+                                                                           [8] P. Masse, Les Reserves et la Regulation de l'Avenir. Paris: Hermann,
+   This paper presented four aggregation methods for a                          1946.
+medium-term self-scheduling of hydro power plants. The
+methods were: (1) aggregated peak and off-peak prices, (2)                 [9] R. Bellman, Dynamic Programming. Princeton, New Jersey: Princeton
+price duration curves, (3) deterministic intrastage subproblems                 University Press, 1957.
+and (4) stochastic intrastage subproblems. Contributions were
+first the application of stochastic intrastage subproblems to the         [10] J. D. C. Little, "The use of storage water in a hydroelectric system,"
+hydro power planning, second the comparison and evaluation                      Journal of the Operations Research Society of America, vol. 3, no. 2,
+of the different methods and finally the extension of the                       pp. 187­197, 1955.
+methods by considering revenue out of provision of spinning
+reserves.                                                                 [11] J. W. Labadie, "Optimal operation of multireservoir systems: State-of-
+The evaluation presented the different computational burden                     the-art review," Journal of Water Resources Planning and Management,
+as well as the quality of the proposed optimization outcomes,                   vol. 130, no. 2, pp. 93­111, March 2004.
+where a Monte Carlo operation simulation study was per-
+formed. The results suggest, that the consideration of stochas-           [12] H. Abgottspon, M. Bucher, and G. Andersson, "Stochastic dynamic pro-
+tic intrastage subproblems makes only sense if the market                       gramming for unified short- and medium-term planning of hydro power
+structure is sufficiently complex as it is the case for the market              considering market products," in 12th IEEE International Conference
+for secondary frequency control provision. The results also                     on Probabilistic Methods Applied to Power Systems (PMAPS), 2012.
+indicate that another reason could be more complex hydro
+plant structures, whereas the evaluation on such a plant is left          [13] A. Conejo, R. Garcia-Bertrand, and M. Carrion, "Forward trading for
+for future work.                                                                an electricity producer," in Third International Conference on Electric
+                                                                                Utility Deregulation and Restructuring and Power Technologies, 2008,
+                                                                                pp. 89 ­93.
+
+                                                                          [14] S.-E. Fleten, D. Haugstvedt, J. A. Steinsbo, M. M. Belsnes, and
+                                                                                F. Fleischmann, "Bidding hydropower generation: Integrating short- and
+                                                                                long-term scheduling," in 17th Power Systems Computation Conference,
+                                                                                2011.
+
+                                                                          [15] H. Skjelbred, "Unified modeling of short- and long-term effects in
+                                                                                hydropower systems," in PowerTech, 2011 IEEE Trondheim, 2011.
+
+                                                                          [16] V. L. de Matos, A. Philpott, and E. C. Finardi, "Improving the perfor-
+                                                                                mance of stochastic dual dynamic programming," Optimization Online,
+                                                                                2012.
+
+                                                                          [17] S. Cerisola, J. M. Latorre, and A. Ramos, "Stochastic dual dynamic
+                                                                                programming applied to nonconvex hydrothermal models," European
+                                                                                Journal of Operational Research, vol. 218, no. 3, pp. 687 ­ 697, 2012.
+
+                                                                          [18] F. Thome, M. Pereira, S. Granville, and M. Fampa, "Non-convexities
+                                                                                representation on hydrothermal operation planning using sddp," working
+                                                                                paper, available: http://www.psr-inc.com.br/portal/psr/publicacoes/.
+
+                                                                          [19] H. Abgottspon, G. Andersson, K. Nja´lsson, and M. A. Bucher, "Risk-
+                                                                                averse medium-term hydro optimization considering provision of spin-
+                                                                                ning reserves," submitted to: 2014 International Conference on Prob-
+                                                                                abilistic Methods Applied to Power Systems (PMAPS 2014), Durham,
+                                                                                UK, 2014.
+
+                            REFERENCES
+
+[1] G. Pritchard, A. Philpott, and P. Neame, "Hydroelectric reservoir
+     optimization in a pool market," Mathematical Programming, vol. 103,
+     pp. 445­461, 2005.
+

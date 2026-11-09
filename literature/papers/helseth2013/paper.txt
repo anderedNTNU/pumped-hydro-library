@@ -1,0 +1,671 @@
+www.ietdl.org
+
+  Published in IET Generation, Transmission & Distribution
+  Received on 5th November 2012
+  Revised on 18th April 2013
+  Accepted on 19th April 2013
+  doi: 10.1049/iet-gtd.2012.0639
+
+                                                                                                                                                    ISSN 1751-8687
+
+A model for optimal scheduling of hydro thermal
+systems including pumped-storage and wind power
+
+Arild Helseth1, Anders Gjelsvik1, Birger Mo1, Úlfar Linnet2
+
+1SINTEF Energy Research, Sem Sælands vei 11, 7465, Trondheim, Norway
+2Landsvirkjun, Háaleitisbraut, IS-103, Reykjavik, Iceland
+E-mail: arild.helseth@sintef.no
+
+Abstract: This study describes a model for optimal scheduling of hydro thermal systems with multiple hydro reservoirs. Inflow to
+hydropower reservoirs, wind power and exogenously given prices are treated as stochastic variables. Power flow constraints are
+included through a linearised power flow model. A linearised representation of start-up costs for generating units and pumps is
+provided. The model is well suited for medium- and long-term hydro thermal generation scheduling and has the capability of
+capturing detailed system constraints by using a fine time resolution. The presented model is tested on a realistic
+representation of the Icelandic power system, considering some potential future system extensions.
+
+1 Introduction                                                         Applications of the SDDP algorithm on a detailed
+                                                                    hydropower system while taking into account power flow
+There is a need for coupling efforts between traditional power      constraints, have been documented in the literature [7, 8].
+system market modelling and hydro thermal scheduling on             The work presented in [7] extends the algorithm in [6] to
+one side and transmission system modelling on the other.            incorporate linearised power flow constraints. As pointed
+This need is frequently revealed in power markets through           out in [7], the one-stage sub-problem can be seen as a
+tighter market balances and increased power flow variations.        linearised optimal power flow problem for the specified
+An example is the large-scale introduction of wind power,           state and realisation of stochastic variables. A practical
+which will often, because of the highly stochastic nature and       application of this algorithm is presented in [8], where
+possible remote locations, stress system constraints, such as       emphasis is on expansion planning and identification of
+transmission system and hydro reservoir capacities. In order to     price zones. Later research related to the SDDP algorithm
+realistically capture this type of system constraints, traditional  has, for example, focused on convergence properties [9],
+hydro thermal market models are challenged to cope with a           strategic bidding [10], risk aversion [11] and emission
+finer time resolution.                                              constraints [12]. The work presented in this paper primarily
+                                                                    adds to recent research through the novel treatment of
+   A formal solution of the hydro thermal scheduling problem        approximate start-up costs on pumps and generating units,
+was presented some 50 years ago in [1, 2]. This approach is         and through the treatment of detailed wind power in the
+known as the incremental water value method and is based on         SDDP context.
+stochastic dynamic programming (SDP). Owing to the
+dimensionality of the problem, SDP suffers from extreme                The presented model comprises three extension to an
+computation times when considering systems with more than a         earlier SDDP-based model for stochastic hydro thermal
+few reservoirs. It is therefore most often applied to aggregated    scheduling described in [13]. First, the modelling of
+one-reservoir models of more complicated hydro systems and          linearised power flow constraints was added, as described in
+for simulation purposes supplemented by heuristics [3, 4].          [7, 14]. Thus, power generation, demand and market
+                                                                    purchases and sales need to be allocated individual busbars
+   Stochastic dual dynamic programming (SDDP) was                   in a transmission network representation, and consequently
+introduced in [5, 6], and serves as an alternative to the SDP       power prices refer to each individual busbar, that is, as
+approach. In short, SDDP allows representation of many              nodal prices. Details related to adopting the model to a
+more state variables than SDP within reasonable                     nodal pricing scheme are discussed, both in terms of model
+computation times. It decomposes the multi-stage stochastic         building and result handling. Second, start-up costs for
+optimisation problem into one-stage sub-problems, where             generating units and pumps are approximated by using a
+the expected future cost function is approximated by                continuous variable for the operating state, as described in
+hyperplanes in the space of the state variables. The entire         [15]. The operating state has to be entered into the cuts
+scheduling problem is then solved iteratively as an                 describing the future cost functions in the SDDP approach.
+optimisation problem. Thus, more realistic and detailed             The final extension regards the treatment of energy
+models can be dealt with in a consistent manner than with           time-series of wind with a minimum time resolution of 1 h.
+the SDP-approach.
+
+1426                                                                IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+                                                                                                                    doi: 10.1049/iet-gtd.2012.0639
+& The Institution of Engineering and Technology 2013
+                                                                                                         www.ietdl.org                                          17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+Wind power stochasticity could then be taken into account in          For a given realisation of stochastic variables, the
+both the strategy computation and system simulation part of        decomposition in the SDDP algorithm leads to a linear
+the SDDP algorithm. Consequently, the presented model is           sub-problem for week t, described by an objective function
+well suited for coping with finer time resolution in long-         (2) and constraints (3)­(8)
+and medium-term hydro thermal generation scheduling,
+which is demonstrated in the case study.                                                   Jt = min at + CtTX t      (2)
+
+   This paper is organised as follows. In Section 2, the           The future expected cost function t is constrained by
+mathematical system model is elaborated. Section 3 outlines        hyperplanes or cuts of type (6), and the construction of
+the solution approach, emphasising on the amendments and           these will be elaborated in Section 3.3. In line with, for
+novel concepts introduced. The new model has been used             example [13, 17], we present the basic constraints in
+for an analysis of the power system of Iceland, and this           condensed form below
+case study is presented in Section 4. Finally, Section 5
+concludes this work.
+
+                                                                                   V t - AV X t - Qtzt = V t-1 + mt  (3)
+
+2 System model                                                                             zt = fzt-1 + vt           (4)
+
+2.1 Basic system model                                                                        BtX t = PF             (5)
+
+The objective of the scheduling is to maximise the expected                   at + ktr TV t + mrt Tzt  brt , r = 1, . . . , R (6)
+value of income from power sales, minus generation and
+purchase costs. A typical scheduling horizon is three to five      With the limits
+years, and a basic time step of 1 week is applied. This is
+suitable for describing inflow stochasticity, and the                                      X  min    Xt    X  max    (7)
+decomposition in the SDDP algorithm is therefore carried                                      t               t
+out on a weekly basis. However, because of the variation in
+load, wind speed, exogenous power price and so on, the                                     V  min    Vt    V  max    (8)
+week is further divided into K sub-periods. This division                                     t               t
+provides either aggregate or sequential sub-periods.
+Aggregate sub-periods are found by lumping together hours          where T is the number of weeks in study period; F(V T ) is the
+according to load levels within the week, whereas                  function giving the value of water at the end of the planning
+sequential sub-periods subdivides the week in chronological
+order. The values of the stochastic variables are considered       horizon, in ; Vt is the vector of reservoir volumes at the end
+given within the week.                                             of week t, in Mm3; AV is the matrix given by hydrosystem
+                                                                   topology (incidence matrix); Qt is the diagonal matrix
+   For a given week t a vector Xt is defined, comprising all       containing inflow standard deviations for week t, in Mm3; zt
+variables for that week, such as water releases, thermal           is the normalised inflow vector; mt is the vector of mean
+generation, market purchases and sales and so on, except           inflow week t, in Mm3;  is the inflow model transition
+the vector of reservoir volumes Vt. Associated with Xt there
+is a cost vector Ct comprising all direct costs for the week,      matrix; vt is inflow model noise vector; Bt is the matrix for
+such as cost of thermal generation and the prices for buying
+and selling power. When the model is used with an                  power balances; PF is the firm power demand, in MWh/h;
+exogenously given price, that price will be a component in
+Ct; see Section 2.5. It is assumed that all costs and              t is the expected future cost function, at the end of week t;
+relationships are linear or piecewise linear. Income from          krtrt                                             for cut r, in /Mm3;
+power sales are considered negative cost. The overall                     is  the  hydro   storage cut coefficients  r, in /Mm3; btris the
+objective is then to find an operating strategy to obtain                 is  the  inflow  cut coefficients for cut
+
+                                                                   right-hand side constant for cut r, in ; R is the number of
+
+                                                                   cuts in future cost function approximation at the end of
+
+                                                                   week t.
+
+                                                                          The inflow qt is given by
+
+                                                                                              qt = Qtzt + mt         (9)
+
+       T                                                           It is assumed that zt follows the lag-1 vector autoregressive
+                                                                   model (4). The inflow `noise' vector vt is assumed to have
+min E       CTt X t - F V T  (1)                                   NV discrete values, with a given probability for each. Note
+                                                                   that this inflow model may generate negative inflows which
+       t=1                                                         should not be modified because of the convexity
+                                                                   requirement of the SDDP algorithm. We have introduced
+The expectation is to be taken over the stochastic variables
+inflow, wind energy and exogenous price. The function              artificial variables at high cost in the reservoir balances to
+(VT) estimates the value of water left in the reservoirs at        compensate for this. For further discussions on the
+time T, the end of the study period. Since water left in a
+reservoir at the end of a week is carried over to the next         treatment of negative inflows in SDDP-based models, see
+week, the weekly water balances for the reservoirs become          [18, 19].
+coupled in time, making the optimisation problem a
+dynamic one. Thus, the problem in (1) is a multi-stage                Equation (3) contains the water balances for the reservoirs
+stochastic optimisation problem, which may be efficiently
+solved by decomposition techniques [16]. The presented             after (9) has been substituted for the inflow. The matrix AV is
+model uses the SDDP approach [6], which is a                       derived from the topology of the hydrosystem; it contains
+sampling-based variant of multi-stage Benders
+decomposition. An outer approximation of a convex future           zeros in the columns not associated with releases or spills
+cost function is constructed for each time-stage. The
+decomposition technique will be outlined in Section 3.1.           in Xt. These equations are split into balances for each
+                                                                   sub-period, so that AV is composed of K blocks.
+IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+doi: 10.1049/iet-gtd.2012.0639                                        The system's power balances are of the form (5) and will be
+
+                                                                   detailed in the next section. In Sections 2.3 and 2.4 new
+
+                                                                   constraints for power transfer and for modelling start-up
+
+                                                                                                                                                          1427
+
+                                                                                   & The Institution of Engineering and Technology 2013
+www.ietdl.org                                                                                                                                                                                                                               17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+
+costs are introduced. Note that for notational convenience                      as linear constraints, as elaborated in [22, 23]. Loss
+subscript t is generally omitted in the remainder of this                       computation will not be further addressed here.
+section.
+
+2.2 Power balance                                                               2.4 Start-up costs on generating units and pumps
+
+The power balance in (5) is specified for each sub-period k in                  The modelling of start-up costs on generating units and
+(10)                                                                            pumps is outlined below. Although emphasis is on pumps,
+                                                                                the modelling of start-up costs on generating units follows
+Ak uk              - yk+      + yk-    +  gk    =     P  k  -  PkW  (10)        the same structure.
+                                                         F
+                                                                                   Pumps are described with a simplified model, with a
+Here uk, yk + , yk - and gk are sub-vectors of Xt. All variables                maximum and minimum pumping capacity. The costs
+are in (or converted to) MWh/h. u k denotes the releases in                     incurred by starting pumps should ideally be modelled
+sub-period k, in Mm3 The matrix Ak contains conversion                          using binary variables. However, binary variables would
+factors for the hydropower stations, using piecewise linear                     conflict with the convexity requirement of the SDDP
+descriptions. The yk contains a series of options for selling                   algorithm and would impose a massive increase in
+or purchasing power, each with a given quantity and price.                      computation time. Thus, we adopt a linearised continuous
+yk + denotes sales in the power market and yk - is                              representation of start-up costs as first suggested in [24],
+purchases. gk is a vector of thermal power generation. Wind                     and later extended in [15]. A similar approach is
+power is a stochastic variable of the scheduling problem,                       documented in [25]. Note that the intention of introducing
+and PWk is a realisation of this variable.                                      start-up costs in a long- and medium-term scheduling model
+                                                                                is not to provide accurate commitment schedules, but rather
+   Some additional variables are needed to adopt to a nodal                     to capture the general impact of these costs on system
+pricing scheme. yk should comprise a curtailment option                         operation and price forecasts.
+and a possibility to dump excess power at a negligible
+income at each busbar. The latter opportunity ensures that                         Utilisation of pumps in sub-period k in a given week is
+nodal prices are always positive, which again ensures that                      contained in the vector uP,k which is a sub-vector of u k in
+the piecewise linear approximation of the hydropower                            (10). For each pump j with a defined start-up cost and in
+efficiency-curve is loaded in logical order.                                    each sub-period k the following three linear constraints are
+                                                                                added to the sub-problem
+
+2.3 Power flow constraints                                                                 PjminuLP,,jk + Pjmax - Pjmin uHP,,kj - ujP,k = 0  (14)
+
+A linearised (DC) power flow model is used to describe the                                 uLP,,jk - uPH,,kk  0                              (15)
+
+power flow. This preserves convexity, which is required for
+
+the SDDP algorithm. The DC power flow algorithm is                                         uLP,,jk - uLP,,jk-1 - dkj  0                      (16)
+
+generally considered appropriate for technical-economical
+
+studies of the power system [20], and extensive testing                                    0  uLP,,jk  1
+
+indicates that its accuracy is relatively close to the AC                                                                                    (17)
+
+power flow under a wide variety of operating conditions [21].
+
+The flow constraints are implemented using power transfer                                  0  uHP,,kj  1                                     (18)
+
+distribution factors (PTDF), obtained from the power flow
+
+model. A PTDF for an individual busbar to a single line                         where, for each unit j: Pjmin is the minimum pumping capacity,
+                                                                                piinsertMhueWnpit;ePpr ujmumanxiptiispntughmeabpmoinavgxeibmmeuilnomiwmpumumminpicmianpugamcciatcpyaa;pcdaijktcyii,tsyin;thuMeHP,sW,kjtai;rstu-tLPuh,,pjek
+gives the ratio between the change of flow on the line and
+
+the change of power injection at the given busbar, provided
+
+that the change in injection is balanced by a predefined
+
+reference busbar.                                     for line . If Fk is       variable.
+                                                      vector containing
+   Let the vector  Q    contain the PTDFs                                  the     The coupling between the original    upHPu,m,kj pisinggivveanriaibnle(1u4jP),k.
+flow on the line   (in                          k                          the  and the per unit variables uLP,,jk and
+                        MWh/h)         and  P   I  a
+
+net power injections at all busbars, then                                       Equation (15) tries to load the pump correctly, ensuring that
+
+                              Fk = QTPIk                            (11)        it is started before pumping above the minimum limit.
+                                                                                Equation (16) defines the variable dkj , which is used to
+Now let Fk, max be the maximum flow limit on line  and Xk a                     assign a start-up cost on pumping. In practice, we relax (18)
+sub-vector of Xt, both referring to sub-period k. For                           since there is already an upper limit on ujP,k.
+convenience a matrix AIk is defined so that
+                                                                                   Start-up costs are introduced into the overall model as a
+
+                   P    k  =  AIk X k  -  P  k  +     PkW           (12)        sum of contributions from all NS pumps with start-up cost
+                        I                    F                                  cjs. For 1 week this sum is
+
+Using (12) the power flow constraint for line  becomes                                      K NS                                             (19)
+
+                                                                                                    csj djk
+
+                                                                                           k=1 j=1
+
+- Fk, max + QT PkF - PWk  QT AIk X k  Fk, max                       (13)        Note that modelling start-up costs on a thermal generator will
+                                                                                follow the same procedure as outlined above, that is, by
++ QT  P  k         - PkW                                                        adding three new variables and constraints of type (14)­
+         F                                                                      (18) and the objective function contribution in (19). The
+                                                                                variable uLP,,jk is a state variable, as it is coupled in time in
+Note that quadratic line losses can be computed within the
+SDDP scheme, for example, by expressing the line losses                           IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+                                                                                                                                  doi: 10.1049/iet-gtd.2012.0639
+1428
+
+& The Institution of Engineering and Technology 2013
+(16). As will be shown in Section 3.3, this means that uLP,,jk                              www.ietdl.org                                                     17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+must enter the future cost function through the cuts.
+                                                                   Fig. 1 Illustration of a main iteration in the SDDP algorithm
+2.5 Exogenous price model
+                                                                   Each branch corresponds to a realisation of stochastic variables, and each
+The model allows for one of the exogenous price inputs to be       filled circle indicates a system state. Thick lines are trajectories obtained in
+treated as a stochastic variable. This price can be used to        the forward simulation. Thin lines denote operations as decided for each
+describe several market options in the systems at different        stochastic outcome in the backward recursion.
+locations. The stochastic price input is assumed given by a
+number of price scenarios that describe different futures.         realisation of stochastic variables one computes the optimal
+Each scenario contains one given price for each model              operation for week T. This is illustrated for realisations {1,
+sub-period. Each future scenario is assumed to have equal          2, 3} in Fig. 1. From the sensitivities of the objective
+probability and it is also assumed that there is at least one      function to the initial state values, new cuts at the end of
+scenario corresponding to each future inflow and wind              week T­1 are obtained. These cuts are constructed by
+energy scenario. In the forward simulation of the SDDP             averaging contributions over realisations of stochastic
+algorithm these price scenarios are used directly. In the          variables for a particular state. Thus, realisations {1, 2,
+backward simulation of the SDDP algorithm a Markov                 3} in week T for scenario s1 in Fig. 1 will be used to
+chain model is used to describe the stochastic price. The          construct one cut. If the lag-one model (4) is perfectly valid
+Markov chain parameters are estimated based on the price           for the normalised inflow, then t should be independent of
+scenario input. A detailed description of the SDDP                 zt - 1, and thus t is uncorrelated from stage to stage.
+algorithm with exogenous stochastic price is found in [13]         Therefore the cuts constructed will be valid for all scenarios
+and the Markov chain estimation procedure is described in          {s1, s2, s3} at time T­1 in Fig. 1 [27]. Then one carries out
+[26].                                                              the same procedure for week T­1 and so on. This gives an
+                                                                   updated operating strategy and a lower bound for the
+3 Solution method                                                  expected cost.
+
+The overall optimisation problem is solved by a combination           Convergence is declared when the forward cost sample
+of SDDP and SDP, using an approach which is very close to          estimate and the lower bound from the backward recursion
+that described in [13]. This section first provides a general      come close enough. This may be a slow process, or cost
+introduction to the SDDP algorithm, and then emphasises            gaps exist, so in practice one often checks the change in
+on the amendments that are necessary for the present model.        trajectories from one iteration to the next, stopping after a
+                                                                   fixed maximum number of main iterations.
+3.1 Problem decomposition
+                                                                      If exogenous price data are used, the price dimension is
+We recall that by using dynamic programming principles and         treated in an SDP manner, as described in [13], and then
+representing the future expected cost functions by                 the procedure for each week in the backward recursion is
+hyperplanes or cuts, the problem is broken down to solving         repeated NP times, starting at each of the given discrete
+a sub-problem for each week and with given values of               price states.
+inflows, wind energy and exogenous price. The
+sub-problem objective function was formulated in (2)                  We assume that a set of initial trajectories is always
+subject to the constraints (3)­(8) and (13)­(18). In Section       available, so that the algorithm can start at the backward
+3.3 it is described how the cuts in (6) can be amended to          recursion step. Such a set of trajectories may for instance be
+include the state variables for start-up costs.                    obtained as percentage reservoir contents from aggregated
+                                                                   models.
+   The algorithm builds an operating strategy (represented by
+cuts) iteratively. The two basic steps of a main iteration are     3.2 Handling of wind power stochasticity
+illustrated in Fig. 1 and discussed below. Note that the price
+dimension was omitted for simplicity of the illustration.          In the forward simulation part of the SDDP algorithm, we let
+                                                                   historical records of inflow, exogenous prices and wind
+3.1.1 Forward simulation: From the initial state V0, z0            energy define scenarios. These scenarios are generated
+and uPL,0 the system is simulated for a set of scenarios           based on the assumption that from the starting week each
+comprising realisations of stochastic variables. For a given       historical year have equal probability of occurrence in the
+scenario, the sub-problem described by (2)­(8) and (13)­
+(18) is solved for each week. That is, we assume that all                                                                                               1429
+stochastic variables for a given week are known at the
+beginning of that week. Subsequently, the simulated state at                 & The Institution of Engineering and Technology 2013
+the end of the week is passed forward as an initial state for
+the subsequent week. The forward simulation gives an
+updated set of state trajectories and a (sample) expected
+cost. This procedure is illustrated by following the black
+(thicker) lines in Fig. 1 forward in time for each scenario
+{s1, s2, s3}.
+
+3.1.2 Dynamic backward recursion: Cuts at the end of
+week T can be obtained from the final value function . For
+each state trajectory from the forward simulation one starts
+from the state at the end of week T­1, and for each
+
+IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+doi: 10.1049/iet-gtd.2012.0639
+www.ietdl.org                                                                              Here Vt and zt are state variables and the corresponding starred                17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                                           variables are the given initial values. Consider week t + 1 in
+future. These scenarios are updated according to the current                               the backward run of the SDDP algorithm. For the first
+system state (e.g. snow storage).                                                          sub-period, (16) can be formulated as in (21) with a
+                                                                                           corresponding dual variable t, j.
+   Values from these records are aggregated or disaggregated
+to fit the sub-period time resolution of the model. An                                                        uPL,,t1+1,j - dt1+1,j  uLP,,t+1,j | gt,j           (21)
+alternative method would be to generate scenarios for
+forward simulation from a stochastic model. The use of                                     At the beginning of the week uLP,,t+1 = uLP,,tK is considered
+`observed' scenarios in the forward simulation may                                         given as a part of the state along the current trajectory. Let
+conserve correlations in the inflow, wind and price                                        (20) represent a cut at the beginning of week t + 1, built
+processes not taken into account in the stochastic models.                                 from the solutions of the sub-problems for week t + 1 that
+                                                                                           start from the given starred values at the beginning of week
+   In the backward recursion, stochastic models for inflow and                             t + 1. If the cost function at the beginning of the week is t,
+exogenous prices are used as discussed in Sections 2.1 and                                 then
+2.5, respectively. One could in principle fit wind power into
+the same stochastic model as used for inflow, and thus                                                                    at       =  gt                         (22)
+capture some of the correlations between inflow and wind.                                                               uLP,,t+1
+This has not been tested here.
+                                                                                           where gt = [gt,1, gt,2, . . . , gt,NS ]. The new sample cut at the
+   Some experiments were conducted using a simple stochastic                               end of week t becomes
+wind-energy model in the backward recursion, as outlined
+below. For each historical record, the weekly sum of wind                                  at  + kTt  Vt  -   V     + mtT zt - zt     + gtT      uPL,t - uLP,,t   at
+energy is calculated. The historical records are ordered                                                         t
+according to sum energy, and then grouped into NW groups,
+each with a predefined probability. For each group, new                                                                                                          (23)
+weekly values are constructed by averaging contributions
+from the corresponding records for each sub-period. In this                                The cut is constructed by averaging the contributions of
+way, a reduced set of wind-energy outcomes is constructed.                                 sample cuts of type (23). After reordering the contribution
+Together with the NV different inflow values and NP discrete                               can be formulated as
+price states this gives NV × NP × NW different stochastic
+outcomes for each week. Consequently, the introduction of                                                 a + kTt V t + mTt zt + gtTuPL,t  bt                    (24)
+wind power stochasticity in the backward recursion will
+significantly increase computation time.                                                   where the constant bt is given by
+
+   The outlined approach is capable of capturing the impact of                                            bt  =  at  +  kTt  V     +  mTt zt  +  gTt uLP,t
+weeks with extreme average wind conditions on the operation                                                                     t
+strategy. Such extremes would otherwise be averaged out. It
+will also operate with a correct expectation for the week.                                 3.4 Handling of cuts and power flow constraints
+However, it relies on three assumptions that can be debated.
+First, the wind energy is considered independent of the other                              Both the cuts and the power flow constraints are handled by
+stochastic variables. Second, it ignores possible                                          relaxation in order to reduce computation time, as suggested
+autocorrelation between weeks, that is, the weekly wind                                    in [7, 14]. That is, the problem is first solved without these
+energy in one week is assumed independent of previous                                      constraints, to see if they are fulfilled anyway. If not, the
+weeks. Thus, the generated wind-energy outcomes for one                                    violated constraints are added to the linear programming
+week are common for all states within that week in the                                     (LP) problem and then it is re-solved. In the current logic,
+backward recursion. Finally, and perhaps most important,                                   iterations are first carried out on the relaxed cuts.
+the chosen stochastic time resolution of one week implies                                  Subsequently, when no more cuts are violated, iterations are
+that the values of the stochastic variables are known for a                                carried out on the power flow constraints. Adding power
+whole week in advance. Given the volatile nature of wind                                   flow constraints will change the optimal solution, which in
+conditions, a week-long stochastic time resolution is not fine                             turn may violate new cuts; thus, iterations between the cut
+enough to capture the actual need for balancing wind power.                                and power flow constraint relaxation-loops are needed.
+                                                                                           Optimising the sequence and logic of these two relaxation
+   Initial experiments with this technique indicate that wind                              loops to minimise computational effort may be a topic for
+power stochasticity tend to have little impact on the strategy                             further research.
+in hydropower systems with large storage capacity and a
+modest share of wind power. For this reason, the presented
+case study results are based on average wind-power values
+in the backward recursion.
+
+3.3 Handling of start-up state variables
+
+Consider a system where NS pumps or thermal generators are
+modelled with start-up costs. Owing to the time coupling in
+
+(16), the minimum pumping in the vector
+uPL,,tk = uLP,,tk,1,  uLP,,tk,2, . .  .e,nuteLPr,,tk,NthS e
+variables and         should                                 must    be considered state   3.5 Computing nodal prices
+                                                             future  cost function at the
+                                                                                           Once a sub-problem is solved in the final forward simulation,
+end of the week, where k = K. This function is represented                                 a vector k of nodal prices for a given sub-period k can be
+                                                                                           computed as
+by cuts. A sample cut from a sub-problem in week t can be
+
+written as
+
+            at  + kT  Vt              -  V     + mT zt - zt           at  (20)                                       pk = pkr e + Qpk                            (25)
+                                            t
+
+1430                                                                                       IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+                                                                                                                                           doi: 10.1049/iet-gtd.2012.0639
+& The Institution of Engineering and Technology 2013
+where    ...pflkr,ow1is]Ttchaoenndsdtrpuaakilntissvaalu(1ve3e)co.tforpthokef  power balance (10),                            www.ietdl.org                                                  17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+e = [1,                                                                       dual values from the
+power                                                                         contains zeros for    assigned capacity limits. Hydropower plants are indicated
+                                                                                                    by the letter H, a wind power park by W, and demand by
+non-binding power flow constraints.                                                                 an arrow. Geothermal plants are not shown in Fig. 2 as
+                                                                                                    these are not explicitly modelled. Thus, start-up costs for
+   Nodal price contributions can be split in two terms, as                                          thermal units are not used in this case study. The future
+shown in (25). prk represents the energy component that is                                          HVDC-light cable under investigation is connected to
+equal for all nodes and equals the power price at the                                               busbar b4 providing a link to the UK power system, with a
+                                                                                                    capacity of 350 MW. The UK market was modelled as an
+reference busbar. The second term on the right-hand side in                                         exogenous price series, with one price scenario for each
+                                                                                                    corresponding record of inflow and wind power.
+(25) represents the congestion components.
+                                                                                                       Table 1 states the number of power plants, the busbar
+4 Case study                                                                                        associations, the total installed capacities and the total
+                                                                                                    reservoir volumes for the five modelled watercourses. In
+The presented model was tested on data provided by                                                  order to add flexibility to the production system, it was
+Landsvirkjun, which represents the current Icelandic power                                          extended by two projects, both connected to busbar b4
+system with the addition of some potential future
+expansions. The considered expansions comprise an high-                                              A pumped-storage facility at Vörðufell with 100 MW
+voltage direct current (HVDC)-light cable to the UK, a                                              installed capacity and 20 Mm3 upstream and downstream
+pumped-storage plant and a wind power park. Transmission                                            storage;
+grid data representing today's system was provided by the                                            A wind power park with installed capacity of 100 MW.
+icelandic TSO Landsnet. As a large share of Iceland's
+power production is from hydropower, the system is in                                                  4.2 Simulation results
+principle well suited for balancing wind power and
+exchange with the UK market. However, as the current                                                The system simulations were started in week 40 (full
+transmission system is weak the hydropower's ability to                                             reservoirs) of the first year and completed at the end of the
+regulate cannot be fully utilised, as will be studied in more                                       fourth year, that is a simulation period of 169 weeks. We
+detail below. Although important, possible expansion of the                                         used 54 historical weather scenarios. Available inflow
+transmission grid to better facilitate the suggested increase                                       records have daily time resolution and the wind power
+in production capacity is not considered in this case study.                                        record has hourly time resolution. Simulations were carried
+                                                                                                    out both for aggregate and sequential sub-periods,
+4.1 System description                                                                              comprising 7 and 24 sub-periods within the week,
+                                                                                                    respectively. Table 2 distinguishes the simulated cases in
+Iceland's total electricity production in 2008 was 16.5 TWh,                                        the arrangement of sub-periods and whether power flow
+where approximately 70% came from hydropower and 30%                                                constraints are included.
+from geothermal power. Geothermal power plants are used
+to cover base load and have strong transmission capacity to                                            The single largest reservoir in Iceland, Hálslón, is located
+the loads. Thus, their production can be subtracted from the                                        in the Jokla watercourse and is associated with busbar b11
+loads in the simulations. Landsvirkjun owns and operates                                            in Fig. 2. The transmission network capacity between the
+almost all hydropower in Iceland with approximately 1750                                            Hálslón hydropower station and the rest of the island is
+MW installed capacity in 11 stations. Landsvirkjun's                                                only 10% of the total load at b11. The majority of this load
+consumers can be split in two categories. Power intensive                                           is associated with aluminium smelters. For safety of
+industries have a share of 87% at a constant profile,                                               industrial operation, emptying of Hálslón should be
+whereas the remaining share goes to the wholesale market.
+                                                                                                    Table 1 Aggregate characteristics of the hydropower system,
+   Fig. 2 illustrates the system under investigation. All
+transmission system lines and transformers in the figure are                                        per watercourse
+
+                                                                                                    Name          No. Busbar Installed           Reservoir
+                                                                                                                                                 Vol., Mm3
+                                                                                                                  plants               Cap., MW
+
+                                                                                                    Laxa          1            b1       18         0
+                                                                                                                               b4      1068      2028
+                                                                                                    Thjorsa, Sog  7            b10     150       420
+                                                                                                                                       677       2148
+                                                                                                    Blanda        1            b11     100
+                                                                                                                                       2013       20
+                                                                                                    Kárahnjúkar   2            b4                4616
+
+                                                                                                    Vörðufell     1
+
+                                                                                                    Total         12
+
+                                                                                                    Table 2 Simulated cases
+
+                                                                                                    Case Arrangement of        Power flow        Pumped-storage
+                                                                                                                  sub-periods  constraints         start-up cost
+
+                                                                                                    A          aggregate            ­                      ­
+                                                                                                                                                           ­
+                                                                                                    B          aggregate                                   ­
+                                                                                                                                                           ­
+Fig. 2 Illustration of the Icelandic power system, indicating the                                   C          sequential           ­                      
+electrical topology and the location of loads, wind power and
+hydropower                                                                                          D          sequential           
+                                                                                                                                    
+IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434                                   E          sequential
+doi: 10.1049/iet-gtd.2012.0639
+                                                                                                                                                                                      1431
+
+                                                                                                               & The Institution of Engineering and Technology 2013
+www.ietdl.org                                                       for the Sigalda power plant. This power plant has an                              17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                    installed capacity of 160 MW and has significant upstream
+Fig. 3 Reservoir levels in Hálslón for cases A (dashed) and B       storage capacity. The simulated nodal prices at b4 (in a
+(solid). Average values and 0 and 100 percentiles                   scaled monetary unit) are shown as a dashed line in Fig. 4.
+                                                                    The scheduled production in Sigalda fluctuates according to
+avoided. Fig. 3 compares Hálslón's simulated reservoir levels       the UK prices; it is regulated up during day-time peaks and
+with and without transmission constraints (cases A and B),          down at night-time and on weekends. The simulated nodal
+shown as solid-drawn and dashed lines, respectively. The            prices shown in Fig. 4 correspond to the UK prices, except
+curves represent the average value together with 0 and 100          from the peaks where the nodal prices at b4 are lower. This
+percentiles in Mm3. In case B where power flow constraints          can be explained by the limited HVDC exchange capacity.
+are included, b11 will to a lesser extent see the export            Utilisation of the HVDC cable in this particular week
+option at b4. As a result, the model proposes an optimal            fluctuates between full export of 350 MW in UK price-peak
+schedule where the Hálslón reservoir level is generally             periods and import at low UK prices. Note that there are no
+higher and the risk of emptying the reservoir in extreme            HVDC ramping constraints in the model.
+cases is lower than in case A.
+                                                                       Fig. 5 shows the simulated utilisation of the HVDC cable
+   Busbar b4 receives power from all generation units located       for all cases. As expected, the cable is primarily used for
+in the Thjorsa watercourse. This watercourse comprises              exporting power (positive values) to the UK. In case A,
+several cascaded reservoirs with sizes ranging from seasonal        which is the least constrained case, maximum export takes
+to weekly storage. Power plants in Thjorsa are directly             place 67% of the time. Adding power flow constraints in
+exposed to UK price levels through the HVDC cable                   case B, reduces this number to 62%. This result is related to
+connected to busbar b4. Fig. 4 shows the simulated                  the reservoir levels presented in Fig. 3; the Hálslón
+production as a solid-drawn line for a given week in case D         reservoir is used extensively to generate power for export in
+                                                                    case A. Fig. 5 highlights the importance of adding realistic
+                                                                    system constraints when balancing a hydropower system
+                                                                    against external and price volatile markets and wind power.
+                                                                    Using both a fine time resolution and power flow
+                                                                    constraints in cases D and E clearly shows that operation of
+                                                                    the cable is limited by the transmission system. Cases A­C
+                                                                    clearly overestimates the use of the cable for both export
+                                                                    and import, and thus the total profitability of the cable.
+
+                                                                       In case E we introduced a cost per start-up and a minimum
+                                                                    generation of 30 MW for the pumped-storage plant in
+                                                                    Vörðufell. The duration curves for pumping power for cases
+                                                                    D and E are shown in Fig. 6. As expected, the pump
+                                                                    utilisation decreases when introducing a start-up cost.
+                                                                    Furthermore, Fig. 6 shows that the pump is allowed to
+                                                                    operate a significant amount of time below the minimum
+                                                                    capacity. This indicates that the approximate modelling is
+                                                                    not perfect, but can be further explained by looking at the
+                                                                    frequency of entering pumping mode for the two cases. In
+                                                                    case D, the plant shifts from generating in a previous
+                                                                    sub-period to pumping in 6.54% of the simulated
+
+Fig. 4 Simulated power production from the Sigalda power plant      Fig. 5 Load duration curves for the HVDC cable for cases A­E
+(solid) and nodal prices (dashed) at busbar b4 for a given week in
+case D                                                                IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+                                                                                                                      doi: 10.1049/iet-gtd.2012.0639
+1432
+
+& The Institution of Engineering and Technology 2013
+Fig. 6 Duration curves for pumping power in Vörðufell for cases                             www.ietdl.org                                                     17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+D and E
+                                                                   power and exogenously given prices as stochastic variables.
+sub-periods, whereas this occurs in only 0.12% of the              The incorporation of approximate start-up costs for pumps
+sub-periods in case E. Thus, having made a pump start-up           and generating units is a novel modelling feature, where the
+decision (either full or partial), the benefit of staying in       operating states of these units enter the cuts describing the
+pumping mode is recognised by the model in case E. The             future cost functions in the SDDP approach. Furthermore,
+introduction of start-up cost also impacts prices at busbar        the model incorporates the treatment of detailed wind power
+b4; the mean and standard deviation of the nodal price             in the forward simulation of the SDDP algorithm, and
+increases by 0.34% and 11.12%, respectively, compared              approaches for handling wind power stochasticity in the
+with case D.                                                       backward recursion are proposed.
+
+4.3 Computational performance                                         The model was tested in a case study of the Icelandic power
+                                                                   system. In general, the results indicated that when using a
+All simulations were carried out using parallel processing on      finer time resolution, and thus adding more constraints to
+a multi-core shared-memory computer with 128 GB RAM.               the system, the simulations became more realistic. This
+The CPLEX LP Solver (version 11) was used for solving              finding was illustrated and discussed for both aggregate and
+the sub-problems. The model was run with 12 discrete               detailed types of results. In particular, modelling of the
+inflow noise levels and seven discrete price states in the         limited transmission capacity between the major
+backward recursion. To limit the computational effort the          watercourses had a significant impact on the estimated
+simulations referred to in Section 4.2 used the mean wind          balancing potential on Iceland. Simulations without power
+power values in the backward recursion. A maximum of 60            flow constraints clearly overestimated the capability of
+main iterations in the SDDP-algorithm was allowed.                 exporting power to the UK market and gave unrealistic
+                                                                   reservoir operation. Finally, it was demonstrated that the
+   As there were 54 weather scenarios to be evaluated for 169      utilisation of a pumped-storage plant was significantly
+weeks, a total of 54 × 169 = 9126 sub-problems were solved         impacted by introducing a start-up cost on pumping. The
+in each forward run for all cases. In each backward run this       case study illustrates how this modelling feature can be
+number increases with a factor equal to the number of              used to obtain more realistic plant schedules and power
+stochastic outcomes, that is, 12 × 7 = 84.                         prices.
+
+   The modelling of sequential sub-periods significantly              Clearly, the improved system representation significantly
+increased computation time in the presented example. Cases         increases computation time, which stresses the importance
+A and E were both run on 12 cores, using approximately 5           of parallel processing to obtain acceptable simulation times.
+and 31 h, respectively. If one does not consider the
+relaxation loops, the same number of LP problems are               6 References
+solved in the two cases. Thus, it is primarily the increased
+size of a single LP problem that contributes to the increase        1 Stage, S., Larsson, Y.: `Incremental cost of water power', Trans. Am.
+in computation time.                                                     Inst. Electr. Eng., 1961, 80, (3), pp. 361­364
+
+5 Conclusion                                                        2 Lindqvist, J.: `Operation of a hydrothermal electric system: a multistage
+                                                                         decision process', AIEE Trans. III Power Appar. Syst., 1962, 81, (3), pp.
+An SDDP-based model was presented, suitable for solving                  1­7
+the medium- and long-term hydro thermal scheduling
+problem considering inflow to hydropower reservoirs, wind           3 Fosso, O.B., Gjelsvik, A., Haugstad, A., Mo, B., Wangensteen, I.:
+                                                                         `Generation scheduling in a deregulated system. The Norwegian case',
+IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434        IEEE Trans. Power Syst., 1999, 14, pp. 75­81
+doi: 10.1049/iet-gtd.2012.0639
+                                                                    4 Wolfgang, O., Haugstad, A., Mo, B., Gjelsvik, A., Wangensteen, I.,
+                                                                         Doorman, G.: `Hydro reservoir handling in Norway before and after
+                                                                         deregulation', Energy, 2009, 34, (10), pp. 1642­1651
+
+                                                                    5 Pereira, M.V.F.: `Optimal stochastic operations scheduling of large
+                                                                         hydroelectric systems', Electr. Power Energy Syst., 1989, 11, (3),
+                                                                         pp. 161­169
+
+                                                                    6 Pereira, M.V.F., Pinto, L.M.V.G.: `Multi-stage stochastic optimization
+                                                                         applied to energy planning', Math. Program., 1991, 52, pp. 359­375
+
+                                                                    7 Gorenstin, B.G., Campodónico, N., Costa, J.P., Pereira, M.V.F.:
+                                                                         `Stochastic optimization of a hydro­thermal system including network
+                                                                         constraints', IEEE Trans. Power Syst., 1992, 7, (2), pp. 791­797
+
+                                                                    8 Granville, S., Oliveira, G.C., Thomé, L.M., et al.: `Stochastic
+                                                                         optimization of transmission constrained and large scale hydrothermal
+                                                                         systems in a competitive framework'. Proc. IEEE General Meeting,
+                                                                         Toronto, Canada, 2003
+
+                                                                    9 Philpott, A., Guan, Z.: `On the convergence of stochastic dual dynamic
+                                                                         programming and related methods', Oper. Res. Lett., 2008, 36, (4),
+                                                                         pp. 450­455
+
+                                                                   10 Flach, B., Barroso, L., Pereira, M.: `Long-term optimal allocation of
+                                                                         hydro generation for a price-maker company in a competitive market:
+                                                                         latest developments and a stochastic dual dynamic programming
+                                                                         approach', IET Gener. Transm. Distrib., 2010, 4, (2), pp. 299­314
+
+                                                                   11 Philpott, A., de Matos, V.: `Dynamic sampling algorithms for
+                                                                         multi-stage stochastic programs with risk aversion', Eur. J. Oper.
+                                                                         Res., 2012, 218, (2), pp. 470­483
+
+                                                                   12 Rebennack, S., Flach, B., Pereira, M.V.F., Pardalos, P.M.: `Stochastic
+                                                                         hydro-thermal scheduling under CO2 emissions constraints', IEEE
+                                                                         Trans. Power Syst., 2012, 27, (1), pp. 58­68
+
+                                                                   13 Gjelsvik, A., Belsnes, M.M., Haugstad, A.: `An algorithm for stochastic
+                                                                         medium-term hydrothermal scheduling under spot price uncertainty'.
+                                                                         Proc. 13th Power System Computation Conf., Trondheim, Norway,
+                                                                         1999
+
+                                                                                                                                                        1433
+
+                                                                             & The Institution of Engineering and Technology 2013
+www.ietdl.org                                                                 21 Stott, B., Jardim, J., Alsaç, O.: `DC power flow revisited', IEEE Trans.     17518695, 2013, 12, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                                    Power Syst., 2009, 24, (3), pp. 1290­1300
+14 Stott, B., Marinho, J.L.: `Linear programming for power-system network
+      security applications', IEEE Trans. Power Appar. Syst., 1979, PAS-98,   22 dos Santos, T.N., Diniz, A.L.: `A dynamic piecewise linear model for
+      (3), pp. 837­848                                                              DC transmission losses in optimal scheduling problems', IEEE Trans.
+                                                                                    Power Syst., 2011, 26, (2), pp. 508­519
+15 Warland, G., Haugstad, A., Huse, E.S.: `Including thermal unit start-up
+      costs in a long-term hydro thermal scheduling model'. Proc. 16th Power  23 Helseth, A.: `A linear optimal power flow model considering nodal
+      System Computation Conf., Glasgow, Scotland, 2008                             distribution of losses'. Proc. Ninth Int. Conf. on the European Energy
+                                                                                    Market, Florence, Italy, 2012
+16 Birge, J.R., Loveaux, F.: `Introduction to stochastic programming'
+      (Springer, 2011, 2nd edn.)                                              24 Eriksen, P.B., Ravn, H.F., Pedersen, J., Johannesen, A., Haugstad, A.:
+                                                                                    `Hydrothermal scheduling; computational approaches for optimal
+17 Røtting, T., Gjelsvik, A.: `Stochastic dual dynamic programming for              scheduling of mixed hydro thermal systems'. Proc. Hydropower into
+      seasonal scheduling in the Norwegian power system', IEEE Trans.               the next century, A.-M. Int., Ed., Barcelona, Spain, 1995
+      Power Syst., 1992, 7, (1), pp. 273­279
+                                                                              25 Weber, C., Uncertainty in the electric power industry: methods and
+18 Gjelsvik, A., Mo, B., Haugstad, A.: Handbook of power systems I.                 models for decision support, in `Operations research and management
+      (Springer, 2010), Long- and medium-term operations planning and               science' (Springer, 2004 1st edn., International Series)
+      stochastic modelling in hydro-dominated power systems based on
+      stochastic dual dynamic programming, pp. 33­55                          26 Mo, B., Gjelsvik, A., Grundt, A., Kåresen, K.: `Optimisation of
+                                                                                    hydropower operation in a liberalised market with focus on price
+19 de Matos, V.L., Finardi, E.C.: `A computational study of a stochastic            modelling'. Proc. PowerTech 2001, Porto, Portugal, vol. 1, 2001
+      optimization model for long term hydrothermal scheduling',
+      Int. J. Electr. Power Energy Syst., 2012, 43, (1), pp. 1443­1452        27 Infanger, G., Morton, D.P.: `Cut sharing for multistage stochastic linear
+                                                                                    programs with interstage dependency', Math. Program., 1996, 75, (2),
+20 Wood, A., Wollenberg, B.F.: `Power generation, operation and control'            pp. 241­256
+      (John Wiley & Sons, 1996, 2nd edn.)
+
+1434                                                                          IET Gener. Transm. Distrib., 2013, Vol. 7, Iss. 12, pp. 1426­1434
+                                                                                                                              doi: 10.1049/iet-gtd.2012.0639
+& The Institution of Engineering and Technology 2013
+

@@ -1,0 +1,472 @@
+                                                Author Accepted Manuscript version of the article by Martin Bore et al.
+                                           in 2026 22nd International Conference on the European Energy Market - EEM
+
+                                                              https://doi.org/10.1109/eem68581.2026.11589591
+                                      Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+   Economic assessment of hydropower capacity
+ expansions and multi-market participation using a
+
+           multi-stage stochastic framework
+
+ Martin Borea, Sigurd S. Brensholma, Stian Backea,c, Kasper E. Thorvaldsenb,c, Anders S. Ryssdald, Ivar Refsdald
+aDept. of Industrial Economics and Technology Management, bDept. of Electric Energy, NTNU, Trondheim, Norway
+cSINTEF Energy Research, Trondheim, Norway dTHEMA Consulting Group, Oslo, Norway
+Emails: martbore, sigursb, stian.backe, kasper.e.thorvaldsen@ntnu.no and anders.ryssdal, ivar.refsdal@thema.no
+
+   Abstract--The growing need for flexibility in modern power              P  net    Net electrical power delivered to the grid at PQ-point i  SP Q
+systems increases the value of hydropower in capacity markets.                i
+This paper presents a stochastic optimization framework for                          [MWh/h]
+quantifying the benefits of capacity market participation and              Mi
+evaluating hydropower capacity upgrades. Spot price outcomes                         Slope between consecutive PQ-points i and i + 1, i  SP Q \
+for the 2030 electricity market have been simulated across                           {max(SP Q)}
+multiple historical weather years and clustered using the
+K-means method. Uncertainty in energy prices and inflow is                 Iw,t,     Reservoir inflow at time t  T in week w  W in scenario
+represented through a scenario tree constructed using Markov                            [GWh/h]
+chain logic. Stochastic Dual Dynamic Programming has been                  C max     Maximum production capacity [MW]
+applied to generate cuts embedded in a simulation model                    C min     Minimum production capacity [MW]
+for statistical analysis. A case study of a NO2 hydropower                 Smax      Maximum reservoir storage capacity [GWh]
+plant indicates that combining energy and capacity market                  Smin      Minimum reservoir storage capacity [GWh]
+participation with a 75% capacity upgrade could enhance                    up        Maximum energy for up-regulation [GWh]
+revenues by nearly 50% compared to energy-only participation.              down      Maximum energy for down-regulation [GWh]
+Future work could incorporate stochastic modeling of capacity              Vcmax     Maximum capacity available in market c  C [MW]
+market prices, reserve activation and market saturation, and               Vem,tax   Maximum energy volume in Intraday market at time t  T [MWh]
+tax-related considerations for hydropower producers.                       S0
+                                                                                     Initial reservoir storage level [GWh]
+
+                                                                           Ae        Market share in intraday market e  E \ {DA} [­]
+                                                                           Lem       Cost of using emergency water [EUR/GWh]
+
+   Index Terms-- Ancillary service markets, Capacity upgrades,                Decision Variables
+Hydropower scheduling, Multi-market operation, Stochastic dual
+dynamic programming.                                                       yc,t,     Capacity traded in market c  C at time t  T in scenario   
+                                                                                     [MW]
+
+   Sets                                                                    xe,t,     Energy traded in market e  E at time t  T in scenario   
+                                                                                     [MWh]
+
+W        Set of weeks in the planning period                               sw,t,     Reservoiar storage in week w  W at time t  T in scenario
+                                                                           pwhy,td,     [GWh]
+         Set of spot price­inflow scenarios, indexed by                    hewm,t,
+                                                                                     Extracted hydraulic power from reservoiar in week w  W at
+T        Set of time periods with hourly resolution                                  time t  T in scenario    [MWh/h]
+
+E        Set of energy markets (DA, ID Sell, ID Buy)                                 Emergency water needed in week w  W at time t  T in
+                                                                                     scenario    [GWh]
+C        Set of capacity markets (aFRR Up, aFRR Down, FCR-N, FCR-D)
+CD       Subset of down-regulating capacity markets, CD  C                                           I. INTRODUCTION
+CU       Subset of up-regulating capacity markets, CU  C
+SPQ                                                                        A. Motivation
+         Index set of points used in the linearized PQ-curve
+                                                                              Over the past decade, large-scale deployment of Variable
+   Parameters                                                              Renewable Energy Sources (VRES) and the decommissioning
+                                                                           of coal- and nuclear-based generation have altered Euro-
+Pe,w,t, Price in market e  E in week w  W at time t  T in scenario         pean power-system dynamics [1]. Simultaneously, Norway
+                 [EUR/MWh]                                                 has become more tightly interconnected with continental Eu-
+                                                                           rope through expanded cross-border transmission, making the
+Pc,w,t   Capacity price in market c  C in week w  W at time t  T           Nordic system more exposed to the same developments [2].
+         [EUR/MW]                                                          These trends can reduce revenues from traditional energy-only
+P  hyd                                                                     trading, while reduced synchronous inertia and more volatile
+   i     Discretized hydraulic power at PQ-point i  SP Q [MWh/h]           net-load patterns increase the value of flexible balancing
+                                                                           services [3]. Reservoir-based hydropower possesses several
+   This work was supported by the Research Council of Norway through the
+FME NTRANS - Norwegian Centre for Energy Transition Strategies (grant no.
+296205). We also acknowledge the iDesignRES project which has received
+funding from the Horizon Europe research and innovation program under
+Grant Agreement No. 101095849.
+          Author Accepted Manuscript version of the article by Martin Bore et al.
+     in 2026 22nd International Conference on the European Energy Market - EEM
+
+                       https://doi.org/10.1109/eem68581.2026.11589591
+Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+characteristics well suited to provide such services, particularly  analysis centered on robustness in aggregated systems. Helseth
+when flexibility is required over extended periods.                 and Mo [11] improved the link between aggregated and
+                                                                    detailed hydropower representations by introducing feasibility
+           Fig. 1: Market changes in the European power system [4]  cuts into the framework. This extension provided more precise
+                                                                    water value estimates, albeit at the expense of increased
+   Concurrently with the changing generation mix, European          computational time. Similarly, Hjelmeland et al. [12] intro-
+power markets have undergone substantial reforms (see Fig. 1).      duced strengthened Benders cuts and found improved policy
+Prices for balancing- and capacity-related products have in-        quality, though at roughly five times the computational cost.
+creased in several markets, contributing to higher system           While these studies have improved the framework, none of
+costs borne by grid operators and market actors [4]. This           them quantify the economic value of coordinated participation
+development strengthens the investment case for flexibility-        across multiple electricity markets.
+oriented upgrades and challenges traditional approaches to
+calculating water values [5].                                          Several studies have incorporated multi-market participation
+                                                                    into the SDDP framework. Using a hybrid SDP/SDDP ap-
+   In January 2026, Tussa Group approved a billion-NOK              proach to co-optimize energy and capacity sales in Norway,
+investment for a 90 MW capacity upgrade of an existing              Helseth et al. [13] found that the multi-market extension
+hydropower facility in western Norway [6]. As Norwegian             had only a minor impact on computational burden, although
+regulatory frameworks largely protect unaltered watercourses        simplifying assumptions may have led to an overestimation of
+while aging assets increasingly require reinvestment and rear-      achievable profits. Extending this framework, Helseth et al. [9]
+mament [7], the Tussa II project exemplifies a broader strategic    incorporated stochastic reserve prices and sequential market
+shift among Norwegian hydropower producers. Rather than             clearing, reporting an approximate 1% profit increase and
+developing new greenfield plants, capacity expansion and            limited impact on scheduling decisions. Pérez-Díaz et al. [14]
+modernization of existing facilities are increasingly pursued       conducted a similar study in Spain and reported a 0.12%
+to meet the requirements of tomorrow's power system. Con-           profit increase. Their main contribution was modeling the
+sequently, models that capture multi-market participation and       hydropower producer as a price maker in the capacity market,
+quantify the profitability of expansion measures under realistic    which reduced spillage under strategic bidding behavior. While
+market conditions are increasingly important.                       these studies report increased profits from participation in
+                                                                    capacity markets, they do not evaluate these gains in the
+B. Literature Study                                                 context of structural changes such as capacity upgrades.
+   Hydropower scheduling is inherently stochastic, as uncer-
+                                                                       Research from the investment perspective is limited, but
+tain inflows and market prices interact with reservoir storage      Brekke et al. [15] studied a hypothetical rotational energy
+to create intertemporal trade-offs in production. The sequential    market and found revenues insufficient to justify investment.
+decision structure and the intertemporal value of stored water      Although linking market design to investment incentives, the
+motivate decomposition strategies. While Stochastic Dynamic         analysis was conducted during a period of systematically lower
+Programming (SDP) captures this structure naturally, its prac-      capacity prices and excluded capacity upgrade decisions.
+tical application is limited by the curse of dimensionality
+[8]. Consequently, Stochastic Dual Dynamic Programming                 Overall, existing literature demonstrates that SDDP-based
+(SDDP) has become the state-of-the-art approach for medium          models can incorporate multiple markets, risk preferences, and
+term hydropower scheduling (MTHS) in hydro-dominated                methodological refinements. However, limited attention has
+systems [9]. Pereira and Pinto [8] applied SDDP to a large-         been given to quantifying the revenue potential of multi-market
+scale MTHS problem and demonstrated rapid convergence,              participation in the context of structural capacity changes
+establishing the methodological foundation for research on          within a stochastic framework.
+stochastic hydropower scheduling.
+                                                                    C. Contribution
+   Parts of the research have focused on methodological ex-
+tensions of the SDDP framework. To account for risk prefer-            Motivated by the changing role of hydropower in modern
+ences, Shapiro et al. [10] introduced a worst-case expectation      power systems and the limited literature linking multi-market
+approach and showed that risk-averse formulations are less          operation to investment decisions, this paper contributes to the
+sensitive to demand shocks than risk-neutral models. Their          field in two ways. First, it develops a stochastic MTHS model
+                                                                    that explicitly represents participation in multiple energy and
+                                                                    capacity markets. Lastly, the framework is used to evaluate
+                                                                    whether the additional value from capacity market participa-
+                                                                    tion can justify capacity upgrades of hydropower plants.
+
+                                                                       The study addresses the following research questions:
+
+                                                                       · Can the additional value derived from capacity market
+                                                                          participation justify a capacity upgrade of a hydropower
+                                                                          plant?
+          Author Accepted Manuscript version of the article by Martin Bore et al.
+     in 2026 22nd International Conference on the European Energy Market - EEM
+
+                       https://doi.org/10.1109/eem68581.2026.11589591
+Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+   · How do various capacity upgrade configurations of a           Algorithm 1: SDDP with W number of weeks (stages)
+      hydropower plant influence revenues across energy and
+      capacity markets?                                            in the planning period
+
+   The remainder of this paper is structured as follows. Sec-          Input: Stages {Tw}W w=-01, initial reservoir S0, Markov (0, {Pw}),
+tion II describes the methodology, followed by the case study                   max iterations M , number of forward paths L
+in Section III and results in Section IV. Section V concludes
+the paper.                                                             Output: Cuts Kw for w = 0..W - 2
+
+                         II. METHODOLOGY                           1 Initialization: Kw  ; validLB  [ ]; stable  0.;
+                                                                   2 for m = 1 to M do
+A. Model description
+                                                                   3       Forward pass (L=1 paths): S  S0; draw scenario   0.;
+   To address the research questions in I-C, an optimization
+model has been developed for a hydropower plant and solved         4 for w = 0 to W - 1 do
+using an SDDP algorithm to account for uncertainty in the
+spot price and the inflow. The algorithm is decomposed into        5            Update M odel[w, ] with scenario data (Pe, Pc, I) and
+weekly decision stages, where realizations of spot prices and
+inflow for the period are assumed to be known. Additionally,                    starting storage S; solve.;
+a simulation model has been applied to estimate the results.
+The framework overview is highlighted in II-A1, while the          6            Store vw  send, objw  OBJ , w  , penw.;
+optimization problem solved in the SDDP-algorithm and the
+simulation model is presented in II-B.                             7            S  vw; draw next scenario ;
+
+                   Fig. 2: Overview of the modeling framework      8       end
+
+   1) Framework overview: Figure 2 illustrates the framework       9 Backward pass (cut generation): for W = W - 2 to w = 0
+applied in this study. Price and inflow data are processed
+in a clustering procedure to generate representative weekly                do
+combinations of spot prices and inflows using K-means clus-
+tering (K = 3) [16]. Short-term uncertainty is incorporated        10           Identify pairs of (curr, vw) (current scenario and end
+by allowing multiple realizations of the stochastic variables
+conditional on the previous weeks outcome. This dependency                      storage in week w):
+structure is modeled using a Markov chain [17], where the
+transition probabilities are estimated from the frequency of       11           foreach (curr, vw) do
+transitions between scenarios, given the current state.
+                                                                   12                for next  {0, 1, 2} do
+   Further, the processed data and Markov chain transition
+probabilities are fed into the SDDP algorithm used to gen-         13                     Update and solve M odel[w+1, next] with
+erate Benders cuts. The reservoir storage level serves as the
+state variable linking consecutive weeks. For simplicity, the                             starting storage S = vw.;
+algorithm is described in algorithm 1 using one forward path
+per iteration, though multiple paths can be used.                  14                     Qnext  OBJ ;
+
+   Lines (1­2) initialize empty cut sets, store valid lower        15                     next  dual(Equation 3).;
+bounds, set the stability indicator to 0, and begin the iteration
+over M iterations. Further, it performs a forward pass (3­8),      16                end
+simulating L=1 number of future paths from the initial reser-
+voir and Markov regime probabilities. This includes updating       17                curr ,w  next Pw [curr , next] Qnext ;
+and solving the stage model, storing results, and preparing
+data for the next stage. In the backward pass (9­24), cuts are     18                curr ,w  next Pw [curr , next] next ;
+generated from the last stage to the first by solving models for
+each possible current regime across all next regimes, retrieving   19           end
+dual values, and aggregating - and -values into a single cut
+added to the stage. A convergence criterion has been applied       20           Aggregate over possible scenarios in week w:
+in this study, though it can be omitted to let the loop run to
+completion. At each iteration, the current lower bound (LB) is     21           w  rcurr curr ,w curr ,w ;
+computed and added to the set of valid, penalty-free LBs. The
+                                                                   22           w  curr curr ,w curr ,w ;
+
+                                                                   23           Add single cut to week w: w  w + w(send - v);
+
+                                                                   24      end
+
+                                                                   25 end
+
+                                                                   mean LB is updated, and stability is checked. The iteration
+                                                                   stops once the change in the mean LB falls below a threshold,
+                                                                    , and two consecutive valid solutions are obtained.
+
+                                                                      Upon convergence of the SDDP algorithm, the resulting cuts
+                                                                   are obtained. During the execution of the algorithm, cuts gen-
+                                                                   erated in each iteration are incorporated as constraints within
+                                                                   the SDDP framework. The final set of cuts is subsequently
+                                                                   implemented as constraints in the simulation model with a
+                                                                   predefined number of iterations to estimate the revenues.
+
+                                                                      After conducting the simulations, the Net Present Value
+                                                                   (NPV) method found in Figure 5 is applied to evaluate the
+                                                                   incremental cash flows generated by the various capacity
+                                                                   expansion projects described in Section III.
+
+                                                                      2) Model assumptions: The proposed methodology relies
+                                                                   on several simplifying assumptions. The hydropower plant is
+                                                                   assumed to be sufficiently small to operate as a price taker
+                                                                   within the relevant price zone, and similar assumptions are
+                                                                   commonly adopted in the literature, as observed in Helseth et
+                                                                   al. [9]. Capacity markets are assumed to remain unsaturated
+                                                                   and modeled without activation, implying that revenues stem
+                                                                   solely from capacity procurements. To avoid computational
+                                                                   complexity, the model does not consider start/stop conditions.
+
+                                                                      Long-term uncertainty is represented through a weekly
+                                                                   Markov chain, which may limit the persistence and severity
+                                                                   of extreme price-inflow combinations. Prolonged periods of
+                                                                   scarcity or flooding would likely exacerbate price conditions.
+                                       Author Accepted Manuscript version of the article by Martin Bore et al.
+                                  in 2026 22nd International Conference on the European Energy Market - EEM
+
+                                                    https://doi.org/10.1109/eem68581.2026.11589591
+                             Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+B. Optimization problem                                                                                         III. CASE STUDY
+
+1) Objective function: For a given week and price-inflow                                 The modeling framework was applied to a case study of a
+realization, the optimization problem is described in (1) is                          hydropower plant in NO2 to assess the revenue potential from
+solved. The weekly objective is to maximize immediate and                             multi-market participation, given different capacity upgrade
+future revenues across markets. To ensure feasibility in the                          configurations. The input data used in the case study are sum-
+SDDP algorithm, the model is allowed to purchase water at                             marized in Table IV, where the supply limits for the capacity
+a high penalty cost during intermediate iterations. Since the                         markets are case-specific. Since the case study focuses on a
+uncertain variables are realised within the current week, the                         forward-looking case in which a potential capacity upgrade is
+scenario index is omitted for simplicity.                                             expected to have a long lifetime, spot price data were based
+                                                                                      on THEMA Consulting Group's Power Market Outlook, using
+    max zw =                          Pe,w,t xe,w,t +          Pcc,w,t yc,w,t         the power system in 2030 and more than 40 different weather
+                                                                                      years.
+                eE\{ID Buy} tT                         cC tT
+                                                                                         To assess the added value from multi-market participation
+                -         PID Buy,w,t xID Buy,w,t - Lem ·      hwem,t + w (1)         and different levels of capacity upgrades, eight instances were
+                                                                                      run using the model framework described in II-B. Three
+                    tT                                     tT                         capacity upgrade instances, along with a trivial instance of
+                                                                                      no upgrade, were examined with and without capacity market
+2) Reservoir boundary constraints:                                                    participation (CMP).
+
+sw,t0 = S0, w = 0                                              (2)                       Across the different instances considered in this study, the
+                                                                                      SDDP algorithm was run for between 10 and 31 iterations to
+sw,t0  =  send         ,  w = 1, . . . , W                     (3)                    generate the cuts. One cut was added per week per iteration
+                                                                                      and subsequently incorporated into the simulation model for
+            w-1,tend                                                                  the corresponding instance configuration. In the simulation
+                                                                                      model, 100 iterations were performed for each instance, and
+sw,tend = S0, w = W                                            (4)                    the resulting revenues were averaged across all iterations.
+
+Smin + up  sw,t + hwem,t  Smax - down, w  W, t  T                                                       IV. RESULTS & DISCUSSIONS
+                                                                                 (5)
+                                                                                         This section presents the case study results, including annual
+   The predefined limits of the reservoir and the storage                             revenues from CMP and its seasonal distribution. These results
+capacity requirements are described in (2)-(5). For each                              are compared to annual revenues without CMP to assess the
+consecutive stage, the following constraints must be satisfied.                       added economic value, followed by an NPV analysis.
+Within a stage, no further linking variables are necessary, so
+the stage index is omitted for simplicity.                                            A. Relative change in total revenue given CMP
+
+2) Constraints for each stage:
+
+pt =                   xe,t - xID Buy,t, t  T                  (6)
+
+       eE\{ID Buy}
+
+Cmin  pt  Cmax, t  T                                           (7)                    TABLE I: Total revenue with and without CMP for various capacity upgrades
+
+pt  mi pht yd - P¯i + bi, t  T, i  I                           (8)                    Instance  With CMP (mEUR)     Without CMP (mEUR)
+
+st  =  st-1  +  It  -    1   pht yd,  t  T \ {t0}              (9)                    0 MW         23.71 (+25.84%)             18.84 (100%)
+                       1000                                                           30 MW        26.47 (+38.86%)             19.06 (100%)
+                                                                                      60 MW        28.32 (+50.73%)             18.79 (100%)
+       yc,t  pt - Cmin, t  T                                   (10)                   90 MW        30.56 (+57.46%)             19.41 (100%)
+
+cCd
+
+       yc,t  Cmax - pt, t  T                                   (11)                      Table I shows the relative change in total revenue when
+                                                                                      CMP is included in the model. The results indicate that total
+cCu                                                                                   annual revenues increases substantially when capacity markets
+                                                                                      are accessible. However, the absolute revenue gain grows
+yc,t  Vcm,tax, c  C, t  T                                      (12)                   at a diminishing rate as the capacity upgrade increases, as
+                                                                                      illustrated by comparing the 90 MW upgrade with the trivial
+xe,t  Vem,tax Ae, e  E \ {DA}, t  T                            (13)                   instance. Capacity market revenues account for about 30% of
+                                                                                      total revenue in the former case, compared to roughly 20% in
+   In (6)-(8), the energy production is defined, which must                           the trivial instance. This suggests that larger capacity upgrades
+remain within the predefined limits and not exceed the lin-                           can be more beneficial, although they might affect market
+earized PQ-curve. The reservoir balance is ensured in (9),                            saturation.
+linking the current reservoir level to the previous state and
+the production. Respecting the available margin for selling                              Further, revenues from the energy markets appear largely
+downward and upward regulation is ensured in (10)-(11)                                unaffected by increased capacity, although minor differences
+respectively. Finally, (12)-(13) define the maximum trading                           are observed. These differences may be related to variation in
+limits for selling capacity in the capacity markets and energy
+in the intraday market.
+                         Author Accepted Manuscript version of the article by Martin Bore et al.
+                    in 2026 22nd International Conference on the European Energy Market - EEM
+
+                                      https://doi.org/10.1109/eem68581.2026.11589591
+               Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+the number of iterations required for convergence. Neverthe-             results indicate that approximately 50­75% of the reported
+less, since reservoir storage constraints must be satisfied given        investment costs for the Tussa II project [6] could be covered
+the inflow conditions, additional capacity cannot necessarily be         by the additional revenues from the capacity upgrade. By
+converted into higher energy sales.                                      comparison, the NPV without CMP covers only 4­5.5% of
+                                                                         the investment cost. Although the increased revenue from
+B. Capacity market revenues spread for capacity upgrades                 a 90 MW capacity upgrade alone may not fully cover the
+                                                                         associated investment and O&M costs, the results highlight
+     Fig. 3: Weekly revenue generated from CMP with 30MW upgrade.        that participation in capacity markets provides substantially
+                                                                         stronger investment incentives.
+   Figure 3 suggests that there are large seasonal variations
+in revenues generated from participating in capacity markets.               Apart from the chosen discount rate, several other factors
+During late winter and early spring, the revenue potential is            may also affect the results. Revenue streams may material-
+rather low compared to the spring flood occurring around April           ize later in the project's lifetime due to long planning and
+and May. It also shows that there are larger deviations from             construction lead times, which can reduce the overall NPV.
+the mean revenue during the second half of the year.                     Conversely, the model may also underestimate some of the
+                                                                         revenue potential, as the mFRR capacity and energy activation
+TABLE II: Annual capacity revenue across upgrade instances with 95% CI.  market is not included. Furthermore, deterministic capacity
+                                                                         market prices from 2024 have been used, and future prices may
+Instance       Mean [mEUR]        2.5% [mEUR]     97.5% [mEUR]           deviate from these levels in either direction, which motivates
+                                                                         the need for modeling them stochastically. Klaeboe et al.
+0 MW upgrade                5.63  5.05 (-10.3%)     6.07 (+7.8%)         [19] found no significant information between spot prices and
+30 MW upgrade               7.68    7.12 (-7.3%)    8.26 (+7.6%)         balancing market prices, a finding that was later supported in
+60 MW upgrade               9.60    8.80 (-8.3%)   10.38 (+8.1%)         the work by Backe et al. [20]. Hence, incorporating stochastic
+90 MW upgrade             11.46                    12.34 (+7.7%)         capacity market prices would likely require separate clustering
+                                  10.66 (-7.0%)                          and transition probabilities, thereby increasing model com-
+                                                                         plexity. To mitigate the associated computational burden, a
+   Examining Table II reveals that annual mean revenue spans             coarser temporal resolution could be applied in the SDDP
+from 5.63 mEUR to 11.46 mEUR for non-upgrade and 90MW-                   algorithm.
+upgrade, respectively. Based on the estimated 95% CI, the
+result may range from 10.3% below to 7.7% above the mean.                                           V. CONCLUSION
+Considering the magnitude of the revenue and the lifetime
+of a capacity upgrade, this indicates that an investor faces                This paper develops an SDDP framework to represent
+a prominent variability in expected revenues from capacity               uncertainty in energy prices and inflow. Market simulations
+markets.                                                                 for 2030 across multiple weather years are used to generate
+                                                                         correlated price-inflow trajectories, and the resulting SDDP
+C. Magnitude on investment and OM-cost                                   cuts are embedded in a simulation model to assess the in-
+                                                                         cremental revenue impacts of capacity upgrades and market
+TABLE III: NPV analysis of a 90 MW capacity upgrade using t=40 with      participation strategies for a hydropower plant in NO2.
+CMP (without CMP)
+                                                                            Results from the case study indicate that the additional eco-
+r    NPV per MW [mEUR/MW] NPV total [mEUR]                               nomic value of a capacity upgrade, even when including CMP,
+                                                                         is not sufficient to make the investment commercially viable
+3%             1.76 (0.15)        158.25 (13.05)                         under industry-specific discount rates. However, the inclusion
+                                                                         of CMP yields an NPV that is about twelve times higher
+7%             1.01 (0.08)        91.27 (7.53)                           than without CMP, highlighting the importance of including
+                                                                         capacity markets when evaluating such investment decisions.
+10%            0.74 (0.06)        66.95 (5.52)                           Given that hydropower producers have limited opportunities
+                                                                         for greenfield projects, the additional value from CMP iden-
+   Table III demonstrates the marginal NPV of the revenue                tified in this study is particularly relevant. The distribution of
+over the project lifetime per MW of added capacity with                  revenues across markets also suggests diminishing marginal
+and without CMP. For an investor, this value represents                  returns from larger capacity upgrades when capacity markets
+the maximum investment cost that can be justified when                   are included. When capacity markets are excluded, revenues
+accounting for both the upfront capital expenditure and the              remain largely stable due to limited water availability for
+discounted operation and maintenance (O&M) costs related to              additional production.
+the capacity upgrade.
+                                                                            Despite these results, limitations in market data represen-
+   Depending on whether a conservative discount rate of 10%              tation remain. Future work should address stochastic capacity
+or a more industry-relevant rate of 6% is applied [18], the              prices, reserve activation and saturation, mFRR markets, and
+                                                                         tax considerations to improve realism and decision-support
+                                                                         relevance.
+          Author Accepted Manuscript version of the article by Martin Bore et al.
+     in 2026 22nd International Conference on the European Energy Market - EEM
+
+                       https://doi.org/10.1109/eem68581.2026.11589591
+Distributed under the terms of the Creative Commons Attribution License (CC BY 4.0)
+
+                             REFERENCES                                                      Fig. 4: Illustration of scenario tree propagation
+
+ [1] J. Gorenstein Dedecca, M. Ansarin, C. Bene, T. Van Delzen,                              TABLE IV: Summary of Case Study Input Data
+      L. Van Nuffel, and H. Jagtenberg, "Increasing flexibility in the eu
+      energy system: Technologies and policies to enable the integration of      Parameter                       Value
+      renewable electricity sources," European Parliament, Study PE 769.347,     Production limits
+      policy Department for Transformation, Innovation and Health; requested     Reservoir storage capacity      [Cmin = 15.504M W, Cmax = 79.04M W ]
+      by the Committee on Industry, Research and Energy (ITRE). QA-01-25-        Intraday market share limit
+      027-EN-N. [Online]. Available: https://www.europarl.europa.eu/RegDa                                        [0 GWh, 101.2 GWh]
+      ta/etudes/STUD/2025/769347/ECTI_STU%282025%29769347_EN.pdf                 aFRR Up supply limit
+                                                                                                                 10% of hourly volume
+ [2] Å. G. Tveten, S. T. Jelsness, M. R. Brubæk, K. H. Storaker,                 aFRR Down supply limit
+      and O. K. Ådnanes, "Tilstanden i kraftsystemet 2025: Kraftåret                                             30 MW   ··CCCCCmm mm maaaxaaxxxx
+      2024 og utviklingen fram mot 2029." [Online]. Available: https:            FCR-N supply limit              30 MW
+      //publikasjoner.nve.no/rapport/2025/rapport2025_10.pdf                                                     8 MW ·  ·  CmCamxax
+                                                                                 FCR-D supply limit              32 MW        C max
+ [3] Statnett, "Kortsiktig markedsanalyse 2024­2029," Sep. 2024.                 Capacity upgrade instances
+ [4] "Tilstanden i kraftsystemet 2025: Kraftåret 2024 og utviklingen fram        Capacity market prices          0 MW, 30 MW, 60 MW, 90 MW
+                                                                                 Intraday prices
+      mot 2029," Apr. 2025.                                                      Spot prices                     NO2 (2024)
+ [5] J. Reneses, J. Barquín, J. García-González, and E. Centeno, "Water          Inflow data
+                                                                                 Discount rates (NPV)            NO2 (2024)
+      value in electricity markets," International Transactions on Electrical    Planning resolution
+      Energy Systems, vol. 26, no. 3, pp. 655­670, 2016. [Online]. Available:                                    Simulated 2030 outlook (hydro years 1980 - 2024)
+      https://onlinelibrary.wiley.com/doi/abs/10.1002/etep.2106
+ [6] E. K. Vangsnes. (2026, Jan.) Tommel opp for milliardinvestering                                             Historical series (1980 - 2024), scaled to plant size
+      ­ vil firedoble effekten med nytt kraftverk. [Online]. Available:
+      https://www.europower.no/vannkraft/tommel- opp- for- milliardinvesteri                                     3%, 7%, 10%
+      ng-vil-firedoble-effekten-med-nytt-kraftverk/2-1-1933184
+ [7] Ekspertutvalget for vannkraftbeskatning, "Skattlegging av                                                   Weekly stages, hourly operation
+      vannkraftverk," Oslo, 2019, norwegian Official Report submitted
+      to Finansdepartementet 30. september 2019. [Online]. Available:                           Fig. 5: NPV method used in the case study
+      https://www.regjeringen.no/no/dokumenter/nou-2019-16/id2670343/
+ [8] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic             r: discount rate [3%, 7%, 10%]
+      optimization applied to energy planning," Mathematical Programming,
+      vol. 52, pp. 359­375, 1991.                                                t: project lifetime [40 years]
+ [9] A. Helseth, M. Fodstad, and B. Mo, "Optimal medium-term hydropower
+      scheduling considering energy and reserve capacity markets," vol. 7,       CF : constant annual cash flow throughout the project lifetime
+      no. 3, pp. 934­942, Jul. 2016.                                                  r(1+r)t
+[10] A. Shapiro, W. Tekaya, M. Pereira Soares, and J. P. da Costa, "Worst-       A=  (1+r)t -1
+      case-expectation approach to optimization under uncertainty," Opera-
+      tions Research, vol. 61, no. 6, pp. 1435­1449, 2013.                       NPV  =  CF
+[11] A. Helseth and B. Mo, "Hydropower aggregation by spatial decom-                      A
+      positionan sddp approach," IEEE Transactions on Sustainable Energy,
+      vol. 14, no. 1, pp. 381­392, 2023.                                         Fig. 6: Weekly revenue generated from CMP with 60MW upgrade.
+[12] M. N. Hjelmeland, A. Helseth, and M. Korpås, "Medium-term hy-
+      dropower scheduling with variable head under inflow, energy and reserve    Fig. 7: Weekly revenue generated from CMP with 90MW upgrade.
+      capacity price uncertainty," Energies, vol. 12, no. 1, p. 189, 2019.
+[13] A. Helseth, B. Mo, M. Fodstad, and M. N. Hjelmeland, "Co-optimizing
+      sales of energy and capacity in a hydropower scheduling model," in 2015
+      IEEE Eindhoven PowerTech. Eindhoven, Netherlands: IEEE, Jun. 2015,
+      pp. 1­6.
+[14] J. I. Pérez-Díaz, I. Guisández, M. Chazarra, and A. Helseth, "Medium-
+      term scheduling of a hydropower plant participating as a price-maker
+      in the automatic frequency restoration reserve market," Electric Power
+      Systems Research, vol. 185, p. 106399, 2020. [Online]. Available:
+      https://www.sciencedirect.com/science/article/pii/S0378779620302054
+[15] J. K. Brekke, "Medium-term hydropower scheduling with provision of
+      capacity reserves and inertia," 2016.
+[16] IBM. (2024) What is k-means clustering? Accessed: 27 Feb 2026.
+      [Online]. Available: https://www.ibm.com/think/topics/k-means-cluster
+      ing
+[17] Markov Chains (Chapter 8), University of Auckland, n.d. [Online].
+      Available: https://www.stat.auckland.ac.nz/~fewster/325/notes/ch8.pdf
+[18] Norges vassdrags- og energidirektorat. (2024) Kostnader for
+      kraftproduksjon. [Online]. Available: https://www.nve.no/energi/an
+      alyser-og-statistikk/kostnader-for-kraftproduksjon/
+[19] G. Klæboe, A. L. Eriksrud, and S.-E. Fleten, "Benchmarking time
+      series based forecasting models for electricity balancing market prices,"
+      Energy Systems, vol. 6, no. 1, pp. 43­61, 2013. [Online]. Available:
+      https://doi.org/10.1007/s12667-013-0103-3
+[20] S. Backe, S. Riemer-Sørensen, D. A. Bordvik, S. Tiwari, and C. A.
+      Andresen, "Predictions of prices and volumes in the nordic balancing
+      markets for electricity," in 2023 19th International Conference on the
+      European Energy Market (EEM). IEEE, 2023, pp. 1­6.
+
+                               APPENDIX
+

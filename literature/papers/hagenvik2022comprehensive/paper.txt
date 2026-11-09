@@ -1,0 +1,464 @@
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+      A Comprehensive Simulator for Hydropower
+                     Investment Decisions
+
+1st Hans Olaf Ha°genvik                      2nd Siri Mathisen            3rd Arild Helseth           4th Birger Mo
+SINTEF Energy Research                    SINTEF Energy Research       SINTEF Energy Research    SINTEF Energy Research
+
+   Trondheim, Norway                        Trondheim, Norway            Trondheim, Norway         Trondheim, Norway
+hans.hagenvik@sintef.no                   siri.mathisen@sintef.no       arild.helseth@sintef.no    birger.mo@sintef.no
+
+   Abstract--Due to a higher share of power production from            requirement and the presence of multiple uncertainties limit
+renewable sources with high short-term variation, hydro systems        the amount of physical details that can be represented within
+must more often operate closer to their components' physical           acceptable computation times. Research is ongoing to improve
+limits. To simulate system behaviour, a hydropower system              on the properties that can be modelled. Examples typically
+simulator must therefore include most physical details. We             include linearization and convexifications [1], i.e. the physical
+present a simulator for hydropower investment analysis that            problem is simplified to fit the requirements of the SDDP
+combines a medium-term production planning model based on              method.
+stochastic dual dynamic programming principles with a detailed
+and deterministic short-term hydro scheduling model. To reduce            To provide simulation results that are more in line with
+computation times, the system description for the short-term           the physical and judicial reality some SDDP implementations
+model may include only a snipped subset of the plants and reser-       include a final simulation, performed after convergence, where
+voirs without deteriorating the results. The simulator is verified in  the model properties are changed to be more in line with the
+a case study where an investment decision has been analysed for        plant properties [2]. For example, in the SDDP implementation
+a Norwegian hydropower producer. The combination of medium-            used in Scandinavia, the maximum discharge limit is made
+term optimization and short-term, detailed simulation is a useful      dependent on the reservoir level at the beginning of each
+decision support tool and provides both economic results and           decision stage and the final simulation can be done using unit
+detailed physical information about the system behaviour.              start-up costs. Furthermore, all forward simulations are done
+                                                                       for inflow scenarios constructed from historical observations.
+   Index Terms--Investment analysis, Hydropower Scheduling,            With these differences between the forward simulation and
+Simulator, Stochastic Optimization                                     backward recursion, the final simulation results are closer to
+                                                                       the reality, but there is no longer any guarantee that they are
+                          I. INTRODUCTION                              optimal (according to the applied strategy).
+
+   The European electricity system, which Norway and Swe-                 The simulator described in this paper takes the idea of a
+den are parts of, is developing to a system with much more             final simulation a large step further. With the final set of cuts
+new renewable production, in particular wind and solar pro-            from the SDDP method as input, an applied short-term hydro
+duction, giving more short-term variation in market prices and         scheduling model (SHOP), referred to as the short-term model
+an increased need for short-term balancing. To benefit from            (STM), is used to optimize the hydro scheduling problem at
+this development the hydro system must more often operate              each decision stage, while providing all details and physical
+near its limits and it will consequently be more important             properties, see [3], [4] and [5]. The STM is deterministic
+to include all the physical detailed properties of the hydro           and based on a combination of successive linearization and
+system in investment analysis. This is the motivation for the          mixed-integer linear programming. To generate a strategy
+development of the simulation tool described in this paper.            for operation of a hydropower production river system, the
+The purpose is to develop a comprehensive simulator that can           medium-term SDDP method ProdRisk is used [6], referred to
+calculate profits from different investment alternatives where         as the medium-term model (MTM). ProdRisk is in operational
+detailed physical properties are important for the evaluation.         use in Scandinavia for medium-term hydro scheduling by most
+The simulator should provide results that are as close to              large hydropower producers. The producer is assumed to be a
+optimal as possible with regards to both short and medium-             risk-neutral price taker and each river system can therefore
+term variations and uncertainties in market prices and inflows.        be optimized independently. The input price forecasts are
+In Scandinavia most hydro production systems along a water             typically calculated by the market players using fundamental
+course consist of a combination of large and small reservoir           market models, see [7] and [8]. For the simulator development
+systems.                                                               we assume that the price is given by a set of scenarios for the
+                                                                       future. An example of detailed simulation of a system with
+   The stochastic dual dynamic programming (SDDP) method               substantial share of hydropower is presented in [9], where the
+is state of the art for solving stochastic reservoir optimization      technical details are emphasized and the hydropower strategy
+problems, and requires a convex optimization problem to allow
+for reasonable convergence rates. Both the SDDP convexity
+
+   The work was funded by the RCN (PNO 257588).
+
+"978-1-6654-1211-7/22/$31.00 ©2022 IEEE"
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+is computed by a separate and less detailed procedure. A           A. Medium-term Scheduling
+simulator similar to that presented here but with a different
+model setup was applied for benchmarking the operation of a           The medium-term scheduling task solved by the MTM has
+hydropower system was documented in [10].                          a planning horizon that is usually between 104 and 208 weeks.
+                                                                   In the forward simulations, the recorded (or predicted) inflow
+   Because of the methodology and because it is used op-           and price series are used as input to the model, whereas in
+erationally by many customers throughout the Nordics and           the backward recursion, stochastic models describe the inflows
+Central Europe, the MTM includes almost all features needed        and prices [13], [6]. The model uses weekly decision stages,
+to give a near implementable solution for any physical hydro       assuming known inflows and prices for each time period of
+production system. A combination of optimization and simu-         the coming week. For a given market price and stage, the
+lation often gives the best decision support tools, and many       cuts from the MTM have the following form (we refer to [13]
+generalized tools combine optimization and simulation [11].        for a more thorough description of the cuts and how they are
+The contributions of this paper are twofold: First, we describe    calculated):
+a new simulator framework coupling an STM and an MTM
+model, and thus combining optimization and detailed simula-            + j v - vj + µj z - zj  j, j = 1, .., J (1)
+tion. The simulator is validated in a realistic case study in the
+southwestern part of Norway. Second, the concept of system            where j and µj are the cut coefficients, j, vj and zj
+downscaling (or "snipping") is mathematically elaborated and       are the initial profits, reservoir volumes and inflows, for cut
+validated in the same case study. We show how computation          j,  is the future expected profit, v are the reservoir volume
+times can be substantially reduced by snipping the system prior    variables and z are the inflow variables, which are inputs to
+to running the STM. The simulator is especially useful for the     the algorithm and known for a given week and scenario.
+profit calculations that are part of an investment analysis.
+                                                                      When the medium-term scheduling finishes, the cuts are
+                   II. SIMULATOR FRAMEWORK                         stored and made available as input for the short-term schedul-
+                                                                   ing.
+   The production planning simulator presents a unified user
+interface for a consecutive process, illustrated in Fig.1. As in-  B. Short-term Scheduling
+put, it requires a set of static system descriptions for the MTM
+and the STM, as well as forecasts and updates for inflow and          The STM solves weekly deterministic decision problems
+price given as a set of scenarios (typically  30). The variation   using the cuts from the MTM to represent the future value of
+between the scenarios corresponds to the sample space that is      water in the reservoir at the end of the week. The STM weekly
+normally found in the MTM. The MTM produces a strategy             decision problem differs from the MTM weekly decision
+(a set of cuts) for the optimization horizon, which is used        problem as it is more detailed and contains features that are
+as input to the STM. The STM then performs an optimized            simplified in the MTM to reduce computation time and have
+production planning simulation with fine time resolution and       a convex problem. Once the operation of one week in a simu-
+physical realistic details for each stage, using the cuts as end   lation scenario has been found using the STM, the end values
+value. The output from the simulator are the simulation results    are used as start values in the next week and the procedure
+from both the MTM and STM.                                         is repeated. This is very similar to how the short-term model
+                                                                   is applied for operational decisions. However, when applied
+   The simulator is implemented in the Python programming          for operational decisions, only the decisions for the first day
+language, using Python APIs of the latest official versions of     are implemented. The whole model chain would typically be
+the STM and MTM. The MTM and STM both rely on a opti-              rerun with updated information (prices and inflows, planned
+mization solver to sove linear and mixed integer programming       revisions etc) the next day. This paper presents a basic version
+problems. In this work the commercial optimization solver          of the simulator, running the MTM only once and thereafter
+CPLEX is applied [12].                                             the STM sequentially week by week. This is repeated for all
+                                                                   scenarios simulated without any updating of the strategy.
+
+Fig. 1. Simulator Framework                                                                III. SNIPPED SYSTEM
+
+                                                                      The simulation computation times might be very long for
+                                                                   large hydro production systems consisting of more than 30
+                                                                   reservoirs and plants along the same water course, due to the
+                                                                   detailed modelling used in the short-term model. Therefore,
+                                                                   it can be practical for some analyses to be able to run the
+                                                                   simulator for only a snipped part of the whole system. The
+                                                                   MTM is run for the whole water course, but the detailed and
+                                                                   realistic final simulation with the STM is run on the part of the
+                                                                   system directly connected to the investment, which is referred
+                                                                   to as a snipped system. Investment type analyses are typically
+                                                                   done for many different cases and assumptions about the future
+                                                                   and shorter computation times are beneficial. This section
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+describes how to use the strategy or cuts that are calculated       + j,m - j,dm vm + j,dmvm  j.  (4)
+for the whole system in a final detailed simulation for a
+snipped system. The snipping part is based on the following           Here j,dm is a vector of cut coefficients representing the
+assumptions:                                                       first reservoir that is downstream and not part of the snipped
+                                                                   system. If the system is a straight cascade of reservoirs, j,dm
+   · All simulation results (reservoirs, discharges) from the      is a vector with dimension equal to the number of reservoirs
+      MTM are available to the snipped system.                     in the snipped system, all with the same cut coefficient from
+                                                                   the first reservoir downstream that are not part of the snipped
+   · Discharge/bypass/overflow from modules upstream the           system. Again, simulated values from the MTM were used
+      snipped system are treated as inflow to the snipped          and the part of the cuts that comes from utilisation of water
+      system.                                                      downstream the snipped modules were moved to the right hand
+                                                                   side. This gives:
+   · The simulated reservoir volumes from the MTM are
+      not significantly different from the optimized reservoir              + j,m - j,dm vm  j - j,dmvm,sim, (5)
+      volumes from the STM. This can to some extent be
+      controlled by invoking the updates (grey box) in Fig.1.      where vm,sim are the reservoir storages belonging to the
+                                                                   snipped system, simulated in the MTM for the same week
+   Assume now that the whole water course consists of N            and inflow year. The final expression for the reduced cuts of
+reservoirs. The snipped system consists of M reservoirs, with      the snipped system is:
+D reservoirs downstream the snipped system and U reser-
+voirs upstream the snipped system (where N=M+D+U), using           + j,m - j,dm vm  ,             (6)
+subscript m to represent a reservoir included in the snipped
+system, d to represent a reservoir downstream the snipped
+system and subscript u to represent a reservoir upstream the
+snipped system. The original cuts for the whole system (1)
+can be rearranged and described by:
+
+        + j,uvu + j,mvm + j,dvd                                    j =j - j,dmvm,sim
+
+       +µj,uzu + µj,mzm + µj,dzd  j,                               =j - µj,uvu - j,uvu,sim
+
+                                                 (2)               - µj,dvd - j,dvd,sim
+
+where                                                              - µj,mvm - j,dmvm,sim
+
+            j = j + j,uvu + j,mvm + j,dvd                             where vd,sim and vu,sim are the reservoir storages down-
+       +µj,uzu + µj,mzm + µj,dzd, j = 1, .., J.                    stream and upstream respectively, simulated in the MTM for
+                                                                   the same week and inflow year. In (6), the reduced cuts for
+   It is desirable to utilize as much as possible of the informa-  the snipped system based on the original cuts from the whole
+tion given by the cuts calculated for the whole system when        water course are shown. If the STM for the snipped system
+simulating for the snipped system. To do this the simulation       delivers the exact same reservoir levels as the results from
+results from the MTM are used. The snipped cut description         the MTM for the whole system, then the exact same cuts are
+contain MTM simulation results from the reservoirs and there-      binding. In that case, the cut description would be superfluous,
+fore become scenario specific. Moving the parts that are known     as fixed end-of-week reservoir volumes could be used in the
+to the right hand side, this gives:                                STM optimization. However, the STM includes more details
+                                                                   and it might be beneficial to deviate from the MTM. The
+        + j,mvm  j,                              (3)               reduced cut description allows for this flexibility and utilize
+                                                                   as much as possible of the information from the strategy that
+       j = j - j,uvu,sim - µj,uzu                                  is optimized for the whole water course.
+
+       -j,dvd,sim - µj,dzd - µj,mzm.                                                         IV. CASE STUDY
+
+   Here vu, vd and all inflows zu, zm, zd are assumed known        A. Case Description
+from the full model and can be moved to the right hand
+side and included in j. The cut represented by (3) has                The simulator is demonstrated in a case study concerning
+the correct dimension, i.e. only the m reservoirs that are part    an investment in the Sira-Kvina hydropower system, which
+of the snipped system are included. However, because the           is owned and operated by the Sira-Kvina power producing
+downstream reservoirs are removed from the snipped system,         company on the southwest part of Norway. The system con-
+the dual values for the short-term problem do not have the         sists of multiple reservoirs and power plants along two main
+correct reference to sea level. The STM shall only decide          branches, which meet in a tunnel junction above Tonstad
+on decisions from modules m down to the first downstream           power plant (see Fig.2). The investment in question is to
+reservoir(s) that are not part of the snipped system. Equation     upgrade the runners of the two reversible pump turbines in
+(3) can be rewritten as follows:                                   the Duge pumped storage plant [14]. The simulator is used to
+                                                                   provide profit estimates that may be included in an evaluation
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+of the profitability of an upgrade. The simulation results may                                              1400                                 Percentiles
+also be used to investigate potential consequences in the rest                                              1200                                         0%
+of the system caused by the upgrade.                                                                        1000                                         25%
+                                                                                                                                                         75%
+                                                                            Volume [Mm3]                     800                                         100%
+                                                                                                             600                                         Average
+                                                                                                             400
+                                                                                                             200
+
+                                                                                                                 0
+
+                                                                                                                    Mar 2030 May 2030  Jul 2030  Sep 2030 Nov 2030 Jan 2031
+                                                                                                                                           Date
+
+                                                                            Fig. 3. Reservoir operation of Svartevatn using results from the MTM (solid
+                                                                            lines), STM with full model (dashed lines) and STM with snipped model
+                                                                            (dotted lines).
+
+Fig. 2. Sira-Kvina watercourse with framed snipped system. Figure obtained                                  30                                   Percentiles
+with permission from Sira-Kvina Kraftselskap (2020)
+                                                                                                                                                                             0%
+   A constraint in the operation of the pump in Duge is of
+particular interest. Downstream Duge, there are three reser-                                                                                                                                                                                               100%
+voirs that are connected when the water level is sufficiently                                               25
+high: Gravatn, Valevatn and Kilen, see Fig.2. The STM models
+this as two separate reservoirs "Kilen" and "Gravatn", where                                                                                                                                                                                               Average
+the physical reservoir Valevatn is included in Kilen in the
+model. The combined tunnel and channel flow from Kilen                                    Production [GWh]  20
+to Gravatn is made dependent on the water level in the
+respective reservoirs, to get a more physically accurate system                                             15
+description. In the MTM such head dependent water flow
+may not be modelled, and all three reservoirs are therefore                                                 10
+modelled as one reservoir. Duge may only pump water from
+Kilen to Svartevatn when the reservoir level in Kilen is above                                              5
+a minimum level (in this analysis assumed to be 651 masl.
+throughout the year, although the real constraint description                                               0
+is more complicated). This constraint is not modelled in the
+MTM, but is included in the STM. Due to this difference, the                                                        Mar 2030 May 2030 Jul 2030   Sep 2030 Nov 2030 Jan 2031
+operation of the pump in Duge is expected to depend on which
+simulation results are used.                                                                                                           Date
+
+   Future inflows are based on the historical period 1958-2017,             Fig. 4. Production at Duge without the investment, using results from the
+assuming a 5% increase in inflows due to climate change [15],               MTM (solid lines), STM with full model (dashed lines) and STM with snipped
+[16]. The power price forecast is a result of the research done             model (dotted lines).
+in [17], where the balance between supply and demand in
+Northern Europe was simulated with a fundamentally based                    The plot shows the 0, 25, 75 and 100 percentiles and the
+market model using a low-emission scenario for Europe in                    average reservoir volume during 52 weeks. The simulation
+2030. As elaborated in Section II, the simulator first runs                 methods show qualitatively the same results, although there is
+the MTM for the whole Sira-Kvina hydro production system                    a perceptibly lower 100-percentile for the STM-results for the
+to produce a strategy. The strategy produced in the MTM is                  full model in April 2030 and lower 0-percentile for the MTM-
+simulated using the STM for two separate cases:                             results in February 2030. The production from Duge without
+                                                                            the investment is shown for all three simulation alternatives
+   1) The whole Sira-Kvina system                                           in Fig.4. The plot shows two percentiles and the average
+   2) A snipped system containing the reservoirs Svartevatn,                production during 52 weeks. The 100-percentile shows a
+                                                                            significant difference between the MTM-results and the STM-
+       Gravatn and Kilen, and the power plants Duge and                     results after June, but the averages of the simulation methods
+       Tjørhom. The area in the snipped system is framed in                 are closer to one another.
+       red in Fig.2.
+                                                                               1) Investment decision: The main economic results from
+B. Results                                                                  the simulations with and without the planned investment are
+                                                                            presented in Table I. As the results from the snipped STM
+   The reservoir operation of Svartevatn without the invest-                simulation include results from the snipped area only, these
+ment, for all three simulation alternatives, is shown in Fig.3.             results are compared to the results from the same plants from
+                                                                            the simulations using the MTM and the full STM system
+                                                                            description. The estimated income increase from the upgrade
+                                                                            may be calculated as the difference between the net income
+                                                                            of the upgraded compared to the current system.
+
+                                                                               Based on this calculation, the three different simulation
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+               200                             STM                                                                                                          MTM
+               150                             STM, snipped
+               100                             STM - upgraded                                                                                               STM
+                                               STM - upgraded, snipped
+                 50                                                                                          80                                             STM, snipped
+                   0
+                                                                             Pumping volume [m3/s]                                                          MTM - upgraded
+              ¡50
+             ¡100                                                                                                                                           STM - upgraded
+             ¡150
+             ¡200                                                                                            60                                             STM - upgraded, snipped
+
+Flow [m3/s]         0                                                                                        40
+
+                                                                                                             20
+
+                                                                                                             0
+
+                       20  40     60  80  100                                                                0       5  10   15       20           25   30
+
+                               %                                                                                             %
+
+Fig. 5. Duration curve showing the discharge from Kilen to Gravatn relative                                  Fig. 6. Duration curve showing the pump activity in Duge.
+to the share of time this discharge is kept
+
+methods (MTM, STM and STM with the snipped system                            Total hours (all 60 scenarios)  14k                                                           MTM
+description) estimate the increased annual income from the                                                   12k                                                           STM
+upgrade to be 0.4 MEUR, 1.3 MEUR and 0.4 MEUR,                                                               10k        645      650               655                     STM, snipped
+respectively. Table I shows that all three simulations give
+approximately the same estimate of an increased net income                                                    8k                                            660
+from Duge (0.3 - 0.4 MEUR). The STM simulation also                                                           6k
+indicates a significantly increased income from the largest                                                   4k
+power plant Tonstad as a result of the upgrade in Duge. A po-                                                 2k
+tential explanation of this increase could be that the upgraded
+pumping capacity in Duge will provide extra flexibility to the                                                  0
+operation of the largest reservoir Svartevatn.                                                                  640
+
+   2) Flow between Kilen and Gravatn: The flow between                                                                       Reservoir head Kilen
+Kilen and Gravatn serves as an example of a physical detail
+that may be modelled in the STM, but that is challenging to                  Fig. 7. Histogram of pumping hours at Duge for different reservoir levels in
+model in the MTM (due to the convexity requirement of the                    Kilen.
+SDDP method). According to the power producer, a limited
+flow does not suppress the daily operation of the nearby power               m3/s). The consumption of each turbine depends on pumping
+plants significantly. It may still be reassuring that the profit             volume and head, tunnel loss in the plants main tunnel, the
+estimates from the simulator includes physical details such                  turbines' penstocks and the start-up costs of each turbine. The
+as this flow in the calculations. It could also be of interest               pump description in the MTM is simpler: The two turbines
+to evaluate how the given upgrade affects the flow between                   are modelled as one pumping unit, where maximum pumping
+Kilen and Gravatn. The duration curve for the flow is shown                  volume decreases linearly with pumping head, consuming a
+in Fig.5 for both investment alternatives and for both STM                   constant power if the pump is on. Fig.6 indicates that the
+simulation alternatives. The plot shows that there is little                 snipped STM simulation could be sufficient to show more
+qualitative difference between the two simulation alternatives.              accurate simulation of the pumping units. All three simulation
+This suggests that if the simulator was run to get estimates                 alternatives indicate the same qualitative (intuitive) result that
+of physical details such as this flow, it would in this case be              investing in more efficient pumping turbines will result in
+sufficient to run the STM with a snipped system description                  increased pump flow in Duge.
+(thus saving some computation time). The plot also indicates
+that the flow is not expected to change significantly if the                    Fig.7 shows a histogram of the total number of pumping
+investment in Duge is carried out.                                           hours in Duge for different reservoir levels in Kilen, for the
+                                                                             three simulations of the current system (without upgrade). The
+   3) Pump activity in Duge: Fig.6 is another illustration                   figure shows how the imposed restriction of no pumping if
+of how the simulator provides more realistic and physical                    the reservoir level of Kilen is below 651 masl. is taken into
+accurate results for the system operation. The plot shows                    account by the STM simulations. The MTM cannot model this
+duration curves for the pump activity in Duge from Kilen                     restriction due to the convexity requirements in the SDDP.
+to Svartevatn for both investment alternatives and for both
+STM simulation alternatives. In the STM the two pumping                         For this system, the simulator computation time is dis-
+turbines are modelled separately, allowing for pumping with                  tributed over the MTM run, lasting 26 hours, and the STM run,
+only one turbine (Q  40 m3/s) or two turbines (Q  60                         lasting 58 hours for the full Sira-Kvina system and 10 hours
+                                                                             for the snipped system. The reported run times were from
+                                                                             the simulations of the upgraded system, which were run on a
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+© 2022 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media, including
+    reprinting/republishing this material for advertising or promotional purposes, creating new collective works, for resale or redistribution to servers or lists,
+                                                            or reuse of any copyrighted component of this work in other works
+
+                                                TABLE I
+                                         ECONOMIC RESULTS
+
+[MEUR]           Current                        Upgraded                                        Diffa
+                                                  MTM                                           MTM
+Plant            MTM        STM    STM snipped     19.8                     STM    STM snipped         STM   STM snipped
+                            18.8         18.9       -5.6                    19.9         20.0    0.9    1.1         1.1
+Duge production  19.1        -5.3        -5.2      26.2                      -6.1        -6.0    -0.5  -0.8        -0.8
+                            25.2         26.0       5.5                     25.4         26.0    0.1    0.2         0.0
+Duge pumping     -5.0        5.6                   11.7                      5.6                 0.0    0.0         0.0
+                            11.8         -0.4      38.3                     11.8         -0.4    0.0    0.0         0.0
+Tjørhom          26.1       36.7         39.2      189.6                    36.7         39.6    0.0    0.1         0.0
+                            185.3                  30.0                     185.9                -0.1   0.6         0.0
+Rosskrepp        5.6        28.8                    0.0                     28.9                 0.0    0.1         0.0
+                             -1.4                  315.7                     -1.4                0.0    0.0         0.0
+Kvinen           11.7       305.5                                           306.7                0.4    1.3         0.4
+
+Solhom           38.3       38.7
+
+Tonstad          189.7
+
+A° na-Sira       30.0
+
+Total start-up costs 0.0
+
+NET INCOME       315.3
+
+NET INCOME
+
+SNIPPEDb         40.2              39.6         40.6                        39.2   40.0         0.4    0.5   0.4
+
+a Diff is Upgraded-Current               b Does not include start-up costs, as they are incomparable for different systems
+
+server with an Intel(R) Xeon(R) Silver 4116 processor with                   [2] M. N. Hjelmeland, M. Korpa°s, and A. Helseth, "Combined SDDP and
+maximum frequency of 2,1 GHz, with two kernels (8 virtual                         simulator model for hydropower scheduling with sales of capacity," in
+processors) and 16 GB RAM. The MTM was parallelized to                            Proc. 13th Power System Computation Conference, 2016.
+run in 7 processes.
+                                                                             [3] O. Fosso and M. Belsnes, "Short-term hydro scheduling in a liberalized
+               V. DISCUSSION AND CONCLUSION                                       power system," in 2004 International Conference on Power System
+                                                                                  Technology, 2004. PowerCon 2004., vol. 2, 2004, pp. 1321­1326 Vol.2.
+   The presented new simulator tool may provide income
+estimates that are based on more physically accurate modelling               [4] M. Belsnes, O. Wolfgang, T. Follestad, and E. Aasga°rd, "Applying
+in the STM than in the MTM. On the other hand, due to                             successive linear programming for stochastic short-term hydropower
+the difference between modelling in the simulation (using the                     optimization," Electric Power Systems Research, vol. 130, pp. 167­180,
+STM) and in the strategy calculation (using the MTM), there                       2016.
+is no guarantee of the optimality of the simulation results.
+The simulated increased income caused by the investment                      [5] H. I. Skjelbred, "Unit-based short-term hydro scheduling in competitive
+is therefore uncertain. In total, the STM and MTM results                         electricity markets," Ph.D. dissertation, NTNU, 2019.
+supplement each other and the combination provides more
+information than each model would alone.                                     [6] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+                                                                                  tic medium-term hydrothermal scheduling under spot price uncertainty,"
+   The case study indicates that the proposed methodology for                     in Proc. 13th Power System Computation Conference, 1999.
+simulating only a snipped part of the system using the STM
+may provide physically accurate results for this snipped part                [7] O. Fosso, A. Gjelsvik, A. Haugstad, B. Mo, and I. Wangensteen,
+with a significant reduction of computation time compared to                      "Generation scheduling in a deregulated system. the norwegian case,"
+an STM simulation of the full system. For some purposes this                      IEEE Transactions on Power Systems, vol. 14, no. 1, pp. 75­81, 1999.
+functionality might thus be useful. In this case, the simulation
+results from the MTM must be used for the remaining part                     [8] O. Wolfgang, A. Haugstad, B. Mo, A. Gjelsvik, I. Wangensteen, and
+of the system. Testing indicates that the boundaries for the                      G. Doorman, "Hydro reservoir handling in norway before and after
+snipped system seem to be of importance: one should have                          deregulation," Energy, vol. 34, no. 10, pp. 1642­1651, 2009.
+reservoirs of a satisfactory capacity in each end of the snip
+to avoid that the MTM results restrain the snipped STM                       [9] Y. Gu, J. Bakke, Z. Zhou, D. Osborn, T. Guo, and R. Bo, "A novel
+simulations.                                                                      market simulation methodology on hydro storage," IEEE Transactions
+                                                                                  on Smart Grid, vol. 5, no. 2, pp. 1119­1128, 2014.
+   Recommended future work is to investigate whether the use
+of updated cuts from re-runs of the MTM will give improved                  [10] B. Mo, S. Martino, C. Naversen, and G. Aronsen, "Benchmarking hydro
+income predictions. It is suggested that the initial reservoir                    operation by use of a simulator," in Proc. Of the 6th International
+state may play an important role for certain systems and                          Workshop on Hydro Scheduling in Competitive Electricity Markets.
+external conditions (price and inflow). This may be verified                      Springer, 2018.
+either through realistic case studies, or by designed cases
+where we expect that updating the cuts based on the initial                 [11] D. Rani and M. M. Moreira, "Simulation - optimization modelling: A
+state provides better end value setting for the short term model.                 survey and potential application in reservoirs systems operation," Water
+                                                                                  Resources Management, vol. 24, pp. 1107­1138, 2010.
+                             REFERENCES
+                                                                            [12] "IBM ILOG CPLEX optimizer," https://www.ibm.com/products?types[0]=software,
+ [1] S. Cerisola, J. M. Latorre, and A. Ramos, "Stochastic dual dynamic           accessed: 2010-09-30.
+      programming applied to nonconvex hydrothermal models," European
+      Journal of Operational Research, vol. 218, no. 3, pp. 687­697, 2012.  [13] A. Gjelsvik, B. Mo, and A. Haugstad, Handbook of Power Systems
+                                                                                  I. Springer, 2010, ch. Long- and medium-term operations planning
+                                                                                  and stochastic modelling in hydro-dominated power systems based on
+                                                                                  stochastic dual dynamic programming, pp. 33­55.
+
+                                                                            [14] B. Mo and H. O. Ha°genvik, "Applying the prodrisk- shop simulator for
+                                                                                  investment decisions," SINTEF, HydroCen Report nr.19, Tech. Rep.,
+                                                                                  2020. [Online]. Available: https://hdl.handle.net/11250/2716944
+
+                                                                            [15] B. Mo, G. Doorman, B. Grinden, D. Henning, and M. Togeby, "Impacts
+                                                                                  of climate change on renewable energy resources: Their role in the
+                                                                                  nordic energy system: Energy system analyses," Nordic Energy Reser-
+                                                                                  ach, Nord 2007:003, Tech. Rep., 2007.
+
+                                                                            [16] J. Styve, B. Mo, and O. Wolfgang, Climate change and energy systems :
+                                                                                  impacts, risks and adaptation in the Nordic and Baltic countries, 2012,
+                                                                                  ch. The Nordic power system in 2020. Impacts from changing climatic
+                                                                                  conditions.
+
+                                                                            [17] L. E. Scha¨effer, B. Mo, and I. Graabak, "Electricity prices and value
+                                                                                  of flexible generation in northern europe in 2030," in 13th International
+                                                                                  Conference on the European Energy Market, 2019.
+
+This is the accepted version of an article published in 2022 17th International Conference on Probabilistic Methods Applied to Power Systems (PMAPS)
+                                                                  https://doi.org/10.1109/PMAPS53380.2022.9810621
+

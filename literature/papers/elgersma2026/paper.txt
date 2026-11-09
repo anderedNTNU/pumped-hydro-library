@@ -1,0 +1,969 @@
+2428                                                                            IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+Tight MIP Formulations for Optimal Operation and
+     Investment of Storage Including Reserves
+
+Maaike B. Elgersma , Germán Morales-España , Senior Member, IEEE, Karen I. Aardal , Niina Helistö ,
+                                       Juha Kiviluoma , and Mathijs M. de Weerdt
+
+   Abstract--Fast and accurate large-scale energy system models                             NOMENCLATURE
+are needed to investigate the potential of storage to complement the
+fluctuating energy production of renewable energy systems. How-                 Parameters  Maximum investments of charge/discharge
+ever, standard Mixed-Integer Programming (MIP) models that                      C, D        capacities.
+describe optimal investment and operation of these storage units,                           Maximum investment of storage capacity.
+including the optional capacity to provide up/down reserves, do not             E           Minimum/maximum storage capacities.
+scale well. To improve scalability, the integrality constraints are             E, E        Initially installed storage capacity.
+often relaxed, resulting in Linear Programming (LP) relaxations                 E0          Maximum charge/discharge capacities.
+that allow simultaneous charging and discharging, while this is                 P C, P D
+not feasible in practice. To address this, we derive the convex hull            P0C, P0D    Initially installed charge/discharge capacities.
+of the solutions for the optimal operation of storage for one time              R+, R-      Maximum up/down reserve capacities.
+period, as well as for problems including investments and reserves,             C, D        Charge/discharge efficiencies.
+guaranteeing that no tighter MIP formulation or better LP approx-                           Duration of one time period.
+imation exists for one time period. When incorporating this convex                          Ratio between minimum and maximum storage
+hull into a multi-period formulation and including it in large-scale                        capacity.
+energy system models, the improved LP relaxations can better
+prevent simultaneous charging and discharging, and the tighter                  Variables   Amount of installed charge and discharge capacity.
+MIP could positively affect the solving time. We demonstrate this               c, d        State of charge at end of time period t.
+with illustrative case studies of a unit commitment problem and a               et          Amount of installed storage capacity.
+transmission expansion planning problem.                                        e           Amount that is charged and discharged during time
+                                                                                pCt , pDt   period t.
+   Index Terms--Energy storage systems, mixed-integer linear                                Amount of up and down reserves during time
+programming (MIP), linear programming (LP), convex hull, tight                  rt+, rt-    period t.
+formulation, optimal investments, reserves.                                                 Binary variable that indicates when the storage unit
+                                                                                t           is charging (t = 1) or discharging (t = 0).
+   Received 28 June 2024; revised 18 April 2025 and 4 October 2025; accepted
+14 February 2026. Date of publication 3 March 2026; date of current version                                I. INTRODUCTION
+22 June 2026. The work of Germán Morales-España and Juha Kiviluoma was
+supported by European Climate, Infrastructure and Environment Executive         A. Motivation
+Agency through European Union's HORIZON Research and Innovation Actions
+under Grant Agreement 101095998 (Mopo). The work of Niina Helistö was           D UE to climate change, our energy system needs to be
+supported by European Union's Horizon 2020 research and innovation program             decarbonized by 2050. To this end, renewable energy
+under Grant Agreement 864276 (TradeRES). This work was supported in part by     systems need to be implemented on a large scale. However, re-
+Dutch Research Council (NWO), through Energy Systems Integration (ESI-far)      newable energy generation fluctuates, due to its intrinsic weather
+program, under Project ESI.2019.008, and in part by eScienceCenter under        dependency. Storage systems have become a promising solution
+Project NLeSC C 21.0226. Paper no. TPWRS-01089-2024. (Corresponding             to complement this fluctuating production, by storing energy
+author: Maaike B. Elgersma.)                                                    when there is an energy surplus, and discharging when there is
+                                                                                a deficit.
+   Maaike B. Elgersma, Karen I. Aardal, and Mathijs M. de Weerdt are
+with the Delft University of Technology, Electrical Engineering, Mathe-            To investigate the optimal investment and operation decisions
+matics and Computer Science, 2628 CD Delft, The Netherlands (e-mail:            of storage, we need to formulate realistic models for devices
+m.b.elgersma@tudelft.nl; k.i.aardal@tudelft.nl; m.n.deweerdt@tudelft.nl).       capable of storing energy, such as pumped hydro storage, electric
+                                                                                vehicles [1], thermal storage, and some forms of demand re-
+   Germán Morales-España is with the Delft University of Technology, Elec-      sponse [2]. In some cases, we also want to incorporate reserves,
+trical Engineering, Mathematics and Computer Science, 2628 CD Delft, The
+Netherlands, and also with the Netherlands Organization for Applied Scientific
+Research (TNO), Energy & Materials Transition Unit, 2595 DA The Hague,
+The Netherlands (e-mail: german.morales@tno.nl).
+
+   Niina Helistö is with the VTT Technical Research Centre of Finland,
+Smart Energy and Built Environment, 02044 Espoo, Finland (e-mail: ni-
+ina.helisto@vtt.fi).
+
+   Juha Kiviluoma is with the VTT Technical Research Centre of Finland, Smart
+Energy and Built Environment, 02044 Espoo, Finland, and also with Nodal-
+Tools Ltd., Helsinki, Finland (e-mail: juha.kiviluoma@nodal-tools.fi).
+
+   Digital Object Identifier 10.1109/TPWRS.2026.3669407
+
+      © 2026 The Authors. This work is licensed under a Creative Commons Attribution 4.0 License. For more information, see
+                                                     https://creativecommons.org/licenses/by/4.0/
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES  2429
+
+which enable more flexibility by representing the possible in-        In these decomposition frameworks, the LP relaxation (of the
+crease/decrease to the scheduled amount of charged/discharged         operations/second stage) is solved many times, thus allowing
+energy [3]. Mixed-Integer Programming (MIP) allows us to              simultaneous charging and discharging and resulting in errors.
+correctly model the optimal operation of storage, using both
+binary and continuous variables. Binary variables are required           Several attempts to prevent simultaneous charging and dis-
+to correctly model reserves and to ensure that the storage cannot     charging in convex problems have been made, such as including
+charge and discharge simultaneously [4], [5]. Constraints in MIP      pre-contingency operating costs in the objective function [10]
+models can describe the characteristics and capabilities of stor-     or adding conditions for the roundtrip efficiency [11]. However,
+age units, such as their minimum and maximum state-of-charge,         Arroyo et al. [6] pointed out that it can still occur and illustrated
+and their (dis)charging capacity.                                     this in two case studies: a unit commitment problem and a
+                                                                      transmission expansion planning problem. Thus, an improved
+   However, there are two big problems that arise when using          LP-approximation of storage models that can better prevent
+these storage models to solve large-scale problems. The first is      simultaneous charging and discharging would be a big step
+that computational problems arise when MIP storage models are         toward more useful and better scalable storage models.
+included in large-scale energy system optimization models. MIP
+models generally do not scale well, since existing algorithms for        An improved LP relaxation can also speed up the solving
+finding the optimal solution to MIP models run in exponential         time of MIP storage models. The computational performance
+time (in the worst case). A common practice to reduce the             of MIP models is highly dependent on their tightness and their
+computation time of these large energy models is to use a decom-      size (in terms of the number of constraints and variables) [12].
+position technique, or to relax the integrality restrictions in the   We say that an MIP model is tight if its LP relaxation describes
+MIP formulations. In either case, the Linear Programming (LP)         the convex hull of its solutions. We say that MIP model A is
+relaxation of the storage model is solved, which can be solved        tighter than another MIP model B if the LP relaxation of MIP
+much faster in practice. However, the problem with these LP           model A is contained inside the LP relaxation of MIP model B,
+models for storage operation is that their solutions can enforce      and it is strictly smaller than the other (so LP(A) LP(B)).
+simultaneous charging and discharging, although this cannot be        Typically, the tightness of MIP models can be improved by
+executed in practice. To address both of these challenges, we         adding cuts (additional constraints). However, this also increases
+improve the LP approximation by tightening the MIP models             the size of the model, which in turn could negatively impact the
+for optimal storage investment and operation, including reserves.     computational performance.
+When incorporated in a large-scale model, these tighter MIP for-
+mulations could speed up the solving time. When incorporated             In related fields, such as unit commitment modeling, much
+into a large-scale LP model, the improved LP relaxations can          research has been done on finding tighter MIP models [12],
+better prevent simultaneous charging and discharging.                 [13], [14], [15]. These works take into account the important
+                                                                      trade-off between model tightness and model size. For exam-
+B. Background & Literature Review                                     ple, Damci-Kurt et al. [16] first consider the unit commitment
+                                                                      problem with ramping constraints for a single generator in
+   Charging and discharging at the same time essentially in-          just two time periods. They give a complete linear description
+creases losses, which commonly increases costs [6]. Therefore,        of the convex hull of its feasible solutions. This formulation
+the optimal solution to the LP relaxation usually does not favor      can be incorporated into a multi-generator and multi-period
+this, but it is beneficial in some cases, such as in the event of     formulation, resulting in a formulation that is tighter than the
+negative prices. However, simultaneous charging and discharg-         previously used ramping models, but of similar size. They then
+ing can usually not be executed in practice. There are exceptions,    consider the multi-period case, and find exponential classes of
+such as composite battery systems [7] or other specific cases with    facet-defining inequalities. Though these improve the tightness
+multiple and/or fast storage units. Here, simultaneous charging       of the multi-period problem formulation, they heavily increase
+and discharging might actually be executable by charging a frac-      the size of the model. It is only beneficial for the solving time if
+tion of the time period or storage units, and discharging another     these constraints are added to the formulation using a separation
+fraction [8]. Still, this is not executable when the storage unit is  algorithm, when needed, instead of a priori.
+already at maximum capacity, and it is typically not possible in
+practice at all for generic storage units. Therefore, solutions in       Tighter formulations for specific storage devices have been
+which this occurs are unwanted and can lead to large errors.          found, such as by Baldick et al. [17] for pumped storage hydro-
+                                                                      electric generators. For a basic storage operation MIP model,
+   Some examples of situations in which simultaneous charging         Pozo [18] recently obtained two different convex hull formula-
+and discharging in the model solutions can lead to large errors are   tions: a vertex representation and a hyperplane representation.
+the following. Arroyo et al. [6] present a transmission expansion     Though not clearly stated in their paper, their formulations
+planning case study, where the optimal investment plan is actu-       describe the convex hull of the problem for only one time period.
+ally not feasible in practice, because simultaneous charging and      Additional constraints would be needed to describe the convex
+discharging is needed to execute it. Furthermore, immediate load      hull for a multi-period problem, resulting in a model that likely
+recovery cannot be guaranteed in demand response models with          grows exponentially in size w.r.t. the number of time periods.
+load shifting when simultaneous up and down shifting of load is       However, the single-period convex hull formulation can be in-
+allowed [9]. Lastly, significant errors can occur when decompo-       corporated into a multi-period formulation, which is then tighter
+sition algorithms are used to solve large MIP problems faster [5].    than the commonly used formulation. They demonstrate that
+                                                                      incorporating this multi-period LP formulation in a multi-period
+                                                                      Set-Point Tracking problem prevents simultaneous charging and
+2430                                                                      IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+discharging more often than the LP relaxation of the commonly        A. Modeling Storage Operation Problems
+used MIP model. Yu et al. [19] presented the same findings, as
+well as some additional facets for three periods.                       Constraints (1a)­(1f) are commonly used to describe the
+                                                                     operation of storage in an MIP model, hereafter named the
+   However, there are several downsides to the LP formulations       Basic Operation MIP model (BO-MIP model). Here, the index t
+obtained by Pozo [18] and Yu et al. [19]. First, we observe that     indicates the time period, and the decision variable et represents
+the formulation by Pozo contains several redundant constraints.      the state of charge of the storage system at the end of time
+Half of the constraints can be removed, which decreases the size     period t, which is tracked in (1a). Decision variables pCt and
+of the model. Second, the convex hull by Pozo formulation does       pDt represent the amount that is charged and discharged in time
+not contain the original binary variable. Therefore, their multi-    period t (with duration ), respectively, and parameters C and
+period LP approximation cannot be used to solve the original         D are their corresponding efficiencies. The capacity limits of
+multi-period MIP storage operation problem. Last, neither Pozo       the storage unit are tracked in (1b), where parameters E and E
+nor Yu et al. consider reserves or investment decisions in their     are the min. and max. storage capacities, respectively. The upper
+models.                                                              and lower bounds for charge and discharge are imposed in (1c)
+                                                                     and (1d). Parameters P C and P D are the maximum charge and
+   Thus, developing a tight MIP model for the optimal storage        discharge capacities, respectively.
+operation problem remains an open question in the literature, as
+well as finding the convex hull of storage problems that include       BO-MIP model: Basic Operation MIP.
+reserves and investments.
+
+C. Contributions                                                               et  =  et-1  +  CptC      -    1  pDt       t  T (1a)
+                                                                                                             D
+   In summary, the main contributions of this paper are the                                                                t  T (1b)
+following: 1) We provide a convex hull formulation for opti-                   E  et  E                                    t  T (1c)
+mal storage operation for one period, which consists of fewer                                                              t  T (1d)
+constraints than the formulation found by Pozo [18]. We also                   pCt  P Ct                                   t  T (1e)
+provide the corresponding tight MIP model and include it in a                  pDt  P D(1 - t)                             t  T (1f)
+multi-period formulation, which can be used to solve the original              et, ptC, ptD  R0
+multi-period storage problem, which is not possible with the LP
+model by Pozo [18]. 2) We provide tighter MIP models for ex-                   t  {0, 1}
+tended problems that include reserves and investment decisions.
+We prove that their LP-relaxations provide the convex hull of        Constraints (1c) and (1d) also impose the mutually exclusive
+the feasible solutions to the MIP models for one time period,
+which guarantees that no tighter MIP or better LP approximation      condition of charging or discharging in each time period, since
+for one time period exists. 3) When incorporated in any type
+of multi-period energy investment/operation system model, we         the binary variable t indicates whether the storage unit is
+illustrate that the LP relaxations of the tighter MIP formulations
+can decrease the frequency of occurrences of simultaneous            charging (t = 1) or discharging (t = 0) in time period t. Con-
+charging and discharging.                                            straint (1e) defines the variables et, pCt and pDt as non-negative
+                                                                     continuous variables, and (1f) defines the variable t as binary.
+   The improved MIP formulations and LP relaxations can be
+used for many different types of planning problems that include      Note that to obtain the LP-relaxation of the BO-MIP model,
+storage, as well as for transmission lines. When solving a large-
+scale MIP problem, tightness of each of the components of the        hereafter called the BO-LP model, the integrality constraint on
+model is an important factor in the solving time. The tighter
+MIP storage formulations could positively affect the solving         t is relaxed ((1f) is removed). So t becomes a continuous
+time, as shown by Yu et al. [19]. Furthermore, the improved
+LP approximation can reduce errors when using decomposition          variable, which is automatically bounded between 0 and 1 by
+frameworks, as explained earlier.
+                                                                     (1c) and (1d).
+         II. BACKGROUND: COMMON STORAGE MODELS
+                                                                     We consider a small numerical example of one time period to
+   This section introduces and explains the commonly used
+MIP models to describe the optimal operation and investment          illustrate the problem with the BO-LP model, which motivates
+of storage, including reserves. These MIP models are usually
+incorporated in larger power/energy system models, and the           this research.
+objective depends on the context of these larger problems. Since
+the objective function is not relevant for obtaining the convex         Example 1: Let us consider a storage unit with E = 5 MWh,
+hull of the feasible solutions to this model, it is not included in  E = 50 MWh, P C = P D = 10 MW, and C = D = 0.5 (for
+the model representations below.
+                                                                     simple computational purposes). Now suppose the unit is al-
+                                                                     ready at maximum capacity in a certain time period t - 1, so
+
+                                                                     et-1 = 50. In the event of negative prices, or some situation
+
+                                                                     where the surrounding energy system needs to get rid of energy,
+
+                                                                     simultaneous charging and discharging might be beneficial, as
+
+                                                                     explained in the introduction. The BO-LP model allows this, so
+
+                                                                     it may output an optimal solutions such as (et-1, pCt , ptD , t ) =
+                                                                     (50, 8, 2, 0.8) for the next time period t. The state of charge at
+
+                                                                     the  end  of  period   t  is  then  et  =   et -1  +  CpCt   -   1  ptD    =
+                                                                                                                                     D
+                                                                     50 + 0.5 · 8 · 1 - 2 · 2 · 1 = 50 + 4 - 4 = 50. So the model al-
+
+                                                                     lows a solution where it charges as much as it discharges, keeping
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES          2431
+
+the battery at the same state of charge, and satisfying all the         In this paper, we obtain the convex hull of the BOR-MIP
+constraints. However, this can never be executed in practice.        model for one time period. We want to point out that there is an
+Thus, we want to find and LP model that prevents this.               issue with modeling reserves using the BOR-MIP model, namely
+                                                                     that it does not fully exploit the flexibility of a storage unit. It only
+B. Modeling Storage Operation Problems Including Reserves            allows limited reserves. We explain this further in Appendix B1.
+                                                                     Here we also point out issues with the formulation presented by
+   As explained earlier, storage can be used to balance the power    Momber et al. [22]. This formulation adapts the constraints such
+grid, which is particularly challenging when more renewable          that the model does fully exploit the flexibility of the storage unit,
+energy systems are implemented. Operating reserves, specif-          but it might not ensure that there is enough capacity to provide
+ically spinning reserves, are useful in this scenario [3]. The       the reserves. For those still interested in using the formulation
+up/down reserve provided by a unit is generally defined as the       by Momber et al., we provide tight formulations in the online
+available capacity that the unit can output on top of its scheduled  companion [23, Section 4].
+amount in each time period [20]. For storage units specifically,
+this means that if the storage unit is scheduled to discharge        C. Modeling Storage Investment Problems Including Reserves
+energy, up reserves can be provided by discharging more energy
+than scheduled, and down reserves by discharging less (or even          We can extend the BOR-MIP model, as presented in the
+charging energy). When charging, up reserves can be provided         previous section, to model investment decisions. The most
+by charging less (or even discharging), and down reserves by         general way to model the investment of storage is the Basic
+charging more.                                                       Investment and operation incl. Reserves MIP model (BIR-MIP
+                                                                     model) [24]. The operational problem is similar to that in the
+BOR-MIP model: Basic Operation incl. Reserves MIP.                   BOR-MIP model, but it contains additional investment variables
+                                                                     e, c, and d. The capacity limits of the storage unit, which
+et  =  et-1  +  CpCt   -   1  ptD          t  T (1a)                 now depend on the investment variables, are tracked in (3a)
+                          D                                          and (3b), where parameter E0 is the initially installed maxi-
+                                           t  T (2a)                 mum storage capacity. Parameter  represents the size of the
+et     E  +  CrtC+  +   1  rtD+                                      minimum storage capacity as a fraction of the maximum. The
+                       D                   t  T (2b)                 upper bounds for charging and discharging and the reserves,
+                                                                     also dependent on the investment variables, are imposed in
+et     E  -  CrtC-  -   1  rtD-            t  T (2c)                 (3c)­(3f), where parameters P0C and P0D are the initially installed
+                       D                   t  T (2d)                 charge and discharge capacities, and C and D are the max-
+                                           t  T (2e)                 imum amount of invested charge/discharge capacity. Bounds
+ptC + rtC-  P Ct                           t  T (2f)                 on the maximum amount of invested capacity are imposed
+                                           t  T (2g)                 in (3g)­(3i), where C, D, and E are typically quite large
+ptD + rtD+  P D(1 - t)                     t  T (2h)                 values.
+                                           t  T (2i)
+pCt - rtC+  0                              t  T (1f)
+
+pDt - rtD-  0
+
+rt- = rtC- + rtD-  R-
+
+rt+ = rtC+ + rtD+  R+                                                 BIR-MIP model: Basic Investment and operation incl.
+                                                                     Reserves MIP.
+
+et, ptC, pDt , rtC+, rtC-, rtD+, rtD-  R0                                =        +   CpCt   -   1  ptD             t  T (1a)
+                                                                                                D
+t  {0, 1}                                                            et     et-1                                    t  T (3a)
+
+                                                                     et     (E0    +  e)  +  CrC+   +     1  rD+    t  T (3b)
+                                                                                                         D          t  T (3c)
+                                                                                                                    t  T (3d)
+   A common way to model storage operation reserves with             et     E0  +  e  -  CrC-   -    1   rD-        t  T (3e)
+                                                                                                    D               t  T (3f)
+an MIP formulation is by adapting the constraints from the                                                          t  T (2e)
+                                                                     ptC + rtC-  (P0C + C)t                         t  T (2f)
+BO-MIP model, resulting in the Basic Operation incl. Reserves
+                                                                     pCt + rtC-  P0C + c                                           (3g)
+MIP model (BOR-MIP model) [21]. Here, (2a) and (2b) replace
+                                                                     pDt + rtD+  (P0D + D)(1 - t)
+(1b), since the reserves affect the bounds of the energy storage
+                                                                     pDt + rtD+  P0D + d
+level and vice versa. Constraint (2c) replaces (1c), bounding        ptC - rtC+  0
+                                                                     pDt - rtD-  0
+the amount of energy that can be charged. Constraint (2c) also
+bounds the down reserves rtC- that can be realized by charging       cC
+more than planned, and (2e) bounds the up reserves rtC+, which
+can be realized by charging less energy than the planned ptC.        dD                                             (3h)
+Similarly, (2d) replaces (1d), and together with (2f) imposes
+bounds on pDt , rtD+ and rtD-. Decision variables rt- and rt+ then   eE                                             (3i)
+represent the total amount of up and down reserves that can
+
+be provided in time period t. These total reserves are obtained
+in (2g) and (2h) and bounded by some value R+ and R-,
+
+respectively.
+2432                                                                          IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+      et, pCt , pDt , rtC+, rtC-, rtD+, rtD-  R0  t  T (2i)           two disjunctive sets of constraints of the problem for one time
+      c, d, e  R0                                            (3j)
+      t  {0, 1}                                                       period, where one describes the problem when charging, and the
+                                                  t  T (1f)
+                                                                      other when discharging. For the second step, we can then obtain
+
+                                                                      the convex hull of these two disjunctive sets of constraints, as
+
+                                                                      described Balas [28]. For a detailed explanation of how we did
+
+                                                                      this, we refer to the proof in Appendix A. However, the obtained
+
+                                                                      convex hull formulation is in a higher dimension than the original
+
+   This model, however, contains many more constraints and            formulation. Therefore, in the third step, we project the higher-
+variables than the others. A simplified investment and operation
+model is therefore also commonly used [5], [25]. We present           dimensional formulation to the space of the original variables,
+tight formulations for simplified investment models in the online
+companion [23, Section 3].                                            by eliminating the extra variables using the Fourier-Motzkin
+
+                   III. TIGHT STORAGE MODELS                          elimination procedure [29], [30].
+
+   In this section, we explain the methodology and present                The Fourier-Motzkin elimination procedure eliminates vari-
+the resulting tighter MIP formulations for the optimal invest-
+ment and operation of storage problems (including reserves). In       ables by combining all of their upper and lower bounds. The
+Section III-A, we first explain the outline of the process to obtain
+and prove the convex hull of the solutions to storage operation       downside of this procedure is that it results in many extra
+problems for one time period. We then apply this to the MIP
+models introduced in Section II to obtain tighter MIP models.         constraints, of which some are facets (constraints describing the
+The full proof for the first presented tight model can be found
+in Appendix A. The proofs for the other tight models are in           convex hull), but many others are redundant. It can be difficult
+the online companion [23, Sections 5 and 6]. An overview of
+all models presented in this paper can also be found in the           to identify the redundant constraints and prove that they are
+online companion [23, Section 1], as well as more tight MIP
+formulations for storage problems with different reserves and         indeed redundant, since all combinations of constraints need to
+investments [23, Sections 2­4].
+                                                                      be checked. However, it is typically beneficial to identify and
+   In Section III-A, we also explain what the parameter re-
+quirements are for the tighter formulations. Note that if one         remove redundant constraints, since this could reduce the size
+wants to successfully replace basic storage formulations with
+the tighter formulations, the parameters might need to be             of the models. For example, for storage operation in one time
+adapted such that they satisfy these requirements. These adap-
+tations are also needed in the case studies, as explained in          period, we identified several redundant constraints in the convex
+Appendix B.
+                                                                      hull found by Pozo [18]. As a result, we found a formulation for
+A. Method: Obtaining the Convex Hull
+                                                                      the same convex hull consisting of fewer constraints, as proven
+   The convex hull of an MIP model is a set of constraints that
+form the tightest possible LP formulation of the solutions to this    in Appendix A.
+model. Every vertex of the convex hull is a feasible solution to
+the MIP model. For more background information on general                 Many constraints are redundant when the parameters sat-
+LP and MIP theory, see [26]. In general, we cannot expect to
+explicitly generate the convex hull of an NP-hard problem, even       isfy the following reasonable assumptions, which would typ-
+if we allow for constraint types that contain exponentially many
+constraints [27]. However, for storage operation problems in          ically hold in practice. It should always hold that P C, R- 
+one time period, we are able to find the convex hull by exploiting
+the disjunctive nature of the MIP. Balas [28] showed how the            1  (E    -  E)  and   P D, R+      D  (E  -  E),  meaning  that  the
+convex hull of any disjunctive problem can be obtained. This          C                                    
+results in a convex hull formulation in a higher dimension than
+the original disjunctive problem, but it can be projected onto        charging/discharging capacity and the up/down reserve ca-
+the original dimension. The obtained projected formulation is
+still a convex hull [26, Section 9.2.3]. Thus, it follows that the    pacity for one time period cannot be larger than the total
+obtained formulation describes the convex hull of the original
+disjunctive problem.                                                  storage capacity of the storage unit. Obviously, E > E 
+                                                                      0 and P C, P D, R+, R-  0 here. For the efficiencies, 0 <
+   We can use the theory above to obtain the convex hull of           C, D  1 should hold. Similarly, for the investment problem,
+storage problems in the following way. The first step is to write
+                                                                      it  should    always  hold  that  P0C  +C        1  (E  0  + E)(1 - )
+                                                                                                                     C
+
+                                                                      and     P0D + D       D  (E0  +  E)(1  -  ),   where  0<1          and
+                                                                                            
+
+                                                                      P0C, C, P0D, D, E0, E  0. Thus, to successfully replace some
+
+                                                                      storage formulations with the tighter formulations presented in
+
+                                                                      this paper, the parameters might need to be adapted to satisfy
+
+                                                                      these requirements.
+
+                                                                      B. Tight MIP Formulation of Storage Operation
+
+                                                                         This section presents the Tighter Operation MIP model (TO-
+                                                                      MIP model) for the optimal operation of storage. Its LP relax-
+                                                                      ation is obtained by removing the integrality constraint (1f),
+                                                                      meaning t becomes a continuous variable.
+
+                                                                      TO-MIP model: Tighter Operation MIP (tighter version of
+                                                                      BO-MIP model).
+
+                                                                          et  =  et-1  +  CptC      -   1  ptD       t  T          (1a)
+                                                                                                       D
+
+                                                                          et-1      E  +   1  pDt                    t  T          (4a)
+                                                                                          D
+
+                                                                          et-1  E - CptC                             t  T          (4b)
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES            2433
+
+ptC  P Ct                                  t  T (1c)                 et-1     E   +   1  pDt    +    1  rtD+          t  T (5a)
+pDt  P D(1 - t)                            t  T (1d)                                 D              D
+et, pCt , pDt  R0                          t  T (1e)                                                                  t  T (5b)
+t  {0, 1}                                  t  T (1f)                 et-1  E - CpCt  - CrtC-                          t  T (2c)
+                                                                                                                      t  T (2d)
+                                                                     ptC + rtC-  P Ct                                 t  T (2e)
+                                                                                                                      t  T (2f)
+                                                                     ptD + rtD+  P D(1 - t)                           t  T (5c)
+                                                                                                                      t  T (5d)
+Theorem 1: The LP-relaxation of the TO-MIP model (TO-                pCt - rtC+  0                                    t  T (5e)
+                                                                                                                      t  T (5f)
+LP) describes the convex hull of the solutions to the BO-MIP         pDt - rtD-  0                                    t  T (5g)
+                                                                                                                      t  T (5h)
+model for one time period.                                           rtC-  R-t                                        t  T (2i)
+                                                                                                                      t  T (1f)
+Proof: See Appendix A.
+
+As a result of Theorem 1, the TO-MIP model is a tighter              rtD-  R-(1 - t)
+
+MIP model describing the optimal operation of storage than the       rtC+  R+t
+
+original BO-MIP model. We illustrate this in Example 2. The
+
+TO-MIP model contains the facets (4b) and (4a), which were also      rtD+  R+(1 - t)
+
+found by Pozo [18]. However, the first advantage of the proposed     rt- = rtC- + rtD-
+
+TO-MIP model compared to the convex hull (in hyperplane
+
+representation) of Pozo is that the proposed model contains the      rt+ = rtC+ + rtD+
+
+same variables as the original MIP problem, whereas the variable
+
+t is not present in the model by Pozo. Thus, the proposed            et, ptC, pDt , rtC+, rtC-, rtD+, rtD-  R0
+formulation can be used to solve the original multi-period MIP
+                                                                     t  {0, 1}
+storage operation problem. The second improvement is that we
+
+paid more attention to removing redundant constraints, which
+
+are not facets of the convex hull. As a result, the TO-LP model
+
+contains fewer constraints than their convex hull formulation.          Theorem 2: The LP-relaxation of the TOR-MIP model
+                                                                     (TOR-LP) describes the convex hull of the solutions to the
+Note that if we apply Fourier-Motzkin in TO-MIP to eliminate         BOR-MIP model for one time period.
+
+variable t, then we can replace the upper bounds on ptC and pDt in      Proof: See the online companion [23, Section 5].
+                  ptC     ptC                                           As a result of Theorem 2, the TOR-MIP model is an MIP
+(1c) and (1d) by  PC   +  PC     1 t    T . This results in a model  model describing the optimal operation of storage including
+                                                                     reserves, which is tighter than the original BOR-MIP model.
+similar to that of Pozo, yet still smaller in size (4 constraints    Constraints (2a) and (2b) are replaced by the facets (5a) and
+                                                                     (5b), and (2g) and (2h) are replaced by the facets (5c)­(5h).
+instead of 8).
+                                                                     D. Tight MIP Formulation of Storage Investment Including
+Example 2: In Section II-A we gave a small numeri-                   Reserves
+
+cal example (Example 1) that illustrates the problem with               We now present the tighter models for storage investment and
+                                                                     operation, including reserves. The formulations of these tighter
+the BO-LP model. The BO-LP model allows the solution                 models without reserves can simply be obtained by removing the
+(et-1, ptC , ptD , t ) = (50, 8, 2, 0.8), which cannot be executed   reserve variables. For clarity, these tighter models are given in
+                                                                     the online companion [23, Section 2]. We start by presenting the
+in practice. However, constraint (4b) in the TO-LP model             more general Tighter Investments and operation incl. Reserves
+cuts off this solution: et-1 = 50 and E - CptC  = 50 - 0.5 ·         MIP model (TIR-MIP model).
+8 · 1 do not satisfy this constraint. This illustrates that the
+
+TO-LP model is tighter than the BO-LP model. Moreover,
+
+when considering a problem with more time periods, we can
+
+see that the TO-LP model is still tighter than the BO-LP
+
+model. For a two period problem for example, solutions such
+as (et-1, ptC , ptD , t , ptC+1, pDt+1, t+1) = (50,8,2,0.8,0,0,0),
+(50,8,2,0.8,8,2,0.8) and (45,10,0,1,8,2,0.8) are all cut off by
+
+TO-LP, but not by BO-LP.
+
+C. Tight MIP Formulation of Storage Including Reserves               TIR-MIP model: Tighter Investments and operation incl.
+                                                                     Reserves MIP (tighter version of BIR-MIP model).
+   We now present the Tighter Operation incl. Reserves MIP
+model (TOR-MIP model) for the optimal operation of storage           et  =  et-1  +  CptC       -   1  ptD            t  T (1a)
+including limited reserves.                                                                        D
+                                                                                                                      t  T (6a)
+TOR-MIP model: Tighter Operation incl. Reserves MIP                  et-1     (E0    +   e)  +   1  pDt   +   1  rD+  t  T (6b)
+(tighter version of BOR-MIP model).                                                             D            D        t  T (3c)
+
+                                   1                                 et-1  E0 + e - CptC - CrC-
+                                  D
+et  =  et-1       +    CpCt    -      ptD  t  T (1a)                 pCt + rtC-  (P0C + C)t
+2434                                                                IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+      pCt + rtC-  P0Ct + c                       t  T (6c)                                                    TABLE I
+                                                 t  T (3e)                               UNIT COMMITMENT - OPTIMAL SOLUTIONS
+      ptD + rtD+  (P0D + D)(1 - t)               t  T (6d)
+                                                 t  T (2e)          reserves), and compare it to other LPs by embedding them
+      ptD + rtD+  P0D(1 - t) + d                 t  T (2f)          in a unit commitment (UC) case study. More specifically, we
+                                                 t  T (6e)          compare the optimal solution of the basic MIP storage operation
+      pCt - rtC+  0                              t  T (6f)          models BO-MIP and BOR-MIP, and of their LP relaxations, to
+                                                                    the optimal solution of our LP relaxations TO-LP and TOR-LP.
+      pDt - rtD-  0                                        (3g)     To this end, we replaced constraints (11)­(15) in the formulation
+                                                                    by Wen et al. [10] in the case study by Arroyo et al. [6], which
+      CptC  (1 - )(E0t + e)                                         describe the basic operation of a storage unit, by the tighter
+                                                                    storage operation formulations (with reserves) from this paper.
+       1  ptD    (1  -  )(E0t  +  e)
+      D                                                                The unit commitment case study describes an optimal oper-
+                                                                    ation problem of two generators and a storage unit over two
+      cC                                                            hourly periods with demands equal to 10 MW and 36 MW,
+                                                                    respectively. The objective is to minimize the operational costs
+      dD                                         (3h)               of the generators and the storage unit.
+
+      eE                                         (3i)                  Table I shows the optimal solutions to the basic unit com-
+                                                                    mitment case study, as obtained from different formulations for
+      et, ptC, pDt , rtC+, rtC-, rtD+, rtD-  R0  t  T (2i)          the storage operation part. It can be observed that the optimal
+      c, d, e  R0                                          (3j)     solution to the TO-MIP model is the same as the optimal solu-
+      t  {0, 1}                                                     tion to the BO-MIP model, showing that our MIP formulation
+                                                 t  T (1f)          represents the exact same problem. More importantly, it can be
+                                                                    observed that in the optimal solution to the LP relaxation of
+   Theorem 3: The LP-relaxation of the TIR-MIP model (TIR-          this model (the BO-LP model), both variables ptC and pDt have
+LP) describes the convex hull of the solutions to the BIR-MIP       a positive value in the first hour (highlighted in bold), meaning
+model for one time period.                                          that simultaneous charging and discharging occurs. However,
+                                                                    our LP relaxation (TO-LP) finds the same solution as the MIP
+   Proof: See the online companion [23, Section 6].                 models, so it has successfully prevented simultaneous charging
+   As a result of Theorem 3, the TIR-MIP model is a tighter         and discharging, as desired.
+MIP model describing the optimal investment and operation of
+storage than the original BIR-MIP model. Similar to the case           The storage has a maximum capacity of 13.0 MWh. Due to
+without investments, equations (3a) and (3b) of the BIR model       simultaneous charging and discharging in the first hour, energy is
+are replaced by the facets (6a) and (6b). Furthermore, equations    lost. This enables generator 1 (with a maximum ramp up rate of
+(3d) and (3f) are replaced by the facets (6c) and (6d) (t appears   15 MW/h) to ramp up its generation (pG) fast enough to satisfy
+in these constraints, making them tighter), and (6e) and (6f) are   the demand in the second hour. The expensive generator 2 is
+new facets.                                                         then not needed, resulting in a cheaper solution. However, si-
+                                                                    multaneous charging and discharging is not feasible in practice.
+                 IV. ILLUSTRATIVE CASE STUDIES                      Thus, the BO-LP model finds an operation plan that cannot be
+                                                                    implemented.
+   To illustrate the improved performance of the newly ob-
+tained LP approximations, we apply these formulations to a             To include reserves, we added constraints that ensure that
+unit commitment (UC) and a transmission expansion planning          there are reserves available of at least 1.0 MW in each time
+(TEP) case study, both presented by Arroyo et al. [6]. For a        period. Table II shows the different optimal solutions to the
+detailed description of the case studies, we refer to the paper by  unit commitment case study including storage reserves. In
+Arroyo [6]. We have slightly adapted these case studies such that   the optimal solution to the BOR-MIP model, we can see that
+they include reserves and investment decisions. Additionally, we    the minimum up and down reserves of 1.0 MW in both hourly
+have extended the two-period unit commitment case study to a        periods are satisfied. In the second hour, more energy is gen-
+multi-period problem. A detailed explanation of the adaptions       erated by generator 2 and less energy is discharged (compared
+to case studies is given in Appendix B. We have implemented
+the case studies in Julia using JuMP [31], and solved them to
+optimality using the Gurobi solver [32, Version 10.0.2] with the
+default settings.
+
+A. LP Storage Operation Incl. Reserves in Unit Commitment
+Case Study
+
+   In this section, we illustrate the performance of the proposed
+multi-period LP relaxation for storage operation (including
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES                  2435
+
+                              TABLE II                                                               TABLE III
+UNIT COMMITMENT INCL. RESERVES - OPTIMAL SOLUTIONS                     TRANSMISSION EXPANSION PLANNING - OPTIMAL SOLUTIONS
+
+to the problem without reserves) to achieve this, resulting in a       ensure that there are reserves available of at least 10% of the
+higher total cost.                                                     energy demand in each time period.
+
+   It can be observed that our TOR-MIP model results in the               Table III shows the different optimal solutions to the unit
+same optimal solution as the BOR-MIP model, confirming the             commitment case study with storage investment decisions. Si-
+correctness of our formulation. In the first hour of the solution      multaneous charging and discharging occurs in the second hour
+to the BOR-LP model, simultaneous charging and discharging             of the solution to the BIR-LP model, but it is prevented by our
+occurs again. In the optimal solution to our TOR-LP, simultane-        TIR-LP model.
+ous charging and discharging is prevented. However, it can be
+observed (highlighted in bold) that down reserves are provided            Here, the storage unit in bus 1 has a maximum capacity of
+by charging in the second period, though this would not be             100 MWh. Similar to the UC case study, simultaneous charging
+feasible in practice since the storage is discharging in this period.  and discharging in the second hour causes a loss of energy.
+So the optimal solution to the TOR-LP relaxation still contains        This allows generator 1 (with a maximum ramp-down rate of
+some error, but less than for the BOR-LP model. This issue             10 MW/h) to ramp down fast enough in the second hour, without
+is prevented in the alternative reserves formulation given in          needing a transmission line to get rid of the excess energy. This
+Appendix B1 (the BOF-MIP model) since this model does not              results in a cheaper solution, where a line investment is not
+need a binary variable to model reserves accurately.                   needed. However, simultaneous charging and discharging is not
+                                                                       feasible in practice. Thus, the BIR-LP model finds an investment
+B. LP Storage Investment in Transmission Expansion                     plan that does not allow a feasible operation plan in practice, but
+Planning Case Study                                                    our TIR-LP model does find a feasible plan.
+
+   In this section, we illustrate the performance of our multi-        C. MIP Multi-Period Storage Operation in Unit Commitment
+period storage investment LP relaxation including reserves, and        Case Study
+compare it to other LPs in a transmission expansion planning
+case study. More specifically, we compare the optimal solution            In this section, we illustrate the potential performance of the
+of the basic MIP storage investment and operation model BIR-           proposed multi-period MIP models for storage operation, and
+MIP, and of its LP relaxation, to the optimal solution of our LP       we compare them to basic MIP models by embedding them
+relaxation TIR-LP. To this end, we replaced constraints (24)-(28)      in a larger multi-period unit commitment case study. More
+in the formulation presented by Arroyo et al. [6] (formulation         specifically, we compare the computation time that the solver
+originally by Zhou et al. [11]), which describe the basic operation    needs to solve the BO-MIP model to the time it needs for the
+of a storage unit, by the tighter storage investment and operation     TO-MIP model. To this end, we extend the original problem with
+formulations (with reserves) from this paper.                          two additional periods, in which the demand is 8.25 MW and
+                                                                       0.0 MW, respectively. We then repeat this problem 365 times
+   The transmission expansion planning problem describes an            (representing all days in one year), resulting in a problem
+optimal transmission investment problem of a candidate line of         consisting of 4· 365 = 1460 time periods. All other parameters
+$5000 between two disconnected buses, with a different genera-         remain the same. When solving this multi-period problem using
+tor in each and a storage unit in bus 1. For illustration purposes,    an LP model for storage operation, the optimal solution favors
+the operating condition consists of two hourly periods with both       simultaneous charging and discharging in many periods. This is
+nodal demands respectively equal to 25 MW and 100 MW. We               for similar reasons as those discussed in Section IV-A, namely
+slightly adapted the case study to also include storage investment     that charging and discharging simultaneously enables additional
+decisions and reserves. We substituted the storage capacities          ramping, which is more cost-effective than starting up a second,
+by investment variables and changed the objective function to
+minimize the investment costs of the storage unit, instead of its
+operational costs. To include reserves, we added constraints that
+2436                                                                       IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+                                         TABLE IV                     simultaneous charging and discharging in a multi-period prob-
+              MULTI-PERIOD UNIT COMMITMENT - SOLVING DETAILS          lem, compared to other LP models. Furthermore, we illustrated
+                                                                      that the tighter MIP formulation could indeed positively affect
+very expensive generator. We now investigate how the models           the solving time of the model, also for multi-period problems,
+perform.                                                              though this is case study dependent.
+
+   An overview of the results can be found in Table IV. It can           The improved MIP and LP relaxation can be used as a better
+be observed that the BO-MIP and TO-MIP models again find an           proxy of many different types of energy storage systems, as
+optimal solution with the same objective function value, without      well as transmission lines, in many different large-scale energy
+simultaneous charging and discharging. More interestingly, the        system models. Incorporating the improved LP relaxation into
+table displays the total time that is needed to solve the problem to  large-scale LP models results in more accurate models, that can
+optimality, averaged over 10 runs. Notice that less time is needed    better prevent simultaneous charging and discharging. Addition-
+to solve the problem using the TO-MIP model. More concretely,         ally, the tighter MIP formulation has the potential to speed up the
+fewer nodes are explored by the solver in the branch-and-cut          solving time of large-scale MIPs. Moreover, it allows the direct
+algorithm for the TO-MIP model. This (partially) explains the         application of certain decomposition algorithms, which could
+difference in solve time. Thus, when solving a large-scale            further improve the solving time. Thus, the improved models
+multi-period problem, the tighter TO-MIP model could indeed           can support the energy transition by accurately modeling the
+positively affect the solving time.                                   optimal operation of energy storage systems.
+
+   Table IV also shows how the BO-LP and TO-LP models (the               The convex hull for storage optimization models for more
+LP-relaxations of the MIP models) perform on the multi-period         than one period remains an open problem. More constraints are
+problem. It can be observed that the bound (total cost) provided      needed to describe the convex hull for multiple periods, as we
+by the TO-LP model is slightly better (closer to the MIP so-          showed in Example 2.1 Future work could attempt to find facets
+lution), and it prevents simultaneous charging and discharging        for these problems in multiple time periods, resulting in a tighter
+in many more periods than the BO-LP model does. The last              multi-period formulation. The issue with current reserve models
+row gives an indication of how much power is charged and              that we pointed out in Section II-B can also be investigated
+discharged simultaneously in the optimal solution of the models.      further. It is desired to have a formulation that accurately models
+If this value is zero, no simultaneous charging and discharging       the full flexibility of a storage unit to provide reserves, ideally
+occurs. We observe that this value for the TO-LP model solution       one that is tighter yet small in size.
+is below 1460, which means that less than 1 MW is simultane-
+ously charged and discharged per period on average. This value                                     APPENDIX A
+is more than twice as high for the BO-LP model.                       PROOF OF CONVEX HULL FORMULATION OPTIMAL STORAGE
+
+   The formulation by Pozo [18] cannot be used to solve this                          OPERATION IN ONE TIME PERIOD
+multi-period MIP problem, as their formulation does not contain
+the original binary variable. Instead, their model would yield           In this section, we obtain the convex hull formulation of the
+results comparable to those of the TO-LP model, producing the         solutions to the basic storage operation problem, as given by
+same solution. However, the multi-period TO-LP formulation            the BO-MIP model, for one time period. We use the method as
+for this problem includes only half as many constraints as Pozo's     explained in Section III-A, which guarantees that we obtain the
+multi-period LP formulation.                                          convex hull. We can write the constraints of this model in the
+                                                                      following way for one time period t:
+                            V. CONCLUSION
+                                                                      E    et  =  et -1  + CpCt  -   1  pDt      E  (from 1a and 1b)
+   In this paper, we obtained the convex hull of feasible MIP                                       D
+solutions for the optimal operation of storage problem for one
+time period, as well as for the optimal investment problem, both      E  et-1  E                                    (from 1b)
+including reserves. We provide a step by step proof for these
+convex hull formulations. This guarantees that no tighter MIP         ptC  P Ct                                     (from 1c)
+formulation exists, meaning no better LP approximation exists         ptD  P D(1 - t )                              (from 1d)
+for one time period.                                                  et-1, pCt , ptD  R0                           (from 1e)
+                                                                      t  {0, 1}.                                    (from 1f)
+   The presented case studies illustrate the improved ability of
+the LP relaxations of the tighter MIP formulations to prevent         We use the method described in III-A to obtain the convex hull.
+                                                                      First, we write two disjunctive sets of constraints in Section A1.
+                                                                      We then obtain the convex hull of these two disjunctive sets of
+
+                                                                         1We suspect that the convex hull of storage operation grows exponentially in
+                                                                      size with respect to the number of time periods. Experiments that we have done
+                                                                      using polyhedral geometry software indicate this. Furthermore, by comparing
+                                                                      the storage operation problem to the ramping problem for unit commitment, this
+                                                                      suspicion is supported.
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES                         2437
+
+constraints in Section A2, as explained by Balas [28]. Lastly, we            e1 + CpC  E bound on e1                               (9b)
+obtain the convex hull in the dimension of the original formula-
+tion by eliminating the extra variable using the Fourier-Motzkin                     0  pC  P C in CH                              (9c)
+elimination procedure in Section A3.
+                                                                            e1)      1  pD                                   e1
+                                                                     (e  -       -  D              E(1   -  )  bound     on        (9d)
+
+A1 Disjunctive Constraints Sets: Charging - Discharging                              e - e1  E(1 - ) bound on e1                   (9e)
+
+   The two disjunctive sets of constraints of the problem for                        0  pD  P D(1 - ) in CH                        (9f )
+one time period are given in (7). We dropped the subscripts
+t and t - 1 from the notation for simplicity. Note that some         A3 Eliminating Variable e1
+constraints are redundant. For example, when charging, e  E
+is dominated by e + CpC  E, since the second constraint                 To reduce the dimensionality of the problem, we eliminate
+is a tighter bound on e, so it is redundant.                         variable e1 by applying Fourier-Motzkin elimination. The lower
+                                                                     bounds on e1 are (9a) and (9e), which we can rewrite in the
+      Charging :                   Discharging :                     following way:
+
+            =1                                 =0
+
+            pD = 0                             pC = 0
+                                               pD ¨ ¨E                               e1  E
+¨E ¨  e  +  CpC   E        or   E    e  -   1           (7)                          e1  e - E(1 - ).                          (from 9a)
+             Ee   ¨ ¨E                     D                                                                                   (from 9e)
+                                           ¨E ¨ e  E
+            pC  P C                            pD  P D
+
+            e ¨¨0                              e ¨¨0                 The upper bounds on e1 are (9b) and (9d), which we can rewrite
+            pC  0                              pD  0                 as
+
+A2 Convex Hull of Disjunctive Constraint Sets                                    e1  -CpC + E                                  (from 9b)
+                                                                                                                               (from 9d)
+   We can then obtain the convex hull of these two disjunctive                   e1     e  -   1   pD    -  E(1   -  ).
+                                                                                              D
+sets of constraints, as described Balas [28] in the following
+way. We rename all variables from one set to 1 and variables         We now combine the upper and lower bounds on e1 according
+from the other to 2, and we multiply all parameters in one set       to the Fourier-Motzkin procedure to eliminate the variable. By
+with 1, and the others with 2. We also need to include the           combining the first lower bound and first upper bound, we obtain
+additional constraint 1 + 2 = 1. This gives us the constraints
+                                                                          E  -CpC + E
+in (8), which describe the convex hull of the solutions to the        CpC  (E - E) dominated by (9c).
+
+BO-MIP model for one time period.
+
+                           e1  E1                                                                                                  (10a)
+
+                  e1 + pC1C  E1                                      Note that this constraint is redundant by (9c) under reason-
+                                                                     able assumptions about the parameter values, as explained in
+                           pC1  P C1                                 Section III-A. By combining the first lower bound and second
+                                                                     upper bound, we obtain
+                           pC1  0
+
+                  e2    -  pD2     E2                                                E        e  -    1  pD    -  E  (1  -  )
+                           D                                                                         D
+
+                           e2  E2                                        e    E  +    1  pD      in  CH.                           (10b)
+                                                                                     D
+
+                           pD2  P C2                                 This constraint is not redundant, so it is needed in the convex hull
+
+                           pD2  0                                    formulation. Following this procedure, we obtain the following
+
+                    1 + 2 = 1                           (8)          constraints by combining the second lower bound and all upper
+                                                                     bounds on e1:
+
+We can rewrite this problem, such that it looks more similar to the              e  E - CpC in CH                                  (10c)
+original formulation. We can write pC1 = pC and pD2 = pD. We                                                                       (10d)
+also rename variable 1 as , and write 2 as 1 - . Furthermore,         1  pD      (E  -   E)(1    -   )  dominated    by     (9f).
+we let e = e1 + e2, so we can write e2 as e - e1. This results in    D
+
+(9b)­(9f). Constraints (9c) and (9f) only contain variables that     In conclusion, we have found (9c), (9f), (10b), and (10c), which
+                                                                     describe for the convex hull formulation of the solutions to
+are also in the BO-MIP model, and they are not redundant, thus       the BO-MIP model for one time period. This result is further
+                                                                     explained in Section III-B.
+they are needed in the convex hull (CH) formulation.
+
+                  e1  E bound on e1                     (9a)
+2438                                                                         IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+                                         TABLE V
+              STORAGE UNIT PARAMETER VALUES OF CASE STUDIES
+
+                                TABLE VI                                     Fig. 1. The up and down reserve capacities when discharging, bounded by the
+      STORAGE UNIT PARAMETER VALUES OF CASE STUDIES                          charging and discharging capacities, as modeled by different MIP formulations.
+
+                                                                             costs. Here, the investment costs per MWh charging/discharging
+                                                                             capacity are set to $1/MWh.
+
+                                                                             B1 Modeling Full Flexibility of Reserves Accurately
+
+                            APPENDIX B                                          We want to point out that there is an issue with modeling
+                      CASE STUDIES DETAILS
+                                                                             reserves using the BOR-MIP model, which is that it does not
+As explained in Section IV, we used the unit commit-
+                                                                             fully exploit the flexibility of a storage unit. It only allows
+ment and transmission expansion planning case studies by
+                                                                             limited reserves. We illustrate this with an example, sketched
+Arroyo et al. [6], and adapted them to include reserves and                  in Fig. 1. Suppose P C = P D = 10 MW. If the storage is dis-
+                                                                             charging ptD = 8 MW, then the maximum up reserves the model
+investment decisions. For a full explanation of the case studies,            guarantees is rtD+  2 MW from (2d), which can be realized
+                                                                             in real-life by discharging 2 MW extra. Also, since the unit is
+we refer to the original paper. In this section, we explain how              discharging, t = 0 forces rtC+, rtC-, pCt = 0. So the total down
+                                                                             reserves in this instance can be rt- = rtD-  8 MW, bounded
+we adapted the case studies.                                                 by (2f). However, in real life, we would be able to provide a
+                                                                             total of rt- = 18 MW down reserves, namely by not discharging
+An overview of all the parameter values in the original UC                   those 8 MW (rtD- = 8 MW), and by charging 10 MW instead
+                                                                             (rtC- = 10 MW). Thus, the BOR-MIP model does not fully
+case study, as well as in our adapted case studies (used to                  exploit the flexibility of the storage unit. In Fig. 1 this missing
+
+obtain the results in Tables I and II can be found in Table V.               reserves capacity is indicated by the gray box.
+
+For the regular optimal operation problem, we slightly adjusted                 The constraints can be adapted such that the model does fully
+
+the charging/discharging capacities. As explained at the end of              exploit the flexibility of the storage unit, namely by replacing
+
+Section III-A, the LP relaxations of our formulations describe               (2e) and (2f) by
+
+the convex hull of the solutions to the MIP models for one
+
+time  period  under  the  assumption  that   PC      1      (E  -  E)   and
+                                                   C
+
+PD    D  (E   -  E).  In  the  original  case  study,  the  values  of  PC
+      
+
+and P D do not satisfy this, so we changed these values, as can
+
+be seen in Table VI. Note that this does not affect the optimal              ptC - rtC+  -P D
+                                                                             ptD - rtD-  -P C.
+mixed-integer solution.                                                                                                           (11a)
+                                                                                                                                  (11b)
+For the case study including reserves, we also needed to satisfy
+
+R-      1  (E  -  E) and R+      D       (E  -  E). Thus, we set these
+      C                          
+
+parameters equal to these upper limits, as can be seen in Table VI.          Constraints (11a) and (11b) together with (2c) and (2d) can
+                                                                             be rewritten as (12b) and (12c). This results in the BOF-MIP
+Additionally, we added constraints that ensure that the up/down              model (Basic Operation with Flexible Reserves MIP model), as
+                                                                             presented by Momber et al. [22]. Now, (12b) and (12c) ensure
+reserves were at least 10% of the regular energy demand.                     that the down reserves rt- and up reserves rt+, respectively,
+                                                                             are essentially bounded by P D + P C. Thus, this formulation
+For the case study including investment decisions, we set                    does fully exploit the flexibility of the storage unit, as illus-
+                                                                             trated in Fig. 1. Lastly, the capacity of the reserves is also
+the maximum investments of charge/discharge/storage capacity                 bounded by the current state of charge, as modeled by (12a).
+                                                                             We provide a tighter formulation of this model in the online
+equal to the respective maximum capacities in the other case                 companion [23, Section 4].
+
+studies. For , we chose to set it to E/E, based on the origi-
+
+nal case study. The initially installed charge/discharge/storage
+
+capacities P0C/P0D/E0 are set to zero, representing a Green-
+field scenario. In the objective function, the investment costs
+
+of the storage unit are minimized, instead of the operational
+ELGERSMA et al.: TIGHT MIP FORMULATIONS FOR OPTIMAL OPERATION AND INVESTMENT OF STORAGE INCLUDING RESERVES  2439
+
+                                                                             showing that (12a) is not restricted enough to model the problem
+                                                                             accurately.
+
+Fig. 2. The up and down reserve capacities when discharging, bounded by the                                   REFERENCES
+total storage capacity, as modeled by different MIP formulations.
+                                                                              [1] E. Srilakshmi and S. P. Singh, "Energy regulation of EV using MILP for
+ BOF-MIP model: Basic storage operation incl. flexible                             optimal operation of incentive based prosumer microgrid with uncertainty
+reserves MIP.                                                                      modelling," Int. J. Elect. Power Energy Syst., vol. 134, Jan. 2022, Art. no.
+                                                                                   107353.
+et  =  et-1  +  CpCt   -   1  pDt    t  T (1a)
+                          D                                                   [2] H. Singabhattu, A. Jain, and T. Bhattacharjee, "Distributed energy
+                                     t  T (12a)                                    resources optimization for demand response using MILP," in Proc. 2017
+E   +   1  rt+    et    E  -  Crt-                                                 IEEE Region 10 Symp. (TENSYMP), Cochin, India, Jul. 2017, pp. 1­5.
+       D                             t  T (1c)
+                                     t  T (1d)                                [3] G. Morales-España, L. Ramírez-Elizondo, and B. F. Hobbs, "Hidden
+pCt  P Ct                            t  T (12b)                                    power system inflexibilities imposed by traditional unit commitment for-
+                                     t  T (12c)                                    mulations," Appl. Energy, vol. 191, pp. 223­238, Apr. 2017.
+pDt  P D(1 - t)                      t  T (12d)
+                                     t  T (12e)                               [4] B. Xu, J. Zhao, T. Zheng, E. Litvinov, and D. S. Kirschen, "Factoring the
+pCt - pDt + rt-  P C                 t  T (12f)                                    cycle aging cost of batteries participating in electricity markets," IEEE
+                                     t  T (1f)                                     Trans. Power Syst., vol. 33, no. 2, pp. 2248­2259, Mar. 2018.
+- ptC + pDt + rt+  P D
+rt+  R+                                                                       [5] R. S. Go, F. D. Munoz, and J.-P. Watson, "Assessing the economic
+rt-  R-                                                                            value of co-optimized grid-scale energy storage investments in supporting
+                                                                                   high renewable portfolio standards," Appl. Energy, vol. 183, pp. 902­913,
+et, pCt , ptD, rt+, rt-  R0                                                        Dec. 2016.
+
+t  {0, 1}                                                                     [6] J. M. Arroyo, L. Baringo, A. Baringo, R. Bolanos, N. Alguacil, and N.
+                                                                                   G. Cobos, "On the use of a convex model for bulk storage in MIP-Based
+   However, we want to point out that (12a) might not ensure                       power system operation and planning," IEEE Trans. Power Syst., vol. 35,
+that the reserves are bounded correctly. Thus, it might promise                    no. 6, pp. 4964­4967, Nov. 2020.
+reserves that cannot be realized in practice. Let us consider
+another example, sketched in Fig. 2. The maximum capacity of                  [7] M. Elsaadany, M. R. Almassalkhi, and S. H. Tindemans, "Linear aggregate
+the storage unit is 10 MWh, the maximum charging/discharging                       model for realizable dispatch of homogeneous energy storage," IEEE
+capacities are again 10 MW, the charging and discharging effi-                     Control Syst. Letters, vol. 9, pp. 1267­1272, Jan. 2025.
+ciencies are 50% and 100%, respectively, and  = 1. Suppose
+the state-of-charge is initially at maximum capacity and the                  [8] Z. Shen, W. Wei, D. Wu, T. Ding, and S. Mei, "Modeling arbitrage of
+storage is scheduled to discharge 8 MW, so the storage level                       an energy storage unit without binary variables," CSEE J. Power Energy
+becomes 2 MWh. Then (12b) would allow a down reserve of                            Syst., vol. 7, no. 1, pp. 156­161, Jun. 2021.
+18 MW, just like in the previous example in Fig. 1. Due to
+the total battery capacity and the current storage level, (12a)               [9] G. Morales-España, R. Martínez-Gordón, and J. Sijm, "Classifying
+would constrain this down reserve such that Cr-  8 MW,                             and modelling demand response in power systems," Energy, vol. 242,
+so r-  16 MW. However, in reality, the down reserve would                          Mar. 2022, Art. no. 122544.
+be provided by not realizing the scheduled discharge, resulting
+in a down reserve of capacity of 8 MW. An error is introduced                [10] Y. Wen, C. Guo, H. Pandzic, and D. S. Kirschen, "Enhanced security-
+due to the difference in charging and discharging efficiencies.                    constrained unit commitment with emerging utility-scale energy storage,"
+The promised down reserve of 16 MW cannot be provided,                             IEEE Trans. Power Syst., vol. 31, no. 1, pp. 652­662, Jan. 2016.
+
+                                                                             [11] B. Zhao, A. Conejo, and R. Sioshansi, "Using electrical energy storage to
+                                                                                   mitigate natural gas-supply shortages," IEEE Trans. Power Syst., vol. 33,
+                                                                                   no. 6, pp. 7076­7086, Nov. 2018.
+
+                                                                             [12] G. Morales-Espa, J. M. Latorre, and A. Ramos, "Tight and compact MILP
+                                                                                   formulation for the thermal unit commitment problem," IEEE Trans. Power
+                                                                                   Syst., vol. 28, no. 4, pp. 4897­4908, Nov. 2013.
+
+                                                                             [13] D. Rajan and S. Takriti, "Minimum up/down polytopes of the unit commit-
+                                                                                   ment problem with start-up costs," IBM, Armonk, NY, USA, Tech. Rep.
+                                                                                   RC23628, 2005.
+
+                                                                             [14] C. Gentile, G. Morales-España, and A. Ramos, "A tight MIP formulation
+                                                                                   of the unit commitment problem with start-up and shut-down constraints,"
+                                                                                   EURO J. Comput. Optim., vol. 5, no. 1­2, pp. 177­201, Mar. 2017.
+
+                                                                             [15] J. Huang, K. Pan, and Y. Guan, "Cutting planes for security-constrained
+                                                                                   unit commitment with regulation reserve," IISE Trans., vol. 53, no. 4,
+                                                                                   pp. 437­452, Apr. 2021.
+
+                                                                             [16] P. Damci-Kurt, S. Küçükyavuz, D. Rajan, and A. Atamtürk, "A polyhe-
+                                                                                   dral study of production ramping," Math. Programm., vol. 158, no. 1,
+                                                                                   pp. 175­205, Jul. 2016.
+
+                                                                             [17] R. Baldick, Y. Chen, and B. Huang, "Optimization formulations for storage
+                                                                                   devices with disjoint operating modes," Operations Res., vol. 71, no. 6,
+                                                                                   pp. 1978­1996, Nov. 2023.
+
+                                                                             [18] D. Pozo, "Convex hull formulations for linear modeling of energy stor-
+                                                                                   age systems," IEEE Trans. Power Syst., vol. 38, no. 6, pp. 5934­5936,
+                                                                                   Nov. 2023.
+
+                                                                             [19] Y. Yu, B. Yan, Y. Gao, Y. Li, and L. Sun, "Tight power and energy
+                                                                                   coupling constraints of energy storage resources for unit commitment,"
+                                                                                   IET Renewable Power Gener., vol. 17, no. 9, pp. 2276­2289, 2023.
+
+                                                                             [20] G. Morales-Espana, A. Ramos, and J. Garcia-Gonzalez, "An MIP for-
+                                                                                   mulation for joint market-clearing of energy and reserves based on
+                                                                                   ramp scheduling," IEEE Trans. Power Syst., vol. 29, no. 1, pp. 476­488,
+                                                                                   Jan. 2014.
+
+                                                                             [21] Y. Liu, L. Wu, Y. Yang, Y. Chen, R. Baldick, and R. Bo, "Secured reserve
+                                                                                   scheduling of pumped-storage hydropower plants in ISO day-ahead mar-
+                                                                                   ket," IEEE Trans. Power Syst., vol. 36, no. 6, pp. 5722­5733, Nov. 2021.
+
+                                                                             [22] I. Momber, G. Morales-España, A. Ramos, and T. Gómez, "PEV storage
+                                                                                   in multi-bus scheduling problems," IEEE Trans. Smart Grid, vol. 5, no. 2,
+                                                                                   pp. 1079­1087, Mar. 2014.
+2440                                                                                IEEE TRANSACTIONS ON POWER SYSTEMS, VOL. 41, NO. 4, JULY 2026
+
+[23] M. B. Elgersma, G. Morales-Espana, K. I. Aardal, N. Helisto, J. Kiviluoma,     Karen I. Aardal received the Ph.D. degree from Université catholique de
+      and M. M. de Weerdt, "Online companion for tight MIP formulations for         Louvain, Ottignies-Louvain-la-Neuve, Belgium. She held positions in U.K.,
+      optimal operation and investment of storage including reserves," Reposi-      in USA, and at several universities in the Netherlands. She has held visiting
+      tory Delft Univ. Technol., Working Paper, 2024. [Online]. Available: https:   positions with UC Berkeley, Cornell University, Rice University, and Università
+      //resolver.tudelft.nl/uuid:12bdc86d-a92b-4287-901f-5b52c546c397               Bocconi. In 2008, she was appointed as Full Professor with the Delft University
+                                                                                    of Technology. She became an INFORMS Fellow, in 2019, and was conferred the
+[24] G. Morales-España, R. Hernández-Serna, D. A. Tejada-Arango, and M.             royal distinction Knight in the Order of the Lion of the Netherlands, in 2025. Her
+      Weeda, "Impact of large-scale hydrogen electrification and retrofitting of    research interests include integer and combinatorial optimization, and analysis
+      natural gas infrastructure on the European power system," Int. J. Elect.      of algorithms.
+      Power Energy Syst., vol. 155, Jan. 2024, Art. no. 109686.
+                                                                                    Niina Helistö received the M.Sc. and Ph.D. degrees in electrical engineering
+[25] D. A. Tejada-Arango, G. Morales-España, S. Wogrin, and E. Centeno,             from Aalto University, Espoo, Finland, in 2012 and 2024, respectively. She is
+      "Power-based generation expansion planning for flexibility requirements,"     currently a Senior Scientist with VTT Technical Research Centre of Finland
+      IEEE Trans. Power Syst., vol. 35, no. 3, pp. 2012­2023, May 2020.             Ltd., Espoo. Her research interests include modelling tool development, sector
+                                                                                    coupling, flexibility, electricity markets, and energy system planning under
+[26] L. Wolsey, Integer Programming. Hoboken, NY, USA: Wiley, 1998.                 operational constraints.
+[27] C. H. Papadimitriou and M. Yannakakis, "The complexity of facets (and
+                                                                                    Juha Kiviluoma received the Ph.D. degree from Aalto University, Espoo, Fin-
+      some facets of complexity)," in Proc. Fourteenth Annu. ACM Symp. Theory       land, in 2013. He was a Principal Scientist with VTT Technical Research Center
+      Comput. - STOC '82, San Francisco, CA, USA, 1982, pp. 255­260.                and was employed there for 21 years. He is currently the CEO of Nodal-Tools
+[28] E. Balas, "Disjunctive programming and a hierarchy of relaxations for          Ltd, which is a newly founded company in research, software development and
+      discrete optimization problems," SIAM. J. Algebr. Discrete Methods, vol.      consultancy in the energy domain. He is interested in open-source modeling tool
+      6, no. 3, pp. 466­486, Aug. 1985.                                             development and supporting energy related decision making.
+[29] J. B. J. Fourier, "Solution d'une question particuliere du calcul des inégal-
+      ités," Nouveau Bull. des Sci. par la Société philomatique de Paris, vol. 99,
+      1826, Art. no. 100.
+[30] T. S. Motzkin, "Beiträge zur theorie der linearen ungleichungen," Ph.D.
+      dissertation, Univ. Basel, Switzerland, 1936.
+[31] M. Lubin, O. Dowson, J. Dias Garcia, J. Huchette, B. Legat, and J. P.
+      Vielma, "JuMP 1.0: Recent improvements to a modeling language for
+      mathematical optimization," Math. Programm. Comput., vol. 15, no. 1,
+      pp. 581­589, Jun. 2023.
+[32] Gurobi Optimization, LLC, "Gurobi optimizer reference manual," 2026.
+      Accessed: Jun. 27, 2024.
+
+Maaike B. Elgersma received the M.Sc. degree in applied mathematics in              Mathijs M. de Weerdt received the M.Sc. (cum laude) degree in computer
+2022, from the Delft University of Technology, Delft, The Netherlands, where        science from Utrecht University, Utrecht, Netherlands, in 1998, and the Ph.D.
+she is currently working toward the Ph.D. degree in accurate and efficient          degree from the Delft University of Technology (TU Delft), Delft, Netherlands,
+energy system modeling with the Algorithmics Group. Her research focuses            in 2003. He held visiting positions with CWI, the University of Cork, the
+on optimization and energy system modeling.                                         University of Southampton, and Duke University. He is currently a Full Professor
+                                                                                    and Head of the Algorithmics Group, TU Delft. His research interests include
+                                                                                    algorithms for planning, scheduling, and optimization under uncertainty, with
+                                                                                    applications in energy systems and transportation.
+
+Germán Morales-España (Senior Member, IEEE) received the joint Ph.D.
+degree from the Universidad Pontificia Comillas, Madrid, Spain, the KTH
+Royal Institute of Technology, Stockholm, Sweden, and the Delft University
+of Technology (TU Delft), Delft, The Netherlands, in 2014. He is currently a
+Senior Scientist with the Energy & Materials Transition Unit, the Netherlands
+Organisation for Applied Scientific Research (TNO), and Associate Professor
+with the Faculty of Electrical Engineering, Mathematics and Computer Science,
+TU Delft. His research interests include the optimal planning & operation,
+economics, and reliability of energy systems.
+

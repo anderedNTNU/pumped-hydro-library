@@ -1,0 +1,1829 @@
+nr. 45  Hydropower investment decisions
+
+        The ProdRisk-Shop simulator: decision support tool for
+        revenue calculations
+
+        Stefan Rex, Birger Mo, Linn Emelie Schäffer, Siri Mathisen
+HydroCen
+
+The main objective of HydroCen (Norwegian Research Centre for
+Hydropower Technology) is to enable the Norwegian hydropower
+sector to meet complex challenges and exploit new opportunities
+through innovative technological solutions.
+
+The research areas include:
+
+     · Hydropower structures
+     · Turbine and generators
+     · Market and services
+     · Environmental design
+
+The Norwegian University of Science and Technology (NTNU) is the
+host institution and is the main research partner together with
+SINTEF Energy Research and the Norwegian Institute for Nature
+Research (NINA).
+
+HydroCen has about 50 national and international partners from industry,
+R&D institutes and universities.
+
+HydroCen is a Centre for Environment-friendly Energy Research (FME).
+The FME scheme is established by the Norwegian Research Council.
+
+The objective of the Research Council of Norway FME-scheme is to establish
+time-limited research centres, which conduct concentrated, focused and
+long-term research of high international calibre in order to solve specific
+challenges in the field.
+
+The FME-centres can be established for a maximum period of eight years
+HydroCen was established in 2016.
+Hydropower investment decisions
+
+The ProdRisk-Shop simulator: decision support tool for
+revenue calculations
+
+Stefan Rex, Linn Emelie Schäffer
+Birger Mo, Siri Mathisen
+                                                                    HydroCen Report 45
+
+ Rex, S., Mo, B., Schäffer, L.E., Mathisen, S., 2024. «Hydropower investment decisions. The ProdRisk-
+ Shop simulator: decision support tool for revenue calculations". HydroCen rapport 45. Norwegian
+ Research Centre for Hydropower Technology
+ Trondheim, Juni 2024
+ ISSN: 2535-5392 (digital publikasjon, Pdf)
+ ISBN: 978-82-93602-46-0
+ © SINTEF 2024
+ Publikasjonen kan siteres fritt med kildeangivelse
+ KVALITETSSIKRET AV
+ Arild Helseth, Seniorforsker, SINTEF Energi
+ FORSIDEBILDE
+ Shutterstock
+ NØKKELORD
+ Hydropower, Investment decisions, Simulator, Optimisation
+
+KONTAKTOPPLYSNINGER
+HydroCen
+Vannkraftlaboratoriet, NTNU
+Alfred Getz vei 4
+Gløshaugen,
+Trondheim
+www.HydroCen.no
+
+                                                     2
+                                   HydroCen Report 45
+
+Abstract
+
+Rex, S., Mo, B., Schäffer, L.E., Mathisen, S., 2024. «Hydropower investment decisions. The ProdRisk-Shop
+simulator: decision support tool for revenue calculations". HydroCen Report 45. Norwegian Research Cen-
+tre for Hydropower Technology
+
+The transition to a renewable based power system induces new opportunities and challenges for hydro-
+power producers. In the Nordic region, reservoir hydropower is expected to play a key role in smoothing
+out variability in wind power, solar power and load by ramping up and down production in response to
+the forecasted power prices. Hydropower operations are thereby changing due to the structural changes
+in the power sector. At the same time, the Nordic hydropower fleet is aging. Consequently, we see a
+growing focus on maintenance and refurbishment strategies to extend component lifetimes and opti-
+mise re-investments. Also, a significant share of the hydropower plants' concessions is planned to be
+revised. In total, these events provide an excellent opportunity to consider upgrades of Norwegian hy-
+dropower plants, such as investments in larger turbines, pumped storage plants and other components,
+to improve plant performance considering future market needs.
+
+The research in Project 3.3 of HydroCen is mainly conducted by SINTEF and has focused on decision sup-
+port for upgrading and investment in hydropower. The work has concluded in the development of a new
+tool for calculation of production revenues for individual hydropower systems. Estimation of revenues
+are important parts of the net present value calculations used in traditional investment analysis. The
+project also included one PhD at NTNU which has focused on different aspects of the more general in-
+vestment problem under uncertainty.
+
+This report shortly summarises the simulation tool developed for revenue calculations in investment
+analyses, and documents newly developed functionality. Firstly, we have developed a re-optimization
+framework. Testing of the functionality has demonstrated that repeatedly updating the strategy during
+the simulation sequence is valuable, especially for systems where head dependencies are of importance.
+Secondly, the simulator has been expanded to include a capacity market. The results show a significant
+impact on the reservoir management of considering capacity markets in the strategy calculation. With
+increasing importance of such markets, this simulator functionality is expected to become more im-
+portant in future.
+
+Unfortunately, added functionality usually increases the computational time substantially. Both the re-
+optimization of the strategy and the inclusion of capacity markets gave considerably longer calculation
+times. To reduce the computational burden of the simulator, a snipping methodology has been devel-
+oped. This functionality allows for only a smaller part on the hydropower system to be considered in the
+detailed modelling in the simulator, considerably reducing the calculation burden. It remains to test the
+snipping functionality with the re-optimization framework and the functionality for capacity markets.
+
+All the functionalities discussed in the report are supported by case studies. Nevertheless, some results
+indicated that more and slightly different case studies should be considered to fully grasp the value, and
+limitations, of the new developments. Furthermore, several important aspects in investment analyses
+are not, or just briefly, considered in this work, such as potential revenues from ancillary markets. More
+research is therefore needed to better consider the implications of the transition of the power system in
+the investment process. Still, research conducted in WP 3 of HydroCen constitutes a step in the right
+direction and an excellent basis for further research on the topic.
+
+Stefan Rex, Stefan.Rex@sintef.no,
+
+                                   3
+                                                                      HydroCen Report 45
+
+Linn Emelie Schäffer, LinnEmelie.Schaffer@sintef.no
+Birger Mo, Birger.Mo@sintef.no
+Siri Mathisen, Siri.Mathisen@sintef.no
+
+                                                       4
+                                                                      HydroCen Report 45
+
+Sammendrag
+
+Rex, S., Mo, B., Schäffer, L.E., Mathisen, S., 2024. «Hydropower investment decisions. The ProdRisk-Shop
+simulator: decision support tool for revenue calculations". HydroCen Rapport 45. Norwegian Research
+Centre for Hydropower Technology.
+
+Overgangen til et kraftsystem basert på fornybar energi gir nye muligheter og utfordringer for vannkraft-
+produsenter. I Norden forventes det at magasinkraftverk vil spille en nøkkelrolle i å utjevne variasjoner i
+vindkraft, solkraft og forbruk ved å justere produksjonen opp og ned i henhold til forventede kraftpriser.
+Driften av vannkraftverkene endrer seg dermed på grunn av de strukturelle endringene i kraftsektoren.
+Samtidig eldes den nordiske vannkraftflåten. Følgelig ser vi et økende fokus på vedlikeholds- og oppgra-
+deringsstrategier for å forlenge komponentenes levetid og optimalisere reinvesteringer. I tillegg skal en
+betydelig andel av vannkraftverkene få revidert sine konsesjoner. Dette gir en utmerket mulighet til å
+vurdere oppgraderinger av norske vannkraftverk, som investeringer i større turbiner, pumpekraftverk og
+andre komponenter, for å forbedre anleggenes ytelse med tanke på fremtidige markedsbehov.
+
+Forskningen i Prosjekt 3.3 av HydroCen er utført hovedsakelig av SINTEF og har fokusert på beslutnings-
+støtte for oppgradering og investering i vannkraft. Arbeidet har resultert i utviklingen av et nytt verktøy
+for beregning av produksjonsinntekter for individuelle vannkraftsystemer. Estimering av inntekter er vik-
+tige deler av nåverdi-beregninger brukt i tradisjonelle investeringsanalyser. Prosjektet inkluderte også en
+doktorgradsstipendiat ved NTNU som har fokusert på ulike aspekter av det mer generelle investeringspro-
+blemet under usikkerhet.
+
+Denne rapporten oppsummerer kort simuleringsverktøyet utviklet for inntektsberegninger i investerings-
+analyser og dokumenterer nyutviklet funksjonalitet. For det første har vi utviklet et rammeverk for rebe-
+regning av strategien gjennom simuleringsperioden. Testing av denne funksjonaliteten har vist at det er
+verdifullt å gjentatte ganger oppdatere strategien under simuleringssekvensen, spesielt for systemer hvor
+fallhøydeavhengigheter er viktige. For det andre har simulatoren blitt utvidet til å inkludere et kapasitets-
+marked. Resultatene viser en betydelig innvirkning på magasindisponeringen ved å inkludere kapasitets-
+markeder i strategi-beregningen. Med økende betydning av slike markeder forventes denne simulatorfunk-
+sjonaliteten å bli viktigere i fremtiden.
+
+Dessverre øker ny funksjonalitet vanligvis beregningstiden betydelig. Både re-beregning av strategien og
+inkluderingen av kapasitetsmarkeder førte til betydelig lengre beregningstider. For å redusere beregnings-
+byrden for simulatoren, er en klippemetodikk utviklet. Denne funksjonaliteten gjør at kun en mindre del
+av vannkraftsystemet inngår i den detaljerte modellering i simulatoren, noe som reduserer beregningsbyr-
+den betydelig. Det gjenstår å teste klippefunksjonaliteten sammen med re-optimaliseringsrammen og funk-
+sjonaliteten for kapasitetsmarkeder.
+
+Alle funksjonalitetene diskutert i rapporten støttes av casestudier. Likevel indikerte noen resultater at flere
+og noe annerledes casestudier bør vurderes for fullt ut å forstå verdien og begrensningene av de nye ut-
+viklingene. Videre er flere viktige aspekter i investeringsanalysene ikke, eller bare kort, vurdert i dette
+arbeidet, som inntekter ancillary services. Mer forskning er derfor fortsatt nødvendig for bedre å vurdere
+den komplette nytten av fleksibel vannkraft i et antatt fremtidige 100 % fornybare kraftsystemet. Likevel
+utgjør forskningen utført i WP 3 av HydroCen et skritt i riktig retning og et utmerket grunnlag for videre
+forskning på emnet.
+
+Stefan Rex, Stefan.Rex@sintef.no,
+Linn Emelie Schäffer, LinnEmelie.Schaffer@sintef.no
+Birger Mo, Birger.Mo@sintef.no
+Siri Mathisen, Siri.Mathisen@sintef.no
+
+                                                       5
+                                                                      HydroCen Report 45
+
+Content
+
+Abstract ...................................................................................................................................................... 3
+
+Sammendrag............................................................................................................................................... 5
+
+Content ....................................................................................................................................................... 6
+
+Foreword .................................................................................................................................................... 7
+
+1 Introduction .......................................................................................................................................... 8
+    1.1 Background............................................................................................................................................ 8
+    1.2 The general investment/refurbishment planning problem .................................................................. 8
+    1.3 Current industry practice ...................................................................................................................... 9
+    1.4 Motivation and scope.......................................................................................................................... 10
+
+2 The ProdRisk-SHOP simulator .............................................................................................................. 12
+    2.1 Advantages and challenges ................................................................................................................. 13
+
+3 Re-optimization in the simulator ......................................................................................................... 15
+    3.1 Motivation and conclusions ................................................................................................................ 15
+    3.2 The re-optimization framework .......................................................................................................... 16
+         3.2.1 Modes of operation ................................................................................................................. 19
+    3.3 Technical verification: test case .......................................................................................................... 19
+         3.3.1 Without variable head ............................................................................................................. 20
+         3.3.2 Update frequency .................................................................................................................... 20
+         3.3.3 Update horizon and overlap .................................................................................................... 22
+    3.4 Test case: Røssåga system................................................................................................................... 23
+         3.4.1 Impact of updated cuts ............................................................................................................ 25
+
+4 Reserves in the simulator .................................................................................................................... 27
+    4.1 Motivation and conclusions ................................................................................................................ 27
+    4.2 Spinning and non-spinning reserves in SHOP...................................................................................... 28
+         4.2.1 Technical verification: test case ............................................................................................... 28
+         4.2.2 Test case: Røldal-Suldal hydro system (RSK) ............................................................................ 29
+         4.2.3 Calculation time ....................................................................................................................... 34
+    4.3 Operation below best-efficiency discharge: cost of wear ................................................................... 34
+         4.3.1 Discharge cost curve in SHOP................................................................................................... 34
+         4.3.2 Technical verification: test case ............................................................................................... 35
+         4.3.3 Test case: East Røldal-Suldal hydro system (East RSK)............................................................ 37
+    4.4 Reserves in both SHOP and ProdRisk .................................................................................................. 42
+         4.4.1 Test case: East Røldal-Suldal hydro system (East RSK)............................................................. 43
+         4.4.2 Water value analysis ................................................................................................................ 50
+         4.4.3 Calculation time in the simulator ............................................................................................. 53
+
+5 Conclusions and further work.............................................................................................................. 55
+
+6 References........................................................................................................................................... 56
+
+Appendix: Available resources: code and documentation of the simulator............................................... 58
+
+                                                       6
+                                                                      HydroCen Report 45
+
+Foreword
+
+This report summarises the research conducted in HydroCen WP 3.3 Optimal hydro design in the future
+power system.
+2024-06-24
+Stefan Rex, Stefan.Rex@sintef.no,
+Linn Emelie Schäffer, LinnEmelie.Schaffer@sintef.no
+Birger Mo, Birger.Mo@sintef.no
+Siri Mathisen, Siri.Mathisen@sintef.no
+
+                                                       7
+                                                                      HydroCen Report 45
+
+1 Introduction
+
+     1.1 Background
+
+The Nordic power system relies on market-based operation of power plants to ensure cost efficient uti-
+lisation of available resources. The ongoing changes in the power system with large integration of varia-
+ble renewables induce higher variability in power prices. Regulated power generation responds to the
+price signals, providing a cost-efficient smoothing of variable generation and load. In the Nordic region,
+variability in wind power, solar power and load is mainly handled by reservoir hydropower ramping up
+and down production in response to the forecasted power prices. Hydropower operations are thereby
+changing due to the structural changes in the power sector. At the same time, a large share of the Nordic
+hydropower fleet is aging as many plants were developed in the mid-20th century. The changing market
+conditions, as well as the aging hydropower fleet, result in a growing focus on maintenance and refur-
+bishment strategies to extend components lifetimes and optimise re-investments. Also, a significant
+share of the hydropower plants' concessions is up for revision. It is therefore a good time for several
+power producers to evaluate the profitability of upgrades of plants, such as investments in larger tur-
+bines, pumped storage plants and other components, to improve plant performance considering future
+market needs.
+
+Investments decisions can include both maintenance decisions to refurbish the plant back to its original
+state and upgrades to take advantage of technology improvements and to improve the performance in
+response to changing market conditions. Both maintenance and upgrading strategies must consider a
+large variety of factors and uncertainties, making the underlying problem and decision processes com-
+plex. Decision support tools are therefore useful.
+
+     1.2 The general investment/refurbishment planning problem
+
+The hydropower investment (and/or refurbishment) problem is multi-dimensional. The investment prob-
+lem comprises the option to undertake new investments to maintain, upgrade or expand the production
+facilities, while evaluating options to produce today or store water for future power generation. Several
+factors must be considered to determine an optimal, long-term schedule for investments to maximize
+profit. The problem may include the following considerations:
+
+    · Expansion of existing capacity
+    · Upgrade of existing equipment for improved performance or new functionality
+    · Design of new generation equipment
+    · Location of new generation equipment
+    · Timing of investments, upgrades and maintenance
+    · Cost of operation, including cost elements such as wear and tear, start/stops, operation below
+
+         best point, etc.
+
+The investment problem is strongly impacted by the future market conditions which are subject to sev-
+eral uncertain factors, such as:
+
+    · Inflow (amount and variation)
+    · Power prices (level and structure)
+    · Fuel and CO2 prices
+    · Prices and volumes for provision of ancillary services
+    · National and cross-border transmission capacity
+    · Growth in power consumption and variable renewable power generation
+    · Market structure and regulatory framework (e.g., tax)
+    · Risk of standstill and unplanned maintenance
+
+                                                       8
+                                                                      HydroCen Report 45
+
+    · Technological developments (e.g., properties of new equipment)
+    · Realised functionality of new equipment
+    · Investment costs (e.g., equipment and labour)
+    · Interest rates
+
+The problem is further complicated by the fact that several of the uncertain variables are coupled in time
+and exhibit serial and/or cross-correlations. Especially, power prices and inflows tend to have some serial
+correlation. Likewise, properties of equipment (such as failure rate) tend to depend on the state in pre-
+vious time-steps. In practice, only some of these factors can be considered jointly in the investment
+problem.
+
+The final decision boils down to whether an investment option (e.g., a new turbine design) is profitable.
+The profitability of an investment is determined by two main components: the cost and revenue sides.
+The cost side comprises the actual cost of the investment/maintenance (equipment, labour, etc.), the
+cost of planned downtime and the risk of failure, while the revenue side depends on the future power
+production and supply of services to the power system. Increased revenues from an investment project
+may be obtained through increased efficiencies (e.g., head or turbine improvements), increased opera-
+tional flexibility (e.g., larger installed capacity or broader range of operation) and additional energy (i.e.,
+more water).
+
+     1.3 Current industry practice
+
+The current industry practice in Norway is to use hydropower scheduling models that may include oper-
+ational constraints and costs (e.g. start-up) to conduct an investment analysis for a discrete set of possi-
+ble investments. The investment analysis is decomposed into two subproblems:
+
+     1. Calculation of expected production revenue for a given production system by simulating opera-
+          tion. The time increment is typically from one week to hourly.
+
+     2. Calculation of the net present value (NPV) for a given system including all relevant costs.
+
+The hydropower scheduling and the investment process are not integrated together in one optimization
+model. Instead, a static analysis is conducted using power prices calculated with models such as the EMPS
+model (Wolfgang et al., 2009). An overview of modelling tools for system operation and simulation can
+be found in Helseth et al. (2023). The price characteristics depend on a wide range of factors, such as the
+total power surplus/deficit in the system, the amount of variable renewable power generation, trans-
+mission capacity and fuel prices. Traditionally, uncertainty in fuel prices have not been considered in the
+calculation of future prices. Instead, several scenarios are usually generated as part of the investment
+analysis to reflect different developments. Such an approach may underestimate the electricity price
+uncertainty leading to lower investments in flexibility resources in the power system (Mo et al., 2023).
+
+The expected revenues are calculated by simulating operation using a long-term operational model that
+considers uncertainty in price and inflow, such as ProdRisk (Gjelsvik et al., 2010). There is currently an
+interest in investment projects that expand the power capacity and/or add pumping functionality to ex-
+isting hydropower plants. A common feature of such projects is that there is limited increase in the total
+electricity production, but rather an improvement of the operational flexibility. The revenue potentials
+from these projects are therefore strongly impacted by the variability in the power price and the hydro-
+power systems' ability to respond to the short-term variations. Consequently, detailed modelling that
+captures short-term variations and limitations is becoming even more important, also in investment anal-
+yses.
+
+                                                       9
+                                                                      HydroCen Report 45
+
+     1.4 Motivation and scope
+
+This report presents parts of the research conducted in work package 3.3 (WP 3.3) of HydroCen. The
+objective of the project has been to develop methods and models for calculation of future revenues for
+hydropower and to support decisions regarding optimal investments in upgrading and expansion pro-
+jects. The project has not considered the impact of regulatory structures on investment decisions, such
+as taxes and owner structures, nor hedging and other measures to reduce risk, except what is discussed
+in the PhD-project summarized below.
+
+The project includes a PhD-project that has investigated different aspects of hydropower investment
+decisions. The findings have been documented through several articles that form the basis of a doctoral
+thesis (Kleiven, 2022). The work is also summarized in HydroCen brief nr. 4 (Kleiven, 2023). Firstly, the
+benefit of coordinated maintenance and replacement planning was shown in Dønnestad et al. (2022).
+The study demonstrates that a real options perspective on these activities can be valuable. Specifically,
+the analysis showed the importance of considering several performance-enhancing activities jointly
+when prices are uncertain. By considering maintenance and replacement jointly, the authors found that
+maintenance may delay major replacements significantly. Next, the challenge of considering both flexi-
+bility in long-term investment decisions and short-term operational flexibility is addressed in Kleiven et
+al. (2024, working paper). As discussed in Section 1.3, current industry practice is based on static NPV
+models that do not optimise the timing of investments. Current practice thereby ignores the value of
+having the flexibility to delay investments into the future. The authors highlight that the timing flexibility
+of investment decisions previously has been accounted for in the academic literature, but usually at the
+cost of simplifying short-term operations. This gap is addressed in the study by considering both the value
+of short-term hydropower flexibility and the implications for long-term capacity instalments in a com-
+bined modelling framework. The work considers the performance of operational policies obtained from
+a heuristic that allows a straightforward integration of seasonal planning and intraweek scheduling. The
+numerical experiments in the study show that investments may be significantly impacted by including
+hourly production flexibility, giving up to 20% larger capacity installations. Consequently, the approach
+of simplifying short-term operation in decision support models for investment decisions may be disad-
+vantageous. Furthermore, it was found that the added value of optimally delaying investments de-
+creased as the hourly price variability increased, compared to a traditional NPV approach. Finally, the
+PhD project also addressed renewal and capacity investment decisions under limited information about
+long-term development in market prices (Kleiven, 2022; Kleiven, 2023), as well as the impact of co-dy-
+namics between the level of available resources (i.e., water) and electricity prices in the seasonal pro-
+duction schedule of a hydropower producer operating in hydropower dominated electricity markets
+(Kleiven et al., 2023).
+
+The remaining part of the research in WP 3.3 has focused on decision support for optimal investments
+in upgrading and expansion of hydropower plants based on the current industry practice of static sce-
+nario analyses and NPV calculations. The profitability of hydropower upgrading- and expansion projects
+may strongly depend on the changing market conditions and expected higher price volatility in the power
+markets. To accurately capture the revenue potential of new investments, short-term operational flexi-
+bility of hydropower plants should therefore be included in the modelling. The project has built on exist-
+ing models developed by SINTEF Energy Research, specifically ProdRisk (Gjelsvik et al., 2010) and SHOP
+(Fosso & Belsnes, 2004; Skjelbred, 2019), to develop a new simulator for revenue calculations for hydro-
+power projects. The simulator is based on the current practise for production planning among Norwegian
+hydropower producers, linking long- and short-term operational planning. ProdRisk and SHOP are state-
+of-the-art production planning models used by most of the large Norwegian hydropower producers for
+decision support. ProdRisk optimise long-term operation of a hydropower cascaded watercourses under
+uncertainty in inflow and prices, while SHOP allows for a more detailed modelling of the hydropower
+plants.
+
+                                                      10
+                                                                      HydroCen Report 45
+
+This report especially discusses two major developments of the simulator. For totality, we first describe
+the simulator in Section 2. A more through description of the basic simulator can be found in Mo &
+Hågenvik (2020). Then, the option to re-optimize the strategy from the long-term model during a simu-
+lation is presented in Section 3. The purpose of the re-optimization is to the refine the modelling of head
+dependent production and to increase the density of cuts closer to the simulated reservoir levels. The
+motivation for implementing re-optimization and the conclusions from testing with this functionality are
+discussed in Section 3.1, while the method is presented in Section 3.2. Sections 3.3 and 3.4 present the
+results from running the simulator with re-optimization for a test system and the Røssåga system, re-
+spectively.
+Section 4 considers the allocation of reserve capacity for sale in reserve markets. Revenues from sale of
+system services and capacity may constitute a larger part of hydropower producers' income in the future,
+as the needs for flexible assets in the power system increase. Including other markets than the regular
+(day-ahead) energy market in the valuation of investment projects may be vital for the profitability of
+expansion projects. Functionality for allocation of reserves has therefore been implemented in the sim-
+ulator. The motivation and main results from the testing of reserve markets in the simulator are pre-
+sented in Section 4.1. Section 4.2 discusses the impact of including up-regulating spinning and non-spin-
+ning reserve markets in the short-term model. The functionality is used for a test system and the RSK
+system (the hydropower system in Røldal-Suldal), as presented in Sections 4.2.1 and 4.2.2, respectively.
+Furthermore, the cost of operating below best efficiency point in the short-term model in combination
+with sales of reserves with spinning condition is assessed for the test system and the eastern part of the
+RSK system in Section 4.3. Then, in Section 4.4, up- and down-regulating non-spinning reserve markets
+are included in both the short- and long-term model and run on the test system for the eastern part of
+the RSK system.
+Finally, Section A.1 briefly comments on the simulator prototype, the accessibility of the code for exter-
+nal use as well as available documentation.
+
+                                                      11
+                                                                      HydroCen Report 45
+
+2 The ProdRisk-SHOP simulator
+
+The ProdRisk-SHOP simulator is developed as a decision support tool for investment analyses. Invest-
+ment analyses require a sufficiently long simulation period, while also considering the technical details
+of the short-term operation. The ProdRisk-SHOP simulator combines the long- and short-term perspec-
+tives by coupling the strategy model, ProdRisk, and the operational model, SHOP, in a combined frame-
+work. The simulator can thereby be used to calculate revenues for different investments alternatives,
+imitating the use of long- and short-term optimisation models in real life operational. A prototype version
+of the simulator was finalized for testing in 2020. The implementation and test cases are described in
+HydroCen report nr. 15 (Mo & Hågenvik, 2020).
+
+ProdRisk can be used to calculate a strategy for the operation of a hydropower system over a planning
+horizon of usually 2-5 years. The model uses a stochastic dual dynamic programming (SDDP) based algo-
+rithm consisting of backward recursions for strategy generation and forward simulations for strategy
+testing. A strategy is represented by so-called Benders cuts, or linear inequalities, which can be inter-
+preted as water values. A main limitation of the SDDP algorithm is that it requires a convex model for-
+mulation, fundamentally restricting the physical properties that can be represented in the model. With
+the aim of reducing this limitation, ProdRisk runs a final simulation on a slightly improved model, includ-
+ing some of the physically correct non-convex relations (e.g., the PQ curve), once convergence between
+the forward simulations and backward recursions has been reached. However, there is still a gap be-
+tween the model of the system used in the final simulation, and a physical correct model of the system.
+The ProdRisk-SHOP simulator takes this final simulation to another level: Instead of improving the phys-
+ically descriptions used in the ProdRisk final simulation model, the short-term model SHOP is used to
+perform the final simulation of the system. SHOP is a short-term, deterministic optimization tool in which
+most of the physical details are modelled. This way, the simulator can provide reliable economic results
+that account for physical details.
+
+The simulator is based on two main principles. First, the ProdRisk model calculates a strategy for utilisa-
+tion of the hydro resources using SDDP. The strategy describes the relation between the expected future
+value of power production and the state of the system, namely the storage level in the reservoirs, inflow
+and market price. The strategy is represented in the optimisation model by linear constraints defined for
+each week in the planning horizon, referred to as cuts. Second, the SHOP model is used to conduct a
+sequential simulation of the hydro system week by week using the strategy from ProdRisk (i.e. cuts).
+
+The flow chart of the ProdRisk-SHOP simulator is shown in Figure 1, where it is assumed that each sce-
+nario corresponds to inflow and price data for a 52-week period. The scenarios are interpreted as con-
+secutive years forming an extended period of operation in the future. First, a ProdRisk series simulation
+is performed with a long planning horizon of, e.g., three years. The water values at the end of the horizon
+must be provided as input from another long-term tool, such as Vansimtap. ProdRisk calculates an opti-
+mal strategy described by cuts at the end of each week within the planning horizon. Once the initial
+ProdRisk simulation has terminated, a series of SHOP simulations is invoked. Each SHOP simulation runs
+over one week and is initialized with the final state of the previous week. Cuts from ProdRisk are used in
+the simulations to represent the end of week value of storing water in the reservoirs. These weekly SHOP
+simulations run consecutively through all scenarios, yielding a total of 52 × (Number of scenarios) indi-
+vidual simulations.
+
+                                                      12
+                                                                      HydroCen Report 45
+
+Figure 1. Flow chart of the basic ProdRisk-SHOP simulator.
+
+     2.1 Advantages and challenges
+
+For practical use for the Norwegian hydropower system, it is an advantage that the simulator is based
+on ProdRisk and SHOP as most of the Norwegian hydropower producers use these models in daily oper-
+ation. The simulator can therefore be used with existing datasets, which lowers the barrier for taking the
+simulator into use. Still, some harmonisation of the datasets to ensure consistent physical descriptions
+is to be expected.
+Ideally, a detailed physical description of the system should be used in both the strategy calculation and
+the final simulation, however, this is not achievable due to the complexity and size of the stochastic long-
+term problem. Instead, the combination of ProdRisk and SHOP allows for a more detailed description of
+the system to be used in the final simulation. Consequently, the optimal operation of the hydropower
+system will differ between the short- and long-term model in the simulator. The user thereby obtains
+more information about the system. Still, this also means that some of the physical details are overlooked
+in the strategy. Over time, this may lead to a deviation in the reservoir filling between the SHOP simula-
+tions and the ProdRisk series simulation. This deviation illustrates the impact of the physical details on
+the operation of the reservoir, and a large deviation may indicate that the long-term model is overlooking
+certain important details. However, it is critical that the system descriptions in ProdRisk and SHOP are
+consistent on physical details that are overlapping among the two models. If not, the results may be
+challenging to interpret.
+A main challenge of the simulator is calculation time, especially for complex systems. The final simulation
+consists of several successive simulations in SHOP. The solution time is therefore dependent on how
+efficiently each of the weekly problems can be solved. The weekly short-term problem can be very com-
+plex for large hydropower systems, substantially impacting the computational effort. To manage this
+challenge, a snipping approach can be used to reduce the size of the system modelled in the short-term
+model, thereby reducing the calculation burden of the simulator without deteriorating the results
+(Hågenvik et al., 2022).
+The remainder of this report discusses two new developments to enhance the performance of the sim-
+ulator. The first considers certain physical details that can be especially important to the reservoir man-
+agement (and thereby the strategy), such as the relationship between head and power. The non-linear
+relationship between head and power cannot be included directly in the formal optimisation problem in
+ProdRisk but is considered through an alternative approach based on the average assumed head at each
+
+                                                      13
+                                                                      HydroCen Report 45
+
+point in time (Gjelsvik et al., 2010). During the simulation for some weather years, actual head for a given
+point in time, may deviate substantially from the initially assumed average head. To mitigate this effect
+in the simulator, a re-optimisation functionality is presented in Section 3 where the forecast for future
+head is updated based on the actual head. The second development is that the simulator is developed
+as a decision support tool for investment decisions. Income from capacity markets is expected to become
+increasingly important in the future. Therefore, functionality for allocation of capacity for trade in reserve
+markets has been included in the simulator, as presented in Section 4.
+The simulator is mainly developed for use in investment analyses, but as mentioned previously, it is im-
+portant that the short-term model (SHOP) and the long-term model (ProdRisk) are as consistent as pos-
+sible for good simulator results. The simulator clearly shows model inconsistencies. Consequently, an-
+other application of the simulator is to use it to check and improve the consistency between the SHOP
+and ProdRisk models used for daily operations. Without a simulator it is more difficult to identify such
+inconsistencies that are important for optimal utilization of the system.
+
+                                                      14
+                                                                      HydroCen Report 45
+
+3 Re-optimization in the simulator
+
+This section describes an extension of the simulator framework where the long-term strategy can be
+updated during the planning horizon by conducting a re-optimization. The motivation for implementing
+re-optimization in the simulator and conclusions from the testing are summarised in Section 3.1. The
+extended simulator framework is described in Section 3.2. Finally, the extended simulator framework
+has been run on a test system and the Røssåga system, simulation results from the two case studies are
+presented in Sections 3.3 and 3.4, respectively.
+
+     3.1 Motivation and conclusions
+
+An extended simulator framework with re-optimization of the long-term strategy is proposed to over-
+come some of the drawbacks of the basic simulator framework. The original strategy calculation provides
+a strategy (i.e. cuts) that can be expected to cover a very broad state space. This implies that there may
+be a coarse density of cuts in the relevant range of the reservoir fillings seen in the final simulation,
+resulting in an inaccurate end-value representation. By conducting one or several re-optimizations, a
+higher density of cuts in the relevant range of reservoir fillings is obtained. Furthermore, the strategy
+(i.e. cuts) can be updated with respect to the present reservoir storage levels. This will mitigate the de-
+viations between the initial reservoir fillings used for head valuation in the original strategy calculation
+and the actual filling at given point in time during the simulation, which will give a more accurate repre-
+sentation of the heads in the cuts. This is explained further in Section 3.2. The benefit of updating the
+strategy is connected to the specific modelling of head dependencies in ProdRisk and might not be
+equally beneficial for another implementation of the SDDP methodology or another modelling of head
+in ProdRisk.
+
+In the ProdRisk-SHOP simulator, several scenarios are simulated after each other in a serial manner. Pro-
+dRisk assumes average heads for each week for all plants to calculate cuts, because the cuts are shared
+by all scenarios (Gjelsvik et al., 2010). However, the actual reservoir levels in a specific scenario deviate
+from the average filling, and for some scenarios the difference can be very large. Without feedback from
+the final simulations, ProdRisk is unaware of the actual reservoir filling, resulting in an inaccurate repre-
+sentation of heads in the strategy calculation. This does not pose issues for the typical use of ProdRisk,
+where the cuts calculated for the near future are used in the operational planning and the cuts are cal-
+culated with the same initial state in all scenarios (in parallel mode). Consequently, in the early part of
+the simulation horizon, the different scenarios have not yet deviated too much from each other and
+average heads are a good guess under uncertainty. In a serial simulation, on the other hand, the actual
+head for some weather years may deviate considerably from the initial assumptions. Furthermore, the
+intention of a serial simulation is to find precise accumulated results for the entire simulation period.
+This can for example be as part of an investment analysis. Hence, high accuracy is equally important for
+all weeks and weather years. Under this premise, using average heads can be a major drawback. The
+impact of the heads in ProdRisk is two-fold:
+
+     1. The heads at the beginning of each week are used to scale the input conversion relation between
+          production (MW) and discharge (m3/sec) (PQ curve) relative to a nominal head. The scaled PQ
+          curve is used for the entire week.
+
+     2. The estimated future value of increased heads is precalculated and included in the objective
+          function for each week.
+
+The first point has an immediate impact on the production, while the second point gives a future "head
+value" of more water. The consequences of inaccurate heads must be investigated through simulations.
+The impact depends on the system in total, and in particular on the volume-head relations of each mod-
+ule.
+
+                                                      15
+                                                                      HydroCen Report 45
+
+The re-optimization functionality in the simulator invokes repeated new runs of the ProdRisk model
+based on certain criteria. The purpose is to update the long-term strategy based on the actual reservoir
+filling seen in the final simulation. The new ProdRisk runs are conducted in parallel mode over a shorter
+planning horizon, using information from the initial ProdRisk strategy and simulation to calculate up-
+dated cuts. The updated cuts are then used in the final simulation to achieve more accurate results. This
+is described further in Section 3.2.
+
+The extended simulator framework with the possibility of updating cuts by repeated re-optimization of
+the strategy has been tested for two case studies, as described in Sections 3.3 and 3.4. The first case
+study shows that the basic principle works and that updated cuts can improve simulated operation and
+revenue. Higher updating frequencies and longer planning horizons in the re-optimization were found to
+improve the solution. This is as expected, and ideally, re-optimizations should be conducted for every
+week with long planning horizons (e.g., 52 weeks). However, this is not feasible since re-optimization
+increases the calculation time considerably. For instance, weekly updates could easily lead to 50 times
+longer total run time for the simulator, compared to the standard framework without updated cuts
+(hours per ProdRisk run vs. minutes per SHOP run). For a real system, this would amount to several days
+to complete one simulator run. In practice, re-optimisations are therefore conducted less frequently and
+with considerably shorter planning horizons.
+
+For a realistic case study, the Røssåga system, the situation is less transparent due to model differences
+between SHOP and ProdRisk, and the less dominant impact of heads. However, when the system con-
+tains enough water to avoid empty reservoirs over a longer period, updated cuts seem to improve the
+profit in the SHOP simulation.
+
+     3.2 The re-optimization framework
+
+The re-optimization framework is based on several additional strategy calculations in ProdRisk at given
+points in time during the final simulation. A new ProdRisk simulation that starts at the correct initial state
+can be run to calculate cuts with the correct heads for a certain week in the simulation period. However,
+starting from scratch in each week with a long-term ProdRisk simulation is not feasible regarding com-
+putation time. Therefore, we suggest a scheme where cuts are updated with less computational effort
+by a new layer of shorter ProdRisk simulations. The initial series simulation with a long horizon is run as
+before and calculates original cuts for a broad space of states based on average reservoir trajectories,
+see Figure 2(a) where the red line illustrates the average. Despite their inaccuracies for any specific sce-
+nario, these cuts are still useful to describe the overall long-term strategy. Instead of passing the original
+cuts directly to the weekly SHOP simulations for the entire planning horizon, they are used as end-values
+for a set of additional ProdRisk simulations (updates) that calculate refined cuts based on updated heads
+at a given point in time. The update runs are set up with the following properties:
+
+      · The initial state is set to the actual state of the system according to SHOP, thus enabling feed-
+           back from the simulation phase to the calculation of cuts.
+
+      · Updates are run in parallel mode in ProdRisk. This is necessary to control the initial state. This
+           also provides a higher density of cuts in the relevant range of reservoir fillings.
+
+      · The value of water at the end of the planning horizon is represented by cuts from the initial
+           series simulation in ProdRisk.
+
+      · The update horizon is significantly shorter than in the initial simulation (maximum 52 weeks).
+           The end-value cuts at the end of the planning horizon contain sufficient information about the
+           long-term strategy.
+
+Each short ProdRisk simulation produces a new set of updated cuts that is used by the following SHOP
+weeks, until the next update is invoked. The updated cuts account for the correct heads according to the
+system state and have a higher density close to the optimal reservoir trajectory in each scenario, as
+shown in Figure 2(b). Thus, SHOP is provided with precise information even when its strategy starts to
+
+                                                      16
+                                                                      HydroCen Report 45
+
+deviate from the one found by ProdRisk. Such deviations between the simulated reservoir fillings in Pro-
+dRisk and SHOP are expected because of the different level of details in the models. This implies that the
+original strategy without updates might become inaccurate.
+The frequency and horizon of the short ProdRisk simulations are parameters of the simulator that can
+be adjusted to balance calculation time and accuracy. Longer planning horizon and more frequent up-
+dates will always be better but increase the computation time. The update horizon must at least span
+the interval until the start of the next update, such that updated cuts are available for all weeks. There
+is flexibility, though, in choosing the overlap of consecutive update simulations, see Figure 2(c). The ben-
+efit of such overlap, and whether short intervals or a longer horizon should be prioritized, must be eval-
+uated through testing. The highest frequency of shorter ProdRisk simulations would be once per week,
+and result in as many ProdRisk simulations as SHOP simulations, and therefore a quite long computation
+time. The full simulator framework including updated cuts is shown in Figure 3.
+
+                                                      17
+                                                                      HydroCen Report 45
+
+Figure 2. Schematic view of ProdRisk updates. (a) The initial pseudo-series simulation creates rough cuts based on an av-
+erage reservoir trajectory (to account for heads) with a long horizon. (b) A parallel ProdRisk run with short horizon calcu-
+lates cuts based on the correct state of the system and with higher density of cuts in the relevant range. (c) Cuts must be
+updated repeatedly along the simulated strategy. The overlap of simulations depends on the update interval and horizon.
+The red curve shows the original and updated reference volume for head.
+
+                                                      18
+                                                                      HydroCen Report 45
+
+Figure 3. Flow chart of the ProdRisk-SHOP simulator with updated cuts. The strategy is updated at several points in time
+by running ProdRisk for a shorter planning horizon.
+
+3.2.1 Modes of operation
+
+More generally, one can define an update condition that is not only based on a fixed time interval be-
+tween updates, but on several checks like the discrepancy between the current state and the average
+scenario, or the reservoir filling found by SHOP and ProdRisk. This condition is checked prior to each
+SHOP week and launches a ProdRisk re-optimization for updated cuts if needed. The extended frame-
+work in Figure 3 allows for three different simulation modes:
+
+    1. ProdRisk-SHOP without updates: If the update condition is defined as always False, the simulator
+         is reduced to the basic framework, and SHOP receives cuts from the initial series simulation. This
+         mode is used as a reference to evaluate the benefit of updates.
+
+    2. ProdRisk-SHOP with updates: Cuts are updated based on the present state of the SHOP simula-
+         tion as illustrated in Figure 3. The updated cuts are passed to the following SHOP weeks.
+
+    3. ProdRisk simulator with updates (no SHOP simulation): This is the same updating principle as in
+         2 except that the simpler ProdRisk functionality is used for the final simulation. While this mode
+         loses all physical details from the SHOP model, it is useful to check whether updated cuts give an
+         advantage in ProdRisk itself.
+
+In the following, all results from ProdRisk with updates have been obtained in mode 3, whereas results
+from SHOP have been obtained in mode 2.
+
+     3.3 Technical verification: test case
+
+An artificial, simple test system consisting of two reservoirs, Module A (684 Mm3) and Module B (104
+Mm3) is used to test the re-optimization functionality in the simulator. As illustrated in Figure 4, both
+modules have one power plant with one generator each, and the efficiency of all components is assumed
+to be 100%.
+
+                                                      19
+                                                                      HydroCen Report 45
+
+                                              Figure 4. Illustration of the simple test system.
+
+3.3.1 Without variable head
+
+In the first test case, heads are assumed to be independent of the reservoir fillings. Given the very low
+level of physical detail, the ProdRisk and SHOP models are equal. Hence, close to identical results from
+ProdRisk and SHOP are expected in this test. Furthermore, for a small system without variable heads,
+updating the ProdRisk strategy cannot have any sizable effect. Thus, this test system can serve as a sanity
+check of the simulator. The results also show that the optimal reservoir fillings differ only slightly. The
+deviations in sales revenue between SHOP and ProdRisk are negligible. These results confirm that the
+technical design and the dataflow between the models in the simulator work as intended.
+
+3.3.2 Update frequency
+
+To study the impact of repeated re-optimizations using ProdRisk, the test system is modified to involve
+variable heads. Namely, the upstream module (module A) is assumed to have a volume-head-relation
+that varies linearly between 78m at the minimal regulation level and 106m at the maximal regulation
+level. This is a significant head variation, where a clear benefit from updating the cuts according to the
+current reservoir filling can be expected although the system still lacks complexity. No head variations
+are assumed for Module B.
+First, we compare simulation results for different update frequencies for the repeated ProdRisk runs. The
+updates are always run with a horizon of 52 weeks. Here we use the following three schemes:
+
+     · never: The simulator runs without updates, and SHOP receives cuts from the initial ProdRisk
+          series simulation.
+
+     · yearly: Strategy re-optimizations are initiated at the beginning of each scenario, i.e., every 52
+          weeks.
+
+     · seasonal: Strategy re-optimizations are initiated every 13 weeks, i.e. four times every simulated
+          historical year.
+
+                                                      20
+                                                                      HydroCen Report 45
+
+The strategies obtained from re-optimization differ systematically from the initial ProdRisk series simu-
+lation. Mean reservoir trajectories and percentile ranges calculated by ProdRisk for the three schemes
+are displayed in Figure 5. The simulations with updated strategies always regulate Module A to a signifi-
+cantly higher reservoir level. This improves the head of Plant A compared to the initial strategy. We see
+larger improvements in the head when using seasonal re-optimization than yearly re-optimization. In
+contrast, Module B is regulated to a lower level upon re-optimization. While this has no impact on the
+head of Plant B, it provides more flexibility for the operation of the upstream module. The SHOP simula-
+tions follow closely the reservoir trajectories of the updated strategies for both modules and are not
+shown separately.
+
+Figure 5. Mean reservoir trajectories calculated by ProdRisk and percentile range for ±20% (dark shade) and ±40% (light
+shade) for the test case with strategy updates carried out never, yearly or once per season.
+
+The optimization of heads in the update runs meets the theoretical expectation. The update runs miti-
+gate the inaccuracies of using average reservoir fillings in ProdRisk, as previously discussed in Section 3.1,
+giving improved reservoir management and head optimization. The effect is also clearly visible in the
+economic results, as shown in Figure 6. Over the course of 50 years, repeated re-optimization of the
+ProdRisk strategy yields roughly 4 MEUR extra income with yearly updates, and almost 6 MEUR with
+seasonal updates, compared to the total sales revenue without re-optimization (roughly 870 MEUR). The
+figure shows accumulated difference in sales revenue as a function of the simulated sequence of weather
+years. Because the sales revenue numbers do not include the value of storage differences, a simulation
+period of many years is needed to show the benefit of updating the strategy.
+
+                                                      21
+                                                                      HydroCen Report 45
+
+Figure 6. Accumulated sales revenue for optimal strategies calculated by ProdRisk and SHOP with different update intervals
+in comparison to an ordinary ProdRisk series simulation without strategy updates. Upper panel: absolute difference, lower
+panel: relative difference. Note that reservoir end values are not included.
+
+3.3.3 Update horizon and overlap
+
+Finally, we test the impacts of the length of the planning horizon of the re-optimizations, and thereby
+also the overlap between the updates. The test system is run with head variations, like in Section 3.3.2,
+and a seasonal re-optimization interval (i.e., 13 weeks interval). Planning horizons of 13 weeks (no over-
+lap of update simulations), 20 weeks (7 weeks overlap), and 52 weeks (39 weeks overlap) are tested and
+compared to simulations without re-optimization.
+Unsurprisingly, longer updating horizon gives better economic results as shown in Figure 8. Furthermore,
+the reservoir trajectories in Figure 7 show that the regulation level of Module A increases with the length
+of the update horizon. A short update horizon has two disadvantages. First, a short horizon leaves only
+a short period where the re-optimization can deviate from the initial strategy and improve the results,
+since the re-optimization uses cuts from the initial series simulation as the end-value setting. Conse-
+quently, the updated strategy navigates back towards the original strategy at the end of the update hori-
+zon. Second, a short horizon reduces the overlap of the update runs, which causes discontinuities due to
+the fallback on the initial strategy at the end of the horizon. In the present case, for a 13-week horizon
+and no overlap, the resulting re-optimized strategy will often release water from Module A to Module B
+at the end of a season to approach the initial strategy, but abruptly change the ramping direction at the
+start of the next season to optimize the head again. This causes peaks in the reservoir trajectories, as can
+be seen in the mean trajectories of Module B in Figure 7. For longer overlap, on the other hand, the last
+part of each re-optimization is discarded, and such peaks avoided. Hence, a new re-optimization should
+be initiated well before the horizon of the previous one is reached.
+
+                                                      22
+                                                                      HydroCen Report 45
+
+Figure 7. Mean reservoir trajectories calculated by ProdRisk and percentile range for ±20% (dark shade) and ±40% (light
+shade) for the test case with strategy updates every 13 weeks (indicated by vertical dashed lines) for different horizons of
+the re-optimization.
+
+Figure 8. Accumulated sales revenue for optimal strategies calculated by ProdRisk and SHOP with different update horizons
+in comparison to an ordinary ProdRisk series simulation without strategy updates. Upper panel: absolute difference, lower
+panel: relative difference. Note that reservoir end values are not included.
+
+     3.4 Test case: Røssåga system
+
+To test the simulator on a real hydro system, we use the Røssåga watercourse as a relatively simple
+example. The Røssåga system, illustrated in Figure 10, consists of four modules, out of which the lowest
+reservoir is virtual (no reservoir capacity and no production). The upstream module Bleikvatn has no
+installed plant but release directly into the Røsvatn module. This is by far the largest reservoir, with 2363
+Mm3 out of 2600 Mm3 in the entire system. From Røsvatn water is released through the Øvre Røssåga
+power plant to the Fallfoss module, which has a small reservoir but a large share of the total production
+
+                                                      23
+                                                                      HydroCen Report 45
+
+capacity in the system (about two thirds). The simulator is run for the Røssåga system for 58 historical
+inflow and price scenarios (1958-2015).
+
+                                                         Figure 9. The Røssåga system.
+
+The regulation level at Røsvatn can vary between 370.7 MASL and 383.4 MASL. Including submersion,
+the head at Øvre Røssåga varies between 136.4m and 122.8m. The difference of 13.6m corresponds to
+10% of the nominal head, 133.9m. At Fallfoss, the regulation level lies between 241.9 MASL and 247.9
+MASL. The maximal head variation of 6m corresponds to 2.4% of the nominal head, 245m. Thus, head
+correction is less significant in the Røssåga system than in the modified version of the test case discussed
+in Section 3.3.
+In contrast to the test case, where the physical description was identical in the two models, the model
+differences between ProdRisk and Shop have important consequences in the Røssåga system. Independ-
+ent of how the simulator is run, there is a significant discrepancy between ProdRisk and SHOP. Figure 10
+shows the reservoir trajectories from the two models without any re-optimization. The simulation results
+indicate that ProdRisk prioritizes to maintain a stable head for the largest plant, whereas SHOP stores
+more water upstream. The total sales revenue over all simulation years is approximately 6740 MEUR in
+ProdRisk, compared to 6280 MEUR in SHOP (7% difference).
+
+                                                      24
+                                                                      HydroCen Report 45
+
+Figure 10. Reservoir fillings for ProdRisk and SHOP strategies without updates. The solid lines are the mean trajectory, while
+the shaded regions indicate the ±20% (dark shade) and ±40% (light shade) percentile ranges.
+
+The differences between the ProdRisk and SHOP results are partly expected due to differences in the
+physical details in the models. In the SHOP model, the plants Øvre Røssåga and Nedre Røssåga have 3
+and 6 generators, respectively. Each generator is modelled with a detailed turbine and generator effi-
+ciency curves and a start-up cost. Furthermore, the SHOP description includes several individual loss de-
+scriptions, such as main, penstock and tailrace losses. Nedre Røssåga has a tailrace loss of up to 5.3m
+alone, which is close to the maximal head variation. Such details are not fully captured by the plant de-
+scription used in ProdRisk, which explains the different results to some extent. Nevertheless, the rela-
+tively big discrepancy may also indicate that the consistency of the models could be improved.
+
+3.4.1 Impact of updated cuts
+
+The simulator is run without updated cuts, with seasonally updated cuts (20 weeks horizon, 7 weeks
+overlap) and with yearly updated cuts (52 weeks horizon, no overlap). The ProdRisk strategies from the
+simulations with and without updates are essentially identical, implying that there is no benefit from
+improved head optimization in ProdRisk for this case. Both economically and in reservoir filling, the dif-
+ference is within the expected uncertainty. In contrast, when results from SHOP are compared with and
+without updated cuts, there seems to be a systematic benefit of the re-optimization starting in the sec-
+ond half of the simulation period, whereas no significant differences occur in the first half, as shown in
+Figure 11.
+
+                                                      25
+                                                                      HydroCen Report 45
+
+Figure 11. Accumulated sales revenue for SHOP seasonally or yearly updated cuts compared to SHOP without updates.
+
+This unexpected outcome could possibly be explained with the amount of water in the system. Figure 12
+shows the minimal filling of the entire system. In most years in the first half of the simulation period,
+there is a week where the entire system is almost completely emptied by ProdRisk (with or without up-
+dates). Without water, the system is necessarily in the same state regardless of the operation strategy.
+If such a "reset" occurs every year, ProdRisk has not enough flexibility to build up an advantage during
+the re-optimization (unless, perhaps, with a very long update horizon). In the second half of the simula-
+tion period, more water is available. ProdRisk operates with higher minimal storage levels, such that
+strategy improvements during the update runs are possible. This is when SHOP starts to draw profit from
+updated cuts. Yearly updates yield more profit than seasonal updates, as seen in Figure 11, indicating
+that a long horizon is more beneficial in this specific case than a higher update frequency with shorter
+horizons. This implies that the optimal specifications for update runs is likely to differ from case to case.
+
+Figure 12. Minimal filling of the entire system in each scenario. In the first half of the simulation period, the large reservoirs
+are usually almost emptied by ProdRisk at some point during the year.
+
+                                                      26
+                                                                      HydroCen Report 45
+
+4 Reserves in the simulator
+
+This section describes an extension of the simulator framework to include a reserve market. In its basic
+form, the simulator accounts only for the spot energy market. The motivation for considering reserve
+markets in the simulator and conclusions from the testing are summarised in Section 4.1. The simulator
+was first tested with reserves in SHOP only, as presented in Section 4.2. Furthermore, Section 4.3 de-
+scribes the implications of considering the costs of running below best point in combination with up-
+regulating reserves. Then, finally, modelling of reserve requirements in both the strategy part (ProdRisk)
+and simulation (SHOP) are discussed in Section 4.4. Relevant case studies are presented in each section.
+
+     4.1 Motivation and conclusions
+
+In the future power system, the increasing share of wind and solar generation is expected to cause more
+volatility and the importance of reserve markets is likely to increase. To be able to analyse the impact of
+reserve allocation on an investment case, it is important to include reserve markets in the simulator.
+
+The simulator was first tested with reserves in SHOP only, including markets for up-regulation with and
+without spinning conditions. In this part, reserves were only included in the short-term model, assuming
+that the strategy calculated by ProdRisk remains valid. One objective of the work was to assert this as-
+sumption. Furthermore, the long-term impacts on production and revenue of trading in reserve markets
+were studied, considering both reserves with and without spinning condition. When up-regulation re-
+serves are considered in the optimization, an economic incentive to run generators below optimal effi-
+ciency can occur in some price periods. Functionality to estimate the costs of wear for generators when
+running below optimal efficiency has been developed as a part of HydroCen (Eggen, 2022; Eggen & Bels-
+nes 2023) and is implemented in SHOP. The additional costs of wear for generators when running below
+the optimal efficiency point, when considering up-regulating reserves, are addressed in Section 4.3.
+
+A test system and the Røldal-Suldal hydropower system (RSK) was simulated with up-regulation reserves
+in the short-term model. Simulations of the test system is described Section 4.2.1 and demonstrates that
+the functionality works as intended in the simulator framework. The RSK case study described in Section
+4.2.2., shows that reserve markets may have a significant impact on both the total revenue and reservoir
+operation. Thus, the assumption of approximately unchanged strategy (i.e., cuts) does not hold for this
+case when considering up-regulation reserves. This is a notable finding given that water values that do
+not account for reserve markets are presently used by many hydro producers in the Nordics. This finding
+is in line with, although shows it more clearly, than an earlier research project on integrating balancing
+markets in ProdRisk (Helseth et al 2016). The new results are based on higher reserve prices than used
+in Helseth et al. (2016). In general, energy prices seem to become more volatile and the demand for
+reserves is expected to increase. The case study was based on the rather extreme price year 2022. There-
+fore, the assumption might still hold for cases where reserve markets have less impact relative to the
+spot market in terms of market volume, price ratio and participating plants. Also, the assumption may
+hold if both up- and down-regulation reserves are included with approximate symmetry, which should
+be tested further. Finally, the discharge cost curve functionality in SHOP has been evaluated together
+with spinning reserves. The cost curve was found to change the usage of generators and the allocation
+of reserves considerably. In addition, the estimated cost of wear was found to be reduced by approxi-
+mately 50%. In contrast, it was difficult to identify any changes on operation when it is applied in the
+absence of reserve markets.
+
+The assumption that the strategy calculated by ProdRisk remains valid when including up-regulating re-
+serves in the short-term model was found to be invalid for the RSK case. The simulator has therefore
+been tested with reserves in both the long- and short-term model in Section 4.4. Up- and down-regulat-
+ing reserves without spinning requirements have been included in the short- and long-term model in the
+simulator for the East RSK case. The results are compared to simulation results where reserves are only
+
+                                                      27
+                                                                      HydroCen Report 45
+
+considered in the short-term model. The results show that the reservoir management changes consider-
+ably when reserves are considered in both models, compared to only in the short-term model. Including
+up-regulation reserves in both models reduces how much the average filling increases and vice versa for
+down-regulation reserves. Still, the average reservoir filling is lowered when both up-and down-regula-
+tion reserves are included, indicating that the sensitivity to the regulation direction differs. In general,
+the reservoir management becomes more similar to the case without reserves when reserves are con-
+sidered in both the long- and short-term model. The results from the case study are discussed further in
+Section 4.4.1. The differences in the reservoir management are a consequence of changes in the water
+values, as discussed in Section 4.4.2. The analysis demonstrates that up-regulating reserves reduce the
+water values by an amount depending on the market capacity. An opposite effect was seen for down-
+regulating reserves, giving higher water values.
+
+In each case, one should consider carefully which markets and conditions are needed in the simulation,
+as reserve markets can cause much longer computation times. This is particularly relevant when running
+the simulator, which comprises a high number of individual SHOP simulations. Details on calculation
+times are included for some of the case studies in Sections 4.2.3 and 4.4.3.
+
+     4.2 Spinning and non-spinning reserves in SHOP
+
+In total, seven reserve market types are available in SHOP to model reserves with different activation
+requirements. For simplicity, we only use two of them in this work, one without spinning condition (RR)
+and one with spinning condition (FRR). Furthermore, only up-regulation is considered in this section.
+Details on the reserve types can be found in the SHOP documentation (SINTEF Energy, n.d.).
+
+The amount of reserve capacity that can be delivered from a spinning generating unit is limited by the
+maximum and minimum production, in addition to the optimized production level. In SHOP, the maxi-
+mum and minimum production level consider head-dependencies. Furthermore, active production con-
+straints on the unit are also considered in the reserve capacity constraints. An important aspect regarding
+the optimization is that spinning conditions require binary variables and the use of mixed-integer pro-
+gramming (MIP), which increases the computation time. Activation of reserves is not included in SHOP.
+
+Make clear if water values are computed with respect to reserve prices in cases below.
+
+4.2.1 Technical verification: test case
+
+The integration of reserves into the simulator framework required some technical adjustments. To verify
+that the reserve allocation works as expected, a simple test case was conducted. This is an artificial two-
+reservoir system without head dependence (flat reservoirs) and constant efficiency, as previously de-
+scribed in Section 3.3.
+
+The test case included a non-spinning reserve market ("RR"). Only plant A participated in the allocation
+of reserves. The reserve market was assumed to be unlimited, allowing this plant to freely distribute its
+capacity based on profitability. The reserve price was set to the spot price times a scaling factor, with a
+total of 50 price scenarios (years). This test was repeated for several scaling factors in the range from 0
+to 2. The fixed ratio of reserve to spot prices makes it easier to evaluate the obtained results.
+
+Figure 14 shows the mean production and reserve allocation pattern with weekly resolution for different
+scaling factors, including a reference case without reserves. The production decreases from the reference
+production to zero as the reserve price is scaled up, while the reserve allocation increases simultaneously
+from zero to the total capacity of plant A. The results look meaningful in all price regimes:
+
+                                                      28
+                                                                      HydroCen Report 45
+
+      For very low reserve prices, reserve allocation is unfavourable compared to production for the
+          spot market. A numerical artifact occurs for zero prices, where reserve allocation does not affect
+          the objective function, causing arbitrary reserve "sales" as long as production remains the same.
+          A significant reserve volume is allocated even with extremely low prices (factor 0.01), but still
+          without changing the production pattern. In such cases, the entire surplus power which is not
+          used for production gives a small extra income when sold as reserve. This would likely be differ-
+          ent with nonzero activation rate.
+
+      For an intermediate price range (around half the spot price), the production pattern is altered
+          significantly to maximize sales in both markets. During most of the year, a large share of the
+          capacity is allocated for reserves. Only during the spring flood period is the power production
+          for the spot market maximized and the allocation of capacity for reserves reduced.
+
+      For high reserve prices, it becomes more profitable to spill or bypass water than to produce,
+          such that reserve sales are maximized at each time step. The price threshold for this type of
+          behaviour will depend on spillage penalty values. However, this was not investigated in more
+          detail.
+
+The more plant A is used to allocate reserves, the less water is discharged for production. This leads to a
+higher water level in the upstream reservoir, while less water is stored in the downstream reservoir. For
+the highest reserve prices, the downstream reservoir is almost empty throughout the year.
+
+    Figure 13. Mean production and reserve allocation for base case with a fixed ratio (see legend) of reserve to spot prices.
+    Panels: production in the module connected to the reserve market (top), total production (middle), and reserve allocation
+    (bottom).
+
+4.2.2 Test case: Røldal-Suldal hydro system (RSK)
+
+Case description
+
+                                                      29
+                                                                      HydroCen Report 45
+
+The Røldal-Suldal hydropower (RSK) system is a complex watercourse that is used as a real-world test
+case. The case is based on system descriptions from the industry, but the model descriptions in ProdRisk
+and SHOP had to be harmonized for consistent use in the simulator. The topology of the ProdRisk model
+is shown in Figure 14. The SHOP model is more detailed and contains, e.g., creek intakes and hydraulic
+reservoir couplings that cannot be represented in ProdRisk.
+
+                                    Figure 14. Topology of the RSK system as modeled in ProdRisk.
+
+The RSK system was simulated considering:
+     1. Only with the spot market, no reserves
+     2. With non-spinning up regulation reserves ("RR") in SHOP
+     3. With both spinning ("FRR") and non-spinning ("RR") up regulation reserves in SHOP
+
+It was assumed that all plants participate in all markets. The available market volume was set to 20% of
+the installed capacity for non-spinning reserves and 10% for spinning reserves. The simulations were run
+over a period of 20 inflow and price years, i.e., with 20 scenarios in the ProdRisk series simulation and 20
+years of week-by-week simulations in SHOP. Longer simulations were not attempted because of exces-
+sive calculation times on the small test computer.
+For the inflow, historical data was used. The spot price was based on a simulation with the EMPS power
+market simulator, using the "Low Emission" scenario which resulted from an earlier HydroCen activity
+(Schäffer & Graabak, 2019). This price series contains 30 weather years with a three-hourly time resolu-
+tion. The simulator was run with the first 20 of these price years. For the reserve markets, observed
+prices for one year were taken from the open databases at Nordpool (Nord Pool, n.d.) and ENTSO-E
+(ENTSO-E, n.d.), and the same prices were repeated each year in the simulator. The reserve prices corre-
+spond to NO2 in 2022, therefore the HydroCen series for the spot price was rescaled to the spot yearly
+mean value of NO2 in 2022. The reserve prices were converted to three-hourly resolution to match the
+spot price resolution. This was done by taking the average price in each three-hour period. All price series
+are shown in Figure 15.
+
+                                                      30
+                                                                      HydroCen Report 45
+
+Figure 15. The price series used for the spot market and the reserve markets "RR" (no spinning condition) and "FRR" (spin-
+ning condition) in SHOP. (Does axis cover EUR/MWh and EUR/MW?)
+
+Results
+The energy and reserve capacities sold in the different markets are compared for all three simulations in
+Figure 16. On average, production decreases when reserve markets are present. In periods where reserve
+prices exceed spot prices one can also observe a decrease in maximum production, such as in the late
+summer. Recall that only up-regulation is included in this test case. Thus, reserve sales give an incentive
+to leave some production capacity unused. Contrarily, down-regulation would give an incentive towards
+higher production.
+For non-spinning reserves, the average sales are relatively high throughout the year. Thus, even when
+prices are lower than the spot price, it is often profitable to allocate reserves and thereby generate extra
+income. This corresponds well to the results from the test case with low reserve prices, as discussed in
+Section 4.2.1. Again, it is possible that the optimization algorithm would favour less reserve sales if acti-
+vation rates were included. When spinning reserves are included, these are utilized frequently as well.
+Due to numerical ambiguity, reserves are even allocated in periods where the price is zero.
+
+                                                      31
+                                                                      HydroCen Report 45
+
+Figure 16. The energy sold on the spot market (top), non-spinning reserve market (middle), and spinning reserve market
+(bottom). Each panel shows the averages as solid lines and the minimum to maximum range as a semi-transparent area.
+All results are from SHOP.
+
+The spinning condition can in principle cause higher production when reserve prices are high enough to
+ensure that units are spinning even when the spot price is too low to produce. The spinning reserve price
+used here is mostly below the spot price, such that this effect is irrelevant for the averaged results. How-
+ever, it becomes clearly visible in specific weeks. Figure 17 shows the production and allocation of re-
+serves for week 11 in price year 10, for which the spot price is very low (almost zero), and the reserve
+price is high (maximum). The plot show that minimum production is sustained to enable sales of spinning
+reserves. Without a reserve market, on the other hand, production drops to zero during most of the
+week.
+
+Figure 17. Production and spinning reserves for one specific week where spot prices are very low while spinning reserve
+prices are high.
+
+The average total filling of the system increases slightly when reserve markets are considered. To find
+systematic changes in the reservoir management, we divide the RSK system into upstream and down-
+stream reservoirs. In the western watercourse, all reservoirs from Valldalen and below are counted as
+
+                                                      32
+                                                                      HydroCen Report 45
+
+downstream reservoirs, while in the eastern watercourse, the reservoirs from Sandvann and below are
+counted as downstream reservoirs. All other reservoirs are counted as upstream reservoirs. The plots in
+Figure 18 shows that the change in reservoir filling mostly is located in the upstream reservoirs, while
+the downstream reservoirs show nearly no change. Recall that the reserve markets only are modelled in
+the short-term model, which receives the same water values in all simulations. Without reserves, the
+reservoir filling curves correspond well with the long-term model. Hower, with up-regulation reserves a
+significant deviation between ProdRisk and SHOP appears in the simulated reservoir operation. This de-
+viation indicates that the water values should be calculated including information about reserve capacity
+markets, more on this in Section 4.4. It should also be noted that the present simulations only included
+up-regulation. The gap between the simulated reservoir filling curves from the long-term model are
+smaller if symmetric up- and down-regulation is assumed, which is also discussed in Section 4.4.
+
+Figure 18. Filling of the total system (top), the upstream reservoirs (middle), and the downstream reservoirs (bottom); lines
+show the mean value and shaded areas the minimum/maximum range.
+
+The accumulated results from all SHOP weeks in the simulator are summarized in Table 1. The total rev-
+enue from all markets increases by roughly 15% when both spinning and non-spinning reserves are in-
+cluded. At the same time, the total production decreases by roughly 9% mainly because more water is
+spilled, bypassed or discharged at lower efficiency. Given the assumption that 30% of the total capacity
+in the system could be allocated for reserve sales at any time (the assumed available volume of the re-
+serve markets), these numbers might be larger than the real-life expectation. Simultaneously, the market
+prices favoured a high use of the available reserve capacity. The seemingly small impact of reserves with
+spinning condition, on the other hand, can be attributed to the fact that this condition rarely gave
+changes in the production pattern for the used scenarios. Overall, the simulator gives reasonable results
+for the long-term impact of different types of reserves in the RSK system under the given assumptions.
+
+                                                      33
+                        HydroCen Report 45
+
+Table 1: Accumulated results for RSK with reserve markets relative to the case without reserves.
+
+Production              Non-spinning reserves     Spinning and non-spinning reserves
+Spot revenue
+Spillage + bypass                          91.5%                                     90.9%
+                                           89.5%                                     88.2%
+Total revenue                            113.4%                                    113.8%
+Upstream end value                       114.3%                                    115.1%
+Downstream end value                     126.6%                                    128.2%
+                                         111.6%                                    117.1%
+
+4.2.3 Calculation time
+
+Depending on the original case, reserve markets can increase the complexity of each weekly problem
+significantly and thereby increase the computation time. Additional markets increase the number of var-
+iables and constraints in the optimization, but a spinning condition also requires a binary variable for unit
+commitment. Therefore, reserves with spinning condition resulted in a large increase in the simulation
+time for the test case. However, if mixed-integer programming is used in the model to represent other
+system properties (e.g., start cost), the relative impact of including reserves with spinning condition is
+smaller. This was the case for the RSK system. Specifically, the final simulation (i.e., the short-term SHOP
+simulations) for the test case over 50 scenarios on a PC with 8 cores took:
+
+     · 45 minutes without reserve markets
+     · 1:40h when the non-spinning reserve market ("RR_up") was included
+     · 6:50h with both non-spinning and spinning ("FRR_up") reserves
+
+For the full RSK system (that already includes binary variables), the computation time of SHOP increases
+by approximately 25% per additional market. The run time of ProdRisk was unchanged because reserves
+were only present in SHOP. The discharge cost curve does also require mixed-integer programming. How-
+ever, because it was used together with start cost and reserves with spinning condition that already have
+this requirement, there was no major impact on the computation time.
+
+     4.3 Operation below best-efficiency discharge: cost of wear
+
+Several relevant technical features are normally not considered in the long-term operational models for
+hydropower, such as operational failure probability as a function of start-ups, efficiency degradation as
+a function of operation and impact of system operation on failure probabilities and component efficien-
+cies. Some of these features can be represented as costs in the short-term operational models if the
+required data is available. Reserves for up-regulation which require spinning generators can yield an in-
+centive to run units below their optimal efficiency point. Formally, this might be the correct economic
+optimum. However, one also wants to avoid high wear by driving generators out of their intended range
+of operation. This was tested in the simulator together with spinning reserves for two cases: the test case
+and the East RSK case. The results are discussed in Sections 4.3.2 and 4.3.3, respectively. Non-spinning
+reserves were not included for simplicity. The case studies are based on the same spot and reserve mar-
+ket prices as in Section 4.2. The assumed discharge cost curve is discussed further below.
+
+4.3.1 Discharge cost curve in SHOP
+
+The increase in the cost of wear that appears when generators are run below their best efficiency point
+are discussed in earlier HydroCen project (Eggen, 2021). This cost corresponds to the expected lifetime
+reduction of the unit from one hour operation at the given discharge below best efficiency point. The
+possibility to add a discharge-dependent extra cost was implemented in SHOP, where the cost curve can
+be defined as a piecewise linear function. In an interval around the best efficiency point, no extra cost
+
+                        34
+                                                                      HydroCen Report 45
+
+appears. For lower discharge, the extra cost per hour increases, as illustrated in Figure 19. To ensure that
+the extra cost is not added when the generator is turned off requires the use of a binary variable for unit
+commitment which may increase calculation time considerably. In practice, the discharge cost curve
+should be used together with a minimal production limit and start-up cost.
+In the following, the discharge cost curve is defined in the same way as in Eggen (2021), namely with
+three segments: The zero-cost interval and two segments with slopes 1 EUR/h/(m3/s) and 8
+EUR/h/(m3/s). The discharge threshold values 1, 2 separating the segments varies slightly and will be
+stated for each test case.
+
+Figure 19. Example of a discharge cost curve (red) in SHOP, together with the efficiency curve (blue). The discharge thresh-
+old values separating the segments are marked as 1, 2.
+
+4.3.2 Technical verification: test case
+
+The test system is illustrated in Figure 4, and is the same as was used in Sections 3.3 and 4.2.1. As in
+Section 3.3.1, this two-reservoir system has no head correction, and all components have 100% effi-
+ciency. Thus, no best-efficiency point exists, but the system can be used for technical verification. Typi-
+cally, it is optimal to use the plants either at maximum power or not at all. First, we consider operation
+without reserves. We compare the production pattern with and without an extra cost of wear at the
+downstream plant B, with 1 = 70%  and 2 = 90% . In addition, a small start-up cost of 5
+EUR and  = 20%  are included to avoid any potential numerical issues with the discharge cost
+near zero. As shown in Figure 20, the impact of the discharge cost curve is negligible, since the optimal
+solution is not operating in the penalized discharge range anyway. The duration curve has two clear plat-
+eaus corresponding to running either one or both plants at .
+
+                                                      35
+                                                                      HydroCen Report 45
+
+Figure 20. Duration curve for total production in the test case with and without cost curve, without reserves.
+
+Next, we consider the same system including spinning reserves for up-regulation, which can be allocated
+on plant B. The market volume for reserves is set to 10% of the maximum production of plant B. The case
+without a discharge cost curve on plant B is compared to two different cost curves: one with 1, 2 as in
+the previous test ("low" curve), and one where 2 is increased to 95%  ("high" curve). The resulting
+duration curves are shown in Figure 21. For the low curve, the onset of extra cost coincides with the
+maximum allocatable reserve. Hence, the impact of this cost curve is marginal for high plant utilization
+because reserve allocation is not sufficient to drive plant B into the penalized region (i.e., above 121.8
+MW). On the other hand, the low curve has an impact in the low-power range. The spinning condition
+can lead to situations where the plant is active only to sell reserves, and therefore runs at  (15.7
+MW). This is heavily penalized by the discharge cost curve, leading to a different usage of the lowest
+plateau in Figure 21.The high curve has roughly the same effect at low power, but also restricts the use
+of reserves close to . The 95%-threshold of the cost curve becomes clearly visible as a new usage
+plateau (approximately 125 MW).
+
+Figure 21. Duration curves for total production of both plants with different discharge cost curves on plant B, with spinning
+up-regulation reserves.
+
+The total impact of the extra cost becomes clear in the accumulated SHOP results over the entire simu-
+lation period as given in Table 2. A stricter discharge cost leads to a minor increase in spot market sales,
+but a decrease in reserve sales. The total from both markets decreases slightly. The total reserve alloca-
+tion (the annual average of sold MW times hours in which the reserve was allocated) is significantly re-
+duced by the extra cost.
+
+                                                      36
+                             HydroCen Report 45
+
+Table 2. Accumulated base case results with spinning reserves and different discharge cost curves. Differences are relative
+to the case without cost curve.
+
+No cost curve    Spot sales  Reserve sales  Tot. sales dif-  Total sold re-  Reserves dif-
+Low cost curve   [MEUR]      [MEUR]         ference [%]      serves [MWh]    ference [%]
+High cost curve  86.565      3.237                           24630
+                 86.588      3.147          -0.07            22869           -7.04
+                 86.628      3.006          -0.19            20422           -17.08
+
+4.3.3 Test case: East Røldal-Suldal hydro system (East RSK)
+
+After successful verification of the discharge cost for the simple test case, the impact of such costs was
+analysed for a model of the RSK system. In contrast to Section 4.2.2, only the eastern part of the RSK
+river system, illustrated in Figure 22, was considered in order to reduce computation times. All genera-
+tors were connected to the spinning reserve market (up-regulation) and a discharge cost curve was
+added for each generator with 1 = 70%  and 2 = 93% . Note that both thresholds are now
+relative to the best efficiency point, instead of the maximum discharge. The best efficiency point is nec-
+essarily an approximation, given that the production curve is head-dependent, whereas the discharge
+cost curve does not have head dependence in SHOP.
+
+                     Figure 22. Illustration of the eastern part of the Røldal-Suldal hydro system (East RSK).
+
+In Figure 23, discharge duration curves are compared for the cases (i) without reserve markets, (ii) with
+spinning reserves without discharge cost, and (iii) with both spinning reserves and discharge cost. The
+curves are plotted for the Sandvann and Kvanndalsfoss power plants. The cost curve introduces clearly
+visible new plateaus in the duration curve, e.g., corresponding to the threshold 2 around 12 3/ for
+Sandvann, because the model tries to avoid the discharge range with additional cost whenever possible.
+When the cost curves are not included, the duration curves do not exhibit as sharp plateaus due to the
+head dependence.
+
+                                                      37
+                                                                      HydroCen Report 45
+
+Figure 23. Discharge duration curves for Sandvann (upper panel) and Kvanndalsfoss (lower panel).
+
+Simulations including spinning reserves with and without discharge cost curves were repeated multiple
+times while varying the price assumptions in two different ways:
+
+     1. Scaling the spinning reserve prices with a factor, while keeping the same spot prices. The inten-
+          tion is to study the dependency of sale of reserves on the average price level in the reserve
+          market relative to the spot market.
+
+     2. Scaling the spot price deviation per price period (3 hours) relative to the daily average price with
+          a factor (volatility scaling), while keeping the same reserve prices. This gives insight into the im-
+          pact of short-term price fluctuations on reserve sales.
+
+The final price series are manipulations of the prices used in Section 4.2.2. The results are presented in
+the following two subsections.
+Simulations with scaled reserve price
+The scaling factors  = 0.5, 1, 2, 3, 4 are used for the reserve price series. The results for reserve alloca-
+tion and reserve revenue are shown in Figure 24 and Figure 25, respectively. When the discharge cost
+curve is not included in the short-term optimization, the reserve allocation strictly increases with increas-
+ing reserve prices. This is not true for extreme reserve prices ( = 4) when the extra cost is added as can
+be seen in Figure 24. At the same time, as shown in Figure 25, revenue does not seem to be affected by
+this, indicating that high prices are exploited even more radically.
+
+                                                      38
+                                                                      HydroCen Report 45
+
+Figure 24. Average annual reserve allocation in MWh for different reserve price scaling factors.
+
+Figure 25. Average annual reserve market revenue in Euro for different reserve price scaling factors.
+
+Based on the assumed discharge cost curve, the accrued cost of wear can be calculated from the dis-
+charge results to estimate the expected impact on the lifetime of the generators. The result is shown in
+Figure 26. In all cases, the cost curve functionality produces a usage pattern that significantly reduces
+wear. However, this effect becomes less important for high reserve prices. When reserve prices increase
+while the cost of wear remains the same, this cost becomes less relevant. Note also that the total cost of
+wear is very small compared to the overall objective value.
+
+                                                      39
+                                                                      HydroCen Report 45
+
+Figure 26. Average accumulated annual cost of wear for different reserve price scaling factors.
+
+Spot price volatility scaling
+The volatility was scaled with factors  = 1,2,3,4. First, the average price per day  is calculated from
+the original price series. Then, for each price period, the deviation  =  -  is computed. The
+scaled price in this period is  =  +   . This scaling preserves all daily averages but enhances
+the intra-day variation of prices (for factors > 1). Figure 27 illustrates the increase in price variability in
+the scaled price series.
+
+Figure 27. Price volatility scaling - prices (Euro/MWh) per hour during the first simulation week.
+
+From Figure 28 and Figure 29, one can see that the reserve allocation decreases with increasing varia-
+tions in spot prices. The difference in yearly reserve sales between simulations with and without a dis-
+charge cost curve almost disappears for very high spot price volatility. In that case, it is more beneficial
+to use the available flexibility to adjust the production pattern to maximize the income from the spot
+price variations, rather than binding up capacity in the reserve market. Both the spinning condition and
+the discharge cost curve reduce flexibility and therefore make it less profitable to sell reserves in a vola-
+tile spot market. In reality, one might expect a correlation of reserve prices and the volatility of the spot
+price. This was not considered in this study, but the results from the two price cases (i.e., reserve price
+scaling and volatility scaling) indicate that the two effects could balance each other.
+
+                                                      40
+                                                                      HydroCen Report 45
+
+Figure 28. Average annual reserve allocation in MWh for different spot price volatility.
+
+Figure 29. Average annual reserve market revenue in Euro for different spot price revenue.
+
+The cost of wear is shown in Figure 30. As reserve usage decreases with higher price volatility, the total
+cost of wear is also reduced. The relative benefit of including the discharge cost curve in the optimization
+is roughly the same (about 50%) for all scaling factors. The cost of wear from start/stop is not included
+in these numbers.
+
+                                                      41
+                                                                      HydroCen Report 45
+
+Figure 30. Average accumulated annual cost of wear for different spot price volatility.
+
+     4.4 Reserves in both SHOP and ProdRisk
+
+The simulations of the RSK system, presented in Section 4.2, showed a deviation in the reservoir filling
+between the short- and long-term model when reserve markets for up regulation were considered in the
+short-term model. This indicates that the strategy from the long-term model without reserves is not
+optimal for operation in the short term-model with reserves. This section investigates this further by
+including reserve markets in the long-term model ProdRisk, as well as in the short-term model.
+Furthermore, reserves for both up and down regulation were considered. It is demonstrated that up and
+down regulation have opposite effects on the water values, which can balance each other to some ex-
+tent. This is in line with what has been shown theoretically in Helseth et al. (2017):
+
+     1. Binding down regulation capacity contributes to higher water values.
+     2. Binding up-regulation capacity contributes to lower water values.
+We demonstrate the importance of including reserves in the water value calculation by simulating for
+cases with only one type of reserves or both at the same time.
+The reserve market functionality in ProdRisk was implemented outside of HydroCen and became first
+available in 2024. The optimization including reserves is based on the following assumptions and simpli-
+fications:
+     1. There is only one market for up regulation and one market for down regulation. Details of dif-
+
+          ferent types of reserves and contracts are disregarded.
+     2. Decisions on reserve sales and energy sales are made simultaneously with the same time reso-
+
+          lution, i.e., the spot price periods are used for the reserve markets.
+     3. Reserve prices are deterministic to avoid unacceptable computation time, i.e., the same reserve
+
+          price series is used for each spot-price scenario. Correlations between spot and reserve prices
+          are not considered.
+     4. Reserve activation is not included.
+
+                                                      42
+                                                                      HydroCen Report 45
+
+To achieve as similar reserve modelling as possible in ProdRisk and SHOP, only capacity allocation of non-
+spinning reserves (i.e., the "RR" market type) was used in SHOP. Identical reserve prices and allocation
+limits were used in the short- and long-term models.
+In the following, we first present results from simulations with the full simulator for the Eastern Røldal-
+Suldal hydro system to investigate the benefit of including reserves in the water values given to SHOP.
+Secondly, simulations with ProdRisk only are used to analyse the impact of reserves on the water values.
+
+4.4.1 Test case: East Røldal-Suldal hydro system (East RSK)
+
+Case description
+As a test system, the eastern part of the RSK system was used. The system is the same as was used in
+Section 4.3.3 and consists of 4 reservoirs and 2 plants, as illustrated in Figure 22. In practice, the ProdRisk
+and SHOP models are clipped versions of the full system shown in Figure 14. Details that are only mod-
+elled in SHOP and not in ProdRisk are start-up cost on all generators (treated as binary variables in MIP),
+more precise representation of creek intakes, physically correct head optimization, and modelling of two
+separate units in the downstream plant "Suldal II", which is described by an aggregated production curve
+in ProdRisk. The limit for reserve allocation was set to 20% of the total maximum production. The alloca-
+tion per plant and unit was unrestricted, such that the models had freedom to distribute reserves opti-
+mally. The same reserve capacity was used for up regulation and down regulation.
+The price series for the spot price and the up-regulation reserve price are identical to the ones used in
+Section 4.2, with historical reserve prices for 2022 and spot prices from HydroCen scaled to the historical
+mean value from 2022. As for up regulation, the prices for down-regulation reserves are historical prices
+for 2022 taken from Nordpool for NO-2. The price series are shown in Figure 31. In general, the prices
+for up and down regulation reserves are quite similar. The coherence of the reserve and spot prices is
+not realistic, but the preparation of prices with correct correlations was outside the scope of this project.
+In addition, the limitation in ProdRisk that reserve prices must be deterministic does not allow for cou-
+pled spot and reserve prices per scenario. The used prices are nevertheless assumed to be suitable to
+study generic effects of reserve allocation on the optimal strategy.
+
+                                                      43
+                                  HydroCen Report 45
+
+Figure 31. Price series: Spot price with average (dark blue) and minimum/maximum values (light blue), reserve prices for
+up regulation (orange) and reserve prices for down regulation (green).
+
+The ProdRisk-SHOP simulator was run with different reserve types (up/down/both) in either SHOP only
+or both ProdRisk and SHOP, in addition to the base case without any reserves. All simulations are sum-
+marized in Table 3.
+
+Table 3. Summary of the simulator runs with reserves.
+
+No.       Reserves in ProdRisk                             Reserves in SHOP
+1 (base)  None                                             None
+2         None                                             Up regulation
+3         None                                             Down regulation
+4         None                                             Up and down regulation
+5         Up regulation                                    Up regulation
+6         Down regulation                                  Down regulation
+7         Up and down regulation                           Up and down regulation
+
+Reservoir operation
+First, it was checked that the effect observed in Section 4.2 on upstream water storage can be repro-
+duced with the eastern part of the RSK system if reserves are only included in SHOP. The largest upstream
+reservoir is Holmevann (96 Mm3). The filling of Holmevann is shown in Figure 32. One can see that, as
+observed before, the water level increases compared to the base case when reserves for up regulation
+are added. For down-regulation reserves, the effect is opposite, resulting in less upstream storage. If
+both reserve markets are included at the same time, the average filling is almost not affected. This con-
+firms that the impact of up and down regulation on water management is roughly cancelled out in a
+symmetric situation when reserves are not considered in the long-term strategy.
+
+                                                       44
+                                                                      HydroCen Report 45
+
+Figure 32. The filling of Holmevann in Mm3 for all simulations without reserves in ProdRisk: no reserves (blue), up regulation
+(green), down regulation (orange), and both up and down regulation (red).
+
+When reserves for up regulation are included in the strategy calculation in addition to the short-term
+model, the reservoir management changes significantly. The results from the simulator are shown in
+Figure 33. The average filling in Holmevann becomes very similar to the case without reserves. This indi-
+cates that the increase in filling when reserves are considered in the short-term model is sub-optimal.
+Furthermore, the maximal filling is reduced when reserves are included in the strategy, narrowing the
+span of the operational scenarios. Contrarily, with reserves in SHOP only, the model suggests raising the
+maximal filling before the spring flood period. The reason for both effects (too high average and maxi-
+mum with SHOP only) is that the short-term profit from reserve sales combined with the incorrect water
+value (i. e., not considering reserve allocation) provides a too strong incentive to hold back water in the
+short-term model.
+
+Figure 33. The filling of Holmevann for the simulations with reserves for up regulation in ProdRisk and SHOP (orange), only
+SHOP (green), or none (blue).
+
+Similarly, with reserves for down regulation, the average filling of Holmevann is much closer to the base
+case when the reserves are included in the strategy, compared to the results with reserves in SHOP only.
+Simulator results for down regulation are shown in Figure 34. In contrast to the results for up regulation,
+a difference to the base case remains. Hence, it is optimal to reduce the stored volume, but the short-
+term model tends to overestimate this effect without correct water values.
+
+Figure 34. The filling of Holmevann for the simulations with reserves for down regulation in ProdRisk and SHOP (orange),
+only SHOP (green), or none (blue).
+
+                                                      45
+                                                                      HydroCen Report 45
+
+In the symmetric case, where the same reserve capacity can be allocated for both up and down regula-
+tion, see Figure 35, the outcome is different. Including the two reserve markets in SHOP only, they
+roughly compensate each other regarding water management. However, including the reserves in the
+long-term strategy leads to a reduction of the average filling. Apparently, the sensitivity of the long-term
+model and the short-term model on the regulation direction is different. This will be discussed later.
+
+Figure 35. The filling of Holmevann for the simulations with reserves for both up and down regulation in ProdRisk and SHOP
+(orange), only SHOP (green), or none (blue).
+
+Plant utilization
+In Figure 36, duration curves for the total production in the system are shown for simulations with up-
+regulation reserves. One can clearly see that, in ProdRisk as well as in SHOP, the use time at maximum
+power is drastically reduced when reserves are included. This is as expected, because up regulation is
+only possible when the production limit is not fully exploited. Instead, there is a long plateau at the power
+corresponding to the maximum production minus the maximum reserve capacity. Hence, for a large frac-
+tion of time, selling reserves is more profitable than producing the same capacity. Given that activation
+of reserves is not included in the models, the reduced production at high power leads to surplus water
+and extended use time at lower prices. The lower half of the duration curve lies therefore higher in the
+cases with reserves. An important difference between the curves from ProdRisk and SHOP is the abrupt
+drop to zero at , which is only present in the SHOP results but not in the ProdRisk results. This is a
+consequence of binary variables not being modelled in ProdRisk. Instead, ProdRisk uses a convex pro-
+duction curve, which does not represent unit commitment and minimum power exactly. Whether or not
+reserves are included in ProdRisk has only a marginal impact on the resulting duration curves in SHOP.
+
+                                                      46
+                                                                      HydroCen Report 45
+
+Figure 36. Duration curves for total production in the simulator. Results from SHOP (upper panel) and ProdRisk (lower
+panel), without reserves (blue) and with up-regulation reserves included in only SHOP (green) and both ProdRisk and SHOP
+(orange).
+
+For down regulation, there is little effect on the high-power segment of the duration curves, see Figure
+37. However, the use time at low power increases such that down-regulation reserves can be sold more
+often. The total use time in ProdRisk is higher than in SHOP, which can be attributed to the model differ-
+ences related the modelling of minimum production, start-up costs, and production curves for individual
+generators in SHOP.
+When reserves for both up and down regulation are included, the duration curves exhibit all features
+discussed above at the same time. Results with both reserve types are shown in Figure 38. In all cases,
+the total annual generation remains on average approximately the same with and without reserves. This
+is not surprising, given that the same amount of water is passing through the system.
+
+                                                      47
+                                                                      HydroCen Report 45
+
+Figure 37. Duration curves for total production in the simulator. Results from SHOP (upper panel) and ProdRisk (lower
+panel), without reserves (blue) and with down-regulation reserves included in only SHOP (green) and both ProdRisk and
+SHOP (orange).
+
+Figure 38. Duration curves for total production in the simulator. Results from SHOP (upper panel) and ProdRisk (lower
+panel), without reserves (blue) and with up- and down-regulation reserves included in only SHOP (green) and both ProdRisk
+and SHOP (orange).
+
+In Figure 39, the allocation of reserves is shown. With the prices assumed in this case study, the reserve
+sales are most of the time close to the allowed maximum, for both up and down regulation. This is similar
+in all simulations and in both models.
+
+                                                      48
+                                                                      HydroCen Report 45
+
+Figure 39. Average (solid) and minimum/maximum (dashed) allocation of reserves for up and down regulation as a function
+of time for the simulation where both reserve types are included in both models.
+
+Revenue
+When reserve markets are included, the spot sales revenue decreases slightly, while substantial addi-
+tional revenue is generated through reserve sales (roughly 20% extra per reserve market). This is shown
+in Figure 40. It must be noted that the economic results crucially depend on the price assumptions as
+well as the reserve market limits, which were arbitrarily set to 20% of  in this case study. As discussed
+above, the reserve prices were high enough to exploit most of the available reserve capacity most of the
+time. The additional revenue from reserves is therefore nearly maximal in this study and might be lower
+in other cases.
+
+Figure 40. Average annual sales revenue in MEUR from spot (blue), reserve (orange), and all (green) markets for all simu-
+lations (cf. Table 1).
+
+                                                      49
+                                                                      HydroCen Report 45
+
+To extract the value of including reserves in the long-term strategy, the differences in revenue between
+the simulations with reserves in both models and the simulations with reserves only in SHOP are shown
+in Figure 41. The total income increases in all cases and is largest when only reserves for down regulation
+are present. The difference corresponds to ca. 1% of the total revenue in that case. Including reserves in
+the strategy yields an advantage in the long-term resource management. For the case shown here re-
+serve markets predominantly affects the income from the spot market but this can be dependent on
+how the reserve market is modelled and the somewhat simplified deterministic reserve price modelling.
+For the case with only up regulation, the revenue from reserve sales even decreases slightly to allow for
+larger income on the spot market.
+
+Figure 41. Difference in revenue in MEUR between simulations with reserves in ProdRisk and SHOP and simulations with
+reserves in SHOP only.
+
+4.4.2 Water value analysis
+
+Including reserves in ProdRisk makes it possible to see how the water values change when reserve market
+is included. To run ProdRisk multiple times within reasonable computation time, water values/cuts were
+calculated assuming a deterministic spot price and only one price scenario was used in the final simula-
+tion. A series of ProdRisk simulations per reserve type (up, down, up and down) was run with a maximum
+reserve capacity varying from 0% to 100% of the maximum power. The marginal water values in each
+week were calculated by applying the cuts computed by ProdRisk to the corresponding system states for
+all inflow scenarios. Subsequently, the average over all scenarios was taken to obtain the average mar-
+ginal water value.
+
+Figure 42 shows that the average marginal water values in all reservoirs systematically decrease when
+reserves for up regulation are included in the optimization. The marginal water value decreases because
+less water can be discharged when up-regulation reserves are sold, thereby increasing the utilization
+time and reducing the value (increase in profit) that can be generated from an additional unit of water.
+Contrarily, Figure 43 shows a systematic increase of water values when down-regulation reserves are
+considered. In that case, each additional unit of water helps to continuously sustain the discharge needed
+for down-regulation reserves. This confirms the earlier mentioned theoretical results from Helseth et al.
+(2017).
+
+As an example, the same information is shown for week 40 in Figure 44 as a function of maximum reserve
+capacity. While one can see that the water values decrease or increase for up and down regulation, re-
+spectively, it is important to note that the relative water value between reservoirs is not significantly
+changed, apart from fluctuations for the small reservoirs. This explains why the reservoir operation with
+
+                                                      50
+                                                                      HydroCen Report 45
+
+reserves in ProdRisk in Section 4.4.1 is almost the same as without reserves, although the absolute water
+values are very different.
+The water values in the case with both up and down regulation follow the water values for up regulation
+for reserve capacities up to roughly 50% of , while the impact of down regulation appears to be
+stronger for very large reserve capacities.
+
+Figure 42. Average marginal water values as a function of time for all reservoirs in the east RSK system when a reserve
+market for up regulation is included with a maximum capacity varying from 0% (green) to 100% (red) of .
+
+                                                      51
+                                                                      HydroCen Report 45
+
+Figure 43. Average marginal water values as a function of time for all reservoirs in the eastern RSK system when a reserve
+market for down regulation is included with a maximum capacity varying from 0% (green) to 100% (red) of .
+
+Figure 44. The average marginal water value in week 40 for the different reserve types and all reservoirs, as absolute value
+(left panel) and relative to the water value at Holmevann (right panel).
+
+                                                      52
+                                                                      HydroCen Report 45
+
+Figure 45 shows the water values at Holmevann in week 10 and week 40 without reserves, only up or
+only down regulation, and both reserve types. Here, the water value is shown as a function of the filling
+of Holmevann, while a fixed reference filling is assumed in the other three reservoirs. The average fillings
+over the simulated scenarios in the respective week were used as reference fillings. The reserve capacity
+was set to 20% of . Again, one can see how up regulation reduces the water values, whereas down
+regulation increases the water values. The shape of the water value functions can be quite different for
+different weeks during the year, but on a qualitative level the effect is always the same. Given that the
+reserve capacity is well below 50% of , the water values with both up and down regulation follow
+roughly the water values from the case with only up regulation ­ as expected based on Figure 44.
+
+Figure 45. Marginal water value (left) and total value (right) at Holmevann in two different weeks as a function of filling
+( = 96 3) for fixed reference filling of the other reservoirs.
+
+4.4.3 Calculation time in the simulator
+
+An important aspect regarding the usefulness of including reserves in the simulator is the effect on cal-
+culation time. In Figure 46, the calculation times for all complete simulator runs listed in Table 3 are
+shown. In general, including reserves is computationally costly. With reserves in both models, the simu-
+lator run time increases by 38%, 64%, and 102% for up regulation, down regulation, and both together,
+respectively. It should be noted that complexity of the optimization could be reduced if the models only
+had to find the optimal reserve capacity but not the distribution on the plants or generators.
+Considering the computation times for ProdRisk and SHOP separately, it turns out that up regulation
+seems to be more difficult than down regulation for ProdRisk, whereas SHOP needs less time for down
+regulation than up regulation. A possible explanation is that SHOP has a more advanced modelling of
+minimum production, start-up cost, and reduced efficiency below the best point, which make down reg-
+ulation more difficult to handle. ProdRisk, on the other hand, is aware of the future risk of spillage, such
+that it is harder to include up regulation.
+Comparing the simulations with reserves in both models versus simulations with reserves only in SHOP,
+it turns out that the computation time of SHOP is slightly reduced when reserves are included in the
+strategy. The present case study is, however, not sufficient to draw general conclusions. It is not obvious
+
+                                                      53
+                                                                      HydroCen Report 45
+
+why each deterministic short-term problem is easier to solve by modified water-values, which only affect
+the end valuation per week.
+
+Figure 46. Calculation times for the simulator with reserve markets, tested on eastern RSK with 30 scenarios on 16 cores.
+
+                                                      54
+                                                                      HydroCen Report 45
+
+5 Conclusions and further work
+
+This report has summarised the work in Project 3.3 of HydroCen. The project focus has been on decision
+support for upgrading and investment in hydro power. The project has included one PhD, which has
+focused on different aspects of the more general investment problem under uncertainty. The research
+conducted by SINTEF, which constitutes the largest part of the project, has focused on development of
+a new tool for calculation of production revenues for given production systems. These revenue calcula-
+tions are important parts of the net present value calculations used in traditional investment analysis.
+
+The new simulator can simulate operation of existing and future hydropower systems, that is closer to
+real physical operation than what is possible with existing simulation tools. In the first part of the project, we
+developed and tested the basic simulator framework that is build using two existing operational sched-
+uling models ProdRisk and SHOP. The framework is intended for investment analyses but has also been
+found useful to test consistency between the two operational models. By checking the consistency in the
+simulator, errors and inaccuracies in the underlying data can be identified and corrected. Furthermore,
+the simulator may be used to estimate or adjust certain parameters in the long-term model, ProdRisk,
+based on the differences between the short- and long-term model in the simulator. This potential of such
+use could be investigated further.
+
+In project 3.3 of HydroCen, we have developed and tested different improvements of the basic frame-
+work. First, we have shown that the simulator results can benefit from updated strategy calculation
+during the simulation sequence, especially when head dependencies are very important. However, up-
+dating the strategy increases computation time substantially. Second, the simulator has been expanded
+to include a capacity market. With assumed increasing importance of such markets, this simulator func-
+tionality will become more important in future. The results show a significant impact on the reservoir
+management of considering capacity markets in the strategy calculation.
+
+The exiting ProdRisk model assumes a deterministic capacity price and future research should focus on
+improved modelling of the relation between spot and capacity prices. This includes both estimation of
+the relationship and implementation in the simulator. Furthermore, the value of ancillary services is as-
+sumed to become more important in the future with an increasing share of new renewable production.
+The value of such services is not covered by the simulator analysis even though this income can be a
+significant part of the investment analysis. How to calculate the value of such services for a future system
+is a challenge that likely requires substantial research in the years to come.
+
+Finally, a snipping procedure has been developed, where the simulation is done for a smaller part of the
+physical water course. This is motivated by reduced computation time, which is an issue using the simu-
+lator. We developed the theory and showed that the method, depending on the system and size of the
+snipped system, reduces the computation time significantly without deteriorating the results. Still, the
+case study also showed that when snipping a system in the middle of a cascaded water course, the upper
+and lower modules should consist of reservoirs with some flexibility. Further testing is required to inves-
+tigate the usefulness and limitations of the method, and to identify potential improvements. Further
+assessments could include the combination of the snipping functionality and the re-optimization frame-
+work to obtain improved accuracy at a lower computational cost.
+
+                                                      55
+                                                                      HydroCen Report 45
+
+6 References
+
+Dønnestad, E.M., Fleten, SE., Kleiven, A. et al. A real options analysis of existing green energy facilities:
+maintain or replace?. Energy Syst https://doi.org/10.1007/s12667-022-00505-8
+
+Eggen, A.O., Modell for kjøremønsterrelaterte kostnader.
+HydroCen rapport 24 (2021). Norwegian Research Centre for Hydropower Technology.
+
+Eggen, A.O., Belsnes, M. Operation related maintenance and reinvestment costs for hydropower sched-
+uling. Energy Syst. (2023). https://doi.org/10.1007/s12667-023-00589-w
+
+ENTSO-E. "ENTSO-E Transparency Platform." n.d., Accessed: Dec. 06, 2023. [Online]. Available:
+https://transparency.entsoe.eu/
+
+Fosso, O. B., Belsnes, M. M., "Short-term hydro scheduling in a liberalized power system," in International
+Conference on Power System Technology (2004), Singapore.
+
+Gjelsvik, A., Mo, B., Haugstad, A. Long- and Medium-term Operations Planning and Stochastic Modelling
+in Hydro-dominated Power Systems Based on Stochastic Dual Dynamic Programming. In: Pardalos, P.,
+Rebennack, S., Pereira, M., Iliadis, N. (eds) Handbook of Power Systems I. Energy Systems (2010).
+Springer, Berlin, Heidelberg. https://doi.org/10.1007/978-3-642-02493-1
+
+Helseth, A., Melo, A.C.G., Ploussard, Q., Mo, B., Maceira, M. E.P., Botterud, A., Voisin, N., Hydropower
+Scheduling Toolchains: Comparing Experiences in Brazil, Norway, and USA and Implications for Synergis-
+tic Research, Journal of Water Resources Planning and Management (2023), pp. 04023030, 149,
+doi:10.1061/JWRMD5.WRENG-5911
+
+Helseth, A., Fodstad, M., and Mo, B., "Optimal Medium-Term Hydropower Scheduling Considering En-
+ergy and Reserve Capacity Markets," in IEEE Transactions on Sustainable Energy, vol. 7, no. 3, pp. 934-
+942, July 2016, doi: 10.1109/TSTE.2015.2509447.
+
+Helseth, A., Mo, B, and Fodstad, M., "Water values in future power markets," 2017 IEEE Manchester
+PowerTech, Manchester, UK, 2017, pp. 1-5, doi: 10.1109/PTC.2017.7980885.
+
+Hågenvik, H.O., Mathisen, S.; Helseth, A., Mo, B., "A Comprehensive Simulator for Hydropower Invest-
+ment Decisions," 2022 17th International Conference on Probabilistic Methods Applied to Power Sys-
+tems (PMAPS), Manchester, United Kingdom, 2022, pp. 1-6, doi: 10.1109/PMAPS53380.2022.9810621.
+
+Kleiven, A., Decision analytics in hydropower: Investment and operational planning under uncertainty,
+Doctoral thesis, NTNU (2022), https://hdl.handle.net/11250/2985051
+
+Kleiven, A., Risanger, S. & Fleten, SE. Co-movements between forward prices and resource availability in
+hydro-dominated electricity markets. Energy Syst. (2023). https://doi.org/10.1007/s12667-023-00605-z
+
+Kleiven, A., Decision analytics in hydropower: Investment and operational planning under uncertainty
+HydroCen brief nr. 4 (2023), https://hdl.handle.net/11250/3065259
+
+Kleiven, A., Nadarajah, S. and Fleten, SE. Hierarchical Planning for Hydropower Capacity Upgrade: Ex-
+ploiting Structure in Reoptimization and Investment Policies. Working paper (February 2024). Available
+at SSRN: https://ssrn.com/abstract=4728674 or http://dx.doi.org/10.2139/ssrn.4728674
+
+                                                      56
+                                                                      HydroCen Report 45
+
+Mo, B., Hågenvik, H.O. Applying the ProdRisk- SHOP simulator for investment decisions. HydroCen Report
+19 (2020). Norwegian Research Centre for Hydropower Technology.
+Mo, B., Helseth, A. and Rex, S. Modelling uncertainty in gas and CO2 prices ­ consequences for electricity
+price, 2023 19th International Conference on the European Energy Market (EEM), 2023, Lappeenranta,
+Finland, pp. 1-5, doi: https://doi.org/10.1109/eem58374.2023.10161839.
+Nord Pool. "View hourly regulating prices." n.d., Accessed: Dec. 06, 2023. [Online]. Available:
+https://www.nordpoolgroup.com/en/Market-data1/Regulating-Power1/Regulating-
+Prices1/ALL/Hourly/
+Schäffer, L. E., Graabak, I. Power Price Scenarios - Results from the Reference scenario and the Low Emis-
+sion scenario. HydroCen Report 5 (2019). Norwegian Research Centre for Hydropower Technology.
+SINTEF Energy, "Reserves -- Documentation and examples.", n.d., Accessed: May 13, 2024. [Online].
+Available: Reserves -- Documentation and examples (sintef.energy)
+Skjelbred, H. I., Unit-based Short-term Hydro Scheduling in Competitive Electricity Markets, Trondheim:
+PhD-thesis, NTNU (2019).
+Wolfgang, O., Haugstad, A., Mo. B., Gjelsvik, A., Wangensteen, I., Doorman, G. Hydro reservoir handling
+in Norway before and after deregulation, Energy (2009), Volume 34, Issue 10, Pages 1642-1651, ISSN
+0360-5442.
+
+                                                      57
+                                                                      HydroCen Report 45
+
+Appendix: Available resources: code and documentation of
+the simulator
+
+The results presented in this report were obtained with a research prototype of the ProdRisk-SHOP sim-
+ulator. The prototype includes experimental functionality for:
+
+     · a snipped system
+     · re-optimization and updated cuts
+     · data flow with reserve markets
+The prototype can be made available to HydroCen partners upon request, contact stefan.rex@sintef.no.
+The basic simulator framework, comprising one ProdRisk series simulation and weekly SHOP simulations,
+without experimental functionalities, was restructured and published open source. The code, including
+a basic example, is available as a git repository: https://gitlab.sintef.no/energy/prodrisk-shop-simulator.
+The simulator requires commercial license for ProdRisk and SHOP.
+In addition, the simulator is explained and demonstrated in two videos on HydroCen's Knowledge hub
+for hydropower https://hydrocen.nina.no/english/.
+
+                                                      58
+ISSN: 2535-5392
+ISBN: 978-82-93602-46-0
+

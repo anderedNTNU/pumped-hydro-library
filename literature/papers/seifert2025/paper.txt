@@ -1,0 +1,1575 @@
+                                          Highlights
+
+                                          Coordinated Trading Strategies for Battery Storage in Reserve and Spot Markets
+                                          Paul E. Seifert, Emil Kraft, Steffen J. Bakker, Stein-Erik Fleten
+
+                                              · Explores coordinated bidding complexities and steps to build an SDDP-based trading strat-
+                                                 egy.
+
+                                              · The battery storage in the case study operates in three markets (DA, ID and FCR).
+                                              · At four-hour resolution, the FCR market dominates, with minimal coordination benefits.
+                                              · Modified prices enable coordinated bidding and increase revenues by up to 12.5 %.
+
+arXiv:2406.08390v4 [stat.ME] 20 Feb 2025
+ Coordinated Trading Strategies for Battery Storage in Reserve and
+                                   Spot Markets
+
+                 Paul E. Seiferta,, Emil Kraftb, Steffen J. Bakkera, Stein-Erik Fletena
+
+    aDepartment of Industrial Economics and Technology Management, Norwegian University of Science and
+                                      Technology, Alfred Getz' vei 3, 7491 Trondheim, Norway
+
+              bInstitute for Industrial Production, Karlsruhe Institute of Technology, Hertzstr. 16, 76187
+                                                                Karlsruhe, Germany
+
+Abstract
+
+Battery storage systems play a crucial role in modern energy infrastructure by balancing fluc-
+tuations of renewable energy sources. However, price interdependencies between markets and
+time-coupling constraints of storage complicate daily bidding and operation across available
+electricity markets. Our research contributes to the literature on short-term electricity market
+operations by expanding it to frequency containment reserve, day-ahead, and intraday markets.
+Our contribution captures price and quantity uncertainty in a stochastic modelling approach
+that complies with the sequential price dependencies using a multidimensional Markov Chain.
+We use econometrics to segregate market sentiments from intrinsic stochasticity and analyse
+price drivers specific to each market to generate representative scenarios. The applicability of
+this method, even in exceptional market environments, is demonstrated in a case study of the
+German electricity market zone during the European energy crisis in 2022. We provide insights
+into the operation of battery storage and find that capacity reservation in the frequency contain-
+ment reserve dominates day-ahead and intraday bidding during this time, indicating significant
+volume shifts between markets. Under cycling compensated market conditions, we observe that
+coordinated bidding across multiple markets can yield additional value and estimate it to be up
+to 12.5 % since battery storage can economically leverage price fluctuations.
+
+Keywords: Markov processes, OR in energy, Stochastic programming, Stochastic Dual
+Dynamic Programming, Battery storage
+
+1. Introduction
+
+    Renewable energy sources (RES) supersede controllable power plants in the electricity system
+due to their economic competitiveness and the need to reduce carbon emissions [35, 26]. However,
+RES rely on weather conditions and are often located far from demand centres. This intensifies
+inflexibility issues in space and time [28, 10]. Due to RES's limited predictability and semi-
+dispatchability, it is difficult to increase RES shares above current levels and reduce controllable
+generation without reducing system stability [6]. Therefore, it is expected that demands for
+balancing capacity and reserves increase to ensure the system balance. However, field studies
+show that market design improvements and the introduction of the Intraday (ID) market have
+led to the opposite effect of reduced balancing needs [22]. The authors' analysis is limited to
+the ID market; however, there are more markets in which to participate. Synergies from market
+
+     Email address: paules@ntnu.no (Paul E. Seifert )
+
+                                                              1
+integration and sector coupling are well-studied [15]. The recent cost reductions and the ability
+to store electricity with short lead times have made battery storage a promising technology for
+this cross-market integration and can help reduce the need for backup capacity in the future.
+However, integrating battery storage into multiple markets is challenging but necessary: older
+studies report revenue stacking of multiple markets necessary to operate battery storage profitable
+[7, 18]. Given the recent cost reductions and expected build-out in battery storage, having a
+competitive edge is essential for market participants to operate battery storage profitably in the
+future.
+
+    Market coordination refers to a process of coordinating decisions across multiple markets,
+taking into account the expectations of subsequent markets [29]. Instead of a series of individ-
+ual optimisations, market coordination determines the best possible decisions across all markets
+while considering the uncertainty of future actions and parameters at the time of decision-making.
+The scheduling of markets has inherent time gaps between bidding, market clearing, and resource
+deployment. Battery storage operators can take advantage of these gaps to benefit from price
+changes and diversify risks through portfolio optimization. However, the complexity of multi-
+stage decision-making with time constraints complicates the development of optimal trading
+strategies as calculations suffer heavily from the curse of dimensionality, often resulting in over-
+simplified approaches, such as assuming perfect foresight or simplified uncertainty.
+
+    Given these challenges and the successful usage of Stochastic Dual Dynamic Programming
+(SDDP) in managing the uncertainty of hydro assets, the main research question addressed in
+this paper is the following. Is the use of SDDP adequate to depict the storage operator's problem
+for coordinated bidding in three markets under given computational and technical limitations
+while following the German market schedule? This paper aims to calculate optimal strategies for
+battery storage operators in coordinated markets from known uncertainty and provide insights
+into overcoming the inherent complexities and uncertainties.
+
+    In this paper, we develop a scalable method for multi-market battery storage bidding under
+uncertainty, which considers the sequential timing structure of real markets and utilises SDDP
+to solve the bidding problem. We consider the intricate relationships between the times of
+bid submissions and market clearings, State-of-Charge (SoC) constraints, and dynamic price
+environment. By doing so, we develop a methodology that can be generalised to give insights
+into the economics of large energy storage capacities in the rapidly evolving energy landscape.
+We apply the method to a case study of a battery operator in Germany who can trade in the Day-
+ahead (DA), ID and the Frequency Containment Reserve (FCR) balancing market. Leveraging
+comprehensive data collected from the German electricity market for the year 2022, we assess the
+economics of large-scale storage in a period with high price volatility. We provide insights into
+market participation by analysing bidding strategies that allow for multi-market coordination
+and answer whether coordination has a monetary advantage.
+
+    This paper is structured as follows: Section 2 reviews advancements in market coordination
+and SDDP as a solution method for complex decision problems. Section 3 discusses the battery
+operator's trading problem and data processing in the German electricity market, including
+market structures and Markov chain estimation. A case study and simulation are presented in
+Section 4. Our findings are presented in Section 5, followed by a discussion in Section 6. We
+conclude in Section 7 with suggestions for further research.
+
+2. Literature Review
+
+    This Section delves into the sequential market problem and its implications for coordinated
+bidding in electricity markets. We examine the evolution of stochastic programming methods for
+electricity trading under the uncertainty of volatile prices, highlighting the application of SDDP
+
+                                                              2
+in hydropower reservoir management. We emphasise its effectiveness in dealing with complex
+multi-stage decisions. Additionally, we discuss various price modelling techniques essential for
+effective market participation and show our contribution.
+
+2.1. Sequential Markets and Coordinated Bidding
+
+    Trading in multiple markets simultaneously requires dynamic evaluation of often interrelated
+price structures across these markets. This complexity necessitates the evaluation of market-
+specific conditions, pricing trends, and potential cross-market influences. Such complex decision-
+making requires advanced analytics and extensive data, which might not always be feasible in
+practice.
+
+    The use of stochastic programming methods for coordinated selling of electricity across mul-
+tiple markets was initially driven by the need for decision support to hedge the risks associated
+with selling electricity at volatile prices now or in advance on stable yet uncertain future or
+options markets [14]. Over the years, the setup has been extended to coordinate sequential
+short-term power markets [41, 34, 5, 25]. Early works formulated the problem and qualitatively
+analysed solutions using small examples. Over time, advancements in computational resources
+and methodological refinements enabled the implementation of these solutions on more realistic
+data. Notably, Boomsma et al. [5] worked on the problem of a hydropower producer in the
+Nordics and coordinated bids of the DA and balancing market with sequential dependencies of
+balancing prices on spot prices. The properties of the balancing market they describe share
+similarities with the ID market we know today. Ottesen et al. [31] extend coordination efforts
+to three sequential markets for selling demand-side flexibility but simplify the decision space by
+creating new models sequentially each time information is revealed and consolidating the number
+of stages to three for tractability. As a consequence, limitations on inter-market trading apply.
+The influence of the gradual revealing of information with the ability to react between decisions
+becomes apparent with Wozabal & Rameseder [42] describing the time gap and complex interplay
+between markets and stages based on the flow of information. The market coordination problem
+is further complicated by time-coupling constraints of storage. Löhndorf & Wozabal [29] ex-
+plicitly model the coordination value at different examples of storages, including grid-connected
+battery storage, for two spot markets as a major extension for modelling a battery's complicated
+time coupling constraints. Finnah et al. [11] model the coordinated bidding of a pumped hydro
+storage operator on the two German spot markets by approximating the value function. Heredia
+et al. [18] optimised the operation of a virtual power plant, including battery storage, across the
+spot and secondary reserve markets using the Iberian electricity zone as a case study.
+
+    Adding markets increases complexity and requires efficient solution methods to calculate op-
+timal actions. Motivated by the complexity of managing hydro reservoirs and their electricity
+production, SDDP has evolved into the de-facto standard solution technique in complex hy-
+dropower reservoir management. SDDP can address multi-stage decisions with time-coupling
+constraints over a long time horizon [33, 37, 38]. Plazas et al. [34] and Fleten & Kristoffersen [12]
+applied SDDP to link market coordination in the hydropower sellers' problem under price uncer-
+tainty. Since then, many authors have investigated the complicated relationship between price
+and weather uncertainty by coordinated bidding using stochastic programming and the method
+has seen gradual methodological improvements. Löhndorf et al. [30] added an exogenous Markov
+process that allows an approximation of the value function of multiple connected hydro reser-
+voirs. The technique, named approximate dual dynamic programming (ADDP), significantly
+improved computational performance compared to previous methods.
+
+    Despite the extensive body of literature, there is no consensus on the monetary benefits of
+coordination across different markets. Studies by Wozabal & Rameseder [42], Finnah et al.
+[11], Löhndorf & Wozabal [29] find that a value for coordinating bids over markets exists and can
+
+                                                              3
+be up to 20 %. Heredia et al. [18] find that coordination of a virtual power plant with a battery on
+the balancing market can nearly quadruple revenues. In turn, Kongelf et al. [23] find only a small
+gain from coordination and further describe a dependency on portfolio size. Unwanted incentives
+for coordination exist, too: Boomsma et al. [5] find that under a two-price balancing setup (down-
+regulation balancing price, upregulation spot market price), it is financially beneficial to hold
+back capacity under some market conditions by providing down-regulation.
+
+    With the increasing volatility in the market environment and recent price drops of battery
+technology, the literature lacks models for coordinating spot and reserve markets with the time-
+coupling constraints of short-term battery storage while obeying the complex decision structure
+between bidding and execution. We aim to investigate this in the current work. With a three-day
+planning horizon, we position ourselves at the initialisation step of the operational decisions for
+short-term energy storage (<4h duration). Furthermore, we coordinate across a total of three
+markets and use SDDP as a solution algorithm to cope with the curse of dimensionality.
+
+2.2. Price Modelling
+
+    When modelling interactions between reserve and spot market prices, accurately representing
+price movements of the combination of markets is important to train effective trading strategies.
+A side objective is to achieve the calculations with a reasonable computational effort so that
+a trader can follow the market schedules in practice. While spot markets and their respective
+prices have received considerable attention (see, e.g. [31, 42, 29]), academic research on balancing
+market prices, like the FCR, is sparse and point out difficulties in modelling. Baetens et al. [3]
+highlight the challenges associated with calibrating forecasting models while Backe et al. [2]
+question the significance of predictive information for balancing markets from historical data.
+Other works on bidding in balancing markets consider market structures different to what is
+used now in Germany: Klæboe et al. [21] benchmark various models for predicting prices and
+volumes of the Norwegian balancing market, some in combination with spot prices. The authors
+find that price calibrations are complex and conclude: "[...] the volume and the premium in
+the balancing market are random. In fact, it could be interpreted as a sign of an efficient
+electricity market that it is impossible to predict the balancing market price" [21]. Boomsma
+et al. [5] find strong autocorrelations and cross-correlations between the spot and balancing
+markets. Specifically, the German balancing market seems to suffer from additional intricacy, as
+it "is known for hardly explainable prices, supposedly due to a high market concentration" [25].
+Wholesale electricity prices hold significant political and economic importance, yet research on
+price formation, especially during times of notable price distortions like the German energy crisis
+is limited [27].
+
+    Another important aspect is aligning the resolution and complexity of the price process
+with the solution algorithm. Finnah et al. [11] highlight challenges in solution algorithms that
+approximate high-dimensional forecasts and state space extensions of dynamic programmes, em-
+phasising the need for careful assessment of the trade-offs between the complexity of the price
+process and solution quality. Previous works have explored various methods, including Autore-
+gressive Integrated Moving Average (ARIMA) models [21], Seasonal Autoregressive Integrated
+Moving Average (SARIMA) models [5, 3], Seasonal Auto-Regressive Integrated Moving Average
+with exogenous factors (SARIMAX) [24], neuronal networks [24] and fixed prices approach [17].1
+
+    1Price modelling success might dependent on the training data. It is important to note that even recent works
+by the authors of Baetens et al. [3], Kraft et al. [24] relied on an obsolete German market scheme, which ended
+on July 1, 2020, and used daily availability auctions instead of the current four-hour interval structure. These
+market changes further restrict the training data available for calibrating advanced models for this market.
+
+                                                              4
+2.3. Contribution
+
+    The paper makes a threefold contribution to the field. It introduces a (1) multi-stage
+stochastic bidding model for battery storage. We add a balancing service to the DA,
+and ID spot markets and develop a profitable trading strategy that coordinates bidding while
+adhering to market schedules. The real-world bidding process is implemented at reduced reso-
+lution for computational tractability, maintaining market characteristics. To address the curse
+of dimensionality, we use SDDP to derive decision policies under uncertainty while being signif-
+icantly more efficient with training data than machine learning methods. Additional trade-offs
+of modelling resolution are critically discussed.
+
+    We construct and calibrate state-of-the-art (2) econometric models for price processes,
+which we use as a prerequisite for sound decision-making on stochastic markets by our bidding
+model. These price models are calibrated using data from the challenging market conditions of
+2022. We separate the stochasticity from market sentiments, avoiding reliance on exogenous as-
+sumptions. This methodological advancement not only provides a framework for future research
+but also offers valuable insights into the German power markets during the energy crisis in 2022.
+
+    The bidding model can be used to (3) evaluate battery economics with multiple rev-
+enue streams. While arbitrage operations within or across spot market segments are well-
+discussed in the literature at length, this paper provides new insights into the operation and
+trading strategies when adding a balancing market. We compare profits within individual mar-
+kets under realistic trading behaviour and explore the additional value generated through coor-
+dinated operations. Our approach helps determine the value of coordination for a battery over
+time and across markets, illustrating multi-market business models. While the German market
+serves as a specific example, the methodology is applicable to short-term markets globally.
+
+3. Coordinated Battery Trading
+
+    The battery storage operation problem comprises decisions on market participation, bid quan-
+tities, price levels, and timing. Unlike traditional generation, batteries do not require long lead
+times for operation and are highly flexible to react to price changes. There is considerable vari-
+ation in available information from individual markets bidding to real-time, leading to market
+volatility that battery storage can economically exploit. Figure 1 illustrates the schedule of
+electricity markets. Power reservations can be made in the FCR balancing market before spot
+markets close. The DA market, cleared daily between 1 p.m. and 2 p.m., provides price-quantity
+pairs for the next day. Market participants must adjust their DA positions based on updated
+information, mainly weather and RES share of total generation [19], with corrective trading in
+the ID market until 30 minutes before delivery.
+
+    The complexity of the problem stems from its multidimensional nature, driven by the interplay
+between the markets, time coupling constraints of the battery, and the multi-day optimisation
+horizon. To cope with the market sequence's complexity, traders can (and do in practice [18])
+simplify decision-making by (1) focusing only on a subset of markets, (2) making sequential
+decisions following the market schedule, (3) limiting the foresight and planning horizon, (4)
+neglecting information about uncertainty or (5) expanding the market intervals to fewer decision
+periods.
+
+3.1. Market Structures
+
+    This Section describes the relationship between individual markets and the fundamental
+model assumptions. We use a Markov Chain to model prices, where a finite number of states are
+interconnected by conditional probabilistic movements called state transitions [20]. A state is a
+discrete point in time that contains available information (prices in our case). Only one state
+
+                                                              5
+Figure 1: Considered market sequence with reserve markets segments as well as DA and ID spot markets.
+
+   Markov State
+
+DA - State ID - State
+
+                          1
+
+1  2
+
+   3
+
+                       1
+2
+
+                       2
+
+                                                                     DA -                             DA -
+                                                                    bidding                         clearing
+
+                                              0-4     4-8     8-12           12-16     16-20
+
+                          Timestep -1   0  1       2       3        4               5         6     1
+
+                             SDDP.jl 0  1
+
+                          Day
+
+                                                              1                                  2
+
+   Figure 2: Exemplary visualisation of the stochastic process for the two markets of ID and DA
+
+                                                      6
+can be visited at a time, and the process is memoryless, meaning that the transitions depend
+solely on the currently active state.
+
+    Our model emphasises the correct timing of the German electricity market schedule but can
+easily be adapted to other use cases. The lowest common denominator of all markets is the
+four-hour resolution of the FCR market. Sub-stages for both other markets are possible but not
+considered in this work. A 24-hour operational day d is divided into six four-hourly time blocks
+f  {1, ..., 6}, where f = 1 represents the interval 00:00­04:00, f = 2 the interval 04:00­08:00,
+and so on. A combination (d, f ) defines a stage t of the decision problem. The model starts at
+midnight, with no commitments for the DA and FCR markets before their first clearing since
+we do not consider a possible deterministic pre-clearing from the previous day. We do not allow
+bidding on the FCR and DA markets on the last day of the planning horizon to avoid running
+into end-of-horizon distortions. The individual markets m  {DA, ID, F CR} are modelled as
+follows:
+
+   1. FCR Market: At day d - 1, in block f = 3, the FCR market takes capacity bids on
+       a four-hour resolution for the next day d. The market is then cleared at t = (d - 1, 4).
+       Bidding and clearing are done for the whole next day in all six four-hour blocks.
+
+   2. DA Market: At day d - 1, in block f = 4, we bid for all six blocks of day d. We defer
+       the market clearing to f = 1 the next day d, again for clearing of the whole next day. 2
+
+   3. ID Market: The ID market price is modelled as a DA price-dependent spread. For a
+       block f - 1, bidding occurs for the next block f , with the commitment delivered in f . The
+       market has three levels: one at the mean of the distribution against DA prices, and one
+       level each above and below this price, similar to the discrete intra-stage price process in
+       [30].
+
+    Figure 2 shows a simplified Markov chain with transitions for two of the three markets. The
+DA stochastic process changes states from bidding in f = 4 in d - 1, revealing the uncertainty
+in f = 1 in d. The implied cost of an operator's decisions may enter the objective function with
+a delay between bidding and clearing, which makes optimal decision-making more complex.
+
+3.2. Price Modelling
+
+    We argue that due to recent electricity price distortions, simple time series analysis is in-
+adequate for capturing price movements when exposed to external shocks. Training models on
+ordinary price years may result in a poor fit during exceptional years. To address this, we nor-
+malise the data by separating prices into a predictable component based on fundamental models
+that are shown to provide accurate estimations in the past and can capture non-linearities [32]
+and a stochastic component.
+
+    We use the relative stochastic component to create relative price scenarios, which we combine
+with forecasts of fundamental model parameters for situation adjustment of the bidding, which
+are then used to estimate the Markov chain of price transitions. The three markets of DA, ID
+and FCR market prices observed a high price level with increased volatility throughout the year
+2022 (Figure A.17), especially compared to 2021 (Figure A.16). We selected residual load, Gas
+Title Transfer Facility (TTF), and CO2 price as explanatory variables based on their statistical
+
+    2This modelling choice is motivated by the dependency of ID prices on DA prices; ID price selection requires
+the current DA state. An early clearing (for the next day) would overwrite the DA state needed for ID prices of
+the current day. Unlike variable values, we can not temporarily store Markov chain movements. By extending
+the clearing to midnight, we preserve the location of the graph at the cost of not revealing the cleared quantities
+two steps before the next day.
+
+                                                              7
+significance and the resulting adjusted R2. Figure 3 depicts the evolution of the fundamental
+explanatory variables throughout the year.
+
+    In a next step, we reduce the DA and ID time series from hourly to 4-hour resolution by
+calculating the mean value within each interval. We then split the DA and FCR price time series
+into a deterministic and a stochastic component by Ordinary Least Squares (OLS) econometric
+models. Further, we calculate the 10 % lower- and upper quantiles of residual load for later usage
+as explanatory variables in the econometric price separation.
+
+800                                                                      102
+
+700                                                                      92
+
+600                                                                      81
+
+Price in [/MWh]500                                                       70
+                                                                                                                                     Price in [/t]
+400                                                                      59
+
+300                                                                      48
+
+200                                                                      37
+
+100                                                                      26
+
+0                                                                        15
+
+Jan 2022  Mar 2022  May 2022  Jul 2022  Sep 2022  Nov 2022
+
+                     DA prices Carbon prices Coal prices Gas TTF prices
+
+     Figure 3: Econometric parameters and DA prices in the year 2022
+
+DA Prices. The DA price PtDA from the historical time series can be separated into a determin-
+istic term DtDA and stochastic residual StDA. Explanatory variables are the Dutch TTF gas price,
+Carbon certificate price and the residual load. The model achieves an adjusted R2 of 84.8 % in
+2022 and 84.9 % in 2021. Therefore, it is deemed a good fit to predict price developments with
+few explanatory variables. We find strong positive autocorrelations with a Durbin-Watson value
+of 0.154.
+
+ID Prices. ID prices can be modelled as a price spread, being dependent on previous DA price
+realizations [16, 36], or as an independent equilibrium between ID supply and demand [32]. We
+use the first approach and model ID prices as up- or downward spreads of forecasting errors from
+the previously cleared DA price where P ID = P DA + IDspread.
+
+FCR Prices. We consider the FCR market to be price-independent of other markets and estimate
+it by another linear regression similar to the DA price model. We find hardly a linear correlation
+between DA and FCR market prices (correlation coefficient of -0.024), and the time of the
+clearing is before the clearing of the DA market. It might be possible to anticipate and behave
+strategically, but we do not find evidence from the time series to support this assumption.
+We use dummy variables for the day's different four h intervals f to capture time-dependent
+patterns. Furthermore, we use the log function for the prediction and residual demand quantiles
+as independent variables to include scarcity effects. Including residual demand quantiles as
+a regressor significantly improves predictability. Residual demand represents the demand not
+
+                              8
+satisfied by renewable sources like wind, solar, and hydropower. In 2022, this approach increased
+the explained variance in the OLS model to an R-squared value of 36 %. In 2021, the same model
+achieved an R-squared value over 53 %. We find no significant signs of autocorrelation in the
+FCR prices. For further information on how to estimate quantile levels, we refer to the work of
+Aneiros et al. [1], Do et al. [8], who achieved good results in short- and long-term predictions of
+residual demand using a functional nonparametric model and quantile regression respectively.
+
+3.3. Estimating the Markov Chain
+
+    The model requires discrete price states for the individual markets and a corresponding
+transition probability lattice to define the Markov chain. Figure 4 provides a schematic overview
+of the individual steps involved.
+
+Intraday (ID)                        Day - Ahead (DA)     Frequency containment Reserve (FCR)
+
+Historic prices                      Historic prices                Historic prices
+
+Stochastic Process                                    Predictors:                    Predictions
+                        Residuals
+                                             Residual Demand (RD),             OLS                Deterministic
+                                             RD Quantile,                                          component
+                                     OLS Gas price,
+                                             Carbon price,
+                                             Time indicators
+
+                                               Residuals            Residuals
+
+                                          Multivariate
+                                     K-means clustering
+
+                                                                                                                      Selection of training
+                                                                                                                                date
+
+                                     Discrete levels                Discrete levels
+
+Probabilities                                                                                       Price prediction
+                    Discrete levels
+                                                                                                  3D Markovian Price
+                                                                                                           Chain
+
+                               Figure 4: Flow chart of processing for estimating the Markov chain
+
+    We apply multivariate Euclidean k-means clustering to the residuals of the stochastic price
+components. Our analysis uses a sequence of three consecutive days, resulting in a total of 121
+historic price combinations (363/3). Based on the elbow plots, we determine that the optimal
+number of clusters is 3 for the FCR market and 5 for the DA market. The results of this clustering
+analysis are presented in Figures in Appendix A.1.
+
+    Figure 5 shows the probability density functions of ID deviations for the different DA clusters.
+The probability density function is characterised by long tails of deviations in both directions,
+particularly in the positive price direction. Tests for normality of the ID deviations were rejected
+in all DA clusters despite desirability from an efficient market theory perspective. We discovered
+that the distribution of ID spreads differs in mean and variance depending on the DA price cluster.
+We take advantage of this and derive the ID price as a cluster-dependent difference to DA prices
+
+                                                              9
+            Probability   0.01
+                         0.008
+                         0.006
+                         0.004
+                         0.002
+
+                               0
+
+                                  -400  -200                 0  200            400         600  800
+
+                                                                Price in /MWh
+
+                                  ID Distribution Cluster 1     ID Distribution Cluster 2  ID Distribution Cluster 3
+                                  ID Distribution Cluster 4     ID Distribution Cluster 5
+
+Figure 5: Histogram of the distances from the stochastic ID realisations to the centroids of the DA clusters of the
+year 2022 with dependency on DA cluster
+
+with PcIlDusterDA = PhIiDstorical -PcDluAsterDA. Based on the distributions of the differences, we define
+three discrete ID price levels for each of the five DA levels and the respective probabilities: the
+mean and the 15 and 85 percentiles of each ID distribution.
+
+    Next, we calculate the transition probabilities between Markov states based on the discrete
+cluster allocation of historical prices and their changes over time.In the last step, we built a
+prediction for the investigated period shortly before market participation. We use the depen-
+dent variables of the OLS model and assume that market participants have access to in-house-
+or external forecasts. The forecasted fundamentals and clustered stochastic residuals are then
+merged into a Markov chain, representing the current market situation with stochastic market
+uncertainty. Based on these prices, we solve the SDDP model and approximate the optimal
+trading policy for the battery operator.
+
+    A comparison of the discrete prices in the Markov chain (green) to the historical prices (blue)
+in an exemplary period is visualised in Appendix A.5.
+
+3.4. Mathematical Model
+
+    In this section, we explain our coordinated multi-market battery storage trading model. Table
+1 lists parameters, variables and sets.
+
+            Table 1: Designated sets, parameters, and variables of the mathe-
+            matical framework.
+
+Sets                              Set of markets: m  {DA, ID, F CR}
+M                                 Set of price levels: nm
+Nm                                Set of days: d
+D                                 Set of 4 hour blocks within a day: f
+F                                 Set of time stages indexed by t = (d, f )
+T =D×F
+                                  Storage capacity of the battery
+Parameters
+Q
+
+                                                                10
+Qstart                Start- and end storage level of the battery
+L                     Rated power of the battery
+                      Penalty term for the usage of slack variables
+
+Random Variables
+
+Ptmf                  Cleared market price in market m at time stage t in four hour block f
+
+                      [AC/MW]
+
+State Variables       State of Charge in time stage t [MWh]
+SoCt                  Bid quantities in market m, at price level n for block f in time stage t
+xtmf n                [MWh]
+                      Offset corrected committed market quantities for market m at time stage
+y~tmf                 t for block f [MWh]
+                      Helper variable for offset correction at time stage t and for block f [MWh]
+ztmf
+Local Variables       Market clearing quantities at the time of clearing for market m and block
+ytmf                  f [MWh]
+                      Slack variable
+st
+
+3.4.1. Objective Function
+
+    The objective function maximises the profit from trading on the FCR, DA and ID markets by
+summing the products of prices and quantities. The FCR and DA markets clear daily in periods
+f = 4 and f = 1, respectively. We add a penalty term for storage level violations.
+
+      max 1{4}(f ) ·       PtFfCRytFfCR + 1{1}(f ) ·       PtDf AytDfA
+
+                      f F                             f F                                   (1)
+
+             + PtIDyfID + st,                                           t = (d, f )  T .
+
+3.4.2. Constraints
+
+    Equation (2) is the market clearing constraint. Each market is cleared according to quantity
+bids on discrete price levels, matching the discrete levels in the Markov states. The step-function
+
+1(-,Ptmf )(Stmfn) returns 1 if the price of the bid is lower than or equal to the sampled market
+
+price (S  P ) and 0 if higher (S > P ).
+
+      yfm =       1(-,Ptmf )(Ptmfn)(xm t-1,f,n - xtm-1,f,n-1), f  F , t  Tmclearing, m  M.  (2)
+
+             nNm
+
+    Bids for the ID and FCR markets are submitted one timestep before respective market clear-
+ing, with the DA market submitting bids in block four each day. We follow the approach of Fleten
+& Pettersen [13], Löhndorf et al. [30], and Wozabal & Rameseder [42] to model the bidding func-
+tion: quantity bids are implemented on the discrete price levels as monotonically increasing bid
+curves, as ensured by Constraint 3.
+
+      xtmf(n-1)  xm tfn, n  N , f  F , t  Tmclearing, m  M.                                 (3)
+
+    ID constraints We limit ID bidding quantities to quantities not exceeding storage con-
+straints, including previously cleared markets. This is not expected to limit the quality of the
+solution since it only excludes non-optimal parts of the solution space. Special care has to be
+taken to the last period each day TIrDest = {(d, f ) : d  D, f = 6} where the restriction apply to
+
+                               11
+bids, instead of cleared quantities. We have verified the validity of this assumption in Appendix
+A.4.
+
+xItfDn  SoCt+1 - y~(Dt+A1),f - y~(Ft+C1R),f ,            n  N , f  F , t  T \ TIrDest, m  ID. (4)
+xItfDn  SoCt+1 - Q - y~(Dt+A1),f - y~(Ft+C1R),f ,
+xItfDn  SoCt+1 - x~(Dt+A1),f,n - y~(Ft+C1R),f ,          n  {1} , f  F , t  T \ TIrDest, m  ID.  (5)
+xItfDn  SoCt+1 - Q - x~(Dt+A1),f,n - y~(Ft+C1R),f ,
+                                                         n  N , f  F , t  TIrDest, m  ID.        (6)
+
+                                                         n  {1} , f  F , t  TIrDest, m  ID.      (7)
+
+    Offset constraints The offset between market clearing timing and real-time deliveries re-
+quires caching of commitments in additional variables for the FCR market. Otherwise, the
+cleared quantities for the rest of the day would be overwritten with new quantities. We ensure
+correct values by caching variables: At the time of clearing, commitments for the first part of the
+next day (until the next clearing) are updated as described in Equation (8a). The commitments
+for the second part of the day are cached as in Equation (9a). At the start of a new day, Equation
+(8b) then inserts cached commitments into the actual commitments. The information is passed
+on for all other periods, as given in Equation (8c) and (9b).
+
+          ytmf  ,       f  F \ Fmcache, t  Tmclearing, m  {F CR} ,                               (8a)
+                        f  Fmcache, t  D × {1} , m  {F CR} ,                                     (8b)
+                        otherwise.                                                               (8c)
+        
+y~tmf = ztmf ,
+
+          y~(mt-1)f  ,
+        
+
+ztmf =    yfm,          f  Fmcache, t  Tmclearing, m  {F CR} ,                                   (9a)
+          z(mt-1)f ,    otherwise.                                                               (9b)
+
+    We have that FFcaCchRe = {4, 5, 6}, TFcCleRaring = {(d, f ) : d  D, f = 4}, and × is used to denote
+the Cartesian product of two sets.
+
+    The state of charge should always stay within boundaries set by the capacity of the battery,
+reduced by capacity reservations for the FCR, y~tFfCR. We assume that the reserved power in the
+FCR market is available in both directions, and we need to ensure that the respective power is
+
+covered by an appropriate SoC level. Hence, we reserve the respective up and down capacities.
+
+Slack variables, which are penalised in the objective, relax these constraints and ensure the
+
+SDDP algorithm's feasibility. We assume no efficiency losses for the battery since our focus is on
+
+a short-term operation where the high-efficiency rates of commercial battery racks are considered
+
+neglectable for operational decisions. Furthermore, the problem becomes more tractable.
+
+      SoCt = SoCt-1 - (yID + y~tDfA),                    tT.                                     (10a)
+y~tFfCR - st  SoCt  Q - y~tFfCR + st,                    tT.                                     (10b)
+SoCt + st = QINIT ,                                      t  0, T .                               (10c)
+
+    Domains. Trading of the battery in all markets and for all variable types is restricted by
+the battery's rated power and storage capacity. Bidding volumes in the ID and DA markets are
+limited by the battery's rated power, while the FCR bids are limited to half the battery's rated
+power as a conservative assumption. SoC is limited by the battery's capacity, and slack variables
+
+                                                     12
+are not limited.             t  T , f  F, m  M.                   (11)
+
+       -L  ytm,f  L,         t  T , f  F, m  M.                   (12)
+       -L  ztm,f  L,
+       -L  y~tm,f  L,        t  T , f  F, m  M.                   (13)
+       -L  xtm,f,n  L,
+                             t  T , f  F , n  N m, m  {DA, ID} .  (14)
+          0  xtm,f,n  0.5L,
+          0  SoCt  Q,        t  T , f  F , n  N m, m  {F CR} .    (15)
+         st  R,
+                             t  T \ 0, T .                        (16)
+
+                             tT.                                  (17)
+
+4. Case Study and Implementation
+
+    We have implemented a case study on a 10MW/10MWh battery storage located in the Ger-
+man electricity market zone and used data from EpexSpot for the year 2022. While spot markets
+have not seen many regulatory changes in recent years, the FCR market structure changes fre-
+quently. At the time of writing, reservations are cleared in a pay-as-cleared remuneration system.
+The market is intended for small imbalances and therefore procured as a symmetrical product
+with at least 1 MW power and 30 seconds of activation time.3 Unlike other balancing markets,
+only the provision of capacity is reimbursed without a price for energy since positive and negative
+activations are expected to balance out on average.4 The demand for the reserve is determined
+by a potential outage of the largest two power generators in the synchronous region and split
+across the participants.5 Activation quantities for similar products are described in the litera-
+ture as negligible, like the Fast Frequency Response (FFR) and disturbance (FCR-D) products
+in the Nordic synchronous area [40]. Saretta et al. [39] state that FCR activations are not energy
+intensive, and activation payments can be negligible.
+
+    The problem is implemented in Julia, where we utilise the sddp.jl package by Dowson &
+Kapelevich [9]. We approximate the optimal trading policy based on the mathematical prob-
+lem formulation in Section 3.4 and the approximated Markov chain from Section 3.3. From the
+data curation, we have 1081 individual price level combinations and 73 state variables, which
+implicitly define the Markov chain's approximately 4 billion price paths. The SDDP algorithm
+takes about 45 minutes to estimate the policy for a subset of 3 · 106 combinations, using 18,000
+iterations (forward and backward passes of the SDDP algorithm) with an Apple M1 Pro note-
+book processor. We found a CPU utilization of around 10 % in serial operation, indicating room
+for improvement by parallelising the training algorithm. Parallelisation requires a full model in
+working memory for each instance, which quickly reaches the hardware limits of the notebook.
+Moving the calculations to a server is possible and recommended for more advanced implemen-
+tations. For the multi-market optimisation, we add a stopping criterion to the SDDP algorithm,
+which stops the algorithm if the upper bound improves with an absolute of less than 0.1 over the
+last 3000 iterations after an initial 5000 iterations. Otherwise, the algorithm runs until 18,000
+iterations. The first trading day contains only the ID market actions and is omitted for a fair
+comparison of markets in the result tables.
+
+    3Frequency Containment Reserve by regelleistung.net, the official market portal for Germany, accessed:
+
+20.11.2023
+    4Definition Frequency Containment Reserve (FCR) by Nextkraftwerke, accessed: 20.11.2023
+    5ibid.
+
+                             13
+    To illustrate the model's functioning, we simulate the obtained policy in a simulation on
+fundamentals of the exemplary time period from 05.07.2022 to 08.07.2022. We tested multiple
+random periods and found consistent patterns with only minor variations in revenue and shares
+between markets that can be attributed to different arbitrage potentials for the prevailing prices.
+The 05.07.2022 - 08.07.2022 period sees relatively high volatility, which is favourable for spot-
+market participation.
+
+5. Results
+
+    In this section, we describe the trained policy from the SDDP algorithm and analyse the
+trading strategies across markets.
+
+5.1. Policy Evaluation
+    We start by evaluating the computational performance of the most general policy, consider-
+
+ing all markets. Figure 6 shows the convergence of the SDDP algorithm as a function of the
+number of iterations. We observe a policy improvement with higher iteration counts of training,
+
+14,000                                                                                            10
+12,000                                                                     4.5%
+10,000
+                                                                                                    8
+                                                                           3.5%
+Revenue in 
+                                                                                                                                               SoC in MWh2.6%6
+
+8,000                                                                      1.7%                                                                            4
+
+6,000                                                                      0.7%                                                                            2
+
+4,000                                                                      -0.2%
+                                                                                                    0
+
+        2,000 4,000 6,000 8,000 10,000 12,000 14,000 16,000 18,000 20,000
+
+                          Iterations                                                                                                                          0  2  4  6  8  10                      12  14       16  18
+
+        Mean storage volume violation [%]  Storage violation rate [%]                                                                                                                         Stage
+        Upper bound                        Mean revenue                                                                                                                [0.05, 0.95] quantile mean
+        95% confidence interval
+                                                                                                                                                                                                     simulations
+
+Figure 6: Objective values and storage violations at dif- Figure 7: Battery SoC development at different stages
+
+ferent iteration counts.                                                         with 18,000 iterations
+
+resulting in a smaller gap between the true upper bound and simulations, as shown in Figure
+6. We achieve a tight optimality gap after around 6,000 iterations. From 12,000 iterations on,
+no storage violations have been apparent, and only the trading strategy has improved. Further
+improvements flatten out with higher iteration counts while the marginal computational costs
+increase. Exemplary storage changes of a policy with 18,000 iterations with 10,000 simulation
+runs of simulated data are visualised in Figure 7. Based on the assessment of storage violations,
+the convergence of the true upper bound and the mean simulated revenue, we decided to con-
+tinue with 18,000 iterations. The mean revenue of all simulations from three days of trading
+converges to an upper bound of 10,415 AC. The trading strategy thus results in profitable trading
+at calculation times that are within the market schedule for a trader in practice. In the following,
+we investigate how the trading strategy handles multi-market coordination.
+
+5.2. Multi-Market Coordination
+
+    To evaluate the benefits of participating in multiple markets, we develop a variety of policies
+that consider different market combinations. Since only ID operations are possible on the first
+day (FCR and DA markets can only submit bid submissions for the next day), we compare the
+last two days of operation in the following. The revenues and balances of policies with different
+market participation are presented in Table 2 and Figure 8. The operational results show that
+
+                                                                                 14
+Table 2: Revenue and market balance from two days on 10,000 in-sample simulations with a 3,000AC/MWh penalty
+for SoC and system-end-state violation
+
+Market configuration       FCR ID              DA FCR, DA ID, FCR ID, DA FCR, ID, DA
+
+DA       Revenue [AC]      -           -       3092.4  500.3          -       2066.0                                                                            -780.9
+ID       Volume [MW/MWh]   -           -       69.8    13.6           -       63.3                                                                              106.8
+FCR      Balance [MWh]     -           -       0.0     0.0            -       1.2                                                                               -4.2
+Penalty  Revenue           -           2705.9  -       -              -351.4  892.6                                                                             863.9
+         Volume            -           65.9    -       -              20.1    65.3                                                                              106.0
+         Balance           -           0.0     -       -              0.0     -1.2                                                                              4.2
+         Revenue           7384.1      -       -       6907.1         6818.5  -                                                                                 6928.2
+         Volume            60.0        -       -       52.8           51.3    -                                                                                 52.8
+         Cost [AC]         0.0         0.0     105.6   238.9          0.0     0.0                                                                               2.3
+
+Total    Revenue           7384.1 2705.9 2986.8 7168.5                6467.1  2958.6                                                                            7008.8
+         Volume            60.0 65.9 69.8 66.4                        71.4    128.6                                                                             265.6
+
+a policy that exclusively bids in the FCR market outperforms all other policies in terms of
+revenue. Policies that add the DA market or DA and ID market result in similar revenues at
+higher volumes from additional spot market cycling but do not reach the same revenues as the
+exclusive FCR market operation.
+
+    We observe that combinations of FCR with ID and DA markets neither see the exclusive
+allocation to the FCR market nor increased revenues over the exclusive FCR market case. The
+model avoids the corner solution of only participating in the FCR market, opting instead for a
+near-optimal solution. Nevertheless, they achieve results reasonably close to it while within a
+small optimality gap from increased computational complexity. Tests indicate that the optimality
+gap between pure FCR operations and combinations with spot markets decreases with higher
+iteration counts of the SDDP algorithm.
+
+         Revenue
+
+                  FCR      7,000                                                   281
+
+                  ID
+
+                  DA       6,000                                                   241
+
+                  Penalty
+
+         Volume            Revenue in 5,000                                        201
+                                                                                                                                              Volume in MW/MWh
+                  FCR
+
+                  ID       4,000                                                   161
+
+                  DA
+
+                           3,000                                                   121
+
+                           2,000                                                   80
+
+                           1,000                                                   40
+
+                           0                                                       0
+
+                           -1,000                                                  -40
+
+                                   ID  FCR, DA DA ID, DA, FCR ID, DA  FCR ID, FCR
+
+                                               Market configuration
+
+Figure 8: Mean revenue and market balance from two days on 10,000 in-sample simulations. The volume for FCR
+represents the reserved battery capacity in MW, whereas the volumes on DA and ID indicate traded volumes in
+MWh. These can contain opposite positions in DA and ID that do not go in physical delivery. Therefore, the
+configurations with both DA and ID markets show significantly larger traded volumes.
+
+    The combination of ID and FCR markets marks an exception and leads to trading losses from
+ID participation, indicating non-beneficial coordination. Adding the ID market typically fails
+to provide additional value; a mix of ID and DA markets generates similar revenue to pure DA
+
+                                               15
+                      20,000
+
+                      15,000
+
+         Revenue in   10,000
+
+                      5,000
+
+                      0
+
+                                  ID     FCR, DA        DA  ID, DA, FCR ID, DA  FCR     ID, FCR
+
+                                                        Market configuration
+
+                                  Figure 9: Revenue distribution of 10,000 simulations
+
+operation, while pure ID operation yields slightly lower results. Despite the ID market's higher
+
+volatility, its operation doesn't add revenue, likely due to unpredictability and limited cycling
+potential in our model's four-hour time resolution. However, ID operation and its combinations
+
+effectively reduce constraint violations and, thus, penalties.
+
+Figure 9 shows the revenue distributions from the policy simulations. ID operation extends
+
+both tails of the revenue distribution, while pure DA operation results in a symmetrically bell-
+shaped distribution around the mean, marked by a long negative tail due to penalized storage
+
+violations. The participation in multiple markets can enhance tail revenues significantly com-
+
+pared to individual markets.
+    Trading volumes increase significantly when combining markets. We observe opposing trading
+
+patterns of ID and DA markets, indicating that the trading policy exploits arbitrage trading
+
+strategies. We assess the extent of arbitrage trading with two different metrics. The direction
+
+metric is defined as:
+
+direction =                       tT yt           ,                                              (18)
+                                  ytDA + ytID
+                         tT
+
+where
+
+yt =   min{|ytDA|, |ytID|}                     if ytDA · ytID < 0, t  T .                        (19)
+       0                                       otherwise,
+
+The intuition behind this metric is that the minimum of both trades with opposing signs is
+covered by the other market and doesn't affect the storage balance; therefore, arbitrages between
+markets. Moreover, the feasibility metric calculates the storage-bound violations caused by DA
+and FCR trades that must be balanced in the ID:
+
+feasibility =                     tT yt              ,                                           (20)
+                                  ytDA + ytID
+                              tT
+
+where
+
+         ytDA         +  ytF CR       -  SoCt           ytDA + ytF CR - SoCt > 0,
+                                                        L + ytDA - ytF CR - SoCt < 0,
+
+                                                        otherwise,
+yt = |L + ytDA - ytF CR - SoCt|
+                                                                                        tT.      (21)
+
+         0
+       
+
+                                                            16
+ Our results indicate that, on average, 39.6 % of the combined market volume corresponds to
+arbitrage trading using the direction metric, and 39.5 % using the feasibility metric. There is a
+significant shift of volume from the DA to the ID market, resulting in a 4.2 MWh surplus in the
+ID market over the three days.
+
+5.3. Modified FCR prices
+
+    We found that trading solely on the FCR market yielded the best results with the given
+input data and a four-hour time resolution. This is surprising, as we expected a multi-market
+strategy to be more profitable. One reason for this could be the model's uniform time resolution,
+which contrasts with real-world markets where the DA and ID markets operate on finer hourly
+and quarter-hour resolutions. This difference allows traders to capture more volatility and price
+spreads, potentially enhancing profitability.
+
+    To address this fundamental limitation of time resolution and investigate the ability of our
+bidding model to approximate a trading policy with market coordination, we create an additional
+analysis with reduced FCR price levels by 50 % to compensate for reduced cycling on the spot
+markets, allowing us a better understanding of the intrinsic market dynamics and the benefits
+of coordinated bidding. The results are shown in Table 3 and Figure 10.
+
+Table 3: Mean revenue and market balance from two days trading at a 50 % reduced FCR prices on 10,000
+in-sample simulations with a 3,000AC/MWh penalty for SoC and system-end-state violation
+
+Market configuration      FCR ID          DA FCR, DA ID, FCR ID, DA FCR, ID, DA
+
+DA       Revenue [AC]     -       -       3073.4  1852.1  -       2079.0  -40.6
+ID       Volume [MW/MWh]  -       -       69.5    45.1    -       63.4    82.7
+FCR      Balance [MWh]    -       -       0.0     0.0     -       1.2     -3.1
+Penalty  Revenue          -       2705.9  -       -       1493.3  879.9   1740.8
+         Volume           -       65.9    -       -       52.6    65.3    81.4
+         Balance          -       0.0     -       -       0.0     -1.2    3.1
+         Revenue          3689.9  -       -       2484.2  2124.4  -       2298.5
+         Volume           60.0    -       -       31.7    25.0    -       28.0
+         Cost [AC]        0.0     0.0     43.8    115.6   0.0     0.0     18.5
+
+Total    Revenue          3689.9 2705.9 3029.6 4220.7     3617.7  2958.9  3980.3
+         Volume           60.0 65.9 69.5 76.8             77.6    128.7   192.1
+
+    We see that the profitability ranking of the individual markets remained intact, with ID, DA,
+and FCR markets in ascending order. The revenues and volumes of arrangements containing
+only DA and ID markets see little variations from the price changes and stay at the original
+cases' levels within the sampling variation. Policies that include the FCR market have reduced
+revenues caused by the price adjustments. Most strikingly, we now observe multi-market trading
+policies outperforming individual-market policies by increasing revenue through higher alloca-
+tions to spot markets and lower allocations to the FCR market. Combining DA, ID, and FCR
+markets improves revenue, with the FCR and DA combination yielding the highest revenue at
+an additional 530.8AC, or 12.5 %, compared to just FCR market. Combining all markets increases
+revenue by 5.7 % over the best individual market option. Moreover, storage violation penalties
+decrease compared to operating solely in the DA market due to a shift in volume from DA to
+ID. The arbitrage volume between ID and DA declines significantly.
+
+6. Discussion
+
+Time resolution and battery properties. The results demonstrate that our chosen methodology is
+appropriate for adapting to the three-market environment, effectively capturing the stochasticity
+
+                                          17
+Revenue                             4,000                                                       187
+     FCR
+     ID                             3,500                                                       164
+     DA
+     Penalty  Revenue in            3,000                                                       140
+                                                                                                                               Volume in MW/MWh
+Volume                              2,500                                                       117
+     FCR
+     ID                             2,000                                                       94
+     DA
+
+                                    1,500                                                       70
+
+                                    1,000                                                       47
+
+                                    500                                                         23
+
+                                    0                                                           0
+
+                                           ID       FCR, DA DA ID, DA, FCR ID, DA  FCR ID, FCR
+
+                                                        Market configuration
+
+Figure 10: Mean revenue and market balance from two days on 10,000 in-sample simulations on 50 % decreased
+FCR prices
+
+Revenue in 12,000
+           10,000
+                                           FCR, DA  DA  ID, DA, FCR ID, DA         FCR  ID, FCR
+             8,000
+             6,000
+             4,000
+             2,000
+
+                    0
+           -2,000
+           -4,000
+
+                                ID
+
+                                                    Market configuration
+
+Figure 11: Revenue distribution of 10,000 simulations on 50% decreased FCR prices
+
+                                                        18
+of the markets, even during periods of high volatility. The solution method can handle complexity
+within a time frame that is suitable for practitioners. However, the case of modified FCR
+prices highlights a key dilemma in modelling battery storage revenues: the model resolution
+significantly affects performance. A four-hour resolution underestimates revenue potential in
+wholesale markets, as spot market revenue relies on time arbitrage. Limiting cycling through a
+low resolution restricts spot market profits, while reserving capacity in the balancing market is
+cycling independent and thus yields higher returns in the investigated case study. We further
+use average prices in the four-hour intervals, which smoothened price spikes, especially in the ID
+market. The battery's power rating is high enough to complete a full cycle within an hour. An
+operator executing fast cycling would likely focus more on the technical properties of the battery,
+like degradation, temperature and efficiency losses caused by heavy cycling in the modelling. An
+even faster cycling in the 15-minute ID market with periodic (and storage level dependent) fast
+charging could further improve revenues but comes at the expense of high computational costs
+and additional (technical) constraints. Additionally, the battery's power/capacity configuration
+(10MW/10MWh) can influence the revenues of the different markets. Larger power ratings
+favour flexibility provision in capacity markets, i.e. FCR. A battery in a 0.5C configuration
+(10MW/20MWh) would make the same FCR revenues but considerably higher revenues on the
+spot markets. The power and capacity ratio can thus be investigated as a sensitivity parameter
+in future work.
+
+Value of coordination. In line with Kongelf et al. [23], we do not find significant coordination
+values in expectation at the chosen modelling resolution. However, the revenue distribution shows
+spikes in volatility, and significant volume shifts between DA and ID markets suggest arbitrage
+opportunities. With lower FCR prices that reduce individual-market dominance, we observe an
+additional value in coordinating spot and balancing market bids, as these prices bring capacity
+reservation revenues and spot market time arbitrage closer together, partially offsetting reduced
+cycling from the model's lower temporal resolution.
+
+    Despite the dominance of one individual market, this are no signs of unwanted incentives as
+in Boomsma et al. [5] since allocating all capacity in the FCR market is limited by the FCR size
+in Germany. The market size is currently only 600MW and will soon be saturated as a revenue
+stream with an increase in large battery projects, whereas DA size and ID size are not expected
+to be saturated in the near future. That means that cannibalisation effects with decreasing
+prices will leave no alternative to splitting up revenues that share the battery capacity and stack
+multiple revenue streams. Contrary to Löhndorf & Wozabal [29] but in line with Heredia et al.
+[18], we find no increases in profits from trading the higher volatility of the ID market but notice
+positive effects on imbalances. However, no common benchmark exists in the academic sphere,
+and results depend on the case study and input data.
+
+Solution method. A limitation of SDDP in large-scale optimisation is its sampling of stochastic
+scenarios from the Markov chain, which can lead to some price paths being overlooked and result
+in near-optimal solutions. Our example illustrates this: while full participation in the FCR mar-
+ket is best in expectation, the model does not fully converge to this solution but instead identifies
+near-optimal market combinations. Increasing the number of iterations narrowed the gap to the
+optimal solution, but single FCR participation was never fully reached. Given the high complex-
+ity of the problem and the curse of dimensionality, we navigate the solution space by SDDP and
+evaluate at most 5,107,075 of the Markovian price paths (0.000124 % of all combinations). The
+achieved optimality gap of 5 % compared to the exclusive FCR market solution is deemed ac-
+ceptable for the considered academic investigation. We are aware that in the current state, with
+the four-hour resolution and given the parameters of the case study, no significant improvement
+compared to the single market strategy is realized. Slack variables used to stabilize the SDDP
+
+                                                             19
+algorithm may negatively impact results, as some simulated policies led to substantial negative
+revenues due to capacity violations. This reveals a conflict between adopting policies that ensure
+feasible actions and maintaining a realistic cost framework. Our fixed imbalance penalty could
+be overly conservative compared to short-notice ID settlements and potential balancing costs
+from the grid operator, risking premature cutoff of trades when storage constraints are violated.
+
+Capacity activations. Limitations apply to imbalances in the battery's storage energy due to
+capacity activations in the FCR market. Although these imbalances occur with low probability
+and involve minimal energy, they can disrupt the battery's energy balance, potentially triggering
+costly short-notice buy actions on the market. It is interesting to see how these additional costs
+rebalance the allocation of volumes between the markets against the high expected revenues. To
+the best of our knowledge, no publicly available data on FCR activations exists, rendering it
+difficult to perform a critical validation.
+
+Storage as a price taker. The price-taker assumption in markets with limited liquidity needs
+careful consideration. While the DA market is highly liquid, the ID and FCR markets may have
+price influences, resulting in lower volatility and reduced revenues6. Considering price impacts
+would require the introduction of binary variables. A solution framework, such as Stochastic Dual
+Dynamic Integer Programming, could handle this but comes at significantly higher computational
+costs. We note that the battery size in the case study is not large enough to expect a significant
+price impact from its market participation, given the liquidity of the markets in Germany. To
+analyse larger storage assets and their price impact, we refer to Barbry et al. [4].
+
+Scenario generation. More advanced data preparation and scenario reduction techniques could
+enhance revenues when constructing the Markov chain. Employing k-means clustering may
+overlook complex patterns within the underlying data. Although we tried to capture these time-
+dependent dependencies with our econometric models and time variables, limitations remain in
+some cases. Since these variations are included in the stochastic component, further pattern
+recognition with advanced clustering algorithms, like Density-based spatial clustering of appli-
+cations with noise (DBSCAN), could be a direction for future research.
+
+7. Conclusion
+
+    We contribute to the literature on coordinated trading by battery storage in electricity mar-
+kets. Our study includes the DA and ID spot markets, along with the FCR balancing market,
+which has received limited attention but is relevant in practice. We present a case study on
+coordinating a 10MW/10MWh battery storage in Germany across three markets. To explore
+multi-market trading, we developed a stochastic multi-market bidding model and solved it us-
+ing SDDP within reasonable computational times while adhering to time coupling and storage
+boundary constraints. Additionally, we developed and calibrated econometric price models for
+the FCR, DA, and ID markets, incorporating a simple yet effective separation of market fun-
+damentals and stochasticity for practical implementations. Our findings reveal that introducing
+quantiles of residual demands as a regressor for scarcity effects significantly improved our econo-
+metric models, particularly in the FCR market. Our stochastic bidding model proves to be
+well-suited for the problem at hand. It consistently generates expected profits across all markets
+
+    6Non-peer-reviewed market analyses for the DA in grey literature question the price taker assumption. See
+for example: regelleistung-online: Preiseffekte durch den Ausbau von Batteriespeichern ­ Teil 3: Arbitrage in der
+Day-Ahead Auktion, accessed 2023-07-08.
+
+                                                             20
+and configurations, can be (re)trained between market scheduling steps and leverages synergies
+from multi-market coordination. However, when considering the FCR balancing market in iso-
+lation, it dominated expected revenues compared to combinations of wholesale markets. This
+suggests that a profit-maximizing operator during the German energy crisis would likely prefer
+this corner solution over market coordination, although the four-hour temporal resolution of our
+model impacts spot market trading. To compensate for this limitation, we decreased the FCR
+price level and observed a value of coordination between spot and balancing markets of up to
+12.5 %. Our methodology can be used to provide valuable insights into the economic feasibility of
+energy storage deployment within the German energy sector, offering a forward-looking perspec-
+tive on the role of storage technologies in the evolving energy landscape. We contribute to the
+literature by discussing model resolution and storage dimensioning and recommend that future
+research on multi-market coordination with battery storage, with a focus on higher-resolution
+models with shorter time intervals, the interaction between offered volumes and prices and the
+extension of coordination to additional products. In practice, coordination by battery storage
+might further motivate investigations into incentive compatibility of the current market setup,
+particularly since profitability equilibria across the market segments compete for the flexibility
+of dispatchable assets.
+
+Acknowledgements
+
+    The Research Council of Norway funded this work via project number 320789. We acknowl-
+edge funding from the KIT House of Young Scientists (KHYS) by a travel budget for visiting
+KIT in Karlsruhe. Special thanks to Benedikt Krieger for his support in data compilation and
+Oscar Dowson for the continuous support of the SDDP.jl package. We thank colleagues and
+participants of the NTNU's Energy System Seminar and the Transatlantic Infraday Conference
+2023 in Paris for their input and valuable feedback.
+
+Declaration of competing interest
+
+    The authors declare that they have no known competing financial interests or personal rela-
+tionships that could have appeared to influence the work reported in this paper at the time of
+writing.
+
+Declaration of generative AI and AI-assisted technologies in the writing process
+
+    During the preparation of this work, the authors used Grammarly in order to improve or-
+thography and readability. After using this service, the authors reviewed and edited the content
+as needed and take full responsibility for the content of the published article.
+
+CRediT
+
+Paul E. Seifert: Conceptualization, Data curation, Formal analysis, Investigation, Methodol-
+ogy, Software, Validation, Visualization, Writing ­ original draft, Writing ­ review & editing.
+Emil Kraft: Conceptualization, Data curation, Formal analysis, Investigation, Methodology,
+Supervision, Visualization, Writing ­ review & editing. Steffen J. Bakker: Conceptualiza-
+tion, Investigation, Methodology, Supervision, Writing ­ review & editing. Stein-Erik Fleten:
+Conceptualization, Investigation, Methodology, Supervision, Writing ­ review & editing.
+
+                                                             21
+References
+
+ [1] Aneiros, G., Vilar, J. M., Cao, R., & Munoz San Roque, A. (2013). Functional prediction
+      for the residual demand in electricity spot markets. IEEE Transactions on Power Systems,
+      28 , 4201­4208.
+
+ [2] Backe, S., Riemer-Sørensen, S., Bordvik, D. A., Tiwari, S., & Andresen, C. A. (2023).
+      Predictions of prices and volumes in the nordic balancing markets for electricity. In 19th
+      International Conference on the European Energy Market (EEM) (pp. 1­6). Lappeenranta,
+      Finland: IEEE.
+
+ [3] Baetens, J., De Kooning, J. D. M., Van Eetvelde, G., & Vandevelde, L. (2020). A two-stage
+      stochastic optimisation methodology for the operation of a chlor-alkali electrolyser under
+      variable DAM and FCR market prices. Energies, 13 , 5675.
+
+ [4] Barbry, A., Anjos, M. F., Delage, E., & Schell, K. R. (2019). Robust self-scheduling of a
+      price-maker energy storage facility in the new york electricity market. Energy Economics,
+      78 , 629­646.
+
+ [5] Boomsma, T. K., Juul, N., & Fleten, S.-E. (2014). Bidding in sequential electricity markets:
+      the nordic case. European Journal of Operational Research, 238 , 797­809.
+
+ [6] Bublitz, A., Keles, D., Zimmermann, F., Fraunholz, C., & Fichtner, W. (2019). A survey on
+      electricity market design: Insights from theory and real-world implementations of capacity
+      remuneration mechanisms. Energy Economics, 80 , 1059­1078.
+
+ [7] Castagneto Gissey, G., Dodds, P. E., & Radcliffe, J. (2018). Market and regulatory barriers
+      to electrical energy storage innovation. Renewable and Sustainable Energy Reviews, 82 ,
+      781­790.
+
+ [8] Do, L. P. C., Lyócsa, S., & Molnár, P. (2021). Residual electricity demand: an empirical
+      investigation. Applied Energy, 283 , 116298.
+
+ [9] Dowson, O., & Kapelevich, L. (2021). SDDP.jl : a julia package for stochastic dual dynamic
+      programming. INFORMS Journal on Computing, 33 , 27­33.
+
+[10] Edenhofer, O., Hirth, L., Knopf, B., Pahle, M., Schlömer, S., Schmid, E., & Ueckerdt, F.
+      (2013). On the economics of renewable energy sources. Energy Economics, 40 , S12­S23.
+
+[11] Finnah, B., Gönsch, J., & Ziel, F. (2022). Integrated day-ahead and intraday self-schedule
+      bidding for energy storage systems using approximate dynamic programming. European
+      Journal of Operational Research, 301 , 726­746.
+
+[12] Fleten, S.-E., & Kristoffersen, T. K. (2007). Stochastic programming for optimizing bidding
+      strategies of a nordic hydropower producer. European Journal of Operational Research, 181 ,
+      916­928.
+
+[13] Fleten, S.-E., & Pettersen, E. (2005). Constructing bidding curves for a price-taking retailer
+      in the norwegian electricity market. IEEE Transactions on Power Systems, 20 , 701­708.
+
+[14] Fleten, S.-E., Wallace, S. W., & Ziemba, W. T. (2002). Hedging electricity portfolios via
+      stochastic programming. In D. N. Arnold, F. Santosa, C. Greengard, & A. Ruszczynski
+      (Eds.), Decision making under uncertainty (pp. 71­93). New York, NY: Springer New York
+      volume 128.
+
+                                                             22
+[15] Fridgen, G., Keller, R., Körner, M.-F., & Schöpf, M. (2020). A holistic view on sector
+      coupling. Energy Policy, 147 , 111913.
+
+[16] Hagemann, S. (2013). Price determinants in the german intraday market for electricity: an
+      empirical analysis. SSRN Electronic Journal , .
+
+[17] Henni, S., Becker, J., Staudt, P., Vom Scheidt, F., & Weinhardt, C. (2022). Industrial peak
+      shaving with battery storage using a probabilistic forecasting approach: economic evaluation
+      of risk attitude. Applied Energy, 327 , 120088.
+
+[18] Heredia, F. J., Cuadrado, M. D., & Corchero, C. (2018). On optimal participation in the
+      electricity markets of wind power plants with battery energy storage systems. Computers
+      & Operations Research, 96 , 316­329.
+
+[19] Kiesel, R., & Paraschiv, F. (2017). Econometric analysis of 15-minute intraday electricity
+      prices. Energy Economics, 64 , 77­90.
+
+[20] Kirkwood, J. R. (2015). Markov processes. Advances in applied mathematics. Boca Raton,
+      FL: CRC Press/Taylor & Francis Group.
+
+[21] Klæboe, G., Eriksrud, A. L., & Fleten, S.-E. (2015). Benchmarking time series based
+      forecasting models for electricity balancing market prices. Energy Systems, 6 , 43­61.
+
+[22] Koch, C., & Hirth, L. (2019). Short-term electricity trading for system balancing: An
+      empirical analysis of the role of intraday trading in balancing Germany's electricity system.
+      Renewable and Sustainable Energy Reviews, 113 , 109275.
+
+[23] Kongelf, H., Overrein, K., Klæboe, G., & Fleten, S.-E. (2019). Portfolio size's effects on gains
+      from coordinated bidding in electricity markets: a case study of a norwegian hydropower
+      producer. Energy Systems, 10 , 567­591.
+
+[24] Kraft, E., Keles, D., & Fichtner, W. (2020). Modeling of frequency containment reserve
+      prices with econometrics and artificial intelligence. Journal of Forecasting, 39 , 1179­1197.
+
+[25] Kraft, E., Russo, M., Keles, D., & Bertsch, V. (2022). Stochastic optimization of trading
+      strategies in sequential electricity markets. European Journal of Operational Research, .
+
+[26] Kuik, O., Branger, F., & Quirion, P. (2019). Competitive advantage in the renewable energy
+      industry: evidence from a gravity model. Renewable Energy, 131 , 472­481.
+
+[27] Liebensteiner, M., Ocker, F., & Abuzayed, A. (2025). High electricity price despite expansion
+      in renewables: How market trends shape Germany's power market in the coming years.
+      Energy Policy, 198 , 114448.
+
+[28] Lund, P. D., Lindgren, J., Mikkola, J., & Salpakari, J. (2015). Review of energy system
+      flexibility measures to enable high levels of variable renewable electricity. Renewable and
+      Sustainable Energy Reviews, 45 , 785­807.
+
+[29] Löhndorf, N., & Wozabal, D. (2022). The Value of Coordination in Multimarket Bidding of
+      Grid Energy Storage. Operations Research, 71 , 1­22.
+
+[30] Löhndorf, N., Wozabal, D., & Minner, S. (2013). Optimizing trading decisions for hydro
+      storage systems using approximate dual dynamic programming. Operations Research, 61 ,
+      810­823.
+
+                                                             23
+[31] Ottesen, S. O., Tomasgard, A., & Fleten, S.-E. (2018). Multi market bidding strategies for
+      demand side flexibility aggregators in electricity markets. Energy, 149 , 120­134.
+
+[32] Pape, C., Hagemann, S., & Weber, C. (2016). Are fundamentals enough? Explaining price
+      variations in the german day-ahead and intraday power market. Energy Economics, 54 ,
+      376­387.
+
+[33] Pereira, M. V. F., & Pinto, L. M. V. G. (1991). Multi-stage stochastic optimization applied
+      to energy planning. Mathematical Programming, 52 , 359­375.
+
+[34] Plazas, M., Conejo, A., & Prieto, F. (2005). Multimarket optimal bidding for a power
+      producer. IEEE Transactions on Power Systems, 20 , 2041­2050.
+
+[35] Ramsebner, J., Haas, R., Ajanovic, A., & Wietschel, M. (2021). The sector coupling concept:
+      a critical review. WIREs Energy and Environment, 10 .
+
+[36] Rintamäki, T., Siddiqui, A. S., & Salo, A. (2020). Strategic offering of a flexible producer
+      in day-ahead and intraday power markets. European Journal of Operational Research, 284 ,
+      1136­1153.
+
+[37] Rotting, T., & Gjelsvik, A. (1992). Stochastic dual dynamic programming for seasonal
+      scheduling in the norwegian power system. IEEE Transactions on Power Systems, 7 , 273­
+      279.
+
+[38] Rougé, C., & Tilmant, A. (2016). Using stochastic dual dynamic programming in problems
+      with multiple near-optimal solutions: SDDP and multiple near-optimal solutions. Water
+      Resources Research, 52 , 4151­4163.
+
+[39] Saretta, M., Raheli, E., & Kazempour, J. (2023). Electrolyzer scheduling for nordic FCR
+      services. In 2023 IEEE International Conference on Communications, Control, and Comput-
+      ing Technologies for Smart Grids (SmartGridComm) (pp. 1­6). Glasgow, United Kingdom:
+      IEEE.
+
+[40] Thingvad, A., Ziras, C., Ray, G. L., Engelhardt, J., Mosbak, R. R., & Marinelli, M. (2022).
+      Economic value of multi-market bidding in nordic frequency markets. In 2022 International
+      Conference on Renewable Energies and Smart Technologies (REST) (pp. 1­5). Tirana,
+      Albania: IEEE.
+
+[41] Triki, C., Beraldi, P., & Gross, G. (2005). Optimal capacity allocation in multi-auction
+      electricity markets under uncertainty. Computers & Operations Research, 32 , 201­217.
+
+[42] Wozabal, D., & Rameseder, G. (2020). Optimal bidding of a virtual power plant on the
+      spanish day-ahead and intraday market for electricity. European Journal of Operational
+      Research, 280 , 639­655.
+
+                                                             24
+Appendix A. Appendix
+Appendix A.1. Multi-variate k-means clustering of prices
+
+                                                                   Weekday 1              Weekday 2              Weekday 3
+                                           200
+
+                                Cluster 1  0
+
+                                           200
+
+                                           400
+
+45k                                             0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+40k
+35k                                        200
+30k
+25k                             Cluster 2  0
+20k
+15k                                        200
+10k
+                                           400
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+                                           200
+
+                                Cluster 3  0
+
+                                           200
+
+                                           400
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+                                           200
+
+                                Cluster 4  0
+
+                                           200
+
+                                           400
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+                                           200
+
+                                Cluster 5  0
+
+     2  4                 6  8             200
+
+                                           400
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+Figure A.12: Elbow-plot of the multi-variate k-means Figure A.13: Results of k-means clustering of stochastic
+clustering of DA prices
+                                DA price components
+
+                                                                   Weekday 1              Weekday 2              Weekday 3
+                                           300
+                                Cluster 1  200
+                                           100
+35k
+                                             0
+                                           100
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+30k                                        300
+                                           200
+                                Cluster 2  100
+
+25k                                          0
+                                           100
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+                                           300
+
+20k                                        200
+
+                                Cluster 3  100
+
+                                           0
+
+15k                                        100
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+                                           300
+
+10k                                        200
+
+                                Cluster 4  100
+
+     2  4                 6  8             0
+
+                                           100
+
+                                                0  1      2  3                4  5  0  1  2  3       4  5  0  1  2  3       4  5
+
+Figure A.14: Elbow-plot of the multi-variate k-means Figure A.15: Results of k-means clustering of stochastic
+clustering of FCR prices
+                                FCR price components
+
+Appendix A.2. Market prices in the investigated period
+    Market prices for the three markets of DA, ID and FCR in Germany are listed below for the
+
+years 2021 (Figure A.16) and 2022 (Figure A.17). They show a strong increase in the price level
+from the second half of 2021 and a general increase in volatility throughout 2022.
+
+Appendix A.3. Selection of the Penalty Term
+    We have tested different configurations of storage violation penalties, including 100,000
+
+AC/MWh (Figure A.18), 10,000 AC/MWh (Figure A.18), and 3,000 AC/MWh (Figure 6), along
+with varying iteration counts. All configurations increase the storage violation penalty term and
+increase losses within simulations, especially at fewer iterations. After about 8,000 iterations,
+
+                                                             25
+1000
+
+800
+                                                                                                                                                                               800
+
+600
+                                                                                                                                                                               600
+
+400                                                                                                                                                                 400
+
+                                                                                                                                                                               200
+200
+
+  0                                                                                                                                                                    0            Mar 2022      May 2022  Jul 2022                 Sep 2022  Nov 2022
+Jan 2021                                                                                                                                                            Jan 2022
+
+                   Mar 2021  May 2021      Jul 2021          Sep 2021  Nov 2021
+
+                                                                                                                                                                                                         ID prices DA prices FCR prices
+
+                                       ID  DA                FCR
+
+                                                                                Figure A.17: Prices of the DA, ID and FCR market of
+Figure A.16: Prices of the DA, ID and FCR market of the year 2022 in Germany
+the year 2021 in Germany
+
+a violation magnitude of about 1 % for each violation can be observed. However, these minor
+violations occur more often. Notably, less-trained policies result in higher negative revenues due
+to storage limit violations, and we observe reduced convergence. The resulting policy at high
+iteration counts is comparable with lower penalty terms; therefore, we conclude that our lower
+penalty term of 3,000 AC/MWh is sufficient and continue the rest of the investigation with it.
+
+Revenue in 20,000                                                                                                                                         3.7%    100,000                                                                                        2.8%
+                                                                                                                                               Revenue in 15,0003.1%50,000                                                                                       2.3%
+10,000                                                                                                                                                    2.4%               0                                                                                   1.9%
+                                                                                                                                                          1.7%                                                                                                   1.5%
+  5,000                                                                                                                                                   1.0%   -50,000                                                                                         1.1%
+         0                                                                                                                                                0.4%  -100,000                                                                                         0.6%
+                                                                                                                                                                -150,000                                                                                         0.2%
+-5,000                                                                                                                                                          -200,000
+
+                                                                                                                                                                                    2,000  4,000  6,000  8,000 10,000 12,000 14,000 16,000 18,000 20,000
+                                                                                                                                                                                                                      Iterations
+            2,000  4,000     6,000  8,000 10,000 12,000 14,000 16,000 18,000 20,000
+                                                 Iterations
+                                                                                                                                                                                                  Mean storage volume violation [%]  Storage violation rate [%]
+                          Mean storage volume violation [%]  Storage violation rate [%]                                                                                                           Upper bound                        Mean revenue
+                          Upper bound                        Mean revenue                                                                                                                         95% confidence interval
+                          95% confidence interval
+
+Figure A.18: Objective values and storage violations at                                                                                                         Figure A.19: Objective values and storage viola-
+different iteration counts at a penalty of 10,000AC/MWh                                                                                                         tions at different iteration counts at a penalty of
+                                                                                                                                                                100,000AC/MWh
+
+Appendix A.4. Removing the ID Constraint
+    Convergence is reached with an upper bound at 10,500 AC but with significant penalty terms,
+
+even at higher iteration counts. This leads to higher storage violations, in absolute occurrence
+and relative strength of the violation, as observable in Figure A.20. In Figure A.21, we can see
+more storage violations, especially small fluctuations up and down of the storage limits. We find
+the general trading patterns unchanged.
+
+Appendix A.5. Price Paths of the Markov Chain in the Investigated Period
+
+                                                                                                                                                                26
+30,000                                                                                     75.7%                                                              10
+
+20,000                                                                                     58.9%                                                              8
+
+Revenue in 10,000                                                                          42.1%                                                              6
+                                                                                                                                               SoC in MWh
+           0                                                                               25.4%                                                              4
+-10,000                                                                                    8.6%
+                                                                                                                                                              2
+
+                                                                                                                                                              0
+
+              2,000  4,000 6,000 8,000 10,000 12,000 14,000 16,000 18,000 20,000
+
+                                         Iterations                                                                                                               0  2            4      6            8         10  12           14         16  18
+
+                            Mean storage volume violation [%]  Storage violation rate [%]                                                                                                                Stage
+                            Upper bound                        Mean revenue
+                            95% confidence interval
+                                                                                                                                                                                         [0.05, 0.95] quantile mean simulations
+
+Figure A.20: Objective values and storage violations at Figure A.21: Battery SoC development at different
+different iteration counts in the absence of constraints. stages.
+
+ 800                                                                                                                                                        800
+
+Price in /MWh600                                                                                                                                            600
+                                                                                                                                               Price in /MWh
+ 400                                                                                                                                                        400
+
+ 200                                                                                                                                                        200
+
+    0                12:00     00:00     12:00                       00:00     12:00                                                                          0                   12:00     00:00        12:00         00:00         12:00         00:00
+   00:00                    Jul 6, 2022                           Jul 7, 2022                                                                                                            Jul 6, 2022                Jul 7, 2022                 Jul 8, 2022
+Jul 5, 2022                                                                                                                                                          00:00
+                                                                                                                                                                 Jul 5, 2022
+
+                            DA prices DA scenarios                                                                                                                                              ID prices ID scenarios
+
+              Figure A.22: Price scenarios for the DA                                                                                                                Figure A.23: Price scenarios for the ID
+
+                                         Price in /MW 800
+
+                                                      600         12:00           00:00           12:00                                                                 00:00            12:00
+                                                                               Jul 6, 2022                                                                           Jul 7, 2022
+                                                      400
+
+                                                      200
+
+                                                         0
+                                                        00:00
+                                                     Jul 5, 2022
+
+                                                                                           FCR prices FCR scenarios
+
+                                                                  Figure A.24: Price scenarios for the FCR
+
+                                                                                            27
+

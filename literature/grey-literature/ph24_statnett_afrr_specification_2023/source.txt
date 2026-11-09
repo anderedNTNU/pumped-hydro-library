@@ -1,0 +1,577 @@
+Ã…pen informasjon / Public information
+
+        Appendix 1:
+        Technical Product and Interface
+        Specification for Delivery of
+        Automatic Frequency Restoration
+        Reserves (aFRR) to Statnett
+
+              Version June 2023
+
+                                                                                                                    i
+Ã…pen informasjon / Public information
+
+ I. Document
+
+This document must be reviewed accordingly if the scope is modified or other significant
+changes are made that impact the interpretation of the document, e.g. changes in the market
+conditions.
+
+Version Revision                       Author Date
+
+0.1  Initial draft SN                  DW/EL  10-01-2011
+
+1.0  External version                  DW/EL  07-11-2011
+
+2.0  External version for procurement  DW     09-01-2012
+
+3.0  Reworked version                  Unknown 10-2021
+
+4.0  Revised version                   LPA    01-06-2023
+
+                                                          ii
+Ã…pen informasjon / Public information
+
+            Table of Contents
+
+                   I. Document .......................................................................................................................... ii
+                   1 Introduction........................................................................................................................ 6
+
+                      1.1 Brief introduction to aFRR ........................................................................................ 6
+                   2 Product specification ......................................................................................................... 7
+
+                      2.1 BSP schedules ......................................................................................................... 7
+                      2.2 Parameters and Values ............................................................................................ 8
+                      2.3 Full Activation Time (FAT) ........................................................................................ 9
+                      2.4 Delay time............................................................................................................... 10
+                      2.5 Set-point definition.................................................................................................. 10
+                      2.6 Accuracy ................................................................................................................. 10
+                      2.7 Capacity/Regulating Volume ................................ Feil! Bokmerke er ikke definert.
+                      2.8 aFRR ACE calculation mode.................................................................................. 11
+                      2.9 Actual aFRR contribution ....................................................................................... 11
+                      2.10 Interplay between FCR and aFRR ......................................................................... 11
+                      2.11 Bidding Limitations ................................................................................................. 12
+                   3 Interface Specification ..................................................................................................... 12
+                      3.1 Using aFRR Set-Point ............................................................................................ 12
+                      3.2 Setting the Remote Control Permitted Status ........................................................ 12
+                      3.3 Monitoring Validity of aFRR Set-points .................................................................. 12
+                      3.4 Other Information.................................................................................................... 12
+                      3.5 Communication Timeout ........................................................................................ 13
+                      3.6 Communication Failure .......................................................................................... 13
+                   4 System Design ................................................................................................................ 14
+                      4.1 System design ........................................................................................................ 14
+                      4.2 Protocol .................................................................................................................. 14
+                      4.3 Availability............................................................................................................... 15
+                      4.4 Signal descriptions ................................................................................................. 15
+                      4.5 Regulation Validation ............................................................................................. 16
+                   Appendix: ............................................................................................................................... 16
+                      Signal list............................................................................................................................. 16
+
+                                                                                                                   iii
+Ã…pen informasjon / Public information
+
+II. Definitions                        Automatic Frequency Restoration Reserves (aFRR) are
+                                       automatically activated from the TSOs. The purpose of
+aFRR                                   aFRR is to release primary reserves and bring the
+                                       frequency in the power grid back to its nominal value of
+aFRR providing unit                    50.00 Hz.
+Assets
+Balancing capacity                     An aFRR providing unit is a controllable object realised by
+BSP                                    one single asset or a group of assets.
+BSP's Control System
+                                       Power producing/consuming/storing assets such as hydro
+                                       generators, wind turbines, solar power installations, energy
+                                       storage, consumption facilities and so on that deliver aFRR
+                                       to Statnett are referred to as assets in this document.
+
+                                       A volume of reserve capacity that a BSP has agreed to
+                                       hold and in respect to which the BSP has agreed to submit
+                                       bids for a corresponding volume of balancing energy to the
+                                       TSO for the duration of the contract.
+
+                                       A Market Participant providing Balancing Services to its
+                                       Connecting TSO, or in case of the TSO-BSP model, to its
+                                       Contracting TSO.
+
+                                       The BSP's Control System, e.g. automatic generator
+                                       control, is a control function running in the BSPâ€™s SCADA
+                                       system. It needs to have automatic transmission of set-
+                                       points to the asset and must be able to take control orders
+                                       sent by the TSO and execute them. The control system
+                                       should not have any other closed loop frequency functions
+                                       other than that of primary reserve.
+
+                                       The TSO orders are combined with the BSPsâ€™ predefined
+                                       generation schedule. It is assumed that the system has a
+                                       control function for executing the schedules.
+Ã…pen informasjon / Public information
+
+Full Activation Time (FAT)             The control system does not have to be a closed loop
+Delay time                             system, but it is preferable. It is used to transfer the control
+Load Frequency Control (LFC)           orders from the TSO to the assets. The details of how this
+Asset/production mix                   is done are up to the BSP and its implementations. Some
+                                       requirements are mandatory to ensure that the aFRR
+Station group                          functions correctly.
+
+                                       The time it takes from an aFRR activation signal is sent
+                                       from the TSO's SCADA system until the assets within the
+                                       aFRR providing unit reach their new power output level
+                                       according to the new set-point.
+
+                                       The period of time between an aFRR activation signal is
+                                       sent from the TSO's SCADA system until the assets within
+                                       the aFRR providing unit starts its physical delivery.
+
+                                       aFRR has previously been referred to as Load Frequency
+                                       Control (LFC). With the Nordic harmonization this specific
+                                       type of reserve is referred to as automatic Frequency
+                                       Restoration Reserve. In European legislation LFC has a
+                                       different meaning, which include both the frequency
+                                       containment process and frequency restoration process.
+
+                                       An aFRR providing unit can be made up of one or more
+                                       assets. The TSO provides the set-points which the BSP
+                                       distributes as they see fit while staying mindful of the
+                                       performance requirements.
+
+                                       It could, for example, be possible to combine a large and
+                                       slow production unit with a fast, smaller unit. This would
+                                       provide the capability to provide aFRR from the slow unit
+                                       without compromising with the performance requirements.
+                                       To approve this set up, the mix of assets must be
+                                       documented and used for subsequent deliveries. This is to
+                                       ensure that the uniform product is delivered.
+
+                                       A Station group is a set of assets that are co-located and
+                                       connected to the electrical power grid via several
+                                       substations.
+
+                                       If the TSO approves it, a station group can be treated as
+                                       one aFRR providing unit. This approval will be part of the
+                                       pre-qualification process.
+Ã…pen informasjon / Public information
+
+         1 Introduction
+
+            1.1 Brief introduction to aFRR
+
+               The automatic Frequency Restoration Reserves (aFRR), previously known as Load Frequency Control
+               (LFC), is a control function running in the TSO's (Statnett's) SCADA system which can control frequency
+               and interchange (flow in or out of the control area) in the power system. This is a secondary control
+               scheme that operates in parallel with the primary regulation but on a slower bandwidth. Primary
+               regulation, now named Frequency Containment Reserves (FCR) which is locally implemented in the
+               asset, will match the generation with the load quantum but will not recover system frequency to the
+               nominal level. This task is performed by aFRR using a PI regulator, by automatically regulating the
+               response based on the system frequency.
+               The main aim of aFRR is to improve the frequency quality in the Nordic synchronous area. Whenever a
+               frequency deviation is recognized an appropriate volume of balancing capacity is activated automatically
+               such that the system frequency is returned to its nominal value of 50.00 Hz and the activated primary
+               reserves are released. Automatic regulation is the key to achieve a faster response time.
+
+               The aFRR regulation should not negatively affect the overall stability of the power system. To ensure
+               this, it is important that the aFRR response does not interfere with the FCR response. Therefore, the
+               aFRR must react slower to changes in the frequency than the FCR). This is achieved by applying a low-
+               pass filter to the frequency measurement that is used to control the aFRR contribution with a sufficiently
+               high time constant.
+Ã…pen informasjon / Public information
+
+         2 Product specification
+
+            2.1 Asset/ production mix
+
+               An aFRR providing unit can be made up of one asset or a group of assets. The contribution from each
+               individual asset can vary if the total volume of balancing capacity is kept unchanged.
+               From the TSOs perspective it is a single unit controlled with a single set-point. How this set-point is
+               distributed among the physical assets within the group is solely decided by the BSP's control system
+               (see Feil! Fant ikke referansekilden.). The BSP's bids for supply are given per aFRR providing unit.
+               The bids must comply with the product parameters described in this chapter.
+               ). The BSP's bids for supply are given per aFRR providing unit. The bids must comply with the product
+               parameters described in the aFRR product definition in Chapter 3, Product Specification.
+               Because of the filtering in the main controller the total power demand will change gradually, one step at
+               a time. The set-point signal from the TSO will always be a multiple of the block size, which at the time
+               of writing is 1 MW.
+               In the example in Feil! Fant ikke referansekilden., the BSP obligation is to deliver up to 65 MW in a
+               defined time period (e.g. a 6-hour block). The BSP could plan to deliver from their wind power generators
+               e.g. 2 hours and from their hydro power for the remaining 4 hours. This example shows only positive
+               aFRR. A BSP's control system can be used to deliver both positive and/or negative aFRR.
+
+                 Figure 1: The diagram illustrates the communication flow between the TSO, aFRR providing unit and the
+                 power producing assets
+
+            2.2 BSP schedules
+
+               Each BSP may have a production schedule either executed automatically, using a control system, or
+               manually. However, the units participating in aFRR are required to be automatically controlled by the
+               TSO request known as set-point (SP) or aFRR signal. This alters the resultant production to match the
+Ã…pen informasjon / Public information
+
+               current needs as shown in Figure 2. Planned changes in production according to the BSP schedule are
+               executed independent of TSO control.
+
+Figure 2 shows an example of when a BSP schedule (red) is modified by a TSO request (green). The BSP's
+resultant production is then the sum of the original schedule and the TSO request (blue).
+
+2.3 Parameters and Values
+
+The aFRR response required from the BSP is illustrated in Figure 3, Figure 4, and the utilized
+parameters are defined in Table 1.
+
+Table 1 Definition of parameters that form the aFRR providing unit response
+
+Parameter                    Value        Comment
+
+Step Size                    1 MW         Minimum value: every set-point is a
+                                          multiple of this.
+                                          NB. Statnett has changed this from
+                                          10MW according to Nordic
+                                          harmonisation.
+
+Full activation time (FAT)   120 s        Preferred value
+
+                             300 s        Maximum value
+
+Delay time                   30 s         Maximum value
+
+Accuracy of delivery at FAT  1 MW         When a set-point changes the
+
+                             or           observed change in aFRR, delivery
+                                          should be within these values.
+                             10% of set-
+                             point delta  See examples in 2.7
+
+                             5 MW         Total sustained error from setpoint shall
+                                          not exceed 5 MW.
+Ã…pen informasjon / Public information
+
+                               â€¢ Ã…pen informasjon / Public information
+
+               [%] 100 %
+
+Relative response of aFRR  30                                           60  120
+
+                           Time after setpoint change (in s)                                 [t]
+
+Figure 3: Shows the relative response of aFRR as a function of time after set point change.
+        Fremtiden er elektrisk
+
+Figure 4: Accepted response to a change in set-point.
+
+2.4 Full Activation Time (FAT)
+
+FAT is the time it takes from an aFRR activation signal is sent from the TSO's SCADA system until the
+assets reach their new power output level according to the new set-point.
+All individual changes should be fulfilled within the FAT.
+Maximum allowed FAT is 5 minutes. Statnett preferers a 2 min FAT or faster.
+Ã…pen informasjon / Public information
+
+               Deactivation time should not be longer than FAT.
+
+            2.5 Delay time
+
+               The delay time denotes the time from the signal is sent from the TSO until the assets start to change
+               their power output level. This delay time should be as short as possible, maximum equal to the time set
+               in table 1 above.
+
+               The delay time shall be the same when responding to changes in both directions.
+
+            2.6 Set-point definition
+
+               The signal from Statnett's SCADA system is a delta set-point and tells how much the BSP should differ
+               from the planned production.
+
+               Available aFRR capacity shall not affect or be affected by other obligations such as FCR, mFRR, day-
+               ahead or XBID.
+
+            2.7 Accuracy
+
+               The accuracy of an aFRR providing unit is defined by how precisely it responds to a change of the set-
+               point. At FAT, the change of generated power output should be no more than 10 % different from the
+               change in Statnett set-point OR within 1 MW of the change in the set-point sent from Statnett. Further,
+               the total sustained error should be no more than 5 MW.
+               Examples:
+
+                    â€¢ If the set-point changes from -10 to -15, the decrease in total generation should be between 4
+                          and 6 MW (within 1 MW of change in setpoint).
+
+                    â€¢ If the set-point changes from 20 to 35 (an increase of 15 MW) the increase of total generation
+                          should be between 13,5 and 16,5 (15 MW Â± 10 %) (Within the 10 % limit).
+
+                    â€¢ If the set-point is 80 MW the generation on the assets should be between 75 to 85 MW higher
+                          than the scheduled production (also after adjusting for primary regulation). (Within 5 MW)
+
+               Statnett may still approve aFRR providing units with larger deviations than listed above. In such cases,
+               it may be required that the BSP work on improving the accuracy to be within the limits within a
+               reasonable time frame.
+
+            2.8 Balancing Capacity
+
+               The aFRR Balancing Capacity defines the maximum and minimum change that Statnett can request
+               from an aFRR providing unit.
+
+               The available aFRR Balancing Capacity for each aFRR providing unit is the result of the aFRR capacity
+               market. Statnett can only regulate within the purchased regulating margins, unless otherwise agreed
+               with Statnettâ€™s National Control Centre, i.e. some BSP have agreed to transfer the aFRR capacity
+               obligation.
+Ã…pen informasjon / Public information
+
+            2.9 aFRR ACE calculation mode
+
+               aFRR ACE (Area Control Error) calculation mode can be set in three different modes by the TSO:
+                    â€¢ Constant frequency (CF) when only frequency is considered,
+                    â€¢ Constant net interchange (CNI) where only interchange in and out of the control block is
+                          considered
+                    â€¢ Tie-Line Bias (TLB) where both frequency and interchange are used.
+
+               Regulation mode in the aFRR control function in Statnett SCADA-system is currently set to Constant
+               frequency (CF) but will in the future be changed to TLB mode.
+
+            2.10 Actual aFRR contribution
+
+               The actual aFRR contribution from an aFRR providing unit is a calculated measurement. Under normal
+               circumstances this should coincide with the control set-point. This signal is sent from the BSP to Statnett.
+               This signal should be a continuous measurement, reflecting how much the aFRR providing unit is
+               contributing to the aFRR. If the contribution is spread over multiple assets their individual contribution
+               should be summed in this measurement.
+
+                                                    í µí°´í µí±í µí±¡í µí±¢í µí±Ží µí±™í µí°¹í µí±…í µí±… = í µí±†í µí±ƒí µí°¹í µí±…í µí±… + í µí±’ = í µí±ƒí µí±”í µí±’í µí±› âˆ’ í µí±ƒí µí±í µí±™í µí±Ží µí±› âˆ’ í µí°¹í µí°µ âˆ™ âˆ†í µí±“
+               where í µí±†í µí±ƒí µí°¹í µí±…í µí±… is the set-point from Statnett, í µí±’ is errors due to oscillations, inaccuracy in the turbine
+               regulator etc., í µí±ƒí µí±”í µí±’í µí±› is the MW measurement from the asset(s), í µí±ƒí µí±í µí±™í µí±Ží µí±› is planned production (including
+               mFRR, period shift, and other intended regulations) before aFRR and the last term í µí°¹í µí°µ âˆ™ âˆ†í µí±“1 is an
+               adjustment for delivery of FCR.
+
+            2.11 Interplay between FCR and aFRR
+
+               The BSP may deliver both aFRR and FCR from the same asset at the same time.
+               When the BSP defines the capacity of aFRR to which it will be obligated through a bidding process it
+               must calculate the FCR maximum capacity2 based on a frequency deviation of 0.5 Hz [49.5 â€“ 50.5 Hz],
+               also considering the current droop settings.
+
+                   1 As defined in Vedlegg til retningslinjer for fos Â§ 14 - nvf (statnett.no)
+                   2 As defined in Vedlegg til retningslinjer for fos Â§ 8a (statnett.no)
+Ã…pen informasjon / Public information
+
+            2.12 Bidding Limitations
+
+               The BSPs control system must check that an asset does not belong to more than one active aFRR
+               providing unit.
+               The aFRR providing unit should normally only include assets co-located and connected to the electrical
+               power grid via one substation, however inclusion of co-located assets that are connected to the electrical
+               power grid via several substations defined as a Station group can be accepted following acceptance by
+               the TSO.
+
+         3 Interface Specification
+
+            3.1 Using the Set-Point
+
+               The BSP's control systems must be able to read the set-point transferred via ICCP from Statnett and
+               divide this change in set-point among the assets currently at disposal. The actual division is up to the
+               BSP. One suggestion is to use participation factors which are dynamically normalised. This correction
+               is added to the scheduled generation level (base point) for the individual assets. The BSP's control
+               systems will send out set-points to the individual assets according to the system's implementation.
+
+            3.2 Setting the Remote Control Permitted Status
+
+               The TSO will only regulate an aFRR providing unit if the signal Remote Control Permitted is set. This
+               should be set when the aFRR providing unit is ready to receive and execute set-points.
+
+               The BSP's control systems must have a monitoring function that checks the conditions for setting this
+               signal, sets it and transmits this signal to the TSO.
+
+            3.3 Monitoring Validity of Set-points
+
+               The BSP's control system must have a monitoring function that checks that the set-point sent from
+               Statnett are within the available capacity and in compliance with other parameters. If set point is outside
+               capacity, only available capacity should be activated
+
+            3.4 Other Information
+
+               The BSP's control system shall provide Statnett with the currently available balancing capacity (up and
+               down) and how much they are currently contributing to the aFRR.
+Ã…pen informasjon / Public information
+
+            3.5 Communication Timeout
+
+               In case of a communication breakdown, the aFRR providing unit should maintain its current aFRR
+               contribution level for some time. This timeout should be for a pre-defined period from the last change of
+               the set-point. The timeout period is set by the TSO and should be possible to configure.
+               This function is added to allow for smooth recovery after a short communication breakdown. With a loss
+               of communication between the aFRR providing unit and TSO's SCADA system, or if the set-point signal
+               received is invalid, the current aFRR contribution will be maintained for e.g. 900 seconds from the last
+               received change from the TSO as shown in Figure 5.
+
+                 Figure 5: Illustration of the timeout functionality. The resultant production does not change in the timeout period.
+               This regime ensures that the BSPs do not set their aFRR contribution to zero at the same time, should
+               the TSO communication be lost, keeping the last received change for some time.
+
+            3.6 Communication Failure
+
+               The BSP should monitor the communication band and ensure that an alarm will be generated with loss
+               of the connection. This alarm will then be used to initiate the timeout condition above.
+Ã…pen informasjon / Public information
+
+         4 System Design
+
+               This section describes requirements regarding system design, protocol, and availability for the
+               connection between the TSO SCADA servers and BSP SCADA servers, as illustrated in Figure 5.
+
+               Figure 5: System design
+
+            4.1 System design
+
+               The following requirements are valid for BSPs to partake in the aFRR capacity market:
+                    â€¢ The BSP must have two separate physical connections to the network called E-NETT.
+                    â€¢ The BSP must have a Control Centre with two separate redundant SCADA servers.
+                    â€¢ The BSP should have two separate networks with two firewalls connecting their SCADA servers
+                          to the E-NETT network.
+
+            4.2 Protocol
+
+               aFRR should have a dedicated ICCP connection. Other SCADA signals should go on another ICCP
+               connection.
+               To ensure lowest possible down-time, the TSO will install duplicate routers at the BSP site, each of them
+               connected to a separate BSP firewall. This configuration will ensure redundancy in the complete chain
+               from the TSO SCADA servers to the BSP SCADA servers. BSP will be responsible for the duplication
+               of firewalls and network at the BSP site.
+               All signals between the TSO and the BSP shall be based on ICCP protocol. The communication will be
+               encrypted using ICCP.
+               All indications and set-point values are transferred spontaneously, while all measurements are sent
+               cyclically.
+Ã…pen informasjon / Public information
+
+4.3 Availability
+
+A dedicated ICCP connection will be established between Statnettâ€™s National Control Centre and the
+BSP SCADA. The availability requirement for this connection and subsequent connection from the BSP
+SCADA to the Station will be 99 %. Availability is measured on a weekly basis starting Monday 00:00
+and approximates to 10 min/week. ICCP server restarts should not be included in this metric.
+
+When calculating the availability of the system, down-time caused by the TSO is subtracted.
+
+4.4 Signal descriptions
+
+Remote control                         When set, this signal means that the TSO is permitted to control the aFRR
+permitted status signal                providing unit. This does not imply that the TSO has taken control of the
+                                       aFRR providing unit but it is a pre-requirement for the TSO to use it in
+BSP â†’ TSO                              regulation.
+
+Limitation status                      When this signal is sent, it means that the aFRR providing unit has reached
+signals                                its available reserves limits either up or down. There is one upper and one
+                                       lower limitation signal. This signal is used by the BSP to no longer increase
+BSP â†’ TSO                              or alternatively no longer decrease regulation as long as the corresponding
+                                       signal is sent.
+
+                                       This signal is sent by the BSP when the first signal equal to the max or min
+                                       available reserves is received
+
+                                       NB! This signal will no longer be in active use by Statnett. Please use the
+                                       "Available reserves" to cover the functionality.
+
+Available reserves                     Available reserves up and down. This is a confirmation that there is
+BSP â†’ TSO                              available sufficient regulation with reference to the contractual obligations
+                                       of the BSP.
+Control Set-point
+TSO â†’ BSP                              Example: sold capacity =100, activated = 10 -> available reserves =100)
+
+                                       The set-point is sent as a set-point value over ICCP. Whenever the TSO is
+                                       controlling the aFRR providing unit this value will be updated; it will not be
+                                       updated if the TSO is not controlling it. If this value is not valid the BSP
+                                       control system should not use this signal. A time out should be applied
+                                       before considering this signal invalid in order to handle temporary loss of
+                                       communication. The control signal will be increments of the step size 1 MW,
+                                       and its signal rate will be no more than every 4 seconds. A configurable
+                                       delay after set-point transmission can be added. To verify that the BSP
+                                       control system has received the set-point value, a measurement containing
+                                       the last received set-point value is returned to the TSO.
+Ã…pen informasjon / Public information
+
+                                    For each aFRR providing unit there will be defined a control set-point that
+                                    is updated through ICCP. This set-point shall be interpreted as a deviation
+                                    from the current scheduled generation level. The control set-point signal is
+                                    an accumulated value and therefore a new signal replaces the old one. The
+                                    value is defined in MW.
+
+4.5 Regulation Validation
+
+Regulation validation aims to ensure that activated regulation is in-line with the balancing capacity bids
+submitted by the BSP and within the product specification set for the assets.
+
+The validation happens due to the functionality of limiting the set-point regulation signal to blocks of 1
+MW and a signal rate of 4 seconds.
+
+In addition to the validation by Statnett, the BSP can have its own validation of performance. This is
+however not a requirement from Statnett.
+
+Appendix:
+
+Signal list
+
+Table 2 shows the mapping between SCADA and the correct telemetry. * aFRR_PROVIDING UNIT_NAME in
+column ICCP GLOBAL ID should be exchanged with the aFRR providing unit name in question.
+
+Discrete Name                          Telemetry Template GEN description       ICCP GLOBAL ID
+
+LFGD - AGC in limit down               CZMBR_INPUT     AT LIMIT DOWN STATUS     aFRR_PROVIDING_UNIT *
+                                       CZMBR_ATMN_P_I                           _AGC_LIM_DOWN
+
+LFGD - AGC in limit UP                 CZMBR_INPUT     AT LIMIT UP STATUS       aFRR_PROVIDING_UNIT *
+                                       CZMBR_ATMX_P_I                           _AGC_LIM_UP
+
+LFSE - enabled                         CZMBR_OUTPUT    LFC ENABLED              aFRR_PROVIDING_UNIT *
+                                       CZMBR_LFC_P_O                            _FRR_ENABLED
+
+LFSF â€“ Remote Control Permit           CZMBR_INPUT     REMOTE CONTROL           aFRR_PROVIDING_UNIT
+                                       CZMBR_AUT_P_I   PERMITTED                *_AGC_RCP
+
+Analog name
+
+LFAC â€“ Actual LFC Contributi           CZMBR_INPUT     ACTUAL LFC CONTRIBUTION  aFRR_PROVIDING_UNIT *
+                                       CZMBR_AREG_A_I                           _AGC_ACTUAL_MW
+Ã…pen informasjon / Public information
+
+RDOW â€“ Current LFC res. down CZMBR_INPUT                         CURRENT LFC RESERVE      aFRR_PROVIDING_UNIT *
+                                                 CZMBR_RVDN_A_I  DOWN                     _AGC_RES_DOWN
+
+RUP â€“ Current LFC res. up              CZMBR_INPUT               CURRENT LFC RESERVE UP   aFRR_PROVIDING_UNIT *
+                                       CZMBR_RVUP_A_I                                     _AGC_RES_UP
+
+Table 3 â€“ Signals between BSP and Statnett
+
+Direction    Signal name                                         Signal type Unit Short Name*
+SN -> BSP
+SN -> BSP    aFRR set-point                                      Set-Point   MW FRR_Set_Point
+BSP-> SN
+BSP-> SN     aFRR Enabled                                        Indication               FRR_enabled
+BSP-> SN
+BSP-> SN     Remote control permitted                            Indication               AGC_RCP
+BSP-> SN
+BSP-> SN     Received set-point                                  Measurement MW AGC_recv_SP
+BSP-> SN
+BSP -> SN    Actual aFRR contribution                            Measurement MW AGC_actual_MW
+
+             Current aFRR reserves Up Measurement MW AGC_res_up
+
+             Current aFRR reserves Down Measurement MW AGC_res_down
+
+             Unit in limitation Up                               Indication               AGC_lim_up
+
+             Unit in limitation Down                             Indication               AGC_lim_down
+
+             Generator Participation Flag Indication(s)                                   Gen_FRR_ON
+
+Table 4 â€“ Other relevant signals, which are not distributed between the parties
+
+Signal Name                Comment                                           Signal Type
+Frequency
+                                                                             Measurand
+BSP_MW
+                           Sum of production of the                          Measurand
+Int_Dev                    participating BSP generators
+ACE
+FACE                       Interchange deviation                             Measurand
+IACE
+                           Area control error                                Measurand
+
+                           Filtered ACE                                      Measurand
+
+                           Integrated ACE                                    Measurand
+

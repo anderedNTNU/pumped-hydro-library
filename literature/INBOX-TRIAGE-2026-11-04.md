@@ -1,0 +1,201 @@
+# Inbox triage: 2026-11-04
+
+The user added ~686 files (193 PDFs) to `literature/inbox/`. 166 PDFs are not yet filed. This is how they were batched for processing. Each batch is read by one agent, which screens for relevance, files relevant sources (`papers/` or `grey-literature/`) with a full note, and lists the rest as not filed.
+
+- **Skipped as duplicates of already-filed papers:** pereira1991, birgeLouveaux2011, boydVandenberghe2004, fullnerRebennack2025 and abgottspon2013stochastic copies; extra Helseth 2016/2017 and Pérez-Díaz 2020 copies; the NVE/Nord Pool attachments marked "VEDLEGG_IKKE_SELVE_KILDEN"; everything in `Tidligere_versjoner/`.
+- **Sources with no PDF** (web-only `.html` or `.url`) are not processed in this round.
+
+## B01: SDDP theory & variants
+- dowson2020
+- philpott2008
+- philpott2012
+- shapiro2020
+- DeMatos2015
+- HelsethBraaten2015
+
+## B02: SDDP surveys & theses
+- 117_Li_2021_A_Review_of_Stochastic_Programming_Methods_for_Optimization_of_Process_Systems_Under_Uncer
+- roald2023
+- seranilla2025
+- Seranilla2023
+- ShapiroPhilpott2007
+
+## B03: Nordic SDDP/SDP hydro scheduling (SINTEF)
+- 100_Helseth_2024_Approximating_hydropower_systems_by_feasibility_spaces_in_stochastic_dual_dynamic_programm
+- 80_Helseth_2025_The_ReSDDP_Model_Principles_and_Algorithm
+- 82_Helseth_2023_Hydropower_Scheduling_Toolchains_Comparing_Experiences_in_Brazil_Norway_and_USA_and_Implic
+- gjelsvik1999
+- mo2001
+- Gjelsvik2010
+
+## B04: Hydro scheduling with reserves & markets
+- 01_Aasgard_2020_The_value_of_coordinated_hydropower_bidding_in_the_Nordic_day_ahead_and_balancing_market
+- 111_Grini_2023_A_stochastic_policy_algorithm_for_seasonal_hydropower_planning
+- 21_Helseth_2017_Assessing_hydropower_operational_profitability_considering_energy_and_reserve_markets
+- 22_Helseth_2016_Optimal_medium_term_hydropower_scheduling_considering_energy_and_reserve_capacity_markets
+- hjelmeland2019energies
+- Hjelmeland2018
+
+## B05: Head, discharge, physical modelling
+- 07_Belsnes_2016_Applying_successive_linear_programming_for_stochastic_short_term_hydropower_optimization
+- 11_Diniz_2008_Four_dimensional_model_of_hydro_generation_head_and_spillage_effects
+- 19_Gjelsvik_2005_Considering_head_variations_in_a_linear_model_for_optimal_hydro_scheduling
+- 20_Hammid_2020_Review_of_optimization_algorithms_in_solving_hydro_generation_scheduling_problems
+- 23_Helseth_2022_Hydropower_scheduling_with_state_dependent_discharge_constraints_An_SDDP_approach
+- 30_Kong_2020_Formulations_and_optimization_methods_for_unit_based_short_term_hydro_scheduling
+
+## B06: PHS scheduling & reserves I
+- 10_Chazarra_2016_Stochastic_optimization_weekly_scheduling_day_ahead_and_secondary_regulation_reserve_markets
+- 49_Perez-Diaz_2020_Medium_term_scheduling_hydropower_price_maker_automatic_frequency_restoration_reserve_market
+- chazarra2018
+- mercier2017
+- Deane2013
+- PerezDiaz2015
+
+## B07: PHS scheduling II & SDP
+- 04_Ahlfors_2021_Weekly_planning_of_hydropower_in_systems_with_large_volumes_and_varying_power_generation
+- 51_Scarcelli_2017_Ensemble_of_Markovian_stochastic_dynamic_programming_models_long_term_hydropower_scheduling
+- 52_Schaffer_2022_Stochastic_dynamic_programming_hydropower_state_dependent_maximum_discharge_constraints
+- 74_Warland_2016_Stochastic_optimization_detailed_long_term_hydrothermal_scheduling_scenario_tree_simulation
+- Baslis2011
+- Papavasiliou2018
+
+## B08: Seasonal / long-term storage
+- 113_Sepulveda_2021_The_design_space_for_long_duration_energy_storage_in_decarbonized_power_systems
+- Schuller2024
+- Abdelfattah2023
+- He2026
+- Hunt2020Arrangements
+- Hunt2020Global
+
+## B09: Multi-horizon & Abgottspon
+- Rex2024
+- Abgottspon2016
+- AbgottsponThesis2015
+- Braaten2016
+- Henden2016
+
+## B10: Bidding & trading (storage, multi-market)
+- 101_Lohndorf_2013_Optimizing_Trading_Decisions_for_Hydro_Storage_Systems_Using_Approximate_Dual_Dynamic_Prog
+- 102_Klboe_2022_Day_ahead_market_bidding_taking_the_balancing_power_market_into_account
+- 17_Faria_2011_Day_ahead_market_bidding_for_a_Nordic_hydropower_producer_Taking_the_Elbas_market_into_account
+- finnah2021
+- schindler2024
+- lohndorf2023
+
+## B11: Storage valuation & multi-market (other tech)
+- khaloie2022
+- 103_Seifert_2024_Coordinated_Trading_Strategies_for_Battery_Storage_in_Reserve_and_Spot_Markets
+- 104_Finnah_2022_Integrated_day_ahead_and_intraday_self_schedule_bidding_for_energy_storage_systems_using_a
+- 105_Drury_2011_The_value_of_compressed_air_energy_storage_in_energy_and_reserve_markets
+- 109_Yu_2017_Stochastic_valuation_of_energy_storage_in_wholesale_power_markets
+- 114_Chancelier_2026_Optimal_operation_and_valuation_of_electricity_storage_systems_in_intraday_markets
+
+## B12: Prices, uncertainty modelling & inflow
+- 112_Kleiven_2023_Co_movements_between_forward_prices_and_resource_availability_in_hydro_dominated_electrici
+- 08_Blume-Werry_2021_Eyes_on_the_price_Which_power_generation_technologies_set_the_market_price
+- 24_Idso_2024_Short_term_price_temperature_and_wind_speed_elasticity_of_electricity_Norway
+- 35_Mentens_2025_Flexibility_in_short_term_electricity_markets_for_renewable_penetration
+- 31_Larsen_2015_Evaluation_of_scenario_reduction_methods_for_stochastic_inflow_in_hydro_scheduling
+- kaut2024
+
+## B13: Classic SDP / reservoir operation
+- bore2026
+- Kelman1990
+- Stedinger1984
+- Trezos1987
+- Wu2018
+- Yeh1985
+
+## B14: Investment, upgrades, Norway
+- hjelmeland2019phd
+- 18_Gandhi_2022_Strategic_investment_risks_threatening_India_renewable_energy_ambition
+- 27_IRENA_2012_Hydropower_Renewable_energy_technologies_Cost_analysis_series
+- 44_NVE_2020_Potensialet_for_opprusting_og_utvidelse_av_norske_vannkraftverk
+- 73_TronderEnergi_2025_Nedre_Driva_Mer_kraft_og_effekt_for_fremtiden_VEDLEGG_IKKE_SELVE_KILDEN
+- Gudbjerg2024
+
+## B15: Reserve rules & TSO docs (grey)
+- sogl2017
+- 03_Agneholm_2019_FCR_D_design_of_requirements_Phase_2
+- 63_Statnett_2024a_Vilkar_for_aFRR_fra_01_01_2024
+- 64_Statnett_2024b_Vilkar_for_aktiveringsmarkedet_for_mFRR_fra_01_01_2024
+- 65_Statnett_2024c_Vilkar_for_kapasitetsmarkedet_for_mFRR_fra_11_02_2024
+- 72_Statnett_2025h_Vilkar_for_FCR_marked_fra_juni_2025
+- entsoe2019psh
+- esett2026
+- nordictsos2022
+- 68_Statnett_2025d_Raske_frekvensreserver_FFR_VEDLEGG_IKKE_SELVE_KILDEN
+- 69_Statnett_2025e_Sekundaerreserver_aFRR_VEDLEGG_IKKE_SELVE_KILDEN
+
+## B16: Market & energy-system reports (grey)
+- 120_Zotero_udatert_Product_Specifications_Nordic_Baltic_Market_Areas_september_2025
+- 14_Ember_2025a_Slidedeck_The_Electrotech_Revolution
+- 15_Ember_2025b_European_Electricity_Review_2025
+- 38_Moen_Johansen_1992_Norway_new_energy_act_Lessons_to_date
+- 46_NVE_2024b_Utviklingen_i_kraftmarkedet_mot_2050
+- 66_Statnett_2025b_Kortsiktig_markedsanalyse_2025_2030
+- 70_Statnett_2025f_Systemutviklingsplan_2025_Elektrifisering_for_en_ny_tid
+- ote2025mtu_PRESSEMELDING
+- 46_NVE_2024b_Utviklingen_i_kraftmarkedet_mot_2050_VEDLEGG_IKKE_SELVE_KILDEN
+- 45_NVE_2024a_Hydrologiske_data_til_kraftsituasjonsrapporten_VEDLEGG_IKKE_SELVE_KILDEN
+
+## B17: Web pages & news (grey, short)
+- 13_EDP_2025_What_is_hydropower_and_how_does_it_work_NETTSIDE
+- 76_WWF_udatert_Elver_og_vassdrag_NETTSIDE
+- 55_SINTEF_2025_EMPS_Multi_area_power_market_simulator_NETTSIDE
+- 56_SINTEFEnergi_2025_Kraftmarkeder_og_markedsmodeller_for_vannkraft_NETTSIDE
+- 67_Statnett_2025c_Primaerreserver_FCR_NETTSIDE
+- 68_Statnett_2025d_Raske_frekvensreserver_FFR_NETTSIDE
+- 69_Statnett_2025e_Sekundaerreserver_aFRR_NETTSIDE
+- 06_Andersen_2024_Stromprisen_nar_nye_hoyder_i_sorvest_Norge_NETTSIDE_UTDRAG
+- 12_DNV_2024_New_power_systems_report_Global_grid_infrastructure_to_double_by_2050_NETTSIDE
+- 36_MesselLarsen_2024_En_prosent_storre_produksjon_kunne_halvert_ekstremprisen_NETTSIDE_UTDRAG
+- 40_NordPool_2023a_Day_ahead_market_NETTSIDE
+- 41_NordPool_2023b_Intraday_market_NETTSIDE
+- 42_NordPool_2023c_Single_intraday_coupling_NETTSIDE
+- 50_RME_2025_Cross_border_interconnectors_Why_they_exist_NETTSIDE
+- 53_Shinde_2024_Assessment_of_flow_based_market_coupling_in_the_Nordics_NETTSIDE
+- 60_Statnett_2021_Trial_operation_underway_for_North_Sea_Link_NETTSIDE
+- 26_Investopedia_2025_Net_present_value_NPV_NETTSIDE
+- 37_MesselLarsen_2025_Eviny_vil_mer_enn_doble_effekten_pa_tre_kraftverk_NETTSIDE_UTDRAG
+- 59_Statkraft_udatert_Okt_effekt_blir_vel_sa_viktig_som_okt_produksjon_NETTSIDE
+- 73_TronderEnergi_2025_Nedre_Driva_Mer_kraft_og_effekt_for_fremtiden_NETTSIDE
+- 43_NVE_2015_HBV_modellen_NETTSIDE
+- 45_NVE_2024a_Hydrologiske_data_til_kraftsituasjonsrapporten_NETTSIDE
+
+## B18: Methods & classics (mostly background/low)
+- 28_Jacobson_2023_Computationally_efficient_Benders_decomposition_for_energy_systems_planning
+- 39_Murphy_2013_Benders_nested_Benders_and_stochastic_programming_An_intuitive_introduction
+- 54_Sifuentes_2007_Hydrothermal_scheduling_using_Benders_decomposition_Accelerating_techniques
+- 75_Wohlin_2014_Guidelines_for_snowballing_in_systematic_literature_studies
+- arroyo2020
+- elgersma2026
+- Karmarkar1984
+- LandDoig1960
+- Bellman1952
+- Bellman1954
+- Bertsekas2024
+- Rust2008
+- SuttonBarto2018
+- CharnesCooper1959
+- Dantzig1955
+- HigleSen1991
+- RockafellarWets1991
+
+## B19: Other technologies & misc (likely low)
+- 33_Liu_2016_Review_on_fatigue_damage_mechanism_in_hydro_turbines
+- 76_WWF_udatert_Elver_og_vassdrag_VEDLEGG_IKKE_SELVE_KILDEN
+- 05_Ahmadi_2015_Evaluating_normal_boundary_intersection_for_environmental_economic_hydrothermal_self_scheduling
+- 16_Farahmand_2020_Stochastic_and_robust_optimization_approaches_for_reserve_procurement_bibliographic_mismatch
+- 79_Grafton_2023_The_price_and_value_of_water_An_economic_review
+- Liu2025
+- decaix2021
+- 106_Xiao_2020_Optimal_operation_of_a_wind_electrolytic_hydrogen_storage_system_in_the_electricity_hydrog
+- 107_Pavic_2022_PVbattery_hydrogen_plant_Cutting_green_hydrogen_costs_through_multi_market_positioning
+- 108_Nitsch_2021_Economic_evaluation_of_battery_storage_systems_bidding_on_day_ahead_and_automatic_frequenc
+- 98_Hummelen_2025_Exploring_European_hydrogen_demand_variations_under_tactical_uncertainty_with_seasonal_hyd
+- 32_Lin_2019_Role_of_diminishing_marginal_utility_in_ordinal_and_cardinal_utility_theories
+
+## Status
+Both waves done (2026-11-04): 125 sources filed with notes; see `knowledge/inbox-review-2026-11-04.md` for what it means for the thesis.

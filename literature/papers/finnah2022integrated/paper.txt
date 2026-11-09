@@ -1,0 +1,1756 @@
+                                                                              European Journal of Operational Research 301 (2022) 726­746
+
+                                                                       Contents lists available at ScienceDirect
+
+                           European Journal of Operational Research
+
+                                                                journal homepage: www.elsevier.com/locate/ejor
+
+Innovative Applications of O.R.
+
+Integrated day-ahead and intraday self-schedule bidding for energy
+storage systems using approximate dynamic programming
+
+Benedikt Finnah a, Jochen Gönsch a,, Florian Ziel b
+
+a Mercator School of Management, University of Duisburg-Essen, Lotharstrae 65, Duisburg 47057, Germany
+b Faculty of Business Administration and Economics, University of Duisburg-Essen, Berliner Platz 6-8, 45127 Essen, Germany
+
+article info                       abstract
+
+Article history:                   Most modern energy markets trade electricity in advance for technical reasons. Thus, market participants
+Received 1 July 2021               must commit to delivering or consuming a certain amount of energy before the actual delivery. In Ger-
+Accepted 6 November 2021           many, two markets with daily auctions coexist. In the day-ahead auction market, the energy is traded
+Available online 11 November 2021  in 60-minute time slots, which are further partitioned into 15-minute time slots for the intraday auc-
+                                   tion market. Because of the slow ramp-ups of nuclear and fossil power plants, these price-makers trade
+Keywords:                          mostly in the day-ahead market. Only the residual energy is traded in the intraday market, where the
+OR in energy                       market prices fluctuate substantially more. These fluctuations as well as the expected price difference
+Trading for energy storage         between these markets can be exploited by fast ramping energy storage systems. We address the deci-
+Multiple sequential markets        sion problem of an owner of an energy storage who trades on both markets, taking ramping times into
+Electricity price forecast         account. Because the state variable of our dynamic programming formulation includes all features of our
+Backwards approximate dynamic      high-dimensional electricity price forecast, this problem cannot be solved to optimality. Instead, we use
+programming                        approximate dynamic programming. In a numerical study based on real-world data, we benchmark the
+                                   algorithm against an adapted state-of-the-art approach from literature and an expectation model with a
+                                   receding horizon. Furthermore, we investigate the influence of the price forecast on expected profit and
+                                   demonstrate that it is essential for the dynamic program to capture the high dimensionality of the price
+                                   forecast to compete with the expectation model, which does not suffer from the curses of dimensionality.
+
+                                                                                                                     © 2021 The Authors. Published by Elsevier B.V.
+                                          This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/)
+
+1. Introduction                                                                     ergy before the actual delivery. In addition, in most countries mul-
+                                                                                    tiple energy markets coexist. The market rules including the pric-
+    The energy sector is a large producer of CO2 and therefore con-                 ing and the temporal sequence differ between countries.
+tributes significantly to climate change. Therefore, many countries
+try to reduce the CO2 emissions by encouraging power producers                          In this paper, we focus on profit maximizing self-schedule bid-
+to increase the share of renewable energies. This is encouraged by                  ding of a fast ramping energy storage in the German day-ahead
+subsidies for produced green energy or by CO2 prices which have                     and intraday auction markets. We formulate the decision problem
+to be paid by conventional CO2 producing power plants. As the                       as a dynamic program and solve it heuristically using backwards
+penetration of renewable energy resources increases, an increas-                    approximate dynamic programming. Our approach is largely inde-
+ing share of the energy production is not controllable. However,                    pendent of the storage technology, but we focus on a pumped hy-
+the energy production has to always match the fluctuating en-                       dro storage (PHS). In Section 1.1 we introduce the focused deci-
+ergy demand. In liberalized energy markets, electricity prices re-                  sion problem. The assumptions needed are stated in Section 1.2.
+flect the balance of production and demand. Accordingly, energy                     Section 1.3 describes our contribution to the literature and outlines
+storage systems which buy energy at low prices and sell it later                    the remainder of the paper.
+at higher prices help to match production and demand, and thus
+improve grid stability. In most energy markets, market participants                 1.1. Problem statement
+must commit to delivering or consuming a certain amount of en-
+                                                                                        We focus on profit maximizing self-schedule bidding for a PHS
+   Corresponding author.                                                            in the German day-ahead and intraday auction market. In the fol-
+     E-mail addresses: benedikt.finnah@uni-due.de (B. Finnah), jochen.goensch@uni-  lowing, we describe the considered key characteristics of the PHS
+                                                                                    and the two markets.
+due.de (J. Gönsch), florian.ziel@uni-due.de (F. Ziel).
+
+https://doi.org/10.1016/j.ejor.2021.11.010
+0377-2217/© 2021 The Authors. Published by Elsevier B.V. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/)
+B. Finnah, J. Gönsch and F. Ziel                                            European Journal of Operational Research 301 (2022) 726­746
+
+    The main components of a PHS are the lower and upper wa-                Assumption 1. The PHS only trades in the day-ahead and intraday
+ter reservoir, the pump, and the turbine. While storing energy, the         auction market.
+pump uses electricity to pump water from the lower reservoir to
+the upper reservoir. This converts the electric energy into potential           Even if it is desirable to consider all possible trading oppotuni-
+energy. While discharging the PHS, the water flows from the up-             ties (see Viehmann, 2017 for an overview), we restrict the trading
+per reservoir through the turbine into the lower one. Meanwhile,            to the two auction markets. Assumption 1 reduces the complexity
+the turbine converts the potential energy into electric energy. In          and computational burden of the decision problem. The restriction
+this paper, we consider the following properties of the PHS: capac-         of the considered markets even down do a single market setting
+ity, working power range, efficiency, start-up cost, and ramping-           is common in the literature (e.g. Durante, Nascimento, & Powell,
+time. The capacity is the maximum amount of energy which can                2020; Finnah & Gönsch, 2021; Ghavidel et al., 2020; Gönsch & Has-
+be stored in the PHS. Due to technical restrictions, the pump and           sler, 2016; Salas & Powell, 2018; Scott, 2019; Zhou, Scheller-Wolf,
+the turbine cannot operate at arbitrary low power. They are either          Secomandi, & Smith, 2016). In Section 7 we discuss the limitations
+switched off completely or operate in the working power range de-           of our research regarding further trading opportunities (derivative
+fined by the maximum and minimum power of the turbine and                   markets, balancing markets, continuous intraday markets, over-the-
+the pump. While the pump or the turbine converts the electric en-           counter markets) and how our research can be beneficial for mar-
+ergy into potential energy or vice versa, some energy is lost for           ket participants which trade in more markets.
+the PHS. The share of energy which is not lost is the efficiency of
+the pump/turbine. When the pump or the turbine starts to work,              Assumption 2. The PHS uses price-accepting bids/self-schedule
+they suffer from increased abrasion. The corresponding increase             bidding.
+of the maintenance costs is captured by the start-up cost. The
+ramping-time describes how long the pump and the turbine need                   Assumption 2 further reduces the complexity of the de-
+to change from one power level to a new, increased/decreased                cision problem. Self-schedule bidding is common for energy
+power level. During ramping, the storage owner cannot meet the              storage systems (e.g. Heredia, Cuadrado, & Corchero, 2018;
+commitments on the energy markets exactly. The difference is bal-           Khatami, Oikonomou, & Parvania, 2020; Löhndorf & Minner, 2010;
+anced by the transmission system operator (TSO) and the stor-               Vahedipour-Dahraie, Rashidizadeh-Kermani, Anvari-Moghaddam, &
+age owner is paid/billed by the TSO for the under/overproduction.           Siano, 2020; Xu et al., 2020), as energy storage systems are prof-
+Based on the TSO contracts, intentional under/overproduction is             itable if the difference between the buying price and the selling
+forbidden.                                                                  price is large enough. The price difference cannot be reflected by
+                                                                            price-volume bids. In Appendix A, we numerically investigate the
+    In Germany, two auction markets with daily auction coexist; the         benefits of price-volume bids in a simplified setting. In particular,
+day-ahead and the intraday auction market. The key characteris-             we show that price-volume bids are not needed for energy storage
+tic of the German markets is that the intraday auction market dif-          systems with realistic correlation of the noise of the price process.
+fers in terms of the time length (15 minute) of the traded products         Price-volume bids can only outperform self-schedule bids with ar-
+from the day-ahead market (60 minute). In the day-ahead mar-                tificially reduced correlation. This may be different for hydropower
+ket, market participants can submit multiple price-volume com-              plants with huge reservoirs (discharge time of days to weeks) and
+binations, called bids, for each traded product, until noon. The            a natural water inflow. For these power plants to be profitable,
+traded products are commitments to generate or consume a cer-               it is essential to consume the resource at high price hours (e.g.
+tain amount of energy for each hour of the following day. Forty             Boomsma, Juul, & Fleten, 2014; Fleten & Kristoffersen, 2008).
+minutes later, the market clearing prices (MCP) are published and
+the market participants must fulfill their accepted bids to the MCP.        Assumption 3. The PHS ramps linearly with identical rates for
+A buying bid is accepted if the price component of the bid is above         ramping up and down.
+the MCP. A selling bid is accepted if the price component is be-
+low the MCP. To remove the uncertainty regarding acceptance of                  Identical ramping rates reduce the notation needed but do not
+bids, market participants can use price-accepting bids (also called         influence the computational burden of the decision problem. How-
+self-schedule bidding). The latter term is derived from the fact            ever, linearity reduces complexity, as this allow us to model the
+that the production/consumption schedule of the market partic-              daily decision problem as a mixed integer linear program (MILP).
+ipant only depends on the self-chosen volumes and not on the
+market's outcome. The market participant's actual profit/cost, of           Assumption 4. Balancing prices are linear in intraday market
+course, still depends on the realized market prices. The German             prices.
+intraday auction market works similar to the day-ahead market,
+but with quarter-hourly products. After the intraday auction mar-               During ramping, the storage owner cannot meet the commit-
+ket closure at 15:00, the market results are published. The main            ments on the day-ahead and intraday market exactly. The dif-
+purpose of this market is to capture load ramps with its finer tem-         ference is balanced by the transmission system operator (TSO)
+poral resolution (15 minutes instead of 1 hour at the day-ahead             and the storage owner is paid/billed by the TSO for the un-
+markets). Primarily because of these ramps, the prices in the intra-        der/overproduction. Based on the TSO contracts, intentional un-
+day auction market fluctuate around the day-ahead prices. This is           der/overproduction is forbidden. To reflect this, the PHS must in-
+visualized in Fig. 1 for an exemplary week. The fluctuation can be          tegrate the balancing prices into the decision problem. Assumption
+exploited by fast ramping energy storage systems. For a detailed            4 is in line with the literature (e.g. Finnah & Gönsch, 2021; Gönsch
+overview of the German energy markets see Viehmann (2017).                  & Hassler, 2016; Kim & Powell, 2011; Kuznetsova, Ruiz, Li, & Zio,
+While market participants consume energy they have to pay the               2015; Löhndorf & Minner, 2010; Moghaddam, Nick, Fallahi, Sanei,
+obligatory grid fees.                                                       & Mortazavi, 2013; Vahedipour-Dahraie et al., 2020). The model-
+                                                                            ing approach with balancing prices allows to make the deviation
+1.2. Assumptions                                                            from the commitment financially unattractive. A special case is to
+                                                                            set the balancing prices equal to the intraday market prices. This
+    In this section, we state the assumptions underlying this work          reduces the needed notation but does hardly decrease the compu-
+in detail.                                                                  tational burden. Additionally, this contradicts the TSO contracts, as
+                                                                            deviations may now be financially attractive and, thus, occur in-
+                                                                            tentionally when following an optimal policy.
+
+                                                                       727
+B. Finnah, J. Gönsch and F. Ziel                                             European Journal of Operational Research 301 (2022) 726­746
+
+                                  Fig. 1. Market prices of an exemplary week (04 July 2018 to 10 July 2018).
+
+Assumption 5. The PHS pays grid fees for the stored energy quan-             1.3. Contribution and outline
+tity.
+                                                                                 We make the following contributions to the existing literature:
+    While the PHS stores energy the energy storage acts like a               (1) We model the energy storage problem with high-dimensional,
+consumer and has to pay the obligatory grid fees. In Germany,                competitive, Markovian price processes for sequential auction mar-
+there are several types of grid fees, based on the consumed energy           kets as a dynamic program and solve it using a backwards approx-
+(MWh) and the yearly peak demand (MW). For an overview of the                imate dynamic programming algorithm. (2) We compare this al-
+different grid fees see Sterner & Stadler (2017, Ch. 15.4). Based on         gorithm with the state-of-the-art approximate dual dynamic pro-
+Assumption 5, we do not take the grid fees based on the peak de-             gramming approach (Löhndorf & Shapiro, 2019; Löhndorf, Wozabal,
+mand into account. Since it is reasonable to assume that the PHS             & Minner, 2013; Wozabal & Rameseder, 2020) and an expectation
+uses the pump's maximum power at least once a year, the peak                 model with a receding horizon. We demonstrate that dynamic pro-
+demand is out of focus.                                                      grams have to handle a high dimensional state variable to capture
+                                                                             the features of the underlying price processes to compete with a
+Assumption 6. The PHS owner's price forecasts depend only on                 simple benchmark which does not suffer from the curses of dimen-
+the last week's market prices.                                               sionality. (3) In our numerical study, we focus on a pumped hydro
+                                                                             storage in both German auction markets. We show that the inte-
+    Assumption 6 restricts the storage owner's price forecasts, but          grated trading in both markets outperforms the sequential trading.
+this kind of price processes is well researched and accepted in the          For this we evaluate the trading strategies with real world data.
+price forecasting literature (e.g., Marcjasz, Uniejewski, & Weron,
+2019; Narajewski & Ziel, 2020b; Ziel, 2016). Furthermore, price pro-             The remainder of the paper is organized as follows. Section 2 is
+cesses which follow Assumption 6 are considerably more sophisti-             the literature review. Section 3 models the storage owner's de-
+cated than price processes usually handled by dynamic programs               cision problem as a dynamic program. In Section 4, we state a
+in the energy storage literature. Their inclusion is challenging as          simplified version of the base model and explain how we apply
+dynamic programs have to extend the state variable by all infor-             the solutions of this simplified model. In other words, how we
+mation which is necessary for the considered price processes. Be-            derive a policy for the base model from the simplified model's
+cause of the curses of dimensionality, dynamic programs with large           solution. Section 5 describes the approximate dynamic program-
+state spaces cannot be solved using standard discrete lookup tables          ming algorithm to solve the aforementioned simplified problem.
+in an appropriate time and can rarely be solved analytically. There-         Section 6 presents the numerical study. Section 7 discusses limita-
+fore, dynamic programs have to use simplified price processes (one           tions with a focus on the markets considered before Section 8 con-
+may argue that price processes are always approximations and,                cludes the paper. The appendix contains further numerical investi-
+thus, no exact model/solution with regard to reality exists) and/or          gations and summarizes the notation.
+have to be solved approximately by approximate dynamic pro-
+gramming (ADP) algorithms. Both can lead to a poor solution qual-            2. Literature review
+ity, so it is crucial to find a reasonable trade-off between com-
+plexity of the price process and solution quality together with a                The existing literature on the management of energy storage
+suitable solution approach. Especially algorithms that approximate           systems is already discussed in multiple literature reviews (e.g.,
+the value function can struggle with high dimensional forecasts              Fathima & Palanisamy, 2015; Rahman et al., 2015; Weitzel & Glock,
+(Powell, 2019). To keep the dynamic program simple, nearly all au-           2018). Therefore, we focus the following review on the key top-
+thors use price processes which only depend on a single electricity          ics that distinguish our paper from the existing literature: model-
+price (e.g., current, previous, or average of past prices) and state-        ing/solution approaches, price processes used in optimization, and
+independent features such as the day of the week (e.g., Gönsch &             integrated trading in multiple markets.
+Hassler, 2016; Salas & Powell, 2018; Scott, 2019; Zéphyr & Ander-
+son, 2017; Zhou et al., 2016). To capture the characteristics of the             The most commonly used modeling approaches for the energy
+electricity price like price spikes, some authors add jump-diffusion         storage management which capture the stochastics and dynamics
+or regime-switching models (e.g. Durante et al., 2020; Jiang, Pham,          of the problem are multi-stage stochastic programming (MSSP) and
+Powell, Salas, & Scott, 2014; Salas & Powell, 2018; Scott, 2019; Zhou        dynamic programming. To solve MSSPs, the model is usually re-
+et al., 2016). For a detailed overview of energy price forecasting see       placed with the sample average approximation (SAA). Because the
+Weron (2014).                                                                computational burden of MSSP increases exponentially in the opti-
+                                                                             mization horizon, it is only suitable for short-term management (a
+                                                                             few days). For longer horizons, the problem can be solved with a
+
+                                                                        728
+B. Finnah, J. Gönsch and F. Ziel                                             European Journal of Operational Research 301 (2022) 726­746
+
+receding horizon. A main advantage is MSSPs' independence of the             manner. Vahedipour-Dahraie et al. (2020) consider a virtual power
+underlying price processes. By contrast, dynamic programs have to            plant with stochastic demand and supply in a day-ahead and a
+extend the state variable by all information which is necessary for          reserve market. Again, the problem is formulated as a stochastic
+the considered price processes. Therefore, competitive price pro-            program. The market prices follow a normal distribution. Wozabal
+cesses are rarely used in dynamic programs.                                  and Rameseder (2020) model integrated trading in the Spanish
+                                                                             auction markets as a dynamic program. As no energy storage is
+    Löhndorf et al. (2013) formulate the decision problem of an              modeled, each day is optimized independently. For the market
+owner of a hydro storage with stochastic inflow on the German                prices, the authors use an autoregressive model which depends on
+day-ahead and continuous intraday market as a dynamic program                the last 24 market prices. The problem is solved with ADDP. For
+and use approximate dual dynamic programming (ADDP) to solve                 this, the stochastic processes are discretized by clustering. Finnah
+it. The energy price process is based on a few fundamentals like             (2021) extends the model proposed in Wozabal and Rameseder
+mean temperature, wind and solar power generation, and the gas               (2020) and uses a more complex price process. Again, no energy
+price. The ADDP algorithm contains a forward pass and a backward             storage is modeled and each day is optimized independently. Since
+pass to approximate the value function of the post-decision state            the modeled dynamic program has a simple structure, the optimal
+with hyperplanes. During the forward pass, the ADDP algorithm                policy is derived analytically via backward recursion.
+explores new states. During the backward pass, the algorithm
+revisits the states from the forward pass. For each state, it iterates           To the best of our knowledge, no paper addresses the stochastic
+over all states in the state space that share the same endogenous            storage problem in both German auction markets. The key charac-
+parts, i.e. that only differ in the exogenous information part to            teristic is that the German intraday auction market differs in terms
+derive new hyperplanes. Therefore, this approach is only suitable            of the time length of the traded products from the German day-
+for discrete or discretized exogenous information. Boomsma et al.            ahead market. Since the German intraday market is the only one
+(2014) focus a profit maximizing power producer in the Nordic                with 15-minute products, models for other markets have to be re-
+day-ahead market and a balancing market. The problem is for-                 worked to be applicable. While this does not have be challenging
+mulated as a MSSP and takes price/volume bids into account.                  (depending on the model), this may structurally change the nu-
+Based on the assumption that the scenarios in the SAA are the                merical results. In addition, we are the first to extend the state
+true distribution of the market prices, the solution is exact. In            variable of a dynamic program by all Markovian features of a high-
+addition, the authors derive an upper bound for the gains from               dimensional price forecast (several hundred dimensions/ explana-
+coordinated bidding in both markets. The price processes are                 tory variables). We handle the full complexity of the state variable
+modeled as a SARIMA process, but the noise is assumed to be                  while solving the problem.
+independent and identically distributed. In fact, the forecast error
+of day-ahead market prices can be strongly correlated. Ding, Hu,             3. Dynamic program
+and Song (2015) use stochastic programming to (re-)optimize the
+management of a wind turbine combined with an energy storage                     In this section, we model the storage owner's decision problem
+on the Spanish day-ahead, intraday, and real-time market. Here,              for T days as a dynamic program. More precisely, the exogenous
+they employ four different timescales down to one minute to                  information, the state variables, and the action variables are de-
+capture the dynamics of the real-time market. Instead of simul-              fined in Section 3.1 to Section 3.3. The contribution function is de-
+taneously optimizing all considered markets, they use separate               scribed in Section 3.4, while the transition function is defined in
+stochastic programs in a receding horizon manner. Moreover,                  Section 3.5. These are used in Section 3.6 for the value function.
+the authors assume that the next market's price is deterministic.            The notation used is summarized in Table D.5 in Appendix D.
+This dramatically decreases complexity. Crespo-Vazquez, Carrillo,
+Diaz-Dorado, Martinez-Lorenzo, and Noor-E-Alam (2018) focus on                   The PHS owner trades in the two German auction markets: the
+self-schedule bidding of a wind power producer with an energy                day-ahead and the intraday market. In the German day-ahead auc-
+storage on two Spanish auction markets and an implicitly modeled             tion market, each day t until noon, the PHS owner submits a self-
+balancing market with hourly products. The decision problem is               schedule bid (volume) xtD,Ah for each hour h of the following day
+formulated as a stochastic program with an optimization horizon              (t + 1). Forty minutes later, the market clearing prices (MCPs) PtD+A1,h
+of 24 hours. Again, the price component of the bids is not mod-              for each hour are published, and the volumes come into effect at
+eled. To generate market price scenarios, Crespo-Vazquez et al.              the MCPs. Subsequently, until 15:00, the PHS owner makes an of-
+(2018) cluster historic data. Heredia et al. (2018) use MSSP to              fer xtID,h,q for each quarter hour q of each hour h of the following
+optimize the management of a wind turbine combined with an                   day (t + 1) in the intraday auction market. Again, the MCPs PtI+D1,h,q
+energy storage. The considered power producer maximizes the                  are published after market closure. This sequence of events is il-
+daily profits on two Spanish auction markets and a reserve power             lustrated in Fig. 2.
+market. Therefore, the Spanish energy markets are not modeled in
+full complexity. Again, the used scenarios are based on clustered                In the following, we formulate the problem as a dynamic pro-
+historic data. Only Brijs, Geth, Jonghe, and Belmans (2019) consid-
+ers both German auction markets in the energy storage problem.               gram. Since each day t  {0, . . . , T - 1} consists of two decision
+In addition, the authors include the balancing market. But they
+completely ignore the stochastics and assume perfect foresight.              stages (day-ahead market and intraday market) we model the
+This dramatically simplifies the problem and overestimates the               problem with alternating stages. The day-ahead market stages are
+value of coordinated trading. Electricity prices are known to have           labeled with the superscript DA and the intraday market stages
+hardly predictable price spikes, which can be exploited with                 with ID.
+perfect foresight. However, they demonstrate that under perfect
+foresight coordinated trading in multiple markets outperforms                3.1. Exogenous information
+sequential trading, giving an upper bound on profits without
+perfect foresight. Khatami et al. (2020) optimize a compressed                   For the 24-dimensional vector of day-ahead market prices
+air energy storage in a day-ahead and real-time market and take              PtD+A1 = PtD+A1,0, · · · , PtD+A1,23 , we use the autoregressive price forecast
+start-up cost as well as ramps into account: The decision problem            proposed by Ziel (2016), and similarly used by e.g. Uniejewski &
+is modeled as an MILP and re-optimized in a receding horizon                 Weron (2018), Marcjasz (2020), Jedrzejewski, Marcjasz, & Weron
+                                                                             (2021), Narajewski & Ziel (2021). It linearly depends on the pre-
+                                                                             vious 168 prices (7 days) and the day of the week, in line with
+
+                                                                        729
+B. Finnah, J. Gönsch and F. Ziel                                                                                                                                           European Journal of Operational Research 301 (2022) 726­746
+
+                                                                                                                                              Obviously, the storage owner's decisions depend on the current
+
+                                                                                                                                          storage level. Rtstart is the storage level at the start of day t. xtstart
+                                                                                                                                          is the current power in- or outflow. This is needed for the consid-
+
+                                                                                                                                          ered start-up cost and ramping. Altogether, the state StDA has 842
+                                                                                                                                          continuous variables.
+
+                                                                                                                                              The state StID is the state of the system right before the intraday
+                                                                                                                                          market decision xtID is made and after the day-ahead market prices
+                                                                                                                                          PtD+A1 become known.
+
+                                                                                                                                          StID = StDA, xtDA, PtD+A1                                                                                        (7)
+
+                                            Fig. 2. Sequence of events.                                                                       The state StID extends the state StDA by the commitments for
+                                                                                                                                          the day-ahead market xtDA (which are not physically fulfilled) and
+                                                                                                                                          the known day-ahead market prices PtD+A1 which are needed for the
+                                                                                                                                          forecast of the intraday market prices PtI+D1.
+
+                                                                                                                                          3.3. Action variable
+
+Assumption 6.
+
+                            7                                           7 23                                                                  The day-ahead market decision xtDA is the 24 commitments for
+                                                                                                                                          this market's products.
+ PtD+A1,h = DA     +                   DA   DoWt        j   +                      DA       PtD+A1-    j,k
+            0 ,h                       j,h              +1                           j,k,h
+
+                         j=1                                         j=1 k=0                                                              xtDA = xtD,A0, . . . , xtD,A23                                                                                   (8)
+
+         +      DA             h       {0,     .  .  .  ,  23 }                                                                 (1)
+
+               t +1,h
+
+DA    =    DA      ,     .  .  .  ,  DA               N 0,                    DA                                                (2)       s.t.
+t +1       t +1,0                    t +1,23
+                                                                                                                                          xtD,Ah  -xtmuarbxine, xmpuamxp h  {0, . . . , 23}
+with day of the week dummies                                                                                                                                                                                                                               (9)
+
+DoWt1+1 =      1      ,     t + 1 is Monday                    ,  ·  ·  ·  ,  DoWt7+1   =           1  , t + 1 is Sunday                      A positive xtD,Ah corresponds to buying energy and a negative one
+               0      ,     otherwise                                                               0  , otherwise                        to selling energy. To reduce speculation on the price split between
+
+                                                                                                                                (3)       day-ahead and intraday market, we introduce the no-short-selling
+
+and correlation matrix DA. The regression parameters are denoted                                                                          constraint (9). According to this constraint, the commitments must
+                                                                                                                                          be in the working range of the energy storage. xmpuamx p is the maxi-
+(D·A) . Thus, the exogenous information which becomes known right                                                                         mum power of the pump and xtmuarbxine the maximum power of the
+                                                                                                                                          turbine.
+after the day-ahead market decision stage is WtD+A1 = PtD+A1.
+    We assume that the 96-dimensional intraday price vector                                                                                   Likewise, the intraday market decision xtID is the 96 commit-
+                                                                                                                                          ments for this market's products.
+PtI+D1 = PtI+D1,0,0, . . . , PtI+D1,23,3 depends linearly on the day of the
+week, the intraday, and day-ahead prices of the last week, includ-                                                                        xtID = xtID,0,0, . . . , xtID,23,3                                                                               (10)
+                                                                                                                                          s.t.
+ing the known day-ahead prices of the same day PtD+A1.
+
+                               7                                           7 23
+
+ PtI+D1,h,q =ID       +               ID       DoWt        j   +                    Ij,Dk,h,qPtD+A1- j,k                                  xtD,Ah + xtID,h,q = xtp,uhm,qp - xtt,uhr,bqine                                                                   (11)
+             0 ,h,q                     j,h,q              +1
+
+                               j=1                                      j=0 k=0
+
+    7 23 3
+
++                  ID                  PtI-D  j,k,m  +       ID               h    {0,  .  .  .  ,  23},  q    {0,  .  .  .  ,  3}        xcmoimnpytc,ohm,qp  xtc,ohm,qp  xcmoamxpytc,ohm,qp comp  {pump, turbine} (12)
+                     j,k,m,h,q
+                                                            t +1,h,q
+
+   j=1 k=0 m=0
+
+                                                                                                                                (4)
+
+ID  =    ID     ,  .  .  .  ,     ID            N 0,                    ID                                                      (5)       ytp,uhm,qp + yttu,hr,bqine  1                                                                                    (13)
+t        t,0,0                    t ,23,3
+
+with correlation matrix ID and regression parameters (ID·). Thus,                                                                         xtc,ohm,qp,up -            xtc,ohm,qp,down = xtc,ohm,qp - xtc,ohm,qp-1  comp  {pump, turbine}
+                                                                                                                                                                                                                                                (14)
+the exogenous information which becomes known right after the
+
+intraday market decision stage is WtI+D1 = PtI+D1.
+
+3.2. State variable                                                                                                                        Rt,h,q = Rt,h,q-1 + pump                  tIDxtp,uhm,qp -     t ram p  xtp,uhm,qp,up +     t ram p  xtp,uhm,qp,down
+                                                                                                                                                                                                          2                            2
+
+    The state variables include everything the storage owner's de-                                                                                            1         t  ID  x tt  urbine  -  t ram p  x tt  urbine,u  p  +  t ram p  xtt ,uhr,bqine,down
+                                                                                                                                                                                     ,h,q        2             ,h,q             2
+cision depends on and all necessary information to evaluate the                                                                                         - turbine                                                                                   (15)
+
+transition and contribution functions. In particular, it must include                                                                     Rt,h,q  [0, Rmax]                                                                                                (16)
+
+all prices of the last week as they are necessary for the price fore-                                                                     ytp,uhm,qp, ytt,uhr,bqine  {0, 1}                                                                                (17)
+casts. Since the day of the week DoW((··)) can be derived based on
+the period/index t, it does not have to be part of the state even if
+
+it is needed for the price forecasts.
+    The state StDA is the system right before the day-ahead market
+
+decision xtDA is made.
+
+StDA = Rtstart , xtstart , Pthistory                                                                                            (6)       xtp,uhm,qp,  x tt  urbine  ,  xtp,uhm,qp,u p ,     xtp,uhm,qp,down ,    x tt  urbine,u  p,    x tt  urbine,down       0
+                                                                                                                                                             ,h,q                                                       ,h,q                  ,h,q
+
+with Pthistory = PtD-A6, . . . , PtDA, PtI-D6, . . . , PtID  R840.                                                                                                                                                                                         (18)
+
+                                                                                                                                     730
+B. Finnah, J. Gönsch and F. Ziel                                                                                                                            European Journal of Operational Research 301 (2022) 726­746
+
+All constraints are defined for all q  {0, 1, 2, 3} and h                                                                     ramps up or the turbine ramps down, the storage owner consumes
+                                                                                                                              less resp. produces more energy than committed. In this case, the
+{0, . . . , 23}. Additionally, (·)t,h,4 is defined as (·)t,h+1,0 and Rt,0,-1 =                                                storage owner is paid the balancing price for overproduction
+Rtstart and xtp,u0m,-p1 = max xtstart , 0 and xtt,u0r,b-in1e = max -xtstart , 0 .
+Compared to the day-ahead market, additional constraints and
+                                                                                                                              Qto+ve1r,h,q = Qionvteerrcept + QsolvoeprePtI+D1,h,q                                                (21)
+auxiliary variables like          x tt               urbine,u  p  are  needed          because           costs  like
+                                                     ,h,q
+                                                                                                                              with intercept Qionvteerrcept and slope Qsolvoepre. While the pump ramps
+grid fees, TSO balancing or start-up that depend on net commit-                                                               down or the turbine ramp up, the storage owner consumes more
+
+ments in both markets are considered in the profit related to the
+
+intraday market (see Section 3.4).                                                                                            resp. produces less energy than committed. In this case, the stor-
+
+Constraint (11) splits the summed trading volume on both mar-                                                                 age owner is billed the balancing price for underproduction
+
+kets into a positive (store energy, xtp,uhm,qp) and a negative part                                                           Qtu+n1d,ehr,q = Qiunntedrecrept + Qsulnodpeer PtI+D1,h,q                                            (22)
+
+(generate  electricity,     x tt  urbine             ).  If  a    component            (pump          or  turbine)            with intercept Qiunntedrecrept and slope Quonvedrer.
+                                  ,h,q                                                                                            The last row in (20) is the start-up cost of the pump (cpump)
+is working (ytc,ohm,qp = 1), constraint (12) limits the power to its
+
+feasible range; otherwise, it forces the power to zero. Accord-                                                               and the turbine (cturbine). They capture the increased maintenance
+
+ing to the working mode constraint (13), the pump and the tur-                                                                cost  (e.g.  abrasion).       The  variables          ztp,uhm,qp  and  z tt  urbine  are  binaries  that
+                                                                                                                                                                                                           ,h,q
+bine cannot work at the same time. Constraint (14) captures how
+much the components have to ramp up ( xtc,ohm,qp,up) or ramp down                                                             capture if the pump or the turbine has to start-up. They are inte-
+
+( xtc,ohm,qp,down) to reach the new power level xtc,ohm,qp. The storage                                                       grated by the following constraints.
+
+level equation is constraint (15). The new storage level is equal to                                                          ytc,ohm,qp - ytc,ohm,qp-1  ztc,ohm,qp comp  {pump, turbine}                                         (23)
+
+the previous plus the incoming minus the outgoing energy taking
+
+the ramps and pump and turbine efficiency (pump, turbine) into                                                                ztp,uhm,qp, ztt,uhr,bqine  0                                                                        (24)
+
+account. According to Assumption 3, the energy storage ramps-
+
+up/down linearly with constant ramping time. We denote the                                                                       These constraints are defined for all q  {0, 1, 2, 3} and h 
+                                                                                                                              {0, . . . , 23}. Additionally, (·)t,h,4 is defined as (·)t,h+1,0 and ytp,u0m,-p1 =
+ramping time as tramp. While ramping to reach the new power
+        t ram p  xt(,·h),q less/more energy is consumed/produced.                                                             1xtstart >0 and ytt,u0r,b-in1e = 1xtstart <0.
+level,   2                                                                                                      t ID              Constraint (23) forces the non-negative start-up variable ztc,ohm,qp
+
+is the temporal resolution of the intraday auction market. Con-                                                               to be at least 1 if the pump/turbine starts up. Because ztc,ohm,qp exerts
+                                                                                                                              a negative influence on the intraday stage contribution function
+straint (16) keeps the storage level non-negative and within the                                                              (20) and does not influence future profits, ztc,ohm,qp is binary in ev-
+                                                                                                                              ery optimal solution without being forced to be binary. Constraint
+storage capacity Rmax. Constraint (17) defines the only binary vari-
+                                                                                                                              (24) restricts the start-up variables to be non-negative.
+ables, and constraint (18) ensures non-negativity for the remainder
+
+of variables except xtID,h,q.
+
+3.4. Contribution function
+
+    The contribution function CtDA is the storage owner's one-stage                                                           3.5. Transition functions
+profit at the day-ahead market.
+
+                                                23       t DAPt+1,hxtD,Ah                                       (19)              The two transition functions capture how the system transitions
+                                                                                                                              from one decision stage to the next. The transition function SM,DA
+CtDA StDA, xtDA, WtD+A1 = -                                                                                                   simply unions the state, action and exogenous information of the
+                                                                                                                              day-ahead market stage.
+                                               h =0
+
+    The one-stage profit at the day-ahead market is the sum of the                                                            StID = SM,DA StDA, xtDA, WtD+A1 = StDA, xtDA, PtD+A1                                                (25)
+
+volumes times the market clearing prices times the duration of the                                                                The transition function from the intraday market stage to the
+day-ahead market products tDA. Since a positive xtD,Ah corresponds                                                            day-ahead market stage is denoted SM,ID and only slightly more
+to buying energy, the sum has a negative sign.
+                                                                                                                              complex:
+    The storage owner's one-stage profit at the intraday market is
+denoted by CtID.                                                                                                              StD+A1 = SM,ID StID, xtID, WtI+D1 = Rtst+a1rt , xtst+a1rt , Pth+is1tory
+                                                                                                                              = Rt,23,3, xtD,A23 + xtID,23,3, PtD-A5, . . . , PtD+A1, PtI-D5, . . . , PtI+D1
+                            23 3
+
+CtID StID, xtID, WtI+D1  =                           -   t IDPtI+D1,h,qxtID,h,q -         t IDcg f xtp,uhm,qp                                                                                                                     (26)
+
+                            h=0 q=0                                                                                           where Rt,23,3 follows the storage level Eq. (15).
+
+                                  t ramp                        xtp,uhm,qp,up + xttu,hr,bqine,down Qto+ve1r,h,q               3.6. Value function
+                            +
+
+                                   2
+
+                            -     xtp,uhm,qp,down +                    x tt  urbine,u  p  Qtu+n1d,ehr,q
+                                                                             ,h,q
+
+                            - cpumpztp,uhm,qp - cturbineztt,uhr,bqine                                           (20)              Obviously, the decisions xtDA and xtID depend on the current
+
+The first row is the profits based on the commitments on the                                                                  states StDA and StID. Thus, we define a policy  as a function that
+
+intraday market times the duration of the intraday market prod-                                                               maps every state to a decision: XtDA, StDA and XtID, StID . Now, we
+                                                                                                                              have all necessary notation and can formally state the optimization
+ucts tID and the grid fees. While the energy storage stores energy,
+                                                                                                                              problem faced by the storage owner who maximizes the profit over
+it acts as a consumer and has to pay the obligatory grid fees cg f .
+                                                                                                                              an optimization horizon of length T .
+
+The second row corresponds to the profits and costs due to the
+
+TSO's balancing. During ramping, the storage owner cannot meet                                                                        T -1
+
+the commitments exactly and the difference is balanced by the                                                                 max IE        CtDA StDA, XtDA, (StDA ), WtD+A1 + CtID StID, XtID, (StID ), WtI+D1 |S0DA
+
+                                                                                          t ram p        xt(,·h),q. The               t =0
+                                                                                           2
+TSO. The deviation from the commitment is                                                          ·
+
+storage owner is paid/billed by the TSO based on the balancing                                                                                                                                                                    (27)
+
+prices Qto+ve1r,h,q and Qtu+n1d,ehr,q. According to Assumption 4, the balanc-                                                 s.t. (9), (11) to (18), (23) to (26) and initial state S0DA. The objective
+                                                                                                                              is the expectation of the summed contribution over all periods.
+ing price is linear in the intraday market prices. While the pump
+
+                                                                                                                         731
+B. Finnah, J. Gönsch and F. Ziel                                                                             European Journal of Operational Research 301 (2022) 726­746
+
+                                                                                        The state variable of the policy model is equal to the state of
+                                                                                    the day-ahead market decision stage (6). The action variable com-
+                                                                                    bines the actions of the day-ahead and intraday decision stages.
+
+                                                                                    xtpolicy = xtDA, xtID                                                                      (31)
+
+                                                                                        The exogenous information is the joint exogenous information
+                                                                                    of the day-ahead and intraday market stage, where the latter one
+                                                                                    is conditioned on the first one.
+
+                                                                                    | Wtp+o1licy = WtD+A1, WtI+D1 WtD+A1                                                       (32)
+
+                                                                                    Since we will remove the stochastics in the contribution function
+                                                                                    of the policy model, Wtp+o1licy is only used for the state's transition.
+
+                                                                                        The transition function SM,policy is the function composition
+
+                                  Fig. 3. Policy design.                            StD+A1 = SM,policy StDA, xtpolicy, Wtp+o1licy = SM,ID SM,DA StDA, xtDA, WtD+A1 , xtID, WtI+D1
+                                                                                                                                                                        (33)
+
+    An alternative formulation of the optimization problem are the                      We denote the policy model's one-stage contribution by Ctpolicy.
+recursive Bellman equations                                                         Instead of modeling a stochastic contribution based on the ex-
+                                                                                    ogenous information Wtp+o1licy and later derive the expectation, we
+VtDA StDA  = max IE    CtDA       StDA, xtDA, WtD+A1  + VtID StID |StDA  (28)       model Ctpolicy as the expectation itself. For this, we need the ex-
+                                                                                    pectation of the day-ahead market prices, intraday market prices,
+                 xtDA                                                               and the balancing prices. We denote these expectations as P¯tD,tA+1,h,
+                                                                                    P¯tI,Dt+1,h,q, Q¯to,vte+r1,h,q, and Q¯tu,nt+de1r,h,q. The subscript t denotes that these
+                       CtID  StID, xtID, WtI+D1  + VtD+A1 StDA  StID                expectations use only information that is available at day t. The
+| VtID StID
+           = max IE                                                      (29)       subscript t + 1 indicates that these are the expectations of ex-
+
+                 xtID                                                               ogenous information which become known right before day t + 1.
+
+with the boundary condition                                                         Since the exogenous information is modeled linearly, the expec-
+
+VTDA STDA = 0                                                            (30)       tations' calculation is straightforward. Finally, the policy model's
+
+Obviously, the same constraints have to be respected. One way to                    one-stage contribution function is
+find a policy is to compute the value functions VtDA and VtID and
+derive the decisions based on (28) and (29) with respect to their                   Ctpolicy StDA, xtpolicy       23      t DAP¯tD,tA+1,hxtD,Ah
+
+corresponding constraints. For other ways to derive a policy see                                             =-
+
+Powell (2019).                                                                                                   h =0
+
+4. Policy                                                                                                            3
+
+    Since we cannot solve (27) s.t. (9), (11) to (18), (23) to (26) an-                                        +-            t IDP¯tI,Dt+1,h,qxtID,h,q -  t IDcg f xtp,uhm,qp
+
+alytically, we define in this section the suboptimal policy functions                                              q =0
+
+XtDA, (·) and XtID, (·) to ease the numerical solution. The policy                                                   t ramp        xtp,uhm,qp,up + xttu,hr,bqine,down Q¯to,vte+r1,h,q
+function XtDA, (·) maps each state StDA to a decision XtDA, StDA for                                           +2
+the day-ahead market stage. The policy function XtID, (·) does this
+                                                                                                               - xtp,uhm,qp,down + xtt,uhr,bqine,up Q¯tu,nt+de1r,h,q
+for the intraday market stage. To define the policy functions, we in-
+                                                                                                               - cpumpztp,uhm,qp - cturbineztt,uhr,bqine                       (34)
+troduce the following policy model. For this, we replace the alter-
+                                                                                    This results in the value function
+nating decision stages by an expectation model. This is illustrated
+                                                                                                                                        + IE Vtp+o1licy StD+A1
+in Fig. 3.                                                                          | Vtpolicy StDA
+                                                                                                = max          Ctpolicy StDA, xtpolicy                          StDA
+    The upper half of Fig. 3 illustrates the base model described in
+                                                                                                     xtpolicy
+Section 3. It visualizes the alternating decision stages for one pe-
+                                                                                                                                                                               (35)
+riod t. Squares symbolize decision nodes, whereas circles denote
+                                                                                    s.t. VTpolicy STDA = 0, (9), (11) to (18), (23) to (24), (33).
+stochastic nodes where new information arrives. The period starts                       In Section 5, we derive approximations V¯tpolicy of the
+with state StDA in the day-ahead market stage, where the day-ahead
+market decision xtDA has to be determined. Then, the exogenous in-                  value function Vtpolicy to yield the policy XtDA, StDA =
+formation WtD+A1 (i.e. the day-ahead market prices) becomes known.
+This brings the system to state StID in the intraday market stage,                  arg max max  Ctpolicy StDA,        xtDA, xtID  + IE V¯tp+o1licy StD+A1 |StDA               s.t.
+where now the intraday market decision xtID has to be determined.                         xtID
+Then, the exogenous information WtI+D1 (intraday market prices) ar-                 xtDA
+rives. This completes period t and transitions the system to the
+first state of period t + 1, StD+A1.                                                (9), (11) to (18), (23) to (24), (33) and
+
+    The lower half of Fig. 3 shows on an intuitive level the policy                    XtID, StID = arg max IE CtID StID, xtID, WtI+D1 + V¯tp+o1licy StD+A1 |StID
+                                                                                                                        xtID
+model for the decision problem. The policy model is a dynamic
+program where at each decision stage t, the decisions xtDA and xtID                 s.t. (11) to (18), (23) to (24), (26). Accordingly, we adjust the
+are made simultaneously before the exogenous information WtD+A1
+and WtI+D1 becomes known. Different from the base model, the in-                    intraday market decisions based on the new day-ahead market
+traday market decision xtID is already determined in state StDA. In
+the following, we state the policy model and how we use it to                       prices. More precisely, the storage owner does not actually use the
+
+derive the policy functions XtDA, (·) and XtID, (·). The notation is                intraday market decision of the policy model, but re-optimizes the
+                                                                                    decision according to the policy function XtID, StID taking into
+summarized in Table D.6 in Appendix D.                                              account the outcome of the day-ahead market.
+
+                                                                                        While the expectation of the linear CtID StID, xtID, WtI+D1 is again
+                                                                                    straightforward, we explain in the following section how we com-
+
+                                                                                    pute the expectation of the value function. In Appendix B, we
+
+                                                                               732
+B. Finnah, J. Gönsch and F. Ziel                                                                                                                 European Journal of Operational Research 301 (2022) 726­746
+
+demonstrate that the policy defined by XtDA, StDA and XtID, StID                                                state by a linear combination of the sample paths. This approach
+is as good as the solution of the SAA of the stochastic counterpart                                             is similar to an approach proposed in Broadie, Glasserman, and Ha
+on a daily base.                                                                                                (2000) and Glasserman (2003, Ch. 8.5) for pricing options. The au-
+                                                                                                                thors estimate weights that mimic transition probabilities based on
+5. Approximate dynamic programming                                                                              a constrained optimization problem. In contrast, the algorithm pre-
+                                                                                                                sented here does allow negative weights that do not have to sum
+    As the formulated policy model is continuous and high-                                                      up to one. In Section 5.2, we enhance the distance measure used
+dimensional, we cannot solve it optimally. To tackle this problem,                                              in the constrained optimization problem computing the weights.
+we propose a BADP algorithm. This algorithm solves a problem                                                    Furthermore, we introduce box constraints which depend on the
+with discretized state space in which Rtstart and xtstart are discretized                                       distance of the sample paths.
+and the price history Pthistory is replaced by a set of sample paths.
+The notation is summarized in Table D.7 in Appendix D.                                                              BADP (Algorithm 1) mimics the classical backwards recursion
+                                                                                                                for discrete dynamic programs. The main purpose of BADP is to
+5.1. BADP                                                                                                       fill a look-up table which approximates the value of being in one
+                                                                                                                of the considered discrete states (Step 14). Steps 1 to Step 7 sam-
+    It is common practice to discretize the state space, for exam-
+ple by discretizing the endogenous part of the state and replacing                                              ple N scenarios Pth,nistory, n  {1, . . . , N} for the price history Pthistory
+the exogenous part with a scenario lattice. The corresponding sam-
+ple paths are sampled with the stochastic processes based on the                                                and pre-process data for the further algorithm. In particular, Step 1
+initial state. To derive the expectation of the next value function,                                            initializes the sampled price history in the starting period P0h,instory
+                                                                                                                as the price history P0history  R840 of the initial state S0DA. Step 4
+transition probabilities P | Pth+is1tory Pthistory are needed. One method                                       computes the expectation of the price history of the next period
+                                                                                                                P¯th,tis+to1r,yn, conditioned on the current price history sample Pth,nistory.
+for this is to choose the scenario lattice as time depending cluster-                                           For this, the transition function (33) and the price processes in
+centroids and estimate the transition probabilities by counting the                                             Section 3.1 are used. The expected price history is needed later in
+transitions from one cluster-centroid to another (e.g. Löhndorf &                                               the algorithm (Step 11). Since our price processes are linear, the
+Shapiro, 2019; Löhndorf et al., 2013; Wozabal & Rameseder, 2020).                                               expectation is straightforward. The subscript t indicates that only
+Scenario lattices are also named vectorial quantization tree (e.g.                                              information available at iteration t is used to derive the expecta-
+Bonnans, Cen, & Christel, 2011) or recombining tree (e.g. Wozabal                                               tion for stage t + 1 (indicated by subscript t + 1). Step 5 samples
+& Rameseder, 2020). Hannah & Dunson (2011) used such clus-                                                      a new price history for the next period. The price history sample
+ter centroids for a problem with 24 exogenous dimensions and                                                    Pth+is1t,onry in Step 5 is determined by the transition function (33) and a
+Wozabal and Rameseder (2020) for a problem with 48 exogenous                                                    sampled day-ahead and intraday market price, based on the price
+dimensions in the state variable.                                                                               processes stated in Section 3.1 and the current sample Pth,nistory. Note,
+                                                                                                                Pth+is1t,onry is a sample of a multivariate normal distribution with mean
+    In our numerical study in Section 6, we show that this approach                                             P¯th,tis+to1r,yn  R840.
+has a poor solution quality for the problem considered here. There-
+fore, we propose in the following an algorithm that does not                                                        After this, Step 8 initializes the lookup table according to
+need transition probabilities nor cluster-centroids. Instead, BADP                                              the boundary condition. Step 9 goes backwards in time, while
+(Algorithm 1) estimates the expected value of being in the next                                                 Step 10 iterates over all sample paths. Subsequently, in Step 11,
+                                                                                                                we regress the expected price history computed in Step 4 on
+Algorithm 1 BADP.                                                                                               the price histories in the set of sample paths sampled in Step 5.
+                                                                                                                We do not enforce properties such as non-negativity for the re-
+1: initialize P0h,instory = P0history, n  {1, . . . , N}
+                                                                                                                gression parameters ¯k. These parameters are used in Step 14 to
+2: for n = 1 to N do
+                                                                                                                estimate/approximate the expectation of the next period's value
+3: for t = 0 to T - 1 do                                                              P¯th,tis+to1r,yn :=       function approximation. Note, for N > 840, no unique solution in
+                                                                                                                Step 11 exists. In our numerical study we choose N = 50.
+4:   compute                 expected           price          history
+                                                                                                                    We now iterate over all discretized storage levels (Step 12) and
+     IE | Pth+is1tory Pthistory = Pth,nistory                                                                   trading volumes (Step 13) to fill the lookup table for the dis-
+
+5:   sample | Pth+is1t,onry Pthistory = Pth,nistory                                                             crete states StDA = Rtstart , xtstart , Pth,nistory in period t. The state con-
+
+6: end for                                                                                                      sists of the discretized storage level, the discretized trading vol-
+                                                                                                                ume, and the price history Pth,nistory, sampled in Step 5. The states
+7: end for                                                                                                      on the right hand side in Step 14 adhere to the transition func-
+
+8: initialize lookup table V¯Tpolicy = 0                                                                        tion StD+A1 = SM,policy StDA, xtpolicy, Wtp+o1licy and therefore depend on
+9: for t = T - 1 to 0 do
+                                                                                                                the decision xtpolicy and the discretized state. The exogenous part
+10: for n = 1 to N do                                                                                           of the state is one of the sampled price histories.
+
+11:  (¯1,    ·  ··  ,  ¯N )  :=  arg min         P¯th,tis+to1r,yn - N kPth+is1t,okry                                The expectation of the next period's value function is estimated
+                                 1,··· ,N                        k =1
+                                                                                      2                         by a weighted sum based on the regression parameters ¯k. These
+     for Rtstart = 0 to Rmax do
+12:      for xtstart = -xtmuarbxine to          xmpuamx p  do                                                   parameters mimic (on an intuitive level) the transition probabili-
+13:                                                                                                             ties, but as they can be negative, the parameters are able to extrap-
+                                                                                                                olate exogenous states that are not evaluated. This is illustrated in
+14:             V¯tpolicy StDA   := max         Ctpolicy   StDA, xtpolicy                                       Fig. 4 (explained later) for out-of-sample data.
+
+                                      xtpolicy                                                                      If a decision in Step 14 leads to a storage level Rtst+a1rt or trad-
+                                                                                                                ing volume xtst+a1rt that is not part of the lookup table, we linearly
+             + N ¯kV¯tp+o1licy | StD+A1 Pth+is1t,okry                                                           interpolate the value function in these. Therefore, the look-up ta-
+                 k =1                                                                                           ble V¯tp+o1licy can be interpreted as a piece-wise linear function. Thus,
+                                                                                                                Step 14 can be solved with standard MILP-solvers. This linear in-
+             s.t. (9), (11) to (18), (23) to (24), (33).
+
+15:          end for
+
+16:  end for
+
+17: end for
+
+18: end for
+
+                                                                                                           733
+B. Finnah, J. Gönsch and F. Ziel                                                                                   European Journal of Operational Research 301 (2022) 726­746
+
+                                                               Fig. 4. Illustration of the value function approximation technique.
+
+terpolation is standard in the literature (e.g., Löhndorf et al., 2013;                         s.t.
+
+Wozabal & Rameseder, 2020).                                                                     - Ktd,k  k  Ktd,k k  {1, . . . , N}                        (37)
+    After fixing the value function approximation V¯tpolicy, the policy                                                                                    (38)
+                                                                                                      For the upper and lower bound we select Ktd,k as
+in Section 4 can be applied. The expectation of the next stage's
+                                                                                                Ktd,k := exp  1    P¯th,tis+to1r,yn - Pth+is1t,okry  2
+value function necessary to calculate the policy functions XtDA, (·)                                          d2                                     wt
+and XtID, (·) is approximated as in Algorithm 1. A pseudo code
+                                                                                                which is the Gaussian kernel with the weighted Euclidean norm
+for the execution logic can be found in Appendix C. In contrast to
+                                                                                                · wt . We set the bandwidth d such that
+other ADP algorithms, it can be applied without re-optimization.
+                                                                                                 N                                                         (39)
+However, this may increase solution quality.
+                                                                                                    Ktd,k = ln(N)
+    The approximation of the value function by the linear combi-
+                                                                                                k =1
+nation based on the parameters ¯k is illustrated in Fig. 4. Cases a
+                                                                                                as this works well in the preliminary test.
+and b each use two sample paths to approximate an out-of-sample
+realized price history Pthistory. More precisely, the figure illustrates                            We select the vector of weights wt = wt,1, . . . , wt, j, . . . , wt,840
+how we approximate the expectation of the next period's value                                   for the weighted Euclidean norm · wt based on the influence of
+function approximation for out-of-sample price histories Pth+is1tory.                           each element Pth+is1t,okry, j on future prices. In particular, we define the
+Each plot shows two price sample paths (thin black lines). At time                              influence as the cumulative absolute change of all future prices
+t, the two corresponding price histories are Pth+is1t,onry  R840 and com-
+prise of the last 7 days' prices. Thus, these histories are a part                              if one element of the price history is ceteris paribus changed by
+
+of the two paths and depicted by bold lines overlaying parts of                                 1e/MWh. Algorithm 2 performs the necessary calculations.
+
+the thin black lines. Now, the blue line is the trajectory of real-                             Algorithm 2 Computation of weights.
+
+ized prices until period t. Based on this, the expected price history                           1: for t = 0 to T - 1 do
+P¯th,tis+to1ry is computed (orange dashed line). It comprises of the real-
+ized prices of the last 6 days and the expectations for the next day                            2: for j = 1 to 840 do
+
+(day t + 1).                                                                                    3:    Pthistory := e j, P¯th,tistory := Pthistory
+
+    Now, this expected price history is regressed on the price his-                             4:    wt, j := 0
+
+tory samples Pth+is1t,onry. The fitted regression N ¯kPth+is1t,okry is drawn                    5:    for  = t to T - 1 do
+                                                                                     k =1
+                                                                                                6:            wt, j := wt, j + IE Wp+ol1icy|P¯th,istory 1
+with a blue dashed line. In Case a, the expected price history
+                                                                                                7:            P¯th,is+to1ry := IE Ph+ist1ory|P¯th,istory
+can be approximated well by a convex combination of the sam-
+                                                                                                8:    end for
+ples. The corresponding regression parameters can be easily in-
+                                                                                                9: end for
+terpreted as transition probabilities. In Case b, the expected price
+                                                                                                10: end for
+history lies outside of the sampled price histories. Therefore, one
+
+needs negative regression parameters and/or they do not sum to
+
+one.
+
+5.2. BADP-weighted
+
+    We modify the BADP algorithm by replacing the regression in                                     Algorithm 2 works as follows. For each period (Step 1) and over
+Step 11 with a box-constrained, weighted regression. With this, we
+take into account that the influence of some prices on the price                                the length of the price history (Step 2), we select the price history
+forecast is more important than the effect of others. In addition,
+due to the box-constrains, the optimal regression parameters may                                as the j-th unit vector (Step 3). Additionally, we initialize the ex-
+be unique even for N > 840.                                                                     pected price history P¯th,tistory which is needed in the first iteration
+                                                                                                of Step 6 and Step 7. We advance forwards (Step 5) in time and
+                                                         N
+                                                                                                update the price history (Step 7), while we add up the absolute
+(¯1, . . . , ¯N ) := arg min         P¯th,tis+to1r,yn -        k Pth+is1t,okry      (36)
+                                                                                                values of the expected outcomes (Step 6). We do not normalize
+                           1 ,...,N                      k =1
+                                                                                                the weights wt, j. To exclude the effects of the day of the week, we
+                                                                                wt              set their parameters to zero in the price processes.
+
+                                                                                                    With the weighted regression, we take into account that some
+
+                                                                                                prices are substantially more important for the future prices and
+
+                                                                                           734
+B. Finnah, J. Gönsch and F. Ziel                                                                         European Journal of Operational Research 301 (2022) 726­746
+
+                                                                 Fig. 5. Setup of the numerical study.
+
+should be better approximated than others. For instance, the last                                Table 1
+day-ahead price of the previous day contains the newest informa-                                 Data of the stochastic processes.
+tion about the cumulative renewable energy production which in-
+fluences the next day's electricity prices (Ziel, 2016). With the box                            Season Training data                Test data
+constraints, we force the regression to approximate the expected
+price history with the closest scenarios in the set of sample paths,                             Winter  16 Jan 2019 to 15 Jan 2020  16 Jan 2020 to 14 Feb 2020
+as the value function should be close as well.                                                   Spring  02 May 2019 to 30 Apr 2020  01 May 2020 to 30 May 2020
+                                                                                                 Summer  01 Aug 2018 to 31 Jul 2019  01 Aug 2019 to 30 Aug 2019
+                                                                                                 Autumn  17 Oct 2018 to 15 Oct 2019  16 Oct 2019 to 14 Nov 2019
+
+6. Numerical study
+
+    In Section 6.1, we state the parameters for our numerical                                    arrows indicate the dependence of the three main steps (estimat-
+study and specify the implemented approaches. The parameter val-                                 ing price processes, solving trading problem, and evaluation) in the
+ues are summarized in Table D.9 in Appendix D. Based on this,                                    numerical study and how they are influenced by the stochastics.
+Section 6.2 compares the different implemented algorithms. Ad-                                   Because of the random division of the training data into subsets
+ditionally, Section 6.3 indicates that the decisions of the best ap-                             for the cross validation, the parameters of the estimated price pro-
+proach are reasonable. For this, we investigate the storage level                                cesses are stochastic (explained in more detail during this section).
+over time. Section 6.4 and Section 6.5 show the gains from using a                               Based on these price processes, we sample the sample paths for
+competitive price forecast and from the integrated trading in both                               our optimization approaches (e.g., BADP). Additionally, the price
+markets.                                                                                         processes are used in the optimization (explained in Section 5.1).
+
+6.1. Data for the numerical study                                                                Therefore, the policy functions XtDA, (·) and XtID, (·) are influenced
+
+     We choose a pumped hydro storage with a storage capacity of                                 by this stochasticity. Thus, the actual decisions and the profit on
+                                                                                                 the evaluation level are stochastic, even when we evaluate with
+Rmax = 100MWh and pump and turbine working power range of                                        real-world data and no further stochastic influence on the evalu-
+ xmpuinmp, xmpuamx p = xtmuirnbine, xtmuarbxine = [5MW, 10MW] with symmetri-                     ation level exists. To compute confidence bands that capture the
+                                                                                                 stochastics present in evaluation, we run the simulation (estimat-
+cal efficiency pump = turbine = 0.9. The start-up costs are cpump =                              ing price processes, solving trading problem, and simulation of op-
+                                                                                                 eration) 20 times.
+cturbine = 15e. We assume that both components need tramp =
+                                                                                                     Because the German energy markets' prices behave differently
+2min to ramp up or down. For the balancing by the TSO, we                                        over the course of a year (e.g. due to increased solar radiation in
+                                                                                                 summer), we consider four different settings denoted as Winter,
+set  the  parameters  Qionvteerrce pt  = -3e/MWh,  Qsolvoepre =   1   ,  Qiunntedrecrept =       Spring, Summer and Autumn. The data is summerized in Table 1.
+                                                                 1.2
+                                                                                                     For each season, the price processes are estimated based on
+3e/MWh, Qsulnodpeer = 1.2. Thus, a deviation from the commitments                                data from EPEX SPOT SE (2020) with 365 days in the training set.
+                                                                                                 For this we use the least absolute shrinkage and selection operator
+is financially unattractive. While the storage owner buys energy,                                (lasso) with ten-fold cross-validation. For the cross-validation, the
+                                                                                                 training data is randomly partitioned into ten subsets. Note that on
+the energy storage acts like a consumer and has to pay the obliga-                               01 Oct 2018, there was a major change in the German auction mar-
+                                                                                                 kets when Austria left the German system. However, to estimate
+tory grid fees (up to 30e/MWh in Germany). However, because en-                                  Summer with 365 days in the training set, we have to include data
+                                                                                                 before this major change.
+ergy storage systems stabilize the grid, they only pay reduced fees.
+                                                                                                     Table 2 shows the out-of-sample mean absolute error (MAE)
+This reduction is a case by case decision (Sterner & Stadler, 2017,                              and the root mean squared error (RMSE) of our price processes. To
+                                                                                                 compute the errors, we forecast the next day's day-ahead and in-
+Ch. 15.4). We choose rather low fees of cg f = 5e/MWh. Finally, the                              traday market prices with the estimated price processes based on
+                                                                                                 the real-world data known at this time. Afterwards, we measure
+optimization horizon is T = 30 days. Since the storage can be fully
+
+charged/discharged in half a day, the start-of-horizon and end-of-
+
+horizon effects are quite small. In practice, a storage owner would
+
+re-optimize in a rolling horizon fashion before the end-of-horizon.
+
+Since all approaches specified in this section suffer from the same
+
+start-of-horizon and end-of-horizon effects, we do not control for
+
+them and the results are still comparable.
+
+     While solving and evaluating the energy trading problem, mul-
+
+tiple sources of stochasticity exist. This is illustrated in Fig. 5. The
+
+                                                                                            735
+B. Finnah, J. Gönsch and F. Ziel                                                        European Journal of Operational Research 301 (2022) 726­746
+
+Table 2                                                                                             with fixed value function-approximations, these are
+Forecast errors of the stochastic processes and average prices.                                     re-optimized. For this, we use BADP-w with a new set
+                                                                                                    of sample paths which is sampled based on the cur-
+              Day-ahead market                 Intraday market                                      rent state in t = 15.
+                                                                                        · ADDP: We adapt the approximate dual dynamic program-
+Season MAE RMSE Average prices MAE RMSE Average prices                                              ming algorithm proposed by Löhndorf et al. (2013).
+                                                                                                    This algorithm was recently used by Wozabal and
+Winter  7.03  10.29               31.26  4.90  7.53              31.06                              Rameseder (2020) for a problem with 48 exogenous
+Spring  7.26  12.13               18.13  4.27  6.08              18.31                              dimensions in the state variable. This algorithm is
+Summer  6.03  9.92                36.95  3.22  4.63              37.04                              a version of stochastic dual dynamic programming
+Autumn  5.07  7.16                39.57  3.45  4.73              38.84                              (SDDP) but allows the stochastic processes to be
+                                                                                                    Markovian and is not limited to stagewise indepen-
+the error between the forecasted prices and the next real-world                                     dend processes (Wozabal and Rameseder, 2020). Orig-
+data. This is done for all days in the test data set.                                               inally, this algorithm iterates over K iterations and ap-
+                                                                                                    proximates the value functions of the post-decision
+   The parameters of the estimated price processes ((D·A) and (ID·))                                states with hyperplanes. Since the value function ap-
+                                                                                                    proximations are piecewise linear and the stochastic
+contain some kind of randomness. More precisely, the splitting of                                   processes are linear and the transition function is lin-
+the training data set into subsets for the cross-validation is ran-                                 ear in these, we can derive the expectation in (35) an-
+dom (illustrated in Fig. 5). To tackle this randomness, we esti-                                    alytically. So, there is no computational advantage to
+mate the price processes 20 times and report the average MAE and                                    use the post-decision state formulation. Therefore, we
+RMSE. For each estimation with ten-fold cross-validation, the train-                                approximate the value functions of the pre-decision
+ing data is newly divided into ten subsets. To ease the interpreta-                                 states. Like BADP, the ADDP approach replaces the ex-
+tion of the errors, we report the average market prices of the test                                 ogenous part of the state Pthistory with a scenario lat-
+sets.                                                                                               tice. But in contrast to BADP and in line with Löhndorf
+                                                                                                    et al. (2013), the scenario lattice is described by N
+    Therefore, the data in Table 2 captures the randomness on esti-                                 cluster centroids (we use N = 50). For generating the
+mation level. In practice, one would average the 20 estimated price                                 scenario lattice, we sample 1,000 price histories for
+processes. This is not done in our numerical study for two rea-                                     each period t and apply k-means clustering with the
+sons. First, the parameters of the price processes hardly differ for                                city block norm. The necessary transition probabilities
+the cross-validation runs. Second, this allows us to investigate the                                are approximated by counting the transitions between
+influence of the stochastics on expected profit on the estimation                                   the clusters. Each iteration of the ADDP algorithm con-
+level.                                                                                              tains a forwards pass and a backwards pass. During
+                                                                                                    the forwards pass, ADDP generates new endogenous
+    Table 2 shows that the day-ahead market prices are harder to                                    states (Rtstart and xtstart ). After this, during the back-
+forecast than the intraday market prices. Both MAE and RMSE are                                     wards pass, we iterate over the endogenous states and
+much higher for the day-ahead market. Especially hard to predict                                    all price histories in the scenario lattice to add a new
+are the day-ahead-market prices in Spring, as it shows the highest                                  hyperplane for each combination.
+error measurements while the mean price is rather low.                                              Preliminary tests indicate that K = 10 iterations are a
+                                                                                                    reasonable trade-off between solution quality and ma-
+    Following the standard approach for the evaluation of ADP al-                                   chine time. More precisely, additional iterations hardly
+gorithms, we conduct numerical comparisons with benchmark ap-                                       improve the profit. To speed the algorithm up, when
+proaches. Therefore, we implement several approaches using Mat-                                     we add a new hyperplane, we remove all hyperplanes
+lab version R2020a and run simulations on a standard PC with a                                      which are dominated by the new one. We do not im-
+3.6 Ghz AMD Ryzen 5 and 16 GB of RAM. We evaluate every pol-                                        plement the rejection of hyperplanes with negligible
+icy with the data in the test data set. In particular, we evaluate the                              improvement. This could speed the ADDP approach up,
+following BADP variants and benchmark approaches:                                                   but also worsen the results slightly.
+                                                                                                    After fixing the value function approximation V¯ policy,
+· BADP: This is the BADP algorithm discribed in Algorithm 1.                                        the policy in Section 4 can be applied. If the transi-
+                                                                                                    tion leads to exogenous states which are not part of
+        We discretize the storage levels Rtstart in 11 equidis-                                     the scenario lattice, the transition probabilities have
+        tant points. Preliminary tests indicate that the last                                       to be updated. This is in contrast to the other ap-
+                                                                                                    proaches which are nevertheless applicable. To speed
+        trade xtstart exerts less influence on the decision. There-                                 this up, we follow Wozabal and Rameseder (2020) and
+                                                                         xtstart                    base the decisions on the transition probabilities of
+        fore, we choose a                rougher discretization for it:  sample                     the closest cluster centroid.
+         -xtmuarbxine, 0, xmpuamx p      . We set the number of                         · EM-7: This approach is an expectation model for seven days.
+                                                                                                    While the other approaches approximate the value
+        paths as N = 50. This results in 11 · 3 · 50 = 1, 650                                       function of the policy model, this benchmark is a di-
+                                                                                                    rect lookahead which, thus, does not suffer from the
+        discrete states. The MILP in Step 14 is solved with                                         curses of dimensionality. The problem (34) s.t. (9),
+                                                                                                    (11) to (18), (23) to (24) is a daily expectation model.
+        the Matlab solver intlinprog. After fixing the value                                        For this benchmark approach, we modify the daily ex-
+                                                                                                    pectation model. Rather than an expectation model for
+        functions, the induced policy is applied without re-                                        one day, we use an expectation model for seven days
+                                                                                                    with a receding horizon. More precisely, at each de-
+        optimization.
+
+· BADP-w: For this BADP approach we replace Step 11 in
+
+        Algorithm 1 with the quadratic problem (36) and (37).
+
+        The coefficients for the lower and upper bounds are
+
+        described by (38) and (39). The weights are computed
+
+        with Algorithm 2. We select the same discretization
+
+        for the states and the same number of samples as for
+
+        the unweighted BADP. After fixing the value function
+
+        approximations, the induced policy is applied without
+
+        re-optimization.
+
+· BADP-w (re-optimized): This approach is largely the same as
+
+        BADP-w, but the value function approximations are re-
+
+        optimized once at t = 15. In more detail, the value
+
+        function approximations are derived first with BADP-
+
+        w. After applying the induced policy for t  {0, · · · 14}
+
+                                                                                   736
+B. Finnah, J. Gönsch and F. Ziel                                                                                      European Journal of Operational Research 301 (2022) 726­746
+
+                                  Table 3
+                                  Performance of BADP variants, ADDP, EM-7, and Perfect foresight.
+
+                                  Algorithm             Profit [e]  Relative profit [%] 95% confidence band           Learning time [s]
+
+                                  EM-7                  93,480.52   100.00                          [99.64, 100.36]   0.00
+                                  BADP                  93,200.08   99.70                           [99.09, 100.30]   1,401.32
+                                  BADP-w                94,826.64   101.44                          [101.04, 101.84]  1,411.83
+                                  BADP-w(re-optimized)  94,854.68   101.47                          [101.00, 101.93]  2,139.18
+                                  ADDP                  77,401.87   82.80                           [82.17, 83.44]    5,172.40
+                                  Perfect foresight     173,593.30  185.70                          -                 0.00
+
+                 cision stage (DA and ID) and each day, the expecta-             could further reduce the machine time, but we do not think this
+                 tion model for the next seven days is re-optimized.             would allow to considerably increase the solution quality as the
+                 Only the decisions of the first decision stage are ex-          performance appears to be quite flat in this regard (not shown
+                 ecuted. As the modification is straightforward, we do           here). As EM-7 and Perfect foresight do not have to learn the value
+                 not show the reformulation. Again, we use intlinprog            functions, the machine time is zero. The large gap between the up-
+                 to solve this MILP. To derive the expectation of future         per bound Perfect foresight and the other approaches is not surpris-
+                 market prices based on the currently known informa-             ing. Electricity prices are hard to forecast and show price spikes
+                 tion with the price processes stated in Section 3.1, we         which can be exploited by Perfect foresight. This underlines that
+                 use the law of iterated expectations.                           deterministic approaches with full hindsight information have lit-
+    · Perfect foresight: This benchmark solves the energy storage                tle value in this context. We also tested a variant of the popular
+                 problem with deterministic prices. Since all electric-          least squares monte carlo approach (with lasso and ten-fold cross-
+                 ity prices are known before trading, the correspond-            validation, not shown here), which yielded 94.31% of EM-7.
+                 ing optimization problem can be modeled as an MILP.
+                 Obviously, Perfect foresight does not define a policy               As mentioned, the approaches behave similar in all four seasons
+                 which is applicable in real world but generates an up-          (not shown here). But further investigations indicate that BADP-w
+                 per bound.                                                      benefits more from reliable forecasts than EM-7. While there is no
+                                                                                 significant difference of the profits in Spring, where the prices are
+    Overall, we only test different value function approximation al-             hard to forecast, the largest difference is in Autumn, where the er-
+gorithms and a direct lookahead approach. For other possible solu-               ror measurements are lowest (see Table 2).
+tion methods see, for example, Powell (2019).
+                                                                                     Re-optimizing with BADP-w in the middle of the optimiza-
+    The value function approximation approaches (BADP, BADP-                     tion horizon (at t = 15) has almost no benefit. Even if more re-
+w, ADDP) are sample-based approaches. Thus, the induced policy                   optimization steps may slightly improve the profit, this already
+highly depends on the sampled (and clustered) sample paths. Ad-                  indicates that BADP-w works well without re-optimization. BADP
+ditionally, the sample paths depend on the estimation level. See                 and ADDP could benefit from re-optimizing as well. To save space,
+Fig. 5 for an illustration. Therefore, a comparison of the imple-                we do not investigate this in the numerical study, since these ap-
+mented approaches cannot rely on a single run for each approach.                 proaches cannot compete with BADP-w.
+Accordingly, we run the approaches 20 times, once for each set of
+estimated price processes (estimation level). The only stochastics                   The objective function includes only costs that are variable in
+which influences EM-7 is the stochastics on estimation level. Per-               the considered trading problem. We use the term "profit" for sim-
+fect foresight is not influenced by stochastics at all.                          plicity, although, formally, "contribution margin" would be more
+                                                                                 appropriate. In reality, additional costs like wages and depreciation
+6.2. Comparison of the solution approaches                                       of investment have to be taken into account. Therefore, the 1.44
+                                                                                 percentage point increase from EM-7 to BADP-w increases the net
+    In this section, we compare the solution approaches based on                 profit much more and may even turn a loss into a profit. Because
+the parameters in the previous section. To capture the randomness                of the high investment and running costs of energy storage sys-
+on estimation level and policy level, we solve the trading prob-                 tems they usually have a low internal rate of return (IRR) of 0.2%
+lem 20 times with each approach, once for each set of estimated                  to 9.1% (Olaszi & Ladanyi, 2017; Steffen, 2012; Zhu et al., 2013). The
+price processes and evaluate with the test data set (see above). We              actual IRR depends on the specifications and costs of the energy
+report the relative mean profit summed over the four seasons of                  storage and the trading strategy. If one can increase the "contri-
+the approaches and the 95% confidence bands. We do not report                    bution margin" with BADP-w by 1.44 percentage points this also
+the profits for the single seasons, as the approaches' behavior does             increases the IRR by nearly 1.44 percentage points. Therefore, the
+hardly change in the different seasons.                                          IRR can be dramatically increased by 16­840%.
+
+    The reported machine time is the average machine time to                     6.3. Decision making insights
+learn the value functions for 30 stages. Since the machine time
+hardly differs for the different seasons and estimated price pro-                    To investigate the decisions of the storage owner and to show
+cesses, we do not show the confidence bands. Furthermore, we do                  that the decisions derived by BADP-w are reasonable, we analyze
+not report the machine time for deriving the policies during evalu-              the storage level for Autumn. Since we derived 20 different policies
+ation because, even with the slowest approach (EM-7), the policies               with our best approach BADP-w we report the average storage level
+are derived in a few seconds per decision stage.                                 over the 20 policies in Fig. 6. Additionally, we report the maximum
+                                                                                 and minimum storage levels as well as the day-ahead prices. As
+    Table 3 compares the different implemented approaches. There                 reference points the Mondays (0:00) of Autumn are marked.
+is no significant difference between the profit of EM-7 and BADP.
+However, the weighted BADP-w approach outperforms both. In-                          Overall, we observe strong daily and weekly patterns in the
+creasing the number of scenarios N can slightly increase the profit              storage level, which follow electricity prices. On a weekly level, the
+(not shown here). ADDP is dominated in terms of profit and ma-                   storage is charged on weekends and discharged at the beginning
+chine time by all other approaches. We acknowledge that the re-                  of the week. On a daily level, it is charged right after midnight
+jection of hyperplanes or better redundancy detection techniques                 and discharged during the day. In particular, we see that at the
+
+                                                                            737
+B. Finnah, J. Gönsch and F. Ziel                                                             European Journal of Operational Research 301 (2022) 726­746
+
+                                  Fig. 6. Storage level over time with prices.
+
+     Fig. 7. Influence of price forecast used in optimization on expected profits.           ten days (StDA  R1202) in the price history. We fit the value func-
+                                                                                             tions with BADP-w and derive the decisions based on this forecast
+first three Sundays the storage is full, as it was charged during the                        and evaluate these with the data in our test data set. The dif-
+weekends where the prices are usually low to sell electricity dur-                           ference of the mean profits with 1­6 days in the price history is
+ing the week where the prices are higher. Only during the fourth                             not significant. But the seventh day in the price history is impor-
+weekend the storage is not fully charged as prices did not drop.                             tant for BADP-w to outperform EM-7 which always uses seven days
+                                                                                             in the price history to calculate the forecast used in the expecta-
+    After the storage is fully charged, not all energy is sold directly                      tion model. This significant increase in the profit follows because
+on Monday. This is only true for the first Monday. After the second                          the electricity prices have a strong weekly pattern and, thus, the
+Monday, most energy is sold Tuesday and after the third Monday                               prices of the same day of the last week are good predictors for
+at Wednesday. These were the weekdays where the prices peaked.                               current prices. Again, the difference of the mean profits with 7­
+                                                                                             10 days in the price history is not significant. Note that the fact
+    In some hours or even days the gap between the policies with                             that profit increases in the price history is not obvious, because
+maximum storage level and minimum storage level is quite large                               a larger state variable is harder to handle, which could also lead
+(e.g. in the week of the second Monday). This happens if multiple                            to a decline in profit. Thus, Fig. 7 demonstrates that BADP-w can
+nearly equally good decisions exist (e.g. discharging a day later at                         handle a large state variable. More importantly, as there is no rea-
+nearly equal prices).                                                                        son not to use a high-dimensional price forecast for the bench-
+                                                                                             mark approach, Fig. 7 indicates that the dynamic program needs at
+6.4. Influence of the price forecast                                                         least seven days in the price history to outperform the benchmark
+                                                                                             approach with seven days. Thus, if we are not willing to handle
+    To check if it is worth to handle a high-dimensional price fore-                         the large state variable in the dynamic program, the much sim-
+cast in the dynamic program, we vary the number of days in                                   pler benchmark approach would be the better choice. Moreover,
+the price forecast and therefore the dimension of the exogenous                              we also tested the influence of the price forecast on EM-7 (i.e. with
+part of the state Pthistory. We denote the number of days in the                             D days in the history used to compute the expectations for the
+price history as D. The corresponding price history is Pthistory =                           next 7 days); not shown here. The profit of EM-7 shows a similar
+                                                                                             pattern as the profit of BADP-w, but BADP-w outperforms EM-7 for
+ PtD+A1-D, . . . , PtDA, PtI+D1-D, . . . , PtID . For each D  {1, . . . , 10} we esti-       every D.
+
+mate the price forecast using lasso with ten-fold cross validation                               Since Fig. 7 indicates that the seventh day in the price history
+20 times and learn the value functions with our best approach                                is more important than the previous days, this suggests the reduc-
+BADP-w. Again we report the mean profit and the 95% confidence                               tion of the state space via feature selection. One could only include
+bands. In addition, we use EM-7 with seven days in the price his-                            the most relevant prices of the previous week. While the impor-
+tory as a benchmark, since this does not suffer from the curses of                           tance of features (dimensions of the price history) is considered in
+dimensionality.                                                                              the weights of BADP-w, the feature selection is not investigated in
+                                                                                             full detail. As the modeled price processes must follow the Markov
+    Fig. 7 illustrates the influence of the length of the price his-                         property, the feature selection is not straightforward. It is possible
+tory used in the optimization on profit. We estimate ten differ-                             to fit the value functions with BADP-w based on a simplified fore-
+ent price processes for each market with one (StDA  R122) up to                              cast and therefore simplified model (e.g. D = 1) but derive the de-
+                                                                                             cisions based on a more complex forecast (e.g. D = 7). For this, the
+                                                                                             higher dimensional StDA and therefore Pthistoy is treated as a latent
+                                                                                             state variable while deriving the trading decisions based on the
+                                                                                             fixed value function approximations. Therefore, we compare this
+                                                                                             approach with the data in Fig. 7. For this, we derive the decisions
+                                                                                             based on our basic forecast (D = 7).
+
+                                                                                                 Fig. 8 is similar to Fig. 7, but is extended by the latent
+                                                                                             state variable approach where the decisions for D < 7 are made
+                                                                                             based on the D = 7 forecast (basic setting). To keep it simple,
+                                                                                             we do not show the EM-7 benchmark with its confidence bands.
+                                                                                             Fig. 8 demonstrates that treating a higher dimensional forecast as
+                                                                                             a latent variable pays off, but the gain decreases in D. The latent
+                                                                                             state variable approach with three days in the price history comes
+                                                                                             closest to the basic setting D = 7, but further tests (not shown
+
+                                                                                        738
+B. Finnah, J. Gönsch and F. Ziel                                                           European Journal of Operational Research 301 (2022) 726­746
+
+Fig. 8. Influence of underlying price process on expected profits.                         trading problem, and evaluation) 20 times, to capture the stochas-
+                                                                                           tics (see, Fig. 5). We report the mean of the summed profits over
+here) indicate that the difference is still significant. We do not in-                     the four seasons and the 95% confidence bands.
+clude D > 7, because in this cases the price history would contain
+dimensions that are not used for the forecast and therefore would                              Table 4 compares our basic setting (DA+ID, integrated) with
+be irrelevant.                                                                             four other settings: only using the day-ahead market (DA), only
+                                                                                           using the intraday market (ID), using both markets with a sequen-
+    In conclusion, it is essential for dynamic programs to use a                           tial optimization (DA+ID, sequential), and trading integrated but
+competitive forecast to outperform a simple benchmark approach.                            without exploiting the price differences (DA+ID, integrated, no ar-
+                                                                                           bitrage). If only one market is used, the intraday market is much
+6.5. Gains from integrated trading                                                         more profitable for the storage owner than the day-ahead market.
+                                                                                           This is because the intraday market prices fluctuate substantially
+    In this section, we compare the integrated day-ahead and intra-                        more than the day-ahead market prices, which can be exploited by
+day trading with restricted trading settings. In particular we con-                        the fast ramping energy storage. The immense difference between
+sider the following settings:                                                              the day-ahead and intraday profits decreases in the ramping time
+                                                                                           (not shown here). In the sequential day-ahead and intraday set-
+· Day-ahead only (DA): This setting trades only in the day-ahead                           ting, the storage owner first trades on the day-ahead market, as
+                                                                                           if only the day-ahead market exists, i.e. exactly as in setting (DA).
+        market and corresponds to our policy functions XtDA, (·) and                       After this, the storage owner adjusts the commitments on the in-
+       XtID, (·) with additional constraint xtID,h,q = 0 h, q.                             traday market. The integrated bidding can enhance the profit by 8
+                                                                                           percentage points compared to the sequential consideration of the
+· Intraday only (ID): This setting trades only in the intraday mar-                        markets and 2.5 percentage points compared to the intraday mar-
+                                                                                           ket setting. In our study, the intraday market setting outperforms
+        ket. This can be reflected with our policy functions XtDA, (·)                     the sequential setting. This is because decisions on the day-ahead
+       and XtID, (·) by adding the constraint xtD,Ah = 0 h.                                market cause a bad starting point for trading on the intraday mar-
+                                                                                           ket and, thus, profit is lower. This changes with increasing ramping
+· DA+ID, sequential: This setting trades in the day-ahead market                           times (not shown here). If the storage owner does not exploit the
+         without anticipating the intraday market. Afterwards, the                         expected price difference between the markets, the relative profit
+         commitments are adjusted on the intraday market. To re-                           only decreases by 0.12 percentage points. The difference between
+         flect this with our policy functions, we add the constraint                       these two settings is not significant. Thus, (almost) no arbitrage is
+                                                                                           possible, which indicates that the German auction markets are ef-
+       xtID,h,q = 0 h, q to XtDA, (·) and the constraint xtD,Ah = 0 h to                   ficient.
+        XtID, (·).
+                                                                                           7. Discussion
+· DA+ID, integrated: This is the basic setting considered in the re-
+         mainder of the paper.                                                                 In this section, we discuss possible limitations of our research.
+                                                                                           We observed that integrated trading in both German auction mar-
+· DA+ID, integrated, no arbitrage: Integrated trading in both auc-                         kets outperforms sequential trading and trading in a single auc-
+         tion markets can speculate on the price difference between                        tion market. We did not investigate whether integrated trading in
+         the hourly day-ahead market products and the price of the                         the auction markets outperforms trading in other markets (e.g.,
+         corresponding quarter-hours on the intraday market. In this                       derivative markets, continuous intraday market, balancing markets,
+         setting, we modify the intraday market price process defined                      over-the-counter). Furthermore, we did not investigate if integrated
+         in Section 3.1 to enforce that the expected market prices are                     trading with additional markets is beneficial. In the following, we
+         equal. Therefore, no arbitrage based on the expected price                        discuss how this limits our research and how practice can still ben-
+         difference is possible. For this setting, we shift the expected                   efit.
+         intraday market prices to the expected day-ahead market
+         prices and use them in the contribution function of the pol-                        Derivative markets: Trading derivatives can be an important
+         icy model (34):                                                                                    instrument to hedge the risk (e.g., variance of re-
+                                                                                                            turns), see Hain, Schermeyer, Uhrig-Homburg, & Ficht-
+                                       1  3                                                                 ner (2018). Since we optimize expected profit, the
+                                       4                                                                    derivative markets are not beneficial.
+P¯tI,Dt +1,h,q  :=  P¯tI,Dt +1,h,q  -            P¯tI,Dt+1,h,q - P¯tD,tA+1,h h  (40)
+                                                                                           Continuous intraday market: As the continuous intraday market
+                                          q =0                                                              works similar to stock markets, a product's current
+                                                                                                            price includes all relevant information and is there-
+    All settings are optimized with the BADP-w approach with                                                fore the best predictor for the future price of the prod-
+seven days in the price history and evaluated with real-world data.                                         uct (see, e.g., Narajewski & Ziel, 2020a). Since the con-
+Again, we run the simulation (estimating price processes, solving                                           tinuous intraday market starts with the intraday auc-
+                                                                                                            tion market clearing prices and both markets have the
+                                                                                                            same temporal resolution, integrated trading in the
+                                                                                                            intraday auction market and the continuous intraday
+                                                                                                            market should not be profitable. Moreover, the con-
+                                                                                                            tinuous intraday market has a rather high market en-
+                                                                                                            trance barrier and a 24/7 trading floor is needed.
+                                                                                                            Nevertheless, sequential trading in the continuous in-
+                                                                                                            traday market after integrated trading in the auction
+                                                                                                            markets should outperform pure auction market trad-
+                                                                                                            ing. Since the trading in the auction markets restricts
+
+                                                                                      739
+B. Finnah, J. Gönsch and F. Ziel                                                                                European Journal of Operational Research 301 (2022) 726­746
+
+                                  Table 4
+                                  Comparison to restricted trading settings.
+
+                                  Trading and optimization         Profit [e]      Relative profit [%]          95% confidence band
+
+                                  Only day-ahead (DA)              37,693.59       39.75                        [39.03, 40.47]
+                                  Only intraday (ID)               92,465.45       97.51                        [97.20, 97.83]
+                                  DA+ID, sequential                87,221.54       91.98                        [91.74, 92.22]
+                                  DA+ID, integrated                94,826.64       100.00                       [99.61, 100.39]
+                                  DA+ID, integrated, no arbitrage  94,712.84       99.88                        [99.39, 100.37]
+
+                 the trading in the continuous intraday market, pure               this and anticipate later markets. This may also be true for mar-
+                 continuous intraday market trading could be even bet-             kets not included in our research. To reduce the computational
+                 ter than a heuristic solution of integrated trading.              burden of such an integrated optimization it is sufficient to use
+  Balancing markets: The balancing markets can be an impor-                        self-schedule bidding in the auction markets. If one needs to re-
+                 tant opportunity for fast ramping energy storage sys-             duce the computational burden even more, an expectation model
+                 tems. We do not include them in our research for                  with a competitive price process is more appropriate than an ADP
+                 the following reason. The rules of the German balanc-             approach with a simple price process.
+                 ing markets changed multiple times in recent years
+                 (e.g., 2018, 2019, and 2020). Since these changes hap-                Future work could go in several directions. First, from a
+                 pen during the time span considered in the numeri-                methodological perspective, infinite-horizon dynamic programs
+                 cal study of Section 6, nearly no data for the current            should be considered. Whereas our proposed dynamic program is
+                 regime exists.                                                    time-independent (except the day of the week), future work can
+  Over-the-counter markets: For energy storage systems, the over-                  reformulate the problem as a steady state problem and solve the
+                 the-counter (OTC) markets are hardly relevant, be-                storage problem with an infinite horizon. This has its own chal-
+                 cause there, most energy is contracted several days or            lenges. For example, the set of sample paths can no longer simply
+                 months ahead. Most energy storage systems are fully               be sampled with the price processes because this depends upon
+                 charged and discharged within hours, so they bene-                the initial price history. Instead, one can use all past price histo-
+                 fit most from short-term price fluctuations. Addition-            ries of the last few years. Second, another research avenue would
+                 ally, there is no public information about OTC markets            be to investigate the influence of ramping time and other proper-
+                 available.                                                        ties of the energy storage on expected profit. Especially if invest-
+                                                                                   ment costs are taken into account one can, for example, investigate
+    In summary, we are confident that we modeled the two most                      the benefit of a small buffer battery for a pumped hydro storage to
+important German markets, but acknowledge that the integration                     enable instant ramping.
+of additional markets, like balancing markets, is desirable.
+                                                                                   Appendix A. Self-schedule bidding
+    Based on our correspondence with practitioners and in line
+with literature, we see that market participants often trade in                        To check the self-schedule assumption Assumption 2, we show
+more than two markets but in a sequential manner. As seen in                       numerically that the gains from price-volume bids are negligible
+Section 6.5 this can decrease profit, even compared to trading in                  for electricity prices with highly correlated noise (like in Germany).
+fewer markets. Nevertheless, market participants that trade in a                   For this, we solve a simplified energy trading problem numerically
+sequential manner can use our model and approach to combine                        with price-volume bids and with self-schedule bids and evaluate
+two links in the chain to improve their trades. This is the first step             these with common out-of-sample scenarios. In this simplified set-
+towards a fully anticipating trading strategy that integrates all rel-             ting, the PHS only trades in the day-ahead market and ramping
+evant markets in an optimization problem.                                          is ignored. The notation is summarized in Appendix D. To show
+                                                                                   the effect of the correlation of the noise, we draw the scenarios
+8. Conclusion and insights                                                         based on the price process defined in Section 3.1, but artificially
+                                                                                   reduce the correlation. We denote the artificial correlation matrix
+    In this paper, we modeled the energy trading problem for both                  as DA, . This is defined as
+German auction markets with a competitive price forecast as a
+high-dimensional dynamic program. We implemented a suitable                        Algorithm 3 Evaluate (A.4)­(A.15).
+backwards ADP solution algorithm and showed that the approach
+successfully overcomes the resulting curse of dimensionality. Fur-                  1: Sample S day-ahead market prices PtD+A1,h,s
+thermore, the implemented approach outperforms an intuitive and                     2: Solve (A.4) to (A.15)
+widely used benchmark using an expectation model in a receding                      3: Use decisions xtb,uhy,,bbid and xts,ehll,,bbid and observe PtD+A1,h
+horizon fashion as well as a state-of-the-art approach from liter-                  4: Solve (A.4) to (A.15) with the single scenario PtD+A1,h,s = PtD+A1,h
+ature. However, it is important to use a long enough price his-
+tory in the optimization's forecast to outperform the expectation                       and fixed xtb,uhy,,bbid and xts,ehll,,bbid
+model. This is an important observation as the resulting explosion
+of the DP's state space often forces researchers to use shorter his-                         DA,                                                 DA        i= j
+tories, whereas this is much less a problem for expectation mod-                                                                                  i, j     else
+els. Furthermore, one has to use an approach that is designed for                            i, j
+handling high-dimensional price processes, albeit common meth-                     ( ) DA, =            i=1,··· ,24; j=1,··· ,24 :=                DA              (A.1)
+ods from literature cannot.                                                                                                                         i, j
+
+    Regarding the integrated trading, we have shown that inte-                     with   [0, 1] and the originally estimated correlation matrix
+grated trading in both German auction markets is beneficial. Fur-                                                                                                  DA, has the
+ther, we have shown that trading in a sequential manner can be                     DA  =  (DA     ) i =1 , ···  , 24 ;  j=1,···  , 24 .  For    = 1,  the  matrix
+even worse than only trading in the intraday auction market. This                          i, j
+shows that storage owners that sequentially trade have to rethink                  correlation estimated with real-world data. For  = 0, the correla-
+
+                                                                                   tion is zero.
+
+                                                                                   We model the simplified decision problem as a two-stage
+
+                                                                                   stochastic program. Based on a state StDA = Rtstart , xtstart , Pthistory ,
+
+                                                                              740
+B. Finnah, J. Gönsch and F. Ziel                                                                                                           European Journal of Operational Research 301 (2022) 726­746
+
+the here-and-now decisions are B selling and buying bids for each                                           All constraints are defined for all s  {1, · · · S} and h 
+
+hour. The wait-and-see decisions are the actual dispatching of the                                          {0, · · · , 23}. Only constraint (A.13) is defined for all b  {1, . . . B}
+
+PHS after the market is cleared. The volume components of the                                               and h  {0, . . . , 23}. Additionally, Rt,-1,s is                        defined as Rtstart and
+bids are denoted xtb,uhy,,bbid and xts,ebll,,hbid with hour h and the number                                                                                                        objective (A.4) maxi-
+                                                                                                            ytp,u0m,-p1 = 1xtstart >0 and ytt,u0r,b-in1e = 1xtstart <0. The
+of the bid b  {1, . . . , B}. The price components are denoted Ptb,uhy,b,bid
+                                                                                                            mizes the average profit over all samples. While pumping, the PHS
+and Pts,ehl,lb,bid. While we model the volumes as continuous decision
+variable, the prices are fixed parameters. Therefore, we map each                                           must pay the market price PtD+A1,h,s and the grid fees cg f . While gen-
+price parameter Ptb,uhy,b,bid and Pts,ehl,lb,bid a to volume xhbu,by,bid and xsbe,hll,bid.                  erating energy, the PHS receives the market price. If the PHS does
+
+    As we replace the stochastic program with the SAA based on                                              not deliver the energy sold (e.g., empty storage), it has to pay the
+
+S scenarios, we sample the price scenarios PtD+A1,h,s for each hour h                                       balancing price for under supply Qtu+n1d,ehr,s. If the PHS stores less en-
+based on the price process defined in Section 3.1 with correlation                                          ergy than bought (e.g., full storage), it receives the balancing price
+matrix DA, and the price history Pthistory. Based on these samples,
+we can pre-process the parameters atb,uhy,s,b and ats,ehll,s,b.                                             for over supply Qto+ve1r,h,s. The increased maintenance costs during
+                                                                                                            start-up are reflected by cpump and cturbine. Constraints (A.5) and
+
+atb,uhy,s,b =           1    , Ptb,uhy,b,bid  PtD+A1,h,s                                       (A.2)        (A.6) derive the contracted commitments based on the decided
+                        0    , otherwise                                                                    volumes xt(,·h,b,ibd) which are mapped to the parameters Pt(,·h,b,bid). There-
+                                                                                                            fore, in scenario s and hour h, the PHS buys xtb,uhy,s and sells xts,ehll,s.
+                                                                                                            Constraints (A.7) and (A.8) derive the difference between the con-
+
+                             , Pts,ehl,lb,bid < PtD+A1,h,s                                                  tracted energy and the stored/delivered energy. Constraint (A.9) is
+                             , otherwise
+ats,ehll,s,b =          1                                                                      (A.3)        the storage balance equation. Constraint (A.10) limits the power of
+                        0
+                                                                                                            the turbine and the pump to the feasible range. The binary vari-
+
+    If atb,uhy,s,b = 1, the buying bid b in hour h and scenario s is ac-                                    ables  ytp,uhm,s p  and  y tt  urbine  are  equal         to  one,  if  the  pump/turbine  work
+cepted (analogously for ats,ehll,s,b).                                                                                                     ,h,s
+
+                                                                                                            in scenario s and hour h. Constraint (A.11) captures if the pump or
+
+                                                                                                            the turbine has to start-up. The constraints (A.12)­(A.15) define the
+
+      1S                             24                                                                     domain of the variables.
+max
+                             t DA        - PtD+A1,h,s + cg f xtb,uhy,s + PtD+A1,h,sxts,ehll,s               If not stated otherwise, we use the same parameters as in the
+       S
+                                   h =1                                                                     numerical study of Section 6. Since this section focuses on daily
+              s =1
+                                                                                                            energy trading, we use Rtstart = 0 and xtstart = 0. Moreover, we de-
+      + Qto+ve1r,h,sxto,vhe,rs - Qtu+n1d,ehr,sxtu,nhd,ser                                                   fine balancing prices for over- and undersupply that are linear in
+
+      - cpumpztp,uhm,sp - cturbineztt,uhr,bsine                                                (A.4)        the day-ahead market price.
+
+                                                                                                            Qto+ve1r,h,s = Qionvteerrcept + QsolvoeprePtD+A1,h,s                         (A.16)
+
+s.t.                                                                                                        Qtu+n1d,ehr,s = Qiunntedrecrept + Qsulnodpeer PtD+A1,h,s                     (A.17)
+
+                     B
+
+xtb,uhy,s =             atb,uhy,s,bxtb,uhy,,bbid                                               (A.5)        The following parameters differ for the energy trading problem
+                                                                                               (A.6)
+               b=1                                                                             (A.7)        with price-volume bids and the problem with self-schedule bids:
+
+                     B                                                                                      · Price-volume bids: Here we use S = 50 price scenarios drawn
+
+xts,ehll,s =            ats,ehll,s,bxts,ehll,,bbid                                                                      with the estimated price process but artificial cor-
+                                                                                                                        relation matrix DA, . As parameters for the price
+               b=1                                                                                                      components of the B = 33 bids, we use Ptb,uhy,b,bid, Pts,ehl,lb,bid 
+
+xtp,uhm,sp + xto,vhe,rs = xtb,uhy,s                                                                                    -, P¯tD,tA+1,h - 30, P¯tD,tA+1,h - 28, . . . , P¯tD,tA+1,h + 30,  h.
+
+x tt  urbine   +     xtu,nhd,ser  =  xts,ehll,s                                                (A.8)                    Thus, self-schedule bids and price- volume bids within
+      ,h,s
+                                                                                                                        ±30e/MWh of the expected market prices are used.
+                                     pump           tDAxtp,uhm,sp -   t DA     xtt ,uhr,bsine
+  Rt,h,s = Rt,h-1,s +                                                                          (A.9)         · Self-schedule bids: Here we use a single price scenario (S = 1)
+                                                                     t urbine
+                                                                                                                      with PtD+A1,h,s = P¯tD,tA+1,hh. Therefore, the prices are equal
+xcmoimn pytc,ohm,sp  xtc,ohm,sp  xcmoamxpytc,ohm,sp comp  {pump, turbine} (A.10)
+                                                                                                                        to the expected day ahead market on day t + 1 only us-
+
+                                                                                                                        ing data known at day t. To force (A.4)­(A.15) to use self
+
+                                                                                                                        schedule bids, we use as price components of the bids
+
+                                                                                                                      Ptb,uhy,b,bid = h and Pts,ehl,lb,bid = -h. Thus, only one bid
+
+                                                                                                                        (B = 1) results.
+
+ztc,ohm,sp  ytc,ohm,sp - ytc,ohm-p1,s comp  {pump, turbine}                                    (A.11)           Obviously we cannot report the objective value of (A.4) but
+
+Rt,h,s  [0, Rmax]                                                                              (A.12)       have to evaluate this with out-of-sample random numbers. In the
+
+xtb,uhy,b, xts,ehll,b  0                                                                       (A.13)       following pseudocode (Algorithm 3) we state how to apply (A.4)­
+                                                                                               (A.14)
+xto,vhe,rs, xtu,nhd,ser , ztp,uhm,sp, ztt,uhr,bsine  0                                         (A.15)       (A.15) on out-of-sample data:
+
+ytp,uhm,s p ,  y tt  urbine       {0, 1}                                                                        To show the effect of the correlation of the noise, we solve the
+                     ,h,s
+                                                                                                            daily trading problem for each of the 120 days in the test data pre-
+
+                                                                                                            sented in Section 6 with   {1, 0.75, 0.5, 0.25, 0}. Since we esti-
+
+                                                                                                            mated the price processes 20 times with cross validation, we solve
+
+                                                                                                            the problem 20 times for each day. In contrast to the remainder of
+                                                                                                            the paper, we only use the corresponding price history Pthistory and
+                                                                                                            do not evaluate with real-world data. The reason for this is that
+
+                                                                                                            the real world data follows a price process with  = 1. Therefore,
+
+                                                                                                            we have to evaluate with randomly drawn scenarios based on the
+                                                                                                            correlation matrix DA, . This procedure introduces a new level of
+
+                                                                                                            randomness (evaluation level) which is not included in Fig. 5. To
+
+                                                                                                       741
+B. Finnah, J. Gönsch and F. Ziel                                                                                            European Journal of Operational Research 301 (2022) 726­746
+
+Fig. A1. Influence of correlation on expected profit ( = 0: no correlation,  = 1:       Appendix B. Expectation model versus stochastic program
+
+correlation of German market).                                                              To demonstrate that the policy designed in Section 4 works
+                                                                                        well, we compare it with a two-stage stochastic program in a
+reduce the computational burden, we set a relative MILP solution                        single-day setting. While the here-and-now decisions correspond
+gap of 1% while deriving the first-stage decisions.                                     to the day-ahead market stage, the wait-and-see decisions are the
+                                                                                        intraday market stage decisions. To solve the two-stage stochastic
+    Fig. A1 shows the relative average profit summed over the 120                       program we use the sample average approximation with S scenar-
+days including the 95% confidence bands based on self-schedule                          ios.
+
+bids and price-volume bids with   {1, 0.75, 0.5, 0.25, 0}. For the                         1 S 23                                                   3
+correlation based on real-world data ( = 1) there is no significant
+                                                                                        max S                            -  t DAPtD+A1,h,sxtD,Ah +                  -    t IDP¯tI+D1,h,q,sxtID,h,q,s
+difference. The reason for this is, that energy storage systems are
+profitable if the price difference between the buying hours prices                                      s=1 h=0                                     q =0
+and selling hours prices is large enough. Since the forecast er-
+rors of the 24 day-ahead market prices are very highly correlated                       - tIDcg f xtp,uhm,qp,s +                  t ramp          xtp,uhm,qp,s,up + xttu,hr,bqi,nse,down Q¯to+ve1r,h,q,s
+(coefficient of correlation up to 0.98 for consecutive hours), fore-                                                               2
+casts usually over- or underestimate the whole day's prices, which
+hardly influences the daily price differences. This justifies our self-                 -  xtp,uhm,qp,s,down +              x tt  urbine,u     p  Q¯tu+n1d,ehr,q,s
+schedule Assumption 2. Furthermore, the machine time with price-                                                                  ,h,q,s
+volume bids is over 5000 times higher than the machine time with
+                                                                                        - cpumpztp,uhm,qp,s - cturbineztt,uhr,bqi,nse                                                                            (B.1)
+self-schedule bids (not shown here). With decreasing  and there-
+                                                                                        s.t.                                                                                                                     (B.2)
+fore decreasing correlation the price-volume bids become increas-                       xtD,Ah  -xtmuarbxine, xmpuamx p
+
+ingly profitable. For uncorrelated noise ( = 0), price-volume bids                      xtD,Ah + xtID,h,q,s = xtp,uhm,qp,s - xttu,hr,bqi,nse                                                                     (B.3)
+
+dramatically outperform self-schedule bids by over 130 percentage                       xmcoimn pytc,ohm,qp,s  xtc,ohm,qp,s  xmcoamxpytc,ohm,qp,s   comp  {pump, turbine}
+points. Therefore, in energy markets with lower correlation, en-
+ergy storage systems must use price-volume bids. For example, the                                                                                                                     (B.4)
+Nordic markets behave very different than the German markets be-
+cause of the immense penetration of storeable hydropower.                               ytp,uhm,qp,s + yttu,hr,bqi,nse  1                                                                                        (B.5)
+
+    Please note that we only show above that price-volume bids                          xtc,ohm,qp,,sup -             xtc,ohm,qp,,sdown = xtc,ohm,qp,s - xtc,ohm,qp-1,s        comp  {pump, turbine}
+are not needed for the daily energy trading. However, we are con-                                                                                                                                        (B.6)
+fident that this is sound enough for the following reasons: First,
+from a theoretical perspective, price-volume bids outperform self-                       Rt,h,q,s = Rt,h,q-1,s + pump                             t IDxtp,uhm,qp,s -           t ramp          xtp,uhm,qp,s,u p
+schedule bids if one is able so solve the corresponding problems                                                                                                                2
+exactly. Thus, it is reassuring that price-volume bids never perform
+significantly worse than self-schedule bids. Second, one may ask                                              +  t ramp     xtp,uhm,qp,s,down            1                     t  ID     x tt  urbine
+whether this also holds for the problem with multiple days. We                                                    2                                                                            ,h,q,s
+did not investigate this setting here, as the tractability mentioned                                                                               - turbine
+above becomes more difficult as the problem grows. However,
+since most energy storage systems are fully charged/discharged                                                     t ramp   xttu,hr,bqi,nse,up +    t ramp               x tt  urbine,down                       (B.7)
+within hours, the daily price differences are the most important                                              -                                      2                         ,h,q,s
+ones for energy storage systems. In contrast, hydropower plants
+have huge reservoirs (discharge time of days to weeks) and a nat-                                                   2
+ural water inflow. For these power plants it is essential to release
+the exogenous resource at high price hours to be profitable (e.g.                       Rt,h,q,s  [0, Rmax]                                                                                                      (B.8)
+Boomsma et al., 2014; Fleten & Kristoffersen, 2008).
+                                                                                        { } ytp,uhm,qp,s,y tt
+                                                                                                              urbine        0, 1                                                                                 (B.9)
+                                                                                                              ,h,q,s
+
+                                                                                        xtp,uhm,qp,s ,  x tt  urbine  ,    xtp,uhm,qp,s,u p ,  xtp,uhm,qp,s,down ,       x tt  urbine,u  p,    xttu,hr,bqi,nse,down  0
+                                                                                                              ,h,q,s                                                           ,h,q,s                      (B.10)
+
+                                                                                        ytc,ohm,qp,s - ytc,ohm,qp-1,s  ztc,ohm,qp,s comp  {pump, turbine}                                                        (B.11)
+
+                                                                                        ztp,uhm,qp,s, ztt,uhr,bqi,nse  0                                                                                         (B.12)
+
+                                                                                           All constraints are defined for all q  {0, 1, 2, 3}, h  {0, . . . , 23},
+                                                                                        and s  {1, . . . , S}. Additionally, (·)t,h,4,s is defined as (·)t,h+1,0,s
+
+                                                                                   742
+B. Finnah, J. Gönsch and F. Ziel                                                                                          European Journal of Operational Research 301 (2022) 726­746
+
+                                                                                         smaller confidence band. The width of the confidence band of the
+                                                                                         stochastic program decreases in S. Since the machine time dramati-
+                                                                                         cally increases in S, we do not test higher values. Even with S = 50,
+                                                                                         the stochastic program is 400 times slower than the expectation
+                                                                                         model. This shows that the daily expectation model works well. It
+                                                                                         would be possible to learn value functions with BADP-w and the
+                                                                                         policies (expectation model) designed in Section 4 and derive the
+                                                                                         decisions while evaluating with the stochastic program, but we do
+                                                                                         not think that the stochastic program would benefit dramatically
+                                                                                         enough to significantly outperform the expectation model.
+
+Fig. B1. Influence of the number of scenarios on the expected profit.                    Appendix C. Evaluating BADP
+
+                                                                                             Using the value function approximation derived by BADP to
+                                                                                         evaluate the induced policies works similar to Step 4, Step 11,
+                                                                                         and Step 14 in Algorithm 1. The execution logic can be found in
+                                                                                         Algorithm 5.
+
+and Rt,0,-1,s = Rtstart and xtp,u0m,-p1,s = max xtstart , 0 and xttu,0r,b-in1e,s =       Algorithm 5 Evaluate BADP.
+max -xtstart , 0 . Since this section focuses on daily energy trading,
+we use Rtstart = 0 and xtstart = 0.                                                      1: initialize S0DA
+                                                                                         2: for t = 0 to T - 1 do
+    The SAA (B.1)­(B.11) is the stochastic counterpart of the policy
+model. The scenarios for the day-ahead market price PtD+A1,h,s are                       3: compute                         expected         price  history                        P¯th,tis+to1ry :=
+sampled based on the price process defined in Section 3.1 and the                                                                                                                  P¯th,tis+to1ry :=
+current price history. The samples for the expected intraday mar-                                  IE | Pth+is1tory Pthistory
+ket price P¯tI+D1,h,q,s are derived based on the price process defined
+in Section 3.1 conditioned on the sample PtD+A1,h,s. The expected bal-                   4:        (¯1,  .  .  .  ,  ¯N  )  :=  arg min    P¯th,tis+to1r,yn - N kPth+is1t,okry
+ancing prices are computed based on these the usual way. Obvi-                                                                  1,··· ,N                   k =1
+ously, we cannot report the objective value of (B.1) but have to                                                                                                                2
+evaluate this with the real-world data in our test data set. In the                      5: derive xtDA := XtDA, (StDA ) based on (¯1, . . . , ¯N )
+following pseudocode Algorithm 4 we state how to apply (B.1)­                            6: use decisions xtDA and observe PtD+A1
+(B.11) to real-world data:
+                                                                                         7: compute                         expected         price  history
+    We solve the daily problem for each day in our test data set and
+evaluate the decisions with the real world data. We generate the                             IE Pth+is1tory|Pthistory, PtD+A1
+samples based on the price processes with seven days in the price
+history. Since we estimated the price processes 20 times, we solve                       8:        (¯1,  .  .  .  ,  ¯N  )  :=  arg min    P¯th,tis+to1r,yn - N kPth+is1t,okry
+the daily problems 20 times and report the relative mean profits                                                                1,··· ,N                   k =1
+                                                                                                                                                                                2
+for S  {10, 20, 30, 40, 50} and the 95% confidence bands. To reduce                      9: derive xtID := XtID, (StDA ) based on (¯1, . . . , ¯N )
+                                                                                         10: use decisions xtID and observe PtI+D1
+the computational burden, we set a relative MILP solution gap of
+1% while deriving the first-stage decisions (Step 2 in Algorithm 4).                     11: end for
+
+Algorithm 4 Evaluate (B.1)­(B.11).                                                           Algorithm 5 shows how we use the value function ap-
+
+ 1: sample S day-ahead market prices PtD+A1,h,s and compute the                          proximation derived with BADP to derive decisions for the
+     conditioned expectations P¯tI+D1,h,q,s, Q¯to+ve1r,h,q,s, and Q¯tu+n1d,ehr,q,s
+                                                                                         day-ahead and the intraday market. More precisely, how we
+ 2: solve (B.1) to (B.12)                                                                evaluate the policy functions XtDA, StDA and XtID, StID . Step
+ 3: use decisions xtD,Ah and observe PtD+A1,h
+ 4: compute the expectations P¯tI+D1,h,q, Q¯to+ve1r,h,q, and Q¯tu+n1d,ehr,q condi-       1 defines the initial state S0DA. Step 2 iterates over the opti-
+                                                                                         mization horizon. In Step 3, we derive the next day's expected
+     tioned on the observation PtD+A1,h
+ 5: solve (B.1) to (B.12) with the single scenario P¯tI+D1,h,q, Q¯to+ve1r,h,q,           price history conditioned on the current price history. The
+
+     and Q¯tu+n1d,ehr,q and fixed xtD,As .                                               expected price history is regressed on the N sampled price his-
+ 6: use decisions xtD,Ah,q and observe PtI+D1,h,q
+                                                                                         tories (from Algorithm 1) to derive the regression parameters
+    Fig. B1 shows the relative cumulative (over all days) profit and
+the relative cumulative machine time of the stochastic program                           (¯1, . . . , ¯N ) in Step 4. These are used to compute XtDA, StDA =
+with different S. The relative profit slightly increases in the number
+of scenarios, but even with 50 scenarios, the stochastic program                         arg max max              Ctpolicy StDA, xtDA, xtID  + N ¯kV¯tp+o1licy | StD+A1 Pth+is1t,okry
+cannot significantly outperform the substantially faster and simpler                               xtID                                          k =1
+expectation model. In addition, the expectation model has a much                             xtDA
+
+                                                                                         s.t. (9), (11) to (18), (23) to (24), (33). Afterwards, the decision xtDA
+                                                                                         is applied and the MCPs PtD+A1 becomes known. With the realized
+
+                                                                                         day-ahead market prices, the expected price history P¯th,tis+to1ry is
+                                                                                         updated (Step 7) and again regressed on the sampled price histo-
+                                                                                         ries (Step 8). The decision for the intraday market is XtID, StID =
+
+                                                                                         arg max IE CtID StID, xtID, WtI+D1 |StID         + N ¯kV¯tp+o1licy  | StD+A1 Pth+is1t,okry    s.t.
+                                                                                              xtID                                            k =1
+
+                                                                                         (11) to (18), (23) to (24), (26). The decision xtID is used and the
+
+                                                                                         intraday market prices become known.
+
+                                                                                    743
+B. Finnah, J. Gönsch and F. Ziel                       European Journal of Operational Research 301 (2022) 726­746
+
+Appendix D. Notation and parameter values
+
+Table D1
+Notation introduced in Section 3.
+
+Indices
+
+t                                                 Day
+                                                  Hour
+h                                                 Quarter-hour
+
+q                                                 Day-ahead market decision
+                                                  Intraday market decision
+Endogenous variables                              State variable in the day-ahead market stage
+                                                  State variable in the intraday market stage
+xtDA = xtD,A0, . . . , xtD,A23                    Storage level at the start of day t
+                                                  Inflow/outflow volume at the start of day t
+xtID = xtID,0,0, . . . , xtID,23,3                Inflow/outflow volume
+StDA                                              Binary working mode variable
+                                                  Start-up variable
+StID                                              Up/down ramping volume of the turbine
+Rtstart                                           Up/down ramping volume of the pump
+                                                  Storage level
+xtstart
+xttu,hr,bqine , xtp,uhm,qp                        Day-ahead market prices
+yttu,hr,bqine , ytp,uhm,qp                        Intraday market prices
+ztt,uhr,bqine , ztp,uhm,qp                        Past prices used for price forecast
+                                                  Payments for overproduction
+   x tt  urbine,u  p,        xtt u,hr,bqine,down  Payments for underproduction
+         ,h,q               xtp,uhm,qp,down       Exogenous information which become known after the day ahead market stage
+                                                  Exogenous information which become known after the intraday market stage
+   xtp,uhm,qp,u p ,
+                                                  Number of time periods
+Rt,h,q                                            Day of the week dummy
+                                                  Regression parameters in price forecast
+Exogenous information                             Correlation matrix
+                                                  Noise
+PtDA = PtD,1A, . . . , PtD,2A4                    Working range of the pump
+PtID = PtI,D0,0, . . . , PtI,D23,3                Working range of the turbine
+Pthistory                                         Storage capacity
+Qtover = Qto,v0e,r0, . . . , Qto,v2e3r,3          Temporal resolution of the day-ahead market
+Qtunder = Qtu,n0d,0er , . . . , Qtu,n2d3e,3r      Temporal resolution of the intraday market
+WtDA                                              Ramping time
+WtID                                              Efficiency of the pump/turbine
+                                                  Grid fees
+Parameters                                        Start-up cost of the pump/turbine
+                                                  Intercept of the linear imbalance cost
+T                                                 Slope of the linear imbalance cost
+DoW((··))
+                                                  One-stage profit of the day-ahead market stage
+((··))                                            One-stage profit of the intraday market stage
+                                                  Transition function from the day-ahead market stage to the intraday market stage
+   (·)                                            Transition function from the intraday market stage to the day-ahead market stage
+                                                  Policy function of the day-ahead market stage
+  (·)                                             Policy function of the intraday market stage
+  t                                               Value function of the day-ahead market stage
+                                                  Value function of the intraday market stage
+xmpuinmp, xmpuamx p
+xtmuirnbine , xtmuarxbine
+Rmax
+
+  t DA
+
+  t ID
+
+  t ramp
+
+  pump, turbine
+
+cg f
+
+cpump, cpump
+Qionvteerrcept , Qiunntedrecrept
+Qsolvoepre , Qsulnodpeer
+
+Functions
+
+CtDA
+CtID
+S M,DA
+
+SM,ID
+XtDA,
+XtID,
+VtDA
+VtID
+
+                                                  744
+B. Finnah, J. Gönsch and F. Ziel                                                                                   European Journal of Operational Research 301 (2022) 726­746
+
+Table D2                                                                                           Table D6
+Notation introduced in Section 4.                                                                  Notation introduced in Appendix A.
+
+Endogenous variables                                                                               Indices
+
+xtpolicy            Decision variable of the policy model                                          b               Bid
+
+Exogenous information                                                                              s               Scenario
+
+Wtpolicy            Exogenous information of the policy model                                      Parameters
+
+Parameters                                                                                         B               Number of bids
+
+P¯tD,tA+1,h         Expectation of the day-ahead market prices                                     S               Number of scenarios
+P¯tI,Dt +1,h,q      Expectation of the intraday market prices
+Q¯to,vte+r1,h,q     Expectation of the balancing prices for overproduction                                         Correlation factor
+Q¯ tu,nt +de1r,h,q  Expectation of the balancing prices for underproduction                                        Artificial correlation matrix
+Functions                                                                                             DA,
+
+                                                                                                   Ptb,uhy,b,bid Price component of the buying bid
+                                                                                                   Pts,ehl,lb,bid
+Ctpolicy            One-stage profit of the policy model                                           atb,uhy,s,b     Price component of the selling bid
+SM, pol icy         Transition function of the policy model                                                        Indicator if buying bid is accepted
+
+                                                                                                   ats,ehll,s,b    Indicator if selling bid is accepted
+
+Vtpolicy            Value function of the policy model                                             Endogenous variables
+V¯ policy           Value function approximation of the policy model
+                                                                                                   xtb,uhy,,bbid   Volume component of the buying bid
+P                   Transition probabilities                                                       xts,ehll,,bbid  Volume component of the selling bid
+                                                                                                   xtb,uhy,s       Contracted buying volume
+Table D3                                                                                           xts,ehll,s      Contracted selling volume
+Notation introduced in Section 5.                                                                  xto,vhe,rs      Overproduction
+                                                                                                   xtu,nhd,ser     Underproduction
+
+Indices                                   Sample index                                             Crespo-Vazquez, J. L., Carrillo, C., Diaz-Dorado, E., Martinez-Lorenzo, J. A., &
+n                                                                                                       Noor-E-Alam, M. (2018). A machine learning based stochastic optimization
+Parameters                                Sample of the price history                                   framework for a wind and storage power plant participating in energy pool
+Pth,nistory                                                                                             market. Applied Energy, 232, 341­357.
+= Pth,nistory,1, . . . , Pth,nistory,840  Expectation of the next price history based on the
+P¯th,tis+to1r,yn                          nth sample                                               Ding, H., Hu, Z., & Song, Y. (2015). Rolling optimization of wind farm and energy
+                                          Expectation of the next price history based on the            storage system in electricity markets. IEEE Transactions on Power Systems, 30(5),
+P¯th,tis+to1ry                            realized price history                                        2676­2684.
+                                          Interpolation/extrapolation parameters
+¯n                                        Upper/lower bounds for the                               Durante, J., Nascimento, J., & Powell, W. B. (2020). Backward approximate dynamic
+                                          Interpolation/extrapolation parameters                        programming with hidden semi-Markov stochastic models in energy storage op-
+Ktd,k                                     Vector of weights                                             timization. Working paper, Princeton University, Princeton.
+                                          jth Unit vector
+wt                                        Bandwidth                                                EPEX SPOT SE (2020). Market data. https://www.epexspot.com/en/market-data. Ac-
+ej                                        Number of sample paths                                        cessed 21 July 2020.
+d
+N                                                                                                  Fathima, A. H., & Palanisamy, K. (2015). Optimization in microgrids with hybrid
+                                                                                                        energy systems ­ A review. Renewable and Sustainable Energy Reviews, 45,
+           Table D4                                                                                     431­446.
+           Notation introduced in Section 6.
+                                                                                                   Finnah, B. (2021). Optimal bidding functions for renewable energies in sequential
+             Parameters                   Number of iterations of ADDP                                  electricity markets. OR Spectrum. https://doi.org/10.1007/s00291-021-00646-9.
+             K                            Number of days in the price history
+             D                                                                                     Finnah, B., & Gönsch, J. (2021). Optimizing trading decisions of wind power plants
+                                                                                                        with hybrid energy storage systems using backwards approximate dynamic pro-
+   Table D5                                                                                             gramming. International Journal of Production Economics, 238, 108­155.
+   Parameter values for the numerical study.
+                                                                                                   Fleten, S.-E., & Kristoffersen, T. K. (2008). Short-term hydropower production
+           Parameter          Value           Parameter      Value                                      planning by stochastic programming. Computers & Operations Research, 35(8),
+                              100MWh                         30                                         2656­2671 .
+           Rmax               5MW             T              5MW
+           xxmmppuuainmmx pp  10MW                           10MW                                  Ghavidel, S., Ghadi, M. J., Azizivahed, A., Aghaei, J., Li, L., & Zhang, J. (2020). Risk­
+                              1h              xtmuirnbine    15 min                                     constrained bidding strategy for a joint operation of wind power and CAES ag-
+             t DA             2 min           xtmuarxbine    5e/MWh                                     gregators. IEEE Transactions on Sustainable Energy, 11(1), 457­466.
+                              15 e                           15 e
+             t ramp           0.9               t ID         0.9                                   Glasserman, P. (2003). Monte Carlo methods in financial engineering. Springer New
+                              -3e/MWh                                                                   York .
+           c pum p            3e/MWh          cg f             1
+                              50                             1.2                                   Gönsch, J., & Hassler, M. (2016). Sell or store? An ADP approach to marketing re-
+            pum p                             cturbine                                                  newable energy. OR Spectrum, 38(3), 633­660.
+                                                             1.2
+           Qionvteerrce pt                    turbine                                              Hain, M., Schermeyer, H., Uhrig-Homburg, M., & Fichtner, W. (2018). Managing re-
+           Qiunnt edrecre pt                                 5e/MWh                                     newable energy production risk. Journal of Banking & Finance, 97, 1­19.
+           N                                  Qsolvoepre
+                                              Qsulnodpeer                                          Hannah, L. A., & Dunson, D. B. (2011). Approximate dynamic programming for stor-
+                                              cg f                                                      age problems. In Proceedings of the 28th international conference on international
+                                                                                                        conference on machine learning. In ICML'11 (pp. 337­344). USA: Omnipress.
+References
+                                                                                                   Heredia, F. J., Cuadrado, M. D., & Corchero, C. (2018). On optimal participation in the
+Bonnans, J. F., Cen, Z., & Christel, T. (2011). Energy contracts management by                          electricity markets of wind power plants with battery energy storage systems.
+     stochastic programming techniques. Annals of Operations Research, 200(1),                          Computers & Operations Research, 96, 316­329.
+     199­222 .
+                                                                                                   Jedrzejewski, A., Marcjasz, G., & Weron, R. (2021). Importance of the long-term sea-
+Boomsma, T. K., Juul, N., & Fleten, S.-E. (2014). Bidding in sequential electricity mar-                sonal component in day-ahead electricity price forecasting revisited: Parame-
+     kets: The nordic case. European Journal of Operational Research, 238(3), 797­809.                  ter-rich models estimated via the LASSO. Energies, 14(11), 3249.
+
+Brijs, T., Geth, F., Jonghe, C. D., & Belmans, R. (2019). Quantifying electricity stor-            Jiang, D. R., Pham, T. V., Powell, W. B., Salas, D. F., & Scott, W. R. (2014). A compar-
+     age arbitrage opportunities in short-term electricity markets in the CWE region.                   ison of approximate dynamic programming techniques on benchmark energy
+     Journal of Energy Storage, 25, 100899.                                                             storage problems: Does anything work?. In Proceedings of the IEEE symposium
+                                                                                                        on adaptive dynamic programming and reinforcement learning (ADPRL). IEEE.
+Broadie, M., Glasserman, P., & Ha, Z. (2000). Pricing american options by simulation
+     using a stochastic mesh with optimized weights. In Nonconvex optimization and                 Khatami, R., Oikonomou, K., & Parvania, M. (2020). Look-ahead optimal participa-
+     its applications (pp. 26­44). Springer US.                                                         tion of compressed air energy storage in day-ahead and real-time markets. IEEE
+                                                                                                        Transactions on Sustainable Energy, 11(2), 682­692.
+
+                                                                                                   Kim, J. H., & Powell, W. B. (2011). Optimal energy commitments with storage and
+                                                                                                        intermittent supply. Operations Research, 59(6), 1347­1360.
+
+                                                                                                   Kuznetsova, E., Ruiz, C., Li, Y. F., & Zio, E. (2015). Analysis of robust optimization for
+                                                                                                        decentralized microgrid energy management under uncertainty. International
+                                                                                                        Journal of Electrical Power & Energy Systems, 64, 815­832.
+
+                                                                                                   Löhndorf, N., & Minner, S. (2010). Optimal day-ahead trading and storage of renew-
+                                                                                                        able energies--An approximate dynamic programming approach. Energy Systems,
+                                                                                                        1(1), 61­77.
+
+                                                                                                   Löhndorf, N., & Shapiro, A. (2019). Modeling time-dependent randomness in
+                                                                                                        stochastic dual dynamic programming. European Journal of Operational Research,
+                                                                                                        273, 650­661.
+
+                                                                                              745
+B. Finnah, J. Gönsch and F. Ziel                                                              European Journal of Operational Research 301 (2022) 726­746
+
+Löhndorf, N., Wozabal, D., & Minner, S. (2013). Optimizing trading decisions for hy-          Sterner, M., & Stadler, I. (2017). Energiespeicher - Bedarf, Technologien, Integration.
+     dro storage systems using approximate dual dynamic programming. Operations                    Springer Berlin Heidelberg.
+     Research, 61(4), 810­823.
+                                                                                              Uniejewski, B., & Weron, R. (2018). Efficient forecasting of electricity spot prices
+Marcjasz, G. (2020). Forecasting electricity prices using deep neural networks: A                  with expert and lasso models. Energies, 11(8), 2039.
+     robust hyper-parameter selection scheme. Energies, 13(18), 4605.
+                                                                                              Vahedipour-Dahraie, M., Rashidizadeh-Kermani, H., Anvari-Moghaddam, A., &
+Marcjasz, G., Uniejewski, B., & Weron, R. (2019). On the importance of the long-term               Siano, P. (2020). Risk-averse probabilistic framework for scheduling of virtual
+     seasonal component in day-ahead electricity price forecasting with NARX neural                power plants considering demand response and uncertainties. International Jour-
+     networks. International Journal of Forecasting, 35(4), 1520­1532.                             nal of Electrical Power & Energy Systems, 121, 106126.
+
+Moghaddam, I. G., Nick, M., Fallahi, F., Sanei, M., & Mortazavi, S. (2013). Risk-averse       Viehmann, J. (2017). State of the german short-term power market. Zeitschrift für
+     profit-based optimal operation strategy of a combined wind farm­cascade hy-                   Energiewirtschaft, 41(2), 87­103.
+     dro system in an electricity market. Renewable Energy, 55, 252­259.
+                                                                                              Weitzel, T., & Glock, C. H. (2018). Energy management for stationary electric energy
+Narajewski, M., & Ziel, F. (2020a). Econometric modelling and forecasting of intraday              storage systems: A systematic literature review. European Journal of Operational
+     electricity prices. Commodity Markets, 19, 100­107.                                           Research, 264(2), 582­606.
+
+Narajewski, M., & Ziel, F. (2020b). Ensemble forecasting for intraday electricity             Weron, R. (2014). Electricity price forecasting: A review of the state-of-the-art with
+     prices: Simulating trajectories. Applied Energy, 279, 115801.                                 a look into the future. International Journal of Forecasting, 30(4), 1030­1081.
+
+Narajewski, M., & Ziel, F. (2021). Optimal bidding on hourly and quarter-hourly day-          Wozabal, D., & Rameseder, G. (2020). Optimal bidding of a virtual power plant on
+     ahead electricity price auctions. https://arxiv.org/pdf/2104.14204.pdf.                       the spanish day-ahead and intraday market for electricity. European Journal of
+                                                                                                   Operational Research, 280(2), 639­655.
+Olaszi, B. D., & Ladanyi, J. (2017). Comparison of different discharge strategies of
+     grid-connected residential PV systems with energy storage in perspective of op-          Xu, X., Hu, W., Cao, D., Huang, Q., Liu, Z., Liu, W., Chen, Z., & Blaabjerg, F. (2020).
+     timal battery energy storage system sizing. Renewable and Sustainable Energy                  Scheduling of wind-battery hybrid system in the electricity market using distri-
+     Reviews, 75, 710­718.                                                                         butionally robust optimization. Renewable Energy, 156, 47­56.
+
+Powell, W. B. (2019). A unified framework for stochastic optimization. European Jour-         Zéphyr, L., & Anderson, C. L. (2017). Stochastic dynamic programming approach
+     nal of Operational Research, 275(3), 795­821.                                                 to managing power system uncertainty with distributed storage. Computational
+                                                                                                   Management Science, 15(1), 87­110.
+Rahman, H. A., Majid, M. S., Jordehi, A. R., Kim, G. C., Hassan, M. Y., &
+     Fadhl, S. O. (2015). Operation and control strategies of integrated distributed          Zhou, Y. H., Scheller-Wolf, A., Secomandi, N., & Smith, S. (2016). Electricity trading
+     energy resources: A review. Renewable and Sustainable Energy Reviews, 51,                     and negative prices: Storage vs. disposal. Management Science, 62(3), 880­898.
+     1412­1420 .
+                                                                                              Zhu, D., Wang, Y., Yue, S., Xie, Q., Pedram, M., & Chang, N. (2013). Maximizing re-
+Salas, D. F., & Powell, W. B. (2018). Benchmarking a scalable approximate dynamic                  turn on investment of a grid-connected hybrid electrical energy storage system.
+     programming algorithm for stochastic control of grid-level energy storage. IN-                In Proceedings of the 18th Asia and south Pacific design automation conference (AS-
+     FORMS Journal on Computing, 30(1), 106­123.                                                   P-DAC) (pp. 638­643).
+
+Scott, P. (2019). Approximate dynamic programming for energy storage with new                 Ziel, F. (2016). Forecasting electricity spot prices using lasso: On capturing the
+     results on instrumental variables and projected Bellman errors. Submitted to Op-              autoregressive intraday structure. IEEE Transactions on Power Systems, 31(6),
+     erations Research.                                                                            4977­4987.
+
+Steffen, B. (2012). Prospects for pumped-hydro storage in Germany. Energy Policy,
+     45, 420­429.
+
+                                                                                         746
+

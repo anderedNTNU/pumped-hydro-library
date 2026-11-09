@@ -1,0 +1,1149 @@
+                                                                                           REVIEW
+                                                                  published: 28 January 2021
+                                                            doi: 10.3389/fceng.2020.622241
+
+                                              A Review of Stochastic Programming
+                                              Methods for Optimization of Process
+                                              Systems Under Uncertainty
+
+                                              Can Li and Ignacio E. Grossmann *
+
+                                              Department of Chemical Engineering, Carnegie Mellon University, Pittsburgh, PA, United States
+
+                                 Edited by:   Uncertainties are widespread in the optimization of process systems, such as uncertainties
+                                Fengqi You,   in process technologies, prices, and customer demands. In this paper, we review the basic
+     Cornell University, United States        concepts and recent advances of a risk-neutral mathematical framework called
+                                              "stochastic programming" and its applications in solving process systems engineering
+                            Reviewed by:      problems under uncertainty. This review intends to provide both a tutorial for beginners
+                     Laureano Escudero,       without prior experience and a high-level overview of the current state-of-the-art
+   Rey Juan Carlos University, Spain          developments for experts in process systems engineering and stochastic
+                  M. M. Faruque Hasan,        programming. The mathematical formulations and algorithms for two-stage and
+Texas A&M University, United States           multistage stochastic programming are reviewed with illustrative examples from
+                                              process industries. The differences between stochastic programming under
+                     *Correspondence:         exogenous uncertainty and endogenous uncertainties are discussed. The concepts
+                  Ignacio E. Grossmann        and several data-driven methods for generating scenario trees are also reviewed.
+                   grossmann@cmu.edu
+                                              Keywords: Stochastic programming, process systems engineering, optimization, decision-making under
+                      Specialty section:      uncertainty, data-driven
+          This article was submitted to
+Computational Methods in Chemical             1 INTRODUCTION
+
+                                Engineering,  Stochastic programming, also known as stochastic optimization (Birge and Louveaux, 2011), is a
+                  a section of the journal    mathematical framework to model decision-making under uncertainty. The origin of stochastic
+    Frontiers in Chemical Engineering         programming dates back to the 1950s when George B. Dantzig, recognized as the father of the
+                                              simplex algorithm for linear programming, wrote the pioneer paper "Linear Programming under
+          Received: 28 October 2020           Uncertainty" (Dantzig, 1955). In this pioneering paper, Dantzig described one of the motivations of
+      Accepted: 29 December 2020              developing the stochastic programming modeling framework as "to include the case of uncertain
+                                              demands for the problem of optimal allocation of a carrier fleet to airline routes to meet an
+         Published: 28 January 2021           anticipated demand distribution". Another early work on stochastic programming can be found in
+                                              Beale (1955). From then on, stochastic programming has evolved into a major area of research for the
+                                   Citation:  mathematical programming and operations research community. A significant number of
+     Li C and Grossmann IE (2021) A           theoretical and algorithmic developments have been made by the mathematicians, which are
+  Review of Stochastic Programming            summarized in the classical textbooks (Birge and Louveaux, 2011; Shapiro et al., 2014). With the
+Methods for Optimization of Process           increase in the maturity of algorithmic and computational methods, stochastic programming has
+                                              been applied to a broad spectrum of problems (Wallace and Ziemba, 2005) including financial
+           Systems Under Uncertainty.         planning, electricity generation, supply chain management, mitigation of climate change, and
+         Front. Chem. Eng. 2:622241.          pollution control, among many others.
+    doi: 10.3389/fceng.2020.622241
+                                                 Process systems engineering (PSE) is an area of chemical engineering that focuses on the
+                                              development and application of modeling and computational methods to simulate, design,
+                                              control, and optimize processes (Sargent, 2005). Uncertainties are prevalent in the optimization
+
+Frontiers in Chemical Engineering | www.frontiersin.org  1  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                 Review Stochastic Programming Process System
+
+FIGURE 1 | The number of papers published in journals including Computers and Chemical Engineering, Computer Aided Chemical Engineering, Industrial and
+Engineering Chemistry Research, and AIChE Journal from 1990 to September 1st, 2020 (Data obtained from Web of Science).
+
+TABLE 1 | Summary of representative works that use stochastic programming for PSE applications.
+
+Work                                                     Application                                             Sources of uncertainty
+
+Gupta and Maranas (2003)               Supply chain planning                                     Demand
+Kim et al. (2011)                      Biomass supply chain network                              Supply, demands, prices, processing technologies
+Guillén-Gosálbez and Grossmann (2009)  Chemical supply chain                                     Life cycle inventory
+Gebreslassie et al. (2012)             Hydrocarbon biorefinery supply chains                     Supply, demand
+Liu and Sahinidis (1996)               Process planning                                          Supply, demand
+Pistikopoulos and Ierapetritou (1995)  Process design                                            Supply, demand
+Acevedo and Pistikopoulos (1998)       Process synthesis                                         Supply, demand
+Goel and Grossmann (2004)              Offshore gas field developments                           Gas reserves
+Zeballos et al. (2014)                 Design and planning of supply chain                       Supply, demand
+Levis and Papageorgiou (2004)          Capacity planning in pharmaceutical industry              Clinical trial outcomes
+Karuppiah and Grossmann (2008)         Synthesis of water networks                               Contaminants concentration, removal efficiency
+Colvin and Maravelias (2008)           Clinical trial planning                                   Clinical trial outcomes
+Li et al. (2011a)                      Natural gas production network design and operation       Quality of natural gas
+Sand and Engell (2004)                 Real-time scheduling of batch plant                       Processing time, yields, capacity, demand
+Liu et al. (2010)                      Polygeneration energy systems design                      Price, demand
+Paules IV and Floudas (1992)           Synthesis of heat-integrated distillation                 Feed composition and flowrate
+Chu and You (2013)                     Integrated scheduling and dynamic optimization            Process uncertainty, e.g., kinetic parameters
+Ye et al. (2014)                       Production scheduling of steelmaking                      Demand
+Zhang et al. (2016)                    Scheduling of power-intensive processes                   Electricity price
+Legg et al. (2012)                     Gas detector placement                                    Leak locations, weather conditions
+Han and Lee (2012)                     Carbon capture and storage infrastructure design          CO2 emissions, product prices, operating costs
+Zavala (2014)                          Control of natural gas networks                           Demand
+Zeng and Cremaschi (2018)              Shale gas infrastructure planning                         Production
+
+of process systems, such as prices and purity of raw materials,         difficult to solve than their deterministic counterparts. After the
+customer demands, yields of pilot reactors, etc. The marriage of        1990s, with the improvement of commercial mathematical
+stochastic programming with PSE seems to be a natural alliance.         programming software, e.g., solvers like CPLEX (Lima, 2010),
+However, the first application of stochastic programming in PSE         and computer hardware, there is an increasing interest to apply
+took place a decade after Dantzig wrote his first paper. The            stochastic programming to process systems applications. In
+earliest paper that we can find is the paper by Kittrell and Watson     Figure 1, we survey the number of papers with stochastic
+(1966) where the authors applied stochastic programming to the          programming as the main topic published in four mainstream
+optimal design of proces equipment under uncertain parameters.          PSE journals and conferences, Computers and Chemical
+The reason that prohibited researchers in PSE to apply stochastic       Engineering, Computer Aided Chemical Engineering,
+programming is that computational resources were limited in the         Industrial and Engineering Chemistry Research, and AIChE
+early days and stochastic programming models are much more              Journal, from 1990 to September 1st, 2020. There is a
+
+Frontiers in Chemical Engineering | www.frontiersin.org              2                           January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                          Review Stochastic Programming Process System
+
+significant growth in the number of papers in this surveyed time          dimension ny, which can only take values 0 or 1. Binary
+horizon, with around 30 papers per year after the 2010s.                  variables are usually used to represent logic relations or
+                                                                          choices e.g., whether to install a given chemical plant or not.
+   The applications of stochastic programming are also                    Vector  represents parameters involved in the optimization
+widespread in the PSE community. In Table 1, some highly                  problem, such as product demand, unit costs of some
+cited papers from the four PSE-related journals that apply                processes. If we assume that these parameters are known with
+stochastic programming are reported. The applications have a              certainty, the problem Eq. 1 is a deterministic optimization
+very broad temporal scale, ranging from long-term design and              problem. A deterministic optimization problem can be
+planning problems to short-term scheduling and control                    classified into several categories depending on the forms of f,
+problems. In terms of industrial sectors, the listed papers in            g, h, x, y.
+Table 1 have both traditional industrial sectors, such as
+petroleum, natural gas, pharmaceutical, chemical, etc., and                  · some of f, g, h, are nonlinear functions. Problem Eq. 1 is a
+new sectors, such as biofuels, carbon capture, etc. The                         mixed-integer nonlinear program (MINLP).
+uncertainties that are considered in those applications include
+prices, supply, and concentration of raw materials, demands of               · f, g, h are all linear functions. Problem Eq. 1 becomes a
+final productions, process technologies, clinical trial outcomes.               mixed-integer linear program (MILP).
+
+   Given the increasing popularity of stochastic programming in              · some of f, g, h, are nonlinear functions and there is no y
+the PSE community, this paper aims to give an overview of basic                 variable, i.e., ny 0. Problem Eq. 1 becomes a nonlinear
+modeling techniques and algorithms for stochastic programming                   program (NLP).
+as well as a high-level description of the recent contributions
+made by the PSE community to a non-expert audience. For                      · f, g, h, are linear functions and there is no y variable, i.e., ny
+readers interested in the recent mathematical developments in                   0. Problem Eq. 1 becomes a linear program (LP).
+stochastic programming, we refer to the review papers by
+Sahinidis (2004); Küçükyavuz and Sen (2017); Torres et al.                   The four different mathematical programs, MINLP, MILP,
+(2019).                                                                   NLP, LP, are chosen depending on the nature of the problem. For
+                                                                          problems in chemical engineering, nonlinear equations are often
+   This paper is organized as follows. In Section 2, we provide an        used to describe thermodynamic or kinetic behavior. Integer
+overview of mathematical programming and optimization under               variables can be used to describe process synthesis problems
+uncertainty. In Section 3, we introduce the concepts,                     e.g., a binary variable can describe whether a given distillation
+mathematical formulations, and algorithms of two-stage                    column exists or not in a chemical flowsheet. For a detailed
+stochastic programming. In Section 4, we introduce an                     treatment of deterministic optimization methods, we refer to the
+extension of two-stage stochastic programming, multistage                 textbook by Grossmann (2021).
+stochastic programming. In Section 5, the techniques for
+multistage stochastic programming under endogenous                           In deterministic optimization models, parameters  are
+uncertainty are reviewed. In Section 6, we review data-driven             assumed to be known. However, in practice, uncertainties
+methods for generating scenario trees. We draw the conclusion in          are prevalent in process systems due to inaccurate
+Section 7.                                                                measurement, forecast error, or lack of information. For
+                                                                          example, uncertainties in supply chain management can
+2 OPTIMIZATION UNDER UNCERTAINTY                                          arise from future customer demand, potential network
+                                                                          disruption, or even the spread of a pandemic. Failing to
+The decision-making process is normally modeled as an                     consider uncertainties in the decision-making process may
+optimization problem. A generic optimization problem is                   lead to suboptimal or even infeasible solutions. To hedge
+represented in the following succinct form in Eq. 1 where we              against the uncertainties in process systems, several
+have some continuous variables x, to represent the decisions              mathematical frameworks have been used by the PSE
+being made, (e.g. sizing decision of a reactor), 0­1 variables y to       community including stochastic programming, chance-
+represent the discrete choices, (e.g. select a given reactor or not),     constrained programming (Li et al., 2008), and robust
+an objective function f to minimize or maximize, (e.g. to                 optimization. (Lappas and Gounaris, 2016). The three
+minimize the total cost), and some constraints g, h, that the             approaches are different in their degrees of risk aversion
+variables have to satisfy, (e.g. the mass balance).                       and ways of characterizing uncertainties. Stochastic
+                                                                          programming (SP) is a risk-neutral approach, which seeks
+                  min f x, y;                                             to optimize the expected outcome over a known probability
+                   x,y                                                    distribution. Chance-constrained programming can be seen as
+                                                                          solving a stochastic program with some probabilistic
+                  s.t. g x, y;   0                                        constraints, which specify that some constraints with
+                                                                          uncertain parameters are satisfied with a given level of
+                  h x, y;  0                                              probability. For example, a chance constraint can specify
+                                                                          that a budget/cost that should not exceed a certain
+                  x  Rnx , y  {0, 1}ny                   (1)              threshold. Chance constrained programming offers
+                                                                          modeling flexibility to deal with reliability issues and have
+   Variables x are continuous variables with dimension nx, which          important connections with risk management. Robust
+can take real values. Variables y are binary variables with
+
+Frontiers in Chemical Engineering | www.frontiersin.org                3  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                       Review Stochastic Programming Process System
+
+TABLE 2 | Summary of stochastic programming, chance-constrained programming, and robust optimization.
+
+Method                                                        Degree                                           Characterization
+                                                         of risk aversion                                        of uncertainty
+
+Stochastic programming                                   Risk neutral                                  Probability distribution
+Chance-constrained programming                           Risk averse                                   Probability distribution, risk level
+Robust optimization                                      Worst case scenario                           Uncertainty set
+
+FIGURE 2 | Two-stage problem: conceptual representation (left); scenario tree (right) where x represents the first stage decisions, y represents the stage two
+decisions for scenario . , h represent the probability and the uncertain right hand side of scenario , respectively.
+
+optimization is another risk-averse approach, which seeks to              to the real probability distribution. For example, the realizations
+optimize the "worst-case" over a pre-defined uncertainty set.
+Robust optimization problems typically involve min-max type               of the demand for a product can have three different values which
+of operators. A summary of the three approaches is shown in
+Table 2.                                                                  represent high, medium, and low demand, respectively. Each
+                                                                          realization is defined as a scenario. The objective of stochastic
+   Besides these three approaches, there are a number of
+mathematical frameworks to model decision-making under                    programming is to optimize the expected value of an objective
+uncertainty, such as Markov Decision Process (MDP). Powell
+(2019) unifies 15 communities in optimization under uncertainty           function, (e.g. the expected cost) over all the scenarios.
+in a single framework. Reviewing all the 15 approaches is outside
+the scope of this paper. Interested readers can refer to the relevant        A special case of stochastic programming is two-stage
+papers (Powell, 2019, Powell, 2016).                                      stochastic programming (Figure 2). Specifically, stage one
+                                                                          decisions are made `here and now' at the beginning of the
+3 TWO-STAGE STOCHASTIC
+PROGRAMMING                                                               period, and are then followed by the resolution of uncertainty.
+                                                                          Stage two decisions, or recourse decisions, are taken `wait and see'
+Two-stage stochastic programming is a special case of stochastic
+programming. In this section, we describe the mathematical                as corrective action at the end of the period. One common type of
+formulations, algorithms and illustrative examples for two-
+stage stochastic programming.                                             two-stage stochastic program is mixed-integer linear program
+                                                                          presented in Eq. 2.  is the set of scenarios.  is the probability of
+3.1 Two-Stage Stochastic Mixed Integer                                    scenario . x represent the first-stage decisions. y represent the
+Linear Programs                                                           second-stage decisions in scenario . The uncertainties are
+                                                                          reflected in the matrices (vectors), W, h, T shown in Eq. 2.
+For simplicity of presentation, we fist consider stochastic MILP          In the literature, W is called the "recourse matrix"; T is called
+problems.                                                                 the "technology matrix". On the right of Figure 2, an example of a
+                                                                          "scenario tree" that has three scenarios with uncertain h is used
+3.1.1 Mathematical Formulation                                            to represent the realizations of uncertainties on the right
+In stochastic programming, it is assumed that the probability
+distributions of the uncertain parameters are known a priori. The         hand side.
+uncertainties are usually characterized by some discrete                     For problem Eq. 2, both the first and the second stage
+realizations of the uncertain parameters as an approximation
+                                                                          decisions are mixed-binary. Let I {1, 2, . . . , n} be the index
+                                                                          set of all the first stage variables. I14I is the subset for indices
+                                                                          of the binary first stage variables. Let J {1, 2, . . . , m} be the index
+                                                                          set of all the second stage variables. J14J is the subset for the
+                                                                          indices of the binary second stage variables. xub is a vector that
+                                                                          represents the upper bound of all the first stage variables. yub is a
+                                                                          vector that represents the upper bound of all the second stage
+
+                                                                          variables. The problem described by Eq. 2 is a two-stage
+
+                                                                          stochastic mixed-integer linear program (TS-MILP). If both J1
+                                                                          and I1 are empty sets, Eq. 2 reduces to a two-stage stochastic
+
+Frontiers in Chemical Engineering | www.frontiersin.org                4                               January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                  Review Stochastic Programming Process System
+
+FIGURE 3 | Superstructure for the process network problem.
+
+linear programming problem (TS-LP). Eq. 2 is often referred to as                    Variables PA(), PB() represent the purchase amount of
+the deterministic equivalent or the extensive form of the two-stage               chemical A and B, respectively. Other material flows for chemical
+stochastic program since Eq. 2 can be solved in the same way as if                B and C are shown in the superstructure in Figure 3. The MILP
+we were solving a deterministic optimization problem.                             formulation is shown as follows.
+
+   min cux + duy                                                                  max - (10Y1 + 15Y2 + 20Y3 + CAP1 + 1.5CAP2 + 2CAP3)
+
+                                                                                  +    E    [  -  4.5PA()  -  9.5PB()  -  0.5PA()  -  0.5B2  ()
+
+   s.t. Ax  b                                                                        d()   P
+   Wy  h - Tx   
+   x  X, X x : xi  {0, 1}, i  I1, 0  x  xub                                       - 0.5B3() + 25C2() + 25C3()]
+   y  Y  , Y y : yj  {0, 1}, j  J1, 0  y  yub .
+                                                                                                                                             (3a)
+                                                                          (2)
+                                                                                  s.t. CAP1  U · Y1, CAP2  U · Y2, CAP3  U · Y3, Y2 + Y3  1
+3.1.2 Process Network Problem                                                                                                                            (3b)
+To show how two-stage stochastic programming can be applied
+to a process systems engineering problem, we provide a process                    PA()  CAP1, B2()  CAP2, B3()  CAP3  (3c)
+network design problem under demand uncertainty. Through
+this example, we also aim to show that the solutions obtained                        B1() 0.9PA(), C2() 0.82B2(),                            (3d)
+from a stochastic program can be different from solving a
+deterministic problem where the uncertain parameters are                                                      C3() 0.95B3() 
+fixed at their expected value.
+                                                                                           B1() + PB() B2() + B3()                           (3e)
+   Consider producing a chemical C which can be manufactured
+with either process 2 or process 3, both of which use chemical B as                               C2() + C3()  d()                           (3f)
+raw material. B can be purchased from another company and/or
+manufactured with process 1 which uses A as a raw material. The                                   Yi  {0, 1} i  {1, 2, 3}                    (3g)
+demand for chemical C, denoted as d, is the source of uncertainty.
+The superstructure of the process network is shown in Figure 3,                      The objective is maximizing the expected profit, which
+which outlines all the possible alternatives to install this chemical             includes the expected income obtained from selling the final
+plant. The alternatives include: 1) All three processes are selected.             product [25C2() + 25C3()], minus the total cost that includes
+2) A true subset of the three processes are selected. 3) None of the              the fixed (10Y1 + 15Y2 + 20Y3) and variable (CAP1 + 1.5CAP2 +
+three processes are selected.                                                     2CAP3) investment costs in stage one, the expected cost to
+                                                                                  purchase chemical A and B in different scenarios
+   Following the time realization framework described in Figure 2,                [4.5PA() + 9.5PB()]) the expected operating cost
+the problem is formulated as a two-stage stochastic program. The                  [0.5PA() + 0.5B2() + 0.5B3], which is proportional to the
+chemical plant has to be first installed before the demand for the                amount of input to each process, i.e., PA(), B2(), B3().
+product is realized and the plant starts production. Therefore, the first-
+stage decisions are investment decisions on the three processes, which               Suppose we have a 3-scenario problem where the demands
+include binary variables Yi to denote whether process i is selected and           d() take values d(1) 8, d(2) 10, d(3) 12, with
+continuous variables CAPi to denote the capacity of process i for i 1,            probabilities (1) 0.25, (2) 0.5, (3) 0.25,
+2, 3. We assume that after the plant is installed, the demand for the             respectively. The optimal first-stage decisions are to select
+product is realized. Based on the realizations of the demand, different
+recourse actions on how to operate the installed plant can be taken,              processes 1 and 3 with capacities 11.70 and 12.63, respectively,
+i.e., the second-stage decisions are the material flows. We denote the            which is shown in Figure 4I. Note that the first-stage decisions
+scenarios as  and explicitly state the dependency of the second-stage             are made "here-and-now" and thus are the same for all three
+decision on them by presenting them as functions of .
+                                                                                  scenarios. However, different second-stage decisions are taken for
+
+                                                                                  different scenarios as shown in Figure 4II. When the demand is
+                                                                                  low d(1) 8, processes 1 and 3 are not operating at their full
+                                                                                  capacity. For d(2) 10, process 1 is operating at full capacity
+                                                                                  but process 3 is not. For d(3) 12, both installed processes are
+                                                                                  operating at full capacity. The chemical A produced by process 1
+
+                                                                                  is not able to satisfy the requirement of process 3. Therefore,
+
+                                                                                  additional chemical B needs to be purchased from other vendors
+
+Frontiers in Chemical Engineering | www.frontiersin.org                        5                              January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                              Review Stochastic Programming Process System
+
+FIGURE 4 | (I) represents the optimal first stage decisions of the two stage stochastic program (II) describes the optimal stage one decisions and the stage two
+decisions under scenarios 1, 2, 3 (III) represents the optimal design decisions of the deterministic model.
+
+when the demand is high. The expected profit of the stochastic                deterministic model at mean value is a concept called the value of
+program is 117.22. This optimal value of the stochastic program is            the stochastic solution (VSS) (Birge and Louveaux, 2011). If the
+called the value of the recourse problem (RP) in the literature               problem is a maximization problem, VSS is defined as,
+(Birge and Louveaux, 2011) (RP 117.22).
+                                                                              VSS RP - EEV                                                                        (4)
+   Other than using stochastic programming, an alternative
+approach is to solve the deterministic model where the demand                    Therefore, the value of the stochastic solution is 117.22 -
+is fixed at its mean value, i.e., set d 10. The optimal solution for          114.20 3.02 for the process network problem.
+this deterministic model is selecting processes 1 and 3 with
+capacities being 11.70, and 10.52, respectively as shown in                   3.1.3 Classical Decomposition Algorithms
+Figure 4III. The only difference from the stochastic solution is              One option to solve the stochastic MILP problems described by
+that the capacity of process 3 becomes lower. The reason is that the          Eq. 2 is to solve the deterministic equivalent problem Eq. 2
+deterministic model is "unaware" of the high demand scenario and              directly using commercial solvers like CPLEX, GUROBI.
+therefore makes the capacity of process 3 to be just enough to                However, solving Eq. 2 directly can be prohibitive when the
+satisfy d 10. However, if we use the deterministic solution for d             number of scenarios is large because the computational time can
+12, it will result in lost sales. We can fix the first stage solutions to     grow exponentially with the number of scenarios. Due to the
+the optimal solutions and evaluate how it performs in the three               difficulties in solving the deterministic equivalent problem,
+scenarios by solving each stage two problem separately. An                    decomposition algorithms such as Lagrangean decomposition
+expected profit of 114.20 is obtained. This value is called the               (Guignard, 2003; Oliveira et al., 2013) and Benders
+expected result of using the expected solution (EEV).                         decomposition (Van Slyke and Wets, 1969; Laporte and
+                                                                              Louveaux, 1993) can be applied to solve problem Eq. 2 more
+   One quantitative metric to evaluate the additional value                   effectively.
+created by stochastic programming compared with solving the
+
+Frontiers in Chemical Engineering | www.frontiersin.org                    6  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                          Review Stochastic Programming Process System
+
+FIGURE 5 | Schematic view of Benders decomposition (left; variables x are "complicating variables"), Lagrangean decomposition (right; the NACs are
+"complicating constraints").
+
+   A high-level view of the ideas behind Benders decomposition            decomposition is also shown in Figure 5. After this
+and Lagrangean decomposition is shown in Figure 5. The figure             reformulation, the NACs are then dualized so that the
+shows the structures of the constraint matrices where the                 deterministic equivalent problem is decomposed into scenarios
+columns correspond to the variables and the rows correspond               that can be solved in parallel. The Lagrangean multipliers can be
+to the constraints. Both decomposition algorithms take advantage          updated using the subgradient method or the cutting plane
+of the "almost" block-diagonal structure shown in Figure 5.               method (Oliveira et al., 2013). A lower bound can be obtained
+                                                                          at each iteration of Lagrangean decomposition which is the
+   Benders decomposition (Van Slyke and Wets, 1969; Laporte               summation of the optimal value of the Lagrangean
+and Louveaux, 1993), also referred to as L-shaped method in               subproblems. However, the upper bound procedure of
+stochastic programming literature, views the first stage variables        Lagrangean decomposition is in general a heuristic. Therefore,
+as "complicating variables" in the sense that if the first stage          Lagrangean decomposition is not guaranteed to converge even for
+variables x are fixed the rest of problem Eq. 2 has a block-diagonal      the problems with continuous recourse. There is usually a
+structure that can be decomposed by scenario and solved                   "duality gap" between the upper and the lower bound.
+independently. A schematic view of the "complicating
+variable" idea behind Benders decomposition is shown in                      Although neither Benders nor Lagrangean decomposition are
+Figure 5. Mathematically, the Benders decomposition                       able to solve Eq. 2 with integer recourse variables to optimality
+algorithm starts by defining a master problem with only the               with their classical form, recent developments have been made
+first-stage decisions. After the master problem is solved, the first-     that can solve Eq. 2 to optimality by extending these two
+stage decisions are fixed at the optimal solution of the master           methods. A discussion of these recent advances can be too
+problem. Then the deterministic equivalent problem can be                 technical and we refer interested readers to the review papers,
+decomposed into || subproblems where || denotes the                       Torres et al. (2019); Küçükyavuz and Sen (2017), for details.
+cardinality of the set of scenarios. The subproblems can be
+solved in parallel and valid inequalities of x can be derived                As for software implementations, the CPLEX solver has an
+and added to the Benders master problem. The master                       implementation of the Benders decomposition algorithm Bonami
+problem is solved again and the algorithm iterates until the              et al. (2020), which can be accessed through most modeling
+upper bound and the lower bound converge. The lower bound                 platforms, such as GAMS, C, C++, Pyomo (Hart et al., 2017),
+is the optimal value of the Benders master problem. The upper             Python, etc. DSP (Kim and Zavala, 2018) is a Lagrangean
+bound is obtained by updating the best feasible solution. Benders         decomposition-based solver for two-stage stochastic mixed-
+decomposition is able to converge in a finite number of steps             integer programs, which provides interfaces that can read
+when the second-stage decisions are all continuous and the                models expressed in C code and the SMPS format (Gassmann
+second stage constraints are linear.                                      and Schweitzer, 2001). DSP can also read models expressed in
+                                                                          JuMP (Lubin and Dunning, 2015).
+   Lagrangean decomposition reformulates problem Eq. 2 by
+making a copy of the first-stage decisions for each scenario and          3.2 Two-Stage Stochastic Mixed-Integer
+adding non-anticipativity constraints (NACs) to ensure that the           Nonlinear Programs
+first-stage decisions made for all the scenarios are the same. For
+example, in a three-scenario problem, three copies of the x               Most SP algorithms and applications investigated by the
+variables, x1, x2, x3, are made. NACs including x1 x2, x1                 Operations Research (OR) community are (mixed-integer)
+x3 are added to guarantee the first-stage decisions are the same          linear problems as in Eq. 2. However, chemical engineering
+for all three scenarios. A schematic view of Lagrangean                   applications can involve significant nonlinearities. Examples
+
+Frontiers in Chemical Engineering | www.frontiersin.org                7  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                  Review Stochastic Programming Process System
+
+FIGURE 6 | Stochastic pooling problem (A) is the superstructure of the pooling problem (B) is the optimal first-stage decisions for the pooling example (C)
+represents the optimal mass flow rates in the low-demand scenario (left) and the high-demand scenario (right).
+
+include the mass balance equations for the splitters and mixers in                the first-stage decisions x, the second-stage decisions y and the
+a flowsheet, the MESH equations in distillation column design,                    uncertain parameters  for scenario . Due to the nonlinear
+the Arrhenius equation in reactor modeling. Therefore,                            objective and the nonlinear constraints, Eq. 5 is more difficult to
+developing stochastic programming models and algorithms for                       solve than Eq. 2. We will review the algorithms to solve Eq. 5 in
+(mixed-integer) nonlinear problems is of great interest to                        Subsection 3.2.3.
+chemical engineers doing PSE research. As a matter of fact,
+the PSE community has been the main driver of developing                          3.2.2 Stochastic Pooling Problem Example
+algorithms to efficiently solve stochastic MINLPs (Li et al., 2011b;              We provide an example of the stochastic pooling problem
+Li and Grossmann, 2019b; Cao and Zavala, 2019).                                   presented in Li and Grossmann (2019b). Pooling problem
+                                                                                  arises in applications include wastewater treatment (Karuppiah
+3.2.1 Mathematical Formulation                                                    and Grossmann, 2008), crude oil refinery planning (Yang and
+The mathematical formulation of a general two-stage stochastic                    Barton, 2016), and natural gas networks planning (Li et al.,
+mixed-integer nonlinear program is shown in Eq. 5.                                2011a). Solving the pooling problem to optimality is of great
+                                                                                  interest due to potential savings in the order of tens of millions of
+           min f0(x) + f1 x, y;                                                   dollars. In a pooling problem, flow streams from different sources
+                                                                                  are mixed in some intermediate tanks (pools) and blended again
+                                                                                  in the terminal points. At the pools and the terminals, the quality
+                                                                                  of a mixture is given as the weighted average of the qualities of the
+     s.t. g0(x)  0                                                                flow streams that go into them.
+           g1 x, y;   0   
+           x  X, X x : xi  {0, 1}, i  I1, 0  x  xub                                  The pooling problem involves both design decisions and
+                                                                                  operating decisions. The design decisions are which feed i and
+y  Y,   , Y y : yj  {0, 1}, j  J1, 0  y  yub                                      which pool l to select from the superstructure shown in
+                                                                          (5)     Figure 6A, and the sizing decisions for the selected feed tanks
+                                                                                  and pools. The second-stage decisions are the mass flowrates of
+   Problem Eq. 5 is an extension of Eq. 2 by considering                          different streams, and the split fractions. The operator has to
+nonlinear objective and nonlinear constraints. Functions f0, f1,                  operate the feeds and the pools to satisfy the quality specifications
+g0, g1 in Eq. 5 are nonlinear functions. f1 and g1 are functions of
+
+Frontiers in Chemical Engineering | www.frontiersin.org                        8  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                          Review Stochastic Programming Process System
+
+at the product terminals j (Figure 6A). In this problem, we also          algorithms are based on the classical decomposition algorithms
+consider purchasing the feeds using three different types of              including Lagrangean decomposition, and generalized Benders
+contracts i.e., fixed price, discount after a certain amount, and         decomposition (GBD) (Geoffrion, 1972) which is an extension of
+bulk discount.                                                            the Benders decomposition (BD) algorithm to convex nonlinear
+                                                                          problems.
+   Before the design decisions are made, several sources of
+uncertainties can arise at the operating level including quality             For convex stochastic MINLP, where the nonlinear feasible
+of the feed streams, prices of the feeds and products, demands for        region of the continuous relaxation is convex, Li and Grossmann
+the products. For this illustrative example, we only consider             (2018) propose an improved L-shaped method where the Benders
+uncertainty in the demands of the products. The demands for               subproblems are convexified by rank-one lift-and-project, and
+the three products can take low, medium, and high values and are          Lagrangean cuts are added to tighten the Benders master
+assumed to vary simultaneously i.e., there are three scenarios in         problem. Li and Grossmann (2019a) further propose a
+this problem with probabilities 0.3, 0.4, 0.3, respectively. The          generalized Benders decomposition-based branch and bound
+actual delivered products have to be less than or equal to the            algorithm with finite -convergence for convex stochastic
+demands. The objective is to maximize the expected total profit.          MINLPs with mixed-binary first and second stage variables.
+The mathematical formulation of this problem has been reported
+in Li and Grossmann (2019b). To make this paper self-contained,              For nonconvex stochastic MINLP, where the nonlinear
+we include the mathematical formulation in the supplementary              functions in the stochastic MINLPs can be nonconvex, the
+material.                                                                 pioneering work is done by Li et al. (2011b) who propose a
+                                                                          nonconvex generalized Benders decomposition algorithm, which
+   The deterministic equivalent of the stochastic pooling problem         can solve two-stage nonconvex MINLPs with pure binary
+with three scenarios is solved to optimality. The optimal first-          variables in a finite number of iterations. For the more general
+stage decisions are to select feeds i1, i2, i5, pools l1, and l4. The     case where the first stage variables can be mixed-integer, Ogbe
+optimal capacities of the selected feeds and pools are shown in           and Li (2019) propose a joint decomposition algorithm. A perfect
+Figure 6B. Recall that in two-stage stochastic programming, after         information-based branch and bound algorithm that solves
+the first-stage decisions are made, the uncertain demands are             nonseparable nonconvex stochastic MINLPs to global
+realized. In different scenarios, different recourse actions can be       optimality is proposed by Cao and Zavala (2019). Kannan
+taken depending on the realization of the demand. The mass flow           (2018) propose a modified Lagrangean relaxation-based (MLR)
+rates of all the streams in the high and the low demand scenarios         branch and bound algorithm, and they prove that MLR has finite
+can be seen in Figure 6C. When the demand is low, the feed tanks          -convergence. A generalized Benders decomposition-based
+and the pools are not operating at their full capacities. When the        branch and cut algorithm for nonconvex stochastic MINLPs
+demand is high, the feed tanks and pools are operating at their full      with mixed-binary first and second stage variables is proposed
+capacities. Recall that the production of each product can be less        by Li and Grossmann (2019b). Li et al. (2020) propose a sample
+than or equal to the demand. In the high-demand scenario, the             average approximation based outer approximation algorithm for
+production of product j1 is even lower than that in the low-              stochastic MINLPs with continuous probability distributions.
+demand scenario. However, the productions of j2 and j3 are
+higher in the high-demand scenario than those in the low-                 4 MULTISTAGE STOCHASTIC
+demand scenario. The results also indicate that the optimal               PROGRAMMING
+capacity is not enough to meet the high demand. The reason
+is that if one were to fully satisfy the high demand, a great part of     In two-stage stochastic programming, it is assumed that the
+the capacity would be left idle in the low-demand scenario. On the        uncertainties are realized only once after the first-stage
+other hand, if the capacity were designed to be just enough to            decisions are made. However, most practical problems involve
+satisfy the low demand, there would be significant lost sales in the      a sequence of decisions reacting to outcomes that evolve over
+high-demand and the medium-demand scenarios. Stochastic                   time. A generalization of two-stage stochastic programming to
+programming is a "risk-neutral" approach to achieve the                   the sequential realization of uncertainties is called "multistage
+highest expected profit, which balances the trade-off between             stochastic programming". The time horizon is discretized into
+lost sales and idle capacity.                                             "stages" where each stage has the realizations of uncertainties at
+                                                                          the current stage.
+3.2.3 Algorithms for Solving Stochastic MINLP
+As we discussed in Subsection 3.1.3, the classical decomposition             A scenario tree similar to Figure 2 for a multistage problem is
+algorithms, such as Benders decomposition and Lagrangean                  shown in Figure 7. The scenario tree has three stages. In stage
+decomposition, cannot be readily applied to solve stochastic              two, there are two different realizations of uncertain parameters
+MINLPs. The challenges to solve stochastic MINLP problems                 and therefore two nodes. Each of the two nodes can have different
+are two-fold: the nonlinear functions in stage two can be                 stage two decisions depending on the realization of information
+nonconvex; second, some of the stage two variables need to                until stage two. After the stage two decisions are made, there are
+satisfy integrality constraints, which also make the stage two            two different realizations of uncertain parameters at stage three
+problem nonconvex. Due to its wide application in process                 for each node in stage two. Therefore, there are four nodes in total
+systems, researchers from the PSE community have been                     at stage three. The stage three decisions depend both on stage one,
+developing algorithms for solving problem Eq. 5. Most of the              stage two decisions and the history of the uncertain parameters. A
+
+Frontiers in Chemical Engineering | www.frontiersin.org                9  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                                      Review Stochastic Programming Process System
+
+FIGURE 7 | Illustration of a scenario tree with 3 stages, 4 scenarios, seven nodes.
+
+scenario in the multistage setting is a "path" from the root node of                 E | [t,H] [1,t-1] denotes the expectation operation in stage t with
+the scenario tree to the leaf node of the scenario tree, which                       respect to the conditional distribution of [t,H] given
+corresponds to a full history of realization of uncertainty                          realization [1,t-1] in stage t - 1. The constraints at stage t are
+parameters until stage three. It is easy to see that there are 4                     defined for all the possible realizations of the stochastic process
+scenarios in Figure 7, represented using 1, 2, 3, 4. The seven                       (2, . . . , t) until stage t. Set Xt denotes the domain of variables xt,
+nodes in the scenario tree are numbered sequentially with                            which can be continuous or (mixed)-integer. Eq. 6 can represent
+notation n1-n7.
+                                                                                     the deterministic equivalent of any multistage mixed-integer
+   It is worth pointing out that in some PSE applications, there
+are two types of decisions i.e., the strategic decisions e.g., the                   linear stochastic programs with discrete or continuous
+installation of chemical processes and the operational decisions
+e.g., material flow rates. The uncertainties can arise from both                     distributions.
+strategic and operational decision-making processes. A scenario
+tree that combines the two types of decisions and uncertainties                         For problems with discrete distributions, we can use the
+can be found in Escudero and Monge (2018).
+                                                                                     following node-based formulation,
+
+                                                                                                 ncnuxn     :                                                  
+                                                                                     mxnin n                       Tnxa(n) + Wnxn  hn, xn  Xn, n  N ,
+                                                                                              N
+                                                                                                                                                                 (7)
+4.1 Mathematical Formulation
+                                                                                     where set N denotes the set of nodes in the scenario tree. The
+The general multistage stochastic programming formulation is                         decisions at node n is denoted as xn. We use a(n) to denote the
+given as follows (Birge and Louveaux, 2011):                                         ancestor nodes of node n. For example, in the scenario tree shown
+
+min cu 1 x1 + E | [2,H] [1,1] min cu 2 (2)x2(2) + . . .                              in Figure 7, the ancestor nodes of n4 are n2 and n1,
+                                                                                     i.e., a(n4) {n2, n1}. n is the probability of node n. The
++ E | [H:H] [1:H-1] min cu H (H )xH (H )                 (6a)                        probability of a non-leaf node equals to the summation of the
+
+                  s.t. W1x1  h1                          (6b)                        probabilities of its child nodes. For example, in Figure 7,
+                                                                                     n2 n4 + n5. The decisions at a given node n, xn, is
+                  T2(2)x1 + W2x2(2)  h2(2)               (6c)                        dependent on the decision made at its ancestor nodes xa(n)
+                                                                                     and the realizations of the uncertain parameters until node n,
+                  ...                                    (6d)                        which is reflected in Tn, Wn, and hn.
+
+TH (H)xH-1(H-1) + WH xH(H)  hH(H )                       (6e)                           An alternative way to write the deterministic equivalent of the
+
+                  x1  X1; xt(t)  Xt, t 2, . . . , H;     (6f)                        node-based formulation is the following recursive formulations
+                                                                                     where set C(n) denotes all the child nodes of a node n. Parameter
+where we have H stages. For simplicity, we assume all the
+                                                                                     qnm denotes the transition probability from node n to its child
+constraints and the objective function are linear. Suppose the                       node m. For example, in Figure 7, if nodes n4, n5 have equal
+                                                                                     probability, the transition probabilities from node n2 to n4 and n5
+data (2, . . . , H) is uncertain and evolves according to a known                    are both 0.5.
+stochastic process. We use t to denote the random data vector in
+stage t and t to denote a specific realization. The parameters ct,                            min      c1u  x1  +          q1mQm(x1)  :  W1x1         (8)
+Tt, Wt, ht are functions of t. Similarly, we use [t,t] to denote the                                                                             h1,
+sequence of random data vectors corresponding to stages t                                     x  X1                     C(1)
+                                                                                                                   m
+through t and [t,t] to denote a specific realization of this
+sequence of random vectors. The decision dynamics is as                              where for each node n  N /{1}, the cost-to-go function Qn is
+                                                                                     defined as
+follows: in stage t, we first observe the data realization t and
+then take an action xt depending on the previous stage decision
+xt-1 and the observed data t to optimize the expected future cost.
+
+Frontiers in Chemical Engineering | www.frontiersin.org               10                                                January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                         Review Stochastic Programming Process System
+
+FIGURE 8 | Optimal solutions of the stochastic process network design problem corresponding to nodes n2, . . . , n7. The material flow rates at each node are
+shown in red. The installed capacities are shown in blue italics.
+
+Qn xa(n)            min     cu n xn  +          qnmQm(xn)                decisions i.e., the material flow rates. The objective is to maximize
+                                                                         the expected total profit over all the scenarios.
+                    xn  Xn                   C(n)
+                                                                            The scenario tree is assumed to have two realizations per stage,
+                                        m
+                                                                         which has the same structure as the scenario tree in Figure 7. We
+                                             
+                  : Wnxn  hn - Tnxa(n).                    (9)           use dn to denote the realization of demand at node n. The demand
+                                                                         at stage two is assumed be take two different values, dn2 8,
+   For the terminal condition t H, the set C(n) is be empty.             dn3 12. The two child nodes, n4 and n5, of node n2, are assumed
+                                                                         to take values dn5 8, dn6 10, whereas, the two child nodes, n6
+4.2 Multistage Process Network Problem                                   and n7, of node n3, are assumed to take higher values i.e., dn6 12,
+                                                                         dn7 14. The four scenarios are assumed to have equal
+To provide an illustrative example for multistage stochastic             probabilities.
+programming, the two-stage process network design problem
+in Subsection 3.1.2 is extended to a three-stage problem. Stage             The optimal solution of multistage stochastic process network
+one decisions are the same as those in Section 3.1.2 i.e., the           design problem corresponding to nodes n2, . . . , n7 are shown in
+selection of the three processes and the capacities of the selected      Figure 8. The material flowrates at each node are shown in red.
+processes. After the design decisions at stage one are made, the
+demand in stage two are realized. Besides the operating decisions        The installed capacities at the previous stage are shown in blue
+on the installed plant, the decisions at stage two include capacity
+expansion decisions on the installed processes. We assume that           italics. At stage one, process one and three are selected and can be
+the expanded capacity will be available at stage three. After the
+stage two decisions are made, the demand at stage three is               used in stage two. At stage two, when the demand is low
+realized. The stage three decisions only include the operating
+                                                                         i.e., dn2 8, processes 1 and 3 are not operating at full
+                                                                         capacity. When the demand is high i.e., dn3 12, both process
+                                                                         one and process three are operating at full capacity. Process three
+
+                                                                         is expanded at stage two when the high demand is observed. The
+
+Frontiers in Chemical Engineering | www.frontiersin.org              11  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                     Review Stochastic Programming Process System
+
+FIGURE 9 | An alternative form of the scenario tree with 3 stages, 4 scenarios.
+
+expanded capacity can be used in stage three at nodes n6 and n7.                     1991). One caveat to apply SDDP is that the underlying stochastic
+The stage three decisions are the material flow rates of different                   process has to be stagewise-independent i.e., the realizations of t
+chemicals. At node n4, n5, and n6, the installed process one and                     do not dependent on the history [1,t-1]. The idea of SDDP is that
+three are able to satisfy the demand. At node n7, due to the limited                 the cutting plane can be shared among the nodes under the
+capacity of process 1, additional chemical B needs to be                             stagewise-independence assumption and thus avoiding solving
+purchased.                                                                           an exponential number of nodes. An extension of SDDP that can
+                                                                                     solve multistage stochastic mixed-integer linear program is the
+4.3 Algorithms for Multistage Stochastic                                             stochastic dynamic dual integer programming (SDDiP)
+(Mixed-Integer) Linear Programs                                                      algorithm proposed by Zou et al. (2019). Besides the standard
+                                                                                     Benders cuts, the authors propose to use other families of cutting
+The number of scenarios of a multistage stochastic program                           planes including Lagrangean cuts, integer cuts, and strengthened
+grows exponentially with the number of stages. For example,                          Benders cuts. Applications of SDDiP have been reported in
+suppose we have three different realizations of uncertain                            Escudero et al. (2020); Zou et al. (2018); Lara et al. (2019).
+parameters at each stage, the number of scenarios for a
+problem with H stages is 3H-1. Therefore, special                                       Lagrangean decomposition can be adapted to solve multistage
+decomposition algorithms are usually applied to solve                                stochastic programs in a similar way to two-stage by duplicating
+multistage stochastic programming problems. Most of the                              the variables such that each scenario has its own copy of variables
+algorithms for multistage stochastic programs are based on                           at each stage and adding nonanticipativity constraints (NACs).
+classical Benders and Lagrangean decomposition algorithms.                           The scenario tree in Figure 7 can be expressed in an alternative
+                                                                                     form shown in Figure 9 (Ruszczyn´ski, 1997). The node in the first
+   An extension of Benders decomposition to multistage stochastic                    stage in Figure 7 is duplicated for each scenario  and NACs
+linear programs is called "nested Benders decomposition" (Birge,                     (shown in red in Figure 9) are added to guarantee that the first
+1985). The idea is to apply Benders decomposition recursively to                     stages decisions are the same for all the scenarios. Each node in
+the multistage problem. Nested Benders decomposition has a                           stage two in Figure 7 is duplicated once and NACs are added to
+"forward pass" step and a "backward pass" step. In the forward                       guarantee that the scenarios with the same parent node in
+pass step, feasible solutions are generated by sequentially solving                  Figure 7 have the same second-stage decisions. With the
+the root node of the scenario tree all the way to the leaf nodes of the              alternative scenario tree, Lagrangean decomposition dualizes
+scenario tree. Problem Eq. 9 for node n is solved "locally" in the                   the NACs and solves each scenario independently.
+forward pass with the value of xa(n) fixed from the solution of its
+parent node and the expected cost to go function Qm(xn)                                 One major difference between nested Benders decomposition
+approximated by some cutting planes generated from the                               and Lagrangean decomposition is that nested Benders
+backward pass. In the backward pass, the problems are solved                         decomposition decomposes the fullspace problem by nodes,
+sequentially from the leaf nodes to the root node. Cutting planes                    whereas Lagrangean decomposition decompose the fullspace
+are generated in the backward pass to refine the approximations for                  problem by scenarios. A discussion of the trade-offs are not
+the cost-to-go functions Qm(xn).                                                     within the scope of this paper and can be found in Torres et al.
+                                                                                     (2019). Moreover, a recent review on main types of
+   Although the nested Benders decomposition algorithm can                           decomposition algorithms for two-stage and multistage
+decompose the fullspace problem by nodes, it still has to solve an                   stochastic mixed integer linear optimization can be found in
+exponential number of leaf nodes. An algorithm that avoids                           Escudero et al. (2017).
+solving an exponential number of nodes is the stochastic dual
+dynamical programming (SDDP) algorithm (Pereira and Pinto,                              As for software packages for multi-stage stochastic programs,
+                                                                                     SDDP. jl (Dowson and Kapelevich, 2020) is an implementation of
+
+Frontiers in Chemical Engineering | www.frontiersin.org                          12  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                         Review Stochastic Programming Process System
+
+                                                                                 applications including oil and gas field planning (Goel and
+
+                                                                                 Grossmann, 2004), synthesis of process networks (Tarhan and
+
+                                                                                 Grossmann, 2008), pharmaceutical industry (Colvin and
+
+                                                                                 Maravelias, 2008; Christian and Cremaschi, 2015), etc.
+
+                                                                                 Here, we describe the modeling framework proposed by Goel
+
+                                                                                 and Grossmann (2006). Figure 10 shows a scenario tree for a
+
+                                                                                 three-stage problem with two endogenous uncertain parameters,
+
+                                                                                 1,     2.  Both   parameters are assumed to have two realizations
+                                                                                 i.e.,  1    {1L,  1H}, 2  {L2, 2H}. We consider the combinations
+
+                                                                                 of the  two realizations for  {1 L1a,ndL2 }, 2  . There are four scenarios in
+                                                                                 total   with realizations,                      {L1 , 2L}, {1L, 2L}, {L1 , 2L},
+
+                                                                                 respectively. The scenario tree in Figure 10 is a scenario-based
+
+                                                                                 representation i.e., the decisions are duplicated for each scenario
+
+                                                                                 and NACs are added. However, the way that the NACs are added
+
+                                                                                 in Figure 10 is different than that in Figure 9 because the
+
+  FIGURE 10 | Illustration of the scenario tree of a stochastic programming      realizations of the uncertain parameters are decision-dependent.
+  problem under endogenous uncertainty with 3 stages, four scenarios, two
+  uncertain parameters 1, 2.                                                     In stage one, since the decisions have not been made to reveal the
+
+the SDDP algorithm in Julia that is built on the JuMP modeling                   values of the uncertain parameters, "initial NACs" are added to
+tools (Lubin and Dunning, 2015). MSPPy (Ding et al., 2019) is an
+implementation of the SDDP/SDDiP algorithm in Python. PySP                       guarantee that the first-stage decisions are the same for all the
+(Watson et al., 2012) is an implementation of the progressive
+hedging algorithm (Rockafellar and Wets, 1991), an algorithm                     scenarios. The initial NACs are represented using solid red lines in
+that can be seen as an augmented Lagrangean decomposition, in
+Pyomo (Hart et al., 2017).                                                       Figure 10. For stage two and three, the NACs are added
+
+5 MULTISTAGE STOCHASTIC                                                          conditionally, depending on whether the corresponding
+PROGRAMMING UNDER ENDOGENOUS
+UNCERTAINTY                                                                      decisions are made in order to reveal the uncertain parameters.
+
+In the stochastic programming models that we have discussed in the               These NACs are called "conditional NACs", which are shown in
+last few sections, the underlying stochastic processes are independent
+of the decisions. This type of uncertainty is called "exogenous"                 Figure 10 as dashed blue lines.
+uncertainty. Another type of uncertainty that is decision-dependent
+is called "endogenous" uncertainties. There two distinct types of                   To provide a concrete example, suppose 1 and 2 are the sizes
+endogenous uncertainties commonly denoted as Type 1 and Type 2                   of two undeveloped oil fields, o1 and o2, respectively, the decisions
+in the literature (Goel and Grossmann, 2006).                                    to reveal the sizes are the drilling of oil field 1 and 2. We use
+
+   In the case of Type 1 endogenous uncertainties, decisions                     binary variable bot to denote whether oil field o is drilled at stage t.
+influence the parameter realizations by altering the underlying                  At t 1, since no oil fields have been drilled before t 1 and no
+probability distributions for the uncertain parameters. A simple
+example of this may be an oil company's decision to flood the                    information regarding the size of the oil fields has been obtained,
+market in order to force a competitor out of business. Here the
+uncertainty is no longer strictly exogenous, as the decision will                the decisions for all the four scenarios are the same i.e., we need to
+make lower oil-price realizations more likely. Type 1 endogenous
+has not been widely studied.                                                     add the initial NACs. At t 1, if the operator decides to drill o1,
+
+   In the case of Type 2 endogenous uncertainties, decisions                     then   the  srceeanlizaaritoiosnwoitfh11willb1Leaknndowthne  before stage 2.  At  stage
+influence the parameter realizations by affecting the time at which              two,   the                                                   scenarios with   1     1H
+we observe these realizations. This refers specifically to technical
+parameters, such as oilfield size, for which the true values cannot be           can be distinguished. Conditional NACs will only be added for
+determined until a particular investment decision is made. The
+modeling framework and algorithm for stochastic programming                      the scenario pairs (1, 2), and (3, 4). On the other hand, if the
+with Type 2 endogenous uncertainty are first proposed by Goel                    operator decides not to drill any oil fields at t 1, the four
+and Grossmann (2006). Since then, this approach has been adopted
+by the PSE community to address problems in a wide range of                      scenarios are still indistinguishable at the beginning of stage two,
+
+                                                                                 all the conditional NACs at stage two have to be enforced.
+
+                                                                                 5.1 Mathematical Formulation
+
+                                                                                 The mathematical formulation for the multistage stochastic
+                                                                                 programming problem under endogenous uncertainty is,
+
+                                                                                                         min  cu t,xt,                                             (10a)
+
+                                                                                                                 tT                                                (10b)
+                                                                                                                                                                   (10c)
+                                                                                                     t                                                             (10d)
+                                                                                                                                                                   (10e)
+                                                                                             s.t.        At,t,xt,  bt, t  T ,                                      (10f)
+                                                                                                                                                                   (10g)
+                                                                                                   t' 1
+
+                                                                                                   x1, x1, , (, )  SPF
+
+                                                                                            Yt,,         Yt,,     (, )  SPN , t  T
+                                                                                        xt+1, xt+1,
+
+                                                                                        Yt,, 5F x1,, . . . , xt, (, )  SPN , t  T
+                                                                                                         xt,  Xt, t  T ,   
+
+                                                                                          Yt,,  {True, False} (, )  SPN , t  T
+
+Frontiers in Chemical Engineering | www.frontiersin.org                      13                                   January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                       Review Stochastic Programming Process System
+
+FIGURE 11 | Optimal solution of the three-stage process network problem under endogenous uncertainty.
+
+where xt, denotes the decisions made at stage t in scenario . Yt,,             modified to a three-stage problem where the uncertainty is
+is a Boolean variable that equals to True if the two scenarios  and            assumed to come from the yield of process one and the
+ are indistinguishable at stage t. The objective function Eq. 10a is           demand is assumed to be deterministic. In practice, process
+to minimize the expected cost. Eq. 10b represents constraints that             one can be a new technology that has never been installed
+govern decisions xt, and link decisions across time periods. The               before. Once process one is installed, its yield will be realized
+initial NACs are expressed in Eq. 10c, where set SPF represents the            in the next stage. Therefore, the time of realization is decision-
+set of scenario pairs to enforce the initial NACs. The scenario pairs          dependent. We assume that there are two realizations of the yield
+for the initial NACs can be written similar to the NACs in the                 of process one i.e., two scenarios, being 0.9, and 0.8 with equal
+exogenous case. Eq. 10d represents the conditional NACs where set              probability, which is denoted as Yield(1) 0.9, Yield(2) 0.8,
+SPN represents the scenario pairs that differ in the realization of            (1) 0.5, (2) 0.5
+only one endogenous parameter (Goel and Grossmann, 2004). If the
+two scenarios  and  are indistinguishable at stage t                              For this problem, stage one decisions are the same as those in
+i.e., Yt,, True, NACs are added for the decisions in the next                  Subsection 3.1.2 i.e., the selection of the three processes and the
+time period. Otherwise, no NACs are added. The value of the                    capacities of the selected processes. At stage two, besides the operating
+Boolean variable is determined by the decisions made at and prior to           decisions on the installed plant, the capacity of the processes that have
+time t, which is expressed in a general form in Eq. 10e. In the oil field      been installed at stage one can be expanded; the processes that have
+example, the expression F(x1,, . . . , xt,) is to determine whether a          not been installed at stage one can also be selected and installed at
+given oil field has been developed based on the drilling decisions.            stage two. The installed and expanded processes will be available at
+Eqs. 10f and 10g specify the domain of variables xt, and Yt,, .                stage three. The stage three decisions only include the operating
+                                                                               decisions i.e., the material flow rates. The objective is to maximize the
+   We acknowledge that the mathematical formulation in Eq. 10                  expected total profit over all the scenarios.
+is a succinct form for ease of explanation. For a more detailed and
+rigorous formulation, we refer the readers to the paper by Apap                   Three cases can happen for the realization of the yield
+and Grossmann (2017). See also Hellemo et al. (2018) for a                     uncertainty:
+nonlinear modeling approach.
+                                                                               (1) Process 1 is selected at stage one. The uncertainty of the yield
+5.2 Multistage Process Network Design                                               is realized at stage two. Only the initial NACs are active.
+Under Endogenous Uncertainty
+                                                                               (2) Process 1 is selected at stage two. The uncertainty of the yield
+To provide an illustrative example for multistage stochastic                        is realized at stage three. The initial NACs and the NACs for
+programming under endogenous uncertainty, the two-stage                             stage two decisions are active.
+process network design problem in Subsection 3.1.2 is
+                                                                               (3) Process 1 is never selected. The uncertainty of the yield is
+                                                                                    never realized. The initial NACs and the NACs for stage two
+                                                                                    and stage three decisions are active.
+
+Frontiers in Chemical Engineering | www.frontiersin.org                    14                          January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                            Review Stochastic Programming Process System
+
+   The optimal solution is shown in Figure 11. Processes 1 and 3            6 DATA DRIVEN SCENARIO TREE
+are selected at stage one. The yield of process 1 is realized at stage      GENERATION
+two. The capacity of process 1 installed at stage one is chosen such
+that it is only able to produce enough chemical B if the yield is           The crucial assumption in stochastic programming is that a
+high. On the other hand, if the yield of process 1 is low, additional       scenario tree is given to characterize the probability distribution
+chemical B needs to be purchased at stage two. Since the two                of the underlying stochastic process. The values and probabilities in
+scenarios can be distinguished at stage two, additional capacity            the scenario tree affect the optimal solutions obtained from the
+for process 1 is added in the high-yield scenario such that enough          stochastic programs. A poor scenario-generation method can spoil
+chemical B can be produced by process 1 when the demand is                  the result of the whole optimization model. In this section, we
+increased to 14 at stage three. For the low-yield scenario, it is not       review the concepts and algorithms of scenario tree generation.
+profitable to produce chemical B from process 1. Therefore, no              Note that the notations used here are for exogenous uncertainty.
+capacity for process 1 is added in stage two. The inadequacy of             The concepts and methods can be easily extended to problems with
+chemical B is resolved by purchasing from other suppliers.                  endogenous uncertainty.
+
+   In order to see the value of the stochastic solution, we solve a            The sources of data for generating scenarios can come from
+deterministic problem with the yield fixed at mean value i.e., 0.85.        historical data, time-series model, or expert knowledge (Kaut,
+The optimal solution of the deterministic model is to select                2011). Historical data represents reliable past information but can
+processes 1 and 3 as well. However, the capacity of process 1               generalize poorly in the future. Statistical or time-series models
+at stage one is 12.38 instead of 11.70 as in the stochastic model.          such as autoregressive integrated moving average (ARIMA),
+This capacity is chosen such that enough chemical B can be                  hidden Markov model (HMM), might generalize well in the
+produced at stage two when the yield is 0.85. This capacity is              future but usually need to be fit by data. Expert knowledge is
+suboptimal if the actual yield can be 0.8 or 0.9.                           useful in certain applications. For example, the prediction of oil
+                                                                            price needs expertise in geopolitics. In practice, usually, a
+5.3 Algorithms for Solving Stochastic                                       combination of all the three approaches is used i.e., estimate
+Programming Under Endogenous                                                the distribution from historical data, then use a mathematical
+Uncertainty                                                                 model and/or expert knowledge to adjust the distribution to the
+                                                                            current situation.
+Solving stochastic programs under endogenous uncertainties can
+be even more challenging than solving the stochastic programs                  A good scenario tree should capture the distributions of the
+under exogenous uncertainties because of the additional binary              random variables at each time period and the inter-temporal
+variables involved in reformulating the disjunctions in the                 dependencies. The distributions at each time period can be
+conditional NACs Eq. 10d. To reduce the number of                           characterized by the marginal distributions of all the variables,
+redundant NACs, scenario pair reduction techniques have                     or more succinctly by their means and higher-order moments.
+been proposed Goel and Grossmann (2006); Boland et al.                      Furthermore, the dependence of the variables is usually measured
+(2016); Apap and Grossmann (2017). However, even with a                     by their correlations. The inter-temporal dependencies describe
+reduced number of scenario pairs, the deterministic equivalent              how the realizations in the previous time periods affect the
+(10) of problems with a large number of scenarios is still                  distributions at the current period. These dependencies are
+intractable. Goel and Grossmann (2006) propose a Lagrangean                 typically modeled by time-series models.
+decomposition-based branch and bound algorithm that dualizes
+the initial NACs and relax the conditional NACs. To satisfy the                The time series models are inherently continuous
+NACs, the authors propose to branch on the logical variables                probability distributions of the random variables. A
+Yt,,' , and the variables involved in the constraints that are              scenario tree can be seen as a discrete approximation of a
+dualized. The Lagrangean decomposition-based algorithm is                   time-series model. The quality of a scenario tree generation
+able to provide both feasible solutions and a lower bound for               method can be evaluated by the stability and the error of this
+the stochastic programs. Colvin and Maravelias (2008) propose a             approximation. The stability measures the deviation of the
+branch and cut algorithm where necessary non-anticipativity                 optimal solutions if the generation method is applied multiple
+constraints that are unlikely to be active are removed from the             times to generate the scenario trees. The error measures the
+initial formulation and only added if they are violated within the          suboptimality in the objective value resulted from the discrete
+search tree.                                                                approximation. The quantitative descriptions of the stability
+                                                                            and error in scenario tree generation can be found in Kaut and
+   Others have proposed heuristic algorithms that can quickly               Wallace (2003).
+obtain feasible solutions to (10). Christian and Cremaschi (2015)
+apply a knapsack decomposition algorithm (KDA) to the                       6.1 Sampling-Based Scenario Generation
+pharmaceutical R&D pipeline management problem. Zeng                        Methods
+et al. (2018) extend the KDA algorithm to a generalized
+knapsack-problem based decomposition algorithm (GKDA).                      A common way to generate scenario trees is to generate i. i.d.
+Apap and Grossmann (2017) propose a sequential                              (independent and identically distributed) samples from the "true"
+decomposition algorithm for stochastic programs under both                  distribution through a simulation. For example, in the case of
+exogenous and endogenous uncertainties.                                     two-stage stochastic programming, we represent "true" stochastic
+                                                                            programming problem succinctly as,
+
+Frontiers in Chemical Engineering | www.frontiersin.org                 15  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                                                       Review Stochastic Programming Process System
+
+FIGURE 12 | Distribution of the historical data for the production yield of facility P1 (Calfa et al., 2014).
+
+                  z* min E f (x; ),                      (11)           6.2 Property Matching Methods
+                      x P
+                                                                        The idea behind the property matching methods is to construct
+where x is the first stage variables, P denotes the "true"              the scenario trees in such a way that some given properties of the
+distribution,  denotes the random variables. The stage two              "true distribution" are matched. The properties are, for example,
+problem is contained implicitly in function f. Solving Eq. 11           the moments of the marginal distributions and covariances/
+with a continuous distribution directly is usually computationally      correlations. Høyland and Wallace (2001) propose a nonlinear
+intractable due to the integration over the continuous                  programming approach to matching the moments of the scenario
+distribution. Suppose we can generate N i. i.d. samples,                tree to those estimated from a dataset or a continuous
+1, . . . , N from P, (11) can be approximated by the following          distribution. The unknowns in the nonlinear programming
+sample average approximation (SAA) problem (Shapiro et al.,             problem are the probabilities and values of the scenarios with
+2014),                                                                  the number of scenarios fixed.
+
+                  zN       1  N                          (12)              However, with the moments alone, the matching problem is
+                      min                                               usually under-specified, especially if the number of realizations in
+                                 f (x; i)                               the scenario tree is large i.e., the scenario tree is able to match the
+                       xN                                               moments perfectly and there are still some degrees of freedom left.
+                              i1                                        To address the under-specification issue, Calfa et al. (2014) propose
+                                                                        to match both the moments and the cumulative distribution
+where the true distribution P is approximated by the empirical          function (CDF) of the empirical distribution that are derived
+distribution of the N i. i.d. samples. It can be proved that as         from real-world data. For example, in Figure 12, the blue dots
+N  , the optimal value and solutions of Eq. 12 converge to the          represent the empirical CDF constructed from some production
+optimal value and solutions of Eq. 11 under some mild                   yield data. Since the empirical distribution is discontinuous and
+assumptions (Shapiro et al., 2014). However, generating an              difficult to match in an optimization problem, Calfa et al. (2014)
+infinite number of samples is impractical. Sample size                  propose to fit a Generalized Logistic Function (GLF) with the data
+estimates for finite error have been developed (Kleywegt et al.,        points of the empirical distribution.
+2002; Shapiro et al., 2014) for different types of two-stage
+stochastic programs. These estimates are usually too                                                           GLF(x)  0 +     1 - 0        (13)
+conservative for real-world problems. A practical                                                                           1 + 2e- 3x 1/4
+implementation of the sample average approximation is
+proposed by Kleywegt et al. (2002).                                        When fitting the GLF to the empirical CDF data, the GLF can
+                                                                        be simplified by setting 0 0 and 1 1 as these parameters
+   There are several advantages to the SAA method. It is easy to        correspond to the lower and upper asymptotes, respectively. The
+implement if it is possible to sample from the true distribution.
+It also has very good asymptotic and finite convergence                 empirical CDF in Figure 12 can be approximated by the red GLF
+properties. However, SAA can have poor performance and                  curve with 2 9.5587 × 107, 3 22.2792, 4 2.3810.
+stability if a small number of samples are used, especially for
+probability distributions with large variances. More                       The NLP formulation that aims to match the moments, the
+importantly, we have to know the "true" distribution to
+sample from.                                                            covariances, and the distribution calculated from data is,
+
+Frontiers in Chemical Engineering | www.frontiersin.org             16                                                 January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                         Review Stochastic Programming Process System
+
+min   zDL2MP              wi,k  mi,k - Mi,k 2 +                 wi,i  ci,i - Ci,i 2      7 CONCLUSION
+ x,p
+                  iI kK                          (i,i)  I                                We have provided an overview of stochastic programming in
+                                                                                         process systems engineering. The applications of stochastic
+                                                         i < i                           programming are widespread, from the traditional
+                                                                                         petrochemical, pharmaceutical industry to carbon capture,
+                         N                                                               energy storage. There are two major types of uncertainties that
+                                                                                         can be modeled using stochastic programming, exogenous
+                  +          i,j  2i,j                                                   uncertainty, which is the most commonly one considered, and
+                                                                                         endogenous uncertainty where realizations of the uncertainties
+                     iI j 1                                                              depend on the decisions taken. Depending on the time
+                                                                                         discretization and the realizations of uncertainties, two-stage
+                                                                      (14a)              or multistage stochastic programming can be used to solve the
+                                                                                         problem under exogenous uncertainty. We have provided the
+                                      N                               (14b)              mathematical formulations and algorithms for solving two-stage
+                                                                                         and multistage stochastic mixed-integer linear/nonlinear
+                                s.t. pj 1                                                programming problems. Endogenous uncertainty is decision-
+                                                                                         dependent. Therefore, the scenario tree representation and the
+                                     j1                                                  mathematical formulation of multistage stochastic programming
+                                                                                         under endogenous uncertainty differ from those of stochastic
+                                N                                                        programming under exogenous uncertainty. To provide an
+                                                                                         intuitive view of the modeling framework, some process
+                     mi,1           xi,jpj  i  I                      (14c)              network design problems and a pooling problem are used as
+                                                                                         illustrative examples. Finally, we discussed how the scenario trees
+                                j1                                                       in stochastic programming can be generated from time-series
+                                                                                         models or historical data.
+                     N   xi,j - mi,1 kpj  i  I, k > 1
+                                                                                            Despite the advances in applying stochastic programming in
+              mi,k                                                    (14d)              process systems, several challenges exist for its broader
+                                                                                         applications. First, it is often difficult to convince
+                     j1                                                                  practitioners without any mathematical programming
+                                                                                         background to adopt stochastic programming methods in
+      N                                                                                  their problems. To that end, more tutorials and textbooks for
+                                                                                         practitioners rather than mathematicians need to be developed.
+ci,i      xi,j - mi,1 xi,j - mi,1 pj  (i, i)  I, i < i (14e)                             Also, simulation can be used to verify the advantages of using
+                                                                                         stochastic programming. Second, the types of problems that can
+      j1                                                                                 be solved efficiently are still limited. A utopia problem would be
+                                                                                         multistage stochastic mixed-integer nonlinear programming
+          xi,j  xLi,jB, xiU,jB  i  I, j 1, . . . , N                  (14f)              under both exogenous and endogenous uncertainty with an
+                  pj  [0, 1]  j 1, . . . , N                          (14g)              arbitrary probability distribution that can be stagewise
+                                                                                         dependent. The current algorithmic development and
+                                 j                                    (14h)              computational resources are still far from solving the utopia
+                                                                                         problem efficiently. The major challenge for algorithm
+      ECDF xi,j - pj' i,j  i  I, j 1, . . . , N                                          development remains to be handling nonconvexity. Third,
+                                                                                         risk measures can be better integrated into stochastic
+                               j' 1                                                      programming, such as the ones used in chance-constrained
+                                                                                         programming. Other risk measures, such as Expected CVaR
+              xi,j  xi,j+1  i  I, j 1, . . . , N - 1                  (14i)              (conditional value at risk) (Pflug and Pichler, 2016), stochastic
+                                                                                         dominance (SD) (Ruszczyn´ski, 2010), can also be used. Fourth,
+where the entries of the uncertain parameters are indexed by                             the connections of stochastic programming with the other 14
+i  I. For example, if the uncertainties are the yields of some                           communities of decision-making under uncertainty (Powell,
+processes, I will be the set of these processes. N denotes the                           2016) can be better established. Last but not least, generating
+number of outcomes per node at the second stage, j  J                                    a scenario tree that has a low error in practice requires high
+{1, 2, . . . , N} denotes the branches (outcomes) from the root                          fidelity historical data and better forecast methods. The recent
+node, and k  K {1, 2, 3, 4} is the index of the first four                               popularity and advances in data science and machine learning
+moments. The decision variables are the uncertain                                        bring opportunities toward this direction.
+parameters of the stochastic programming problem, xi,j, and
+their corresponding probabilities, pj. The moments calculated
+from the tree are denoted by variables mi,k and the ones
+calculated from the data are denoted by parameters Mi,k.
+The covariances calculated between entity i and i from the
+tree and the data are denoted by ci,i and ci,i , respectively.
+Variables i,j represent the deviations with respect to the
+empirical CDF data, which in turn are approximated by, for
+example, the GLF and is represented by the expression
+ECDF(xi,j). In addition to minimizing the weighted square
+errors from matching (co-)moments, the sum of squares of the
+deviations i,j is also minimized with given weights i,j that can
+be chosen relative to the weights for the term involving the
+moments.
+
+   Problem Eq. 14 minimizes the weighted Euclidean distance of
+the moments, covariances, and distribution from the scenario tree
+to those calculated from the data. Problem Eq. 14 is a nonconvex
+NLP because the variables x, m, and p are involved in the bilinear
+and trilinear terms in Eqs. 14d and 14e. If the empirical CDF is
+not considered, problem Eq. 14 reduces to the standard moment
+matching NLP problem proposed by Høyland and Wallace
+(2001).
+
+Frontiers in Chemical Engineering | www.frontiersin.org                              17  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                             Review Stochastic Programming Process System
+
+AUTHOR CONTRIBUTIONS                                                                         Simulation-Based Engineering, Crosscutting Research
+                                                                                             Program of the U.S. Department of Energy's Office of Fossil
+Both CL and IG designed the outline and the content of this                                  Energy.
+manuscript. CL finished the writing of this manuscript under the
+guidance of Ignacio Grossmann.                                                               SUPPLEMENTARY MATERIAL
+
+FUNDING                                                                                      The Supplementary Material for this article can be found online at:
+                                                                                             https://www.frontiersin.org/articles/10.3389/fceng.2020.622241/
+This research was conducted as part of the Institute for the Design                          full#supplementary-material.
+of Advanced Energy Systems (IDAES) with funding from the
+
+REFERENCES                                                                                   Escudero, L. F., Monge, J. F., and Rodríguez-Chía, A. M. (2020). On pricing-based
+                                                                                                 equilibrium for network expansion planning. a multi-period bilevel approach
+Acevedo, J., and Pistikopoulos, E. N. (1998). Stochastic optimization based                      under uncertainty. Eur. J. Oper. Res. 287, 262­279. doi:10.1016/j.ejor.2020.
+    algorithms for process synthesis under uncertainty. Comput. Chem. Eng. 22,                   03.048
+    647­671. doi:10.1016/s0098-1354(97)00234-2
+                                                                                             Gassmann, H. I., and Schweitzer, E. (2001). A comprehensive input format for
+Apap, R. M., and Grossmann, I. E. (2017). Models and computational strategies for                stochastic linear programs. Ann. Oper. Res. 104, 89­125. doi:10.1023/a:
+    multistage stochastic programming under endogenous and exogenous uncertainties.              1013138919445
+    Comput. Chem. Eng. 103, 233­274. doi:10.1016/j.compchemeng.2016.11.011
+                                                                                             Gebreslassie, B. H., Yao, Y., and You, F. (2012). Design under uncertainty of
+Beale, E. M. L. (1955). On minimizing a convex function subject to linear inequalities.          hydrocarbon biorefinery supply chains: multiobjective stochastic programming
+    J. Roy. Stat. Soc. B. 17, 173­184. doi:10.1111/j.2517-6161.1955.tb00191.x                    models, decomposition algorithm, and a comparison between cvar and
+                                                                                                 downside risk. AIChE J. 58, 2155­2179. doi:10.1002/aic.13844
+Birge, J. R. (1985). Decomposition and partitioning methods for multistage
+    stochastic linear programs. Oper. Res. 33, 989­1007. doi:10.1287/opre.33.5.989           Geoffrion, A. M. (1972). Generalized benders decomposition. J. Optim. Theor.
+                                                                                                 Appl. 10, 237­260. doi:10.1007/bf00934810
+Birge, J. R., and Louveaux, F. (2011). Introduction to stochastic programming.
+    Heidelberg, Germany: Springer Science & Business Media.                                  Goel, V., and Grossmann, I. E. (2006). A class of stochastic programs with decision
+                                                                                                 dependent uncertainty. Math. Program. 108, 355­394. doi:10.1007/s10107-006-
+Boland, N., Dumitrescu, I., Froyland, G., and Kalinowski, T. (2016). Minimum                     0715-7
+    cardinality non-anticipativity constraint sets for multistage stochastic
+    programming. Math. Program. 157, 69­93. doi:10.1007/s10107-015-0970-6                    Goel, V., and Grossmann, I. E. (2004). A stochastic programming approach to
+                                                                                                 planning of offshore gas field developments under uncertainty in reserves.
+Bonami, P., Salvagnin, D., and Tramontani, A. (2020). "Implementing automatic                    Comput. Chem. Eng. 28, 1409­1429. doi:10.1016/j.compchemeng.2003.10.005
+    Benders decomposition in a modern MIP solver," in International conference
+    on integer programming and combinatorial optimization, Heidelberg,                       Grossmann, I. E. (2021). Advanced optimization for process systems engineering.
+    Germany: Springer, 78­90.                                                                    in Cambridge series in chemical engineering. (Cambridge, England: Cambridge
+                                                                                                 University Press.
+Calfa, B. A., Agarwal, A., Grossmann, I. E., and Wassick, J. M. (2014). Data-driven
+    multi-stage scenario tree generation via statistical property and distribution           Guignard, M. (2003). Lagrangean relaxation. Top. 11, 151­200. doi:10.1007/
+    matching. Comput. Chem. Eng. 68, 7­23. doi:10.1016/j.compchemeng.2014.                       bf02579036
+    04.012
+                                                                                             Guillén-Gosálbez, G., and Grossmann, I. E. (2009). Optimal design and planning of
+Cao, Y., and Zavala, V. M. (2019). A scalable global optimization algorithm for                  sustainable chemical supply chains under uncertainty. AIChE J. 55, 99­121.
+    stochastic nonlinear programs. J. Global Optim. 75, 393­416. doi:10.1007/                    doi:10.1002/aic.11662
+    s10898-019-00769-y
+                                                                                             Gupta, A., and Maranas, C. D. (2003). Managing demand uncertainty in supply
+Christian, B., and Cremaschi, S. (2015). Heuristic solution approaches to the                    chain planning. Comput. Chem. Eng. 27, 1219­1227. doi:10.1016/s0098-
+    pharmaceutical R&D pipeline management problem. Comput. Chem. Eng. 74,                       1354(03)00048-6
+    34­47. doi:10.1016/j.compchemeng.2014.12.014
+                                                                                             Han, J.-H., and Lee, I.-B. (2012). Multiperiod stochastic optimization model for
+Chu, Y., and You, F. (2013). Integration of scheduling and dynamic optimization of               carbon capture and storage infrastructure under uncertainty in co2 emissions,
+    batch processes under uncertainty: two-stage stochastic programming                          product prices, and operating costs. Ind. Eng. Chem. Res. 51, 11445­11457.
+    approach and enhanced generalized benders decomposition algorithm. Ind.                      doi:10.1021/ie3004754
+    Eng. Chem. Res. 52, 16851­16869. doi:10.1021/ie402621t
+                                                                                             Hart, W. E., Laird, C. D., Watson, J.-P., Woodruff, D. L., Hackebeil, G. A.,
+Colvin, M., and Maravelias, C. T. (2008). A stochastic programming approach for                  Nicholson, B. L., et al. (2017). Pyomo-optimization modeling in python.
+    clinical trial planning in new drug development. Comput. Chem. Eng. 32,                      Heidelberg, Germany: Springer.
+    2626­2642. doi:10.1016/j.compchemeng.2007.11.010
+                                                                                             Hellemo, L., Barton, P. I., and Tomasgard, A. (2018). Decision-dependent
+Dantzig, G. B. (1955). Linear programming under uncertainty. Manag. Sci. 1,                      probabilities in stochastic programs with recourse. Comput. Manag. Sci. 15,
+    197­206. doi:10.1287/mnsc.1.3-4.197                                                          369­395. doi:10.1007/s10287-018-0330-0
+
+Ding, L., Ahmed, S., and Shapiro, A. (2019). A python package for multi-stage                Høyland, K., and Wallace, S. W. (2001). Generating scenario trees for multistage
+    stochastic programming. Optimization online, 1­41.                                           decision problems. Manag. Sci. 47, 295­307 47,295­307. doi:10.1287/mnsc.47.
+                                                                                                 2.295.9834
+Dowson, O., and Kapelevich, L. (2020). SDDP.jl: a Julia package for stochastic dual
+    dynamic programming. Inf. J. Comput. doi:10.1287/ijoc.2020.0987                          Kannan, R. (2018). Algorithms, analysis and software for the global optimization of
+                                                                                                 two-stage stochastic programs. Ph.D. thesis, Massachusetts, MA: Massachusetts
+Escudero, L. F., Garín, M. A., and Unzueta, A. (2017). Scenario cluster lagrangean               Institute of Technology.
+    decomposition for risk averse in multistage stochastic optimization. Comput.
+    Oper. Res. 85, 154­171. doi:10.1016/j.cor.2017.04.007                                    Karuppiah, R., and Grossmann, I. E. (2008). Global optimization of multiscenario
+                                                                                                 mixed integer nonlinear programming models arising in the synthesis of
+Escudero, L. F., and Monge, J. F. (2018). On capacity expansion planning under                   integrated water networks under uncertainty. Comput. Chem. Eng. 32,
+    strategic and operational uncertainties based on stochastic dominance risk                   145­160. doi:10.1016/j.compchemeng.2007.03.007
+    averse management. Comput. Manag. Sci. 15, 479­500. doi:10.1007/s10287-
+    018-0318-9                                                                               Kaut, M. (2011). Scenario generation for stochastic programming introduction and
+                                                                                                 selected methods. SINTEF Technology and Society. 3, 1­61.
+
+Frontiers in Chemical Engineering | www.frontiersin.org                                  18  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                             Review Stochastic Programming Process System
+
+Kaut, M., and Wallace, S. W. (2003). Evaluation of scenario-generation methods for           Ogbe, E., and Li, X. (2019). A joint decomposition method for global optimization
+    stochastic programming. Yokohama, Japan: Yokohama.                                           of multiscenario nonconvex mixed-integer nonlinear programs. J. Global
+                                                                                                 Optim. 75, 595­629. doi:10.1007/s10898-019-00786-x
+Kim, J., Realff, M. J., and Lee, J. H. (2011). Optimal design and global sensitivity
+    analysis of biomass supply chain networks for biofuels under uncertainty.                Oliveira, F., Gupta, V., Hamacher, S., and Grossmann, I. E. (2013). A lagrangean
+    Comput. Chem. Eng. 35, 1738­1751. doi:10.1016/j.compchemeng.2011.02.008                      decomposition approach for oil supply chain investment planning under
+                                                                                                 uncertainty with risk considerations. Comput. Chem. Eng. 50, 184­195.
+Kim, K., and Zavala, V. M. (2018). Algorithmic innovations and software for the                  doi:10.1016/j.compchemeng.2012.10.012
+    dual decomposition method applied to stochastic mixed-integer programs.
+    Math. Prog. Comp. 10, 225­266. doi:10.1007/s12532-017-0128-z                             Paules, G. E., and Floudas, C. A. (1992). Stochastic programming in process
+                                                                                                 synthesis: a two-stage model with minlp recourse for multiperiod heat-
+Kittrell, J., and Watson, C. (1966). Don't overdesign process equipment. Chem.                   integrated distillation sequences. Comput. Chem. Eng. 16, 189­210. doi:10.
+    Eng. Prog. 62, 79.                                                                           1016/0098-1354(92)85006-t
+
+Kleywegt, A. J., Shapiro, A., and Homem-de-Mello, T. (2002). The sample average              Pereira, M. V. F., and Pinto, L. M. V. G. (1991). Multi-stage stochastic optimization
+    approximation method for stochastic discrete optimization. SIAM J. Optim. 12,                applied to energy planning. Math. Program. 52, 359­375. doi:10.1007/
+    479­502. doi:10.1137/s1052623499363220                                                       bf01582895
+
+Küçükyavuz, S., and Sen, S. (2017). Leading developments from INFORMS                        Pflug, G. C., and Pichler, A. (2016). Time-consistent decisions and temporal
+    communities--an introduction to two-stage stochastic mixed-integer                           decomposition of coherent risk functionals. Mathematics. 41, 682­699. doi:10.
+    programming. Maryland, MD: INFORMS.                                                          1287/moor.2015.0747
+
+Laporte, G., and Louveaux, F. V. (1993). The integer l-shaped method for stochastic          Pistikopoulos, E. N., and Ierapetritou, M. G. (1995). Novel approach for optimal
+    integer programs with complete recourse. Oper. Res. Lett. 13, 133­142. doi:10.               process design under uncertainty. Comput. Chem. Eng. 19, 1089­1110. doi:10.
+    1016/0167-6377(93)90002-x                                                                    1016/0098-1354(94)00093-4
+
+Lappas, N. H., and Gounaris, C. E. (2016). Multi-stage adjustable robust                     Powell, W. B. (2016). Optimization challenges in complex, networked and risky
+    optimization for process scheduling under uncertainty. AIChE J. 62,                          systems--a unified framework for optimization under uncertainty. Maryland,
+    1646­1667. doi:10.1002/aic.15183                                                             MD: INFORMS.
+
+Lara, C. L., Siirola, J. D., and Grossmann, I. E. (2019). Electric power infrastructure      Powell, W. B. (2019). A unified framework for stochastic optimization. Eur. J. Oper.
+    planning under uncertainty: stochastic dual dynamic integer programming                      Res. 275, 795­821. doi:10.1016/j.ejor.2018.07.014
+    (sddip) and parallelization scheme. Optim. Eng. 21, 1243­1281. doi:10.1007/
+    s11081-019-09471-0                                                                       Rockafellar, R. T., and Wets, R. J.-B. (1991). Scenarios and policy aggregation in
+                                                                                                 optimization under uncertainty. Mathematics. 16, 119­147. doi:10.1287/moor.
+Legg, S. W., Benavides-Serrano, A. J., Siirola, J. D., Watson, J. P., Davis, S. G.,              16.1.119
+    Bratteteig, A., et al. (2012). A stochastic programming approach for gas detector
+    placement using CFD-based dispersion simulations. Comput. Chem. Eng. 47,                 Ruszczyn´ski, A. (1997). Decomposition methods in stochastic programming.
+    194­201. doi:10.1016/j.compchemeng.2012.05.010                                               Math. Program. 79, 333­353. doi:10.1016/s0025-5610(97)00041-5
+
+Levis, A. A., and Papageorgiou, L. G. (2004). A hierarchical solution approach for           Ruszczyn´ski, A. (2010). Risk-averse dynamic programming for Markov decision
+    multi-site capacity planning under uncertainty in the pharmaceutical                         processes. Math. Program. 125, 235­261. doi:10.1007/s10107-014-0783-z
+    industry. Comput. Chem. Eng. 28, 707­725. doi:10.1016/j.compchemeng.
+    2004.02.012                                                                              Sahinidis, N. V. (2004). Optimization under uncertainty: state-of-the-art and
+                                                                                                 opportunities. Comput. Chem. Eng. 28, 971­983. doi:10.1016/j.
+Li, C., Bernal, D. E., Furman, K. C., Duran, M. A., and Grossmann, I. E. (2020).                 compchemeng.2003.09.017
+    Sample average approximation for stochastic nonconvex mixed integer
+    nonlinear programming via outer-approximation. Optim. Eng. doi:10.1007/                  Sand, G., and Engell, S. (2004). Modeling and solving real-time scheduling
+    s11081-020-09563-2                                                                           problems by stochastic integer programming. Comput. Chem. Eng. 28,
+                                                                                                 1087­1103. doi:10.1016/j.compchemeng.2003.09.009
+Li, C., and Grossmann, I. E. (2019a). A finite $$\epsilon $$-convergence algorithm
+    for two-stage stochastic convex nonlinear programs with mixed-binary first and           Sargent, R. (2005). Process systems engineering: a retrospective view with questions
+    second-stage variables. J. Global Optim. 75, 921­947. doi:10.1007/s10898-019-                for the future. Comput. Chem. Eng. 29, 1237­1241. doi:10.1016/j.
+    00820-y                                                                                      compchemeng.2005.02.008
+
+Li, C., and Grossmann, I. E. (2019b). A generalized Benders decomposition-based              Shapiro, A., Dentcheva, D., and Ruszczyn´ski, A. (2014). Lectures on stochastic
+    branch and cut algorithm for two-stage stochastic programs with nonconvex                    programming: modeling and theory. Philadelphia, Pennsylvania: SIAM.
+    constraints and mixed-binary first and second stage variables. J. Global Optim.
+    75, 247­272. doi:10.1007/s10898-019-00816-8                                              Tarhan, B., and Grossmann, I. E. (2008). A multistage stochastic programming
+                                                                                                 approach with strategies for uncertainty reduction in the synthesis of process
+Li, C., and Grossmann, I. E. (2018). An improved L-shaped method for two-stage                   networks with uncertain yields. Comput. Chem. Eng. 32, 766­788. doi:10.1016/j.
+    convex 0-1 mixed integer nonlinear stochastic programs. Comput. Chem. Eng.                   compchemeng.2007.03.003
+    112, 165­179. doi:10.1016/j.compchemeng.2018.01.017
+                                                                                             Torres, J. J., Li, C., Apap, R. M., and Grossmann, I. E. (2019). A review on the
+Li, P., Arellano-Garcia, H., and Wozny, G. (2008). Chance constrained                            performance of linear and mixed integer two-stage stochastic programming
+    programming approach to process optimization under uncertainty. Comput.                      algorithms and software. Optimization Online.
+    Chem. Eng. 32, 25­45. doi:10.1016/j.compchemeng.2007.05.009
+                                                                                             Van Slyke, R. M., and Wets, R. (1969). L-shaped linear programs with applications
+Li, X., Armagan, E., Tomasgard, A., and Barton, P. I. (2011a). Stochastic pooling                to optimal control and stochastic programming. SIAM J. Appl. Math. 17,
+    problem for natural gas production network design and operation under                        638­663. doi:10.1137/0117061
+    uncertainty. AIChE J. 57, 2120­2135. doi:10.1002/aic.12419
+                                                                                             Wallace, S. W., and Ziemba, W. T. (2005). Applications of stochastic programming.
+Li, X., Tomasgard, A., and Barton, P. I. (2011b). Nonconvex generalized benders                  Philadelphia, Pennsylvania: SIAM.
+    decomposition for stochastic separable mixed-integer nonlinear programs.
+    J. Optim. Theor. Appl. 151, 425. doi:10.1007/s10957-011-9888-1                           Watson, J.-P., Woodruff, D. L., and Hart, W. E. (2012). Pysp: modeling and solving
+                                                                                                 stochastic programs in python. Math. Prog. Comp. 4, 109­149. doi:10.1007/
+Lima, R. (2010). Ibm ilog cplex-what is inside of the box?" in Proc. 2010 EWO                    s12532-012-0036-1
+    seminar (Pittsburgh, PA: Carnegie Mellon University).
+                                                                                             Yang, Y., and Barton, P. I. (2016). Integrated crude selection and refinery
+Liu, M. L., and Sahinidis, N. V. (1996). Optimization in process planning under                  optimization under uncertainty. AIChE J. 62, 1038­1053. doi:10.1002/aic.15075
+    uncertainty. Ind. Eng. Chem. Res. 35, 4154­4165. doi:10.1021/ie9504516
+                                                                                             Ye, Y., Li, J., Li, Z., Tang, Q., Xiao, X., and Floudas, C. A. (2014). Robust
+Liu, P., Pistikopoulos, E. N., and Li, Z. (2010). Decomposition based                            optimization and stochastic programming approaches for medium-term
+    stochastic programming approach for polygeneration energy systems                            production scheduling of a large-scale steelmaking continuous casting
+    design under uncertainty. Ind. Eng. Chem. Res. 49, 3295­3305. doi:10.                        process under demand uncertainty. Comput. Chem. Eng. 66, 165­185.
+    1021/ie901490g                                                                               doi:10.1016/j.compchemeng.2014.02.028
+
+Lubin, M., and Dunning, I. (2015). Computing in operations research using julia.             Zavala, V. M. (2014). Stochastic optimal control model for natural gas
+    Inf. J. Comput. 27, 238­248. doi:10.1287/ijoc.2014.0623                                      networks. Comput. Chem. Eng. 64, 103­113. doi:10.1016/j.
+                                                                                                 compchemeng.2014.02.002
+
+Frontiers in Chemical Engineering | www.frontiersin.org                                  19  January 2021 | Volume 2 | Article 622241
+Li and Grossmann                                                                           Review Stochastic Programming Process System
+
+Zeballos, L. J., Méndez, C. A., Barbosa-Povoa, A. P., and Novais, A. Q. (2014).            Zou, J., Ahmed, S., and Sun, X. A. (2018). Multistage stochastic unit commitment
+    Multi-period design and planning of closed-loop supply chains with uncertain               using stochastic dual dynamic integer programming. IEEE Trans. Power Syst.
+    supply and demand. Comput. Chem. Eng. 66, 151­164. doi:10.1016/j.                          34, 1814­1823. doi:10.1109/TPWRS.2018.2880996
+    compchemeng.2014.02.027
+                                                                                           Zou, J., Ahmed, S., and Sun, X. A. (2019). Stochastic dual dynamic integer
+Zeng, Z., Christian, B., and Cremaschi, S. (2018). A generalized knapsack-                     programming. Math. Program. 175, 461­502. doi:10.1007/s10107-018-1249-5
+    problem based decomposition heuristic for solving multistage
+    stochastic programs with endogenous and/or exogenous                                   Conflict of Interest: The authors declare that the research was conducted in the
+    uncertainties. Ind. Eng. Chem. Res. 57, 9185­9199. doi:10.1021/acs.                    absence of any commercial or financial relationships that could be construed as a
+    iecr.8b00822                                                                           potential conflict of interest.
+
+Zeng, Z., and Cremaschi, S. (2018). Multistage stochastic models for shale gas             Copyright © 2021 Li and Grossmann. This is an open-access article distributed under
+    artificial lift infrastructure planning. Computer aided chemical engineering. 44,      the terms of the Creative Commons Attribution License (CC BY). The use,
+    1285­1290.                                                                             distribution or reproduction in other forums is permitted, provided the original
+                                                                                           author(s) and the copyright owner(s) are credited and that the original publication
+Zhang, Q., Cremer, J. L., Grossmann, I. E., Sundaramoorthy, A., and Pinto, J. M.           in this journal is cited, in accordance with accepted academic practice. No use,
+    (2016). Risk-based integrated production scheduling and electricity                    distribution or reproduction is permitted which does not comply with these terms.
+    procurement for continuous power-intensive processes. Comput.
+    Chem. Eng. 86, 90­105. doi:10.1016/j.compchemeng.2015.12.015
+
+Frontiers in Chemical Engineering | www.frontiersin.org                                20  January 2021 | Volume 2 | Article 622241
+

@@ -1,0 +1,626 @@
+IET Renewable Power Generation
+
+Research Article
+
+Assessing hydropower operational                                             ISSN 1752-1416
+profitability considering energy and reserve                                 Received on 16th June 2017
+markets                                                                      Revised 1st August 2017
+                                                                             Accepted on 4th August 2017
+                                                                             E-First on 12th September 2017
+                                                                             doi: 10.1049/iet-rpg.2017.0407
+                                                                             www.ietdl.org
+
+Arild Helseth1 , Marte Fodstad1, Magnus Askeland1, Birger Mo1, Odd Bjarte Nilsen2, Juan Ignacio
+
+Pérez-Díaz3, Manuel Chazarra3, Ignacio Guisández3
+
+1SINTEF Energy Research, Sem Saelands vei 11, 7465 Trondheim, Norway
+2Lyse Produksjon AS, 4069 Stavanger, Norway
+3Department of Hydraulic, Energy and Environmental Engineering, Technical University of Madrid (UPM), Madrid 28040, Spain
+
+  E-mail: arild.helseth@sintef.no
+
+Abstract: The authors analyse the operational profitability of a hydropower system selling both energy and reserve capacity in a
+competitive market setting. A mathematical model based on stochastic dynamic programming is used to compute the water
+values for the system considering different power plant configurations. The uncertainties in inflow and both energy and reserve
+capacity prices are considered through a discrete Markov chain. Subsequently, the system operation is simulated based on the
+obtained water values to assess system performance and expected revenues from the two markets. The model is applied in a
+case study for a Norwegian hydropower producer, showing how the power plant operation changes and profitability increases
+when considering sale of reserve capacity. The authors emphasise on how the water values are influenced by the opportunity to
+sell reserve capacity, and assess how the representation of non-convex relationships in the water value computations as well as
+simulation influence the profitability.
+
+   Nomenclature                                                b             duration of reservation block b, hours
+Index sets                                                                   duration of time step k, hours
+                                                               k             relative duration of time step k, fraction
+ set of reservation blocks within the week                     ~k            reserve capacity price scaling coefficient
+G set of hydropower generators                                 bC
+K set of time steps within the week                            kE            energy price scaling coefficient
+Kb set of time steps associated with block b                   F
+St set of state variables                                                    conversion factor, from m3/s to Mm3/h
+SE,t set of stochastic state variables                         H             head for given initial reservoir volume, m
+SP,t set of endogenous state variables                         H0            reference head, m
+                                                               K             last time step in week
+Decision variables                                             Mg            number of discharge points
+                                                                             number of nodes per week in Markov model
+t + 1 future expected profit,                                  NE            number of discrete reservoir volumes
+,  SOS-2 variables                                                           generated energy with discharge Qgm, MWh/h
+cb reserved capacity, MW                                       NP            Max./Min. capacity, MW
+pgk generated energy, MWh/h                                    P(Qgm)
+qgDk discharge, m3/s                                           Pgmax, Pgmin  minimum river flow, m3/s
+qkS spillage, m3/s                                             Qmin          discharge in point m, m3/s
+ugk status indicator for the generator (on/off)                              number of weeks in planning horizon
+vk reservoir volume, Mm3                                       Qgm           Max./Min. reservoir volume, Mm3
+xt decision variables                                          T             reservoir volume at point n, Mm3
+ygk incurred start-up cost,                                    V max, V min
+                                                               Vn
+
+Stochastic variables                                           1 Introduction
+
+C weekly average reserve capacity price, /MW                   The increasing share of non-dispatchable renewable energy
+E weekly average energy price, /MWh                            resources in Europe calls for efficient and reliable arrangements for
+I sum weekly inflow to reservoir, Mm3                          balancing services. For large-scale energy storage operators, such
+                                                               as hydropower producers, this development may change the market
+Parameters                                                     products typically being delivered. Today, the producers' primary
+                                                               source of remuneration is from selling energy in the day-ahead
+g           start-up cost,                                     market. However, the flexibility of hydropower enables active
+                                                               contribution in reserve capacity and balancing markets as well,
+gm          energy equivalent, MW/m3/s                         which in turn will challenge the way hydropower reservoirs
+            water value, /Mm3                                  traditionally have been operated.
+i           transition probability matrix
+(...)       water value matrix, /Mm3                               For a hydropower producer, the expected marginal value of
+(...)                                                          water, hereafter referred to as the water value, express the
+                                                               opportunity cost of water. Having the possibility to utilise the
+IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647  facilities for both energy generation and reserve capacity may
+© The Institution of Engineering and Technology 2017           impact the strategic evaluation and scheduling of resources. These
+
+                                                                                                                                                    1640
+products will to some extent rely on the same resource (water), but    multi-market studies of hydropower systems with one or a few                 17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+their resource deployment will differ. Consequently, the               reservoirs and with inherit non-convexities in the model
+consideration of both products will impact the water values, and in    formulation. Moreover, it can be used to benchmark the scheduling
+turn the expected operational profitability of a hydropower project.   policies from state-of-the-art linear models, and to quantify the
+The term operational profitability is used throughout the text to      approximation errors in those.
+emphasise that we do not consider investment costs for the project,
+only profitability from operation.                                         In Section 3, we apply the model to a hydropower system in
+                                                                       South-Western Norway to assess how investments in different
+    The early works on operational planning (scheduling) of            generator technologies are expected to generate profit for the
+hydropower reservoirs used the principles of stochastic dynamic        operator when considering both the day-ahead energy and primary
+programming (SDP) [1­3]. SDP decomposes the multi-stage                reserve capacity markets.
+planning problem into a sequence of single-stage subproblems that
+can be solved by backward induction. The method allows explicit        2 Scheduling model
+representation of uncertainty (typically in inflow) and the
+representation of non-linear and non-convex relationships. Non-        We consider a single reservoir connected to a multi-generator
+convexities typically occur when representing the head-dependent       power station suited for delivering energy and reserve capacity to
+relationship between power output and water discharge, and the         separate markets. It is assumed that the reservoir operator
+unit commitment of generators. The major drawback of the SDP           (hydropower producer) is a risk-neutral price-taker in both markets.
+method is that the state variables (typically reservoir volumes) need  This assumption is fair for producers in the liberalised Nordic
+to be discretised, so the overall problem size becomes                 market. Note that the model can easily be extended to treat
+computationally intractable when considering systems with many         multiple reservoirs, but the computational burden will increase
+reservoirs. Thus, SDP-based scheduling models applied to multi-        exponentially due to the discretisation of state variables.
+reservoir systems often rely on aggregation­disaggregation
+techniques, such as in [4­6]. Numerous other methodological            2.1 Model overview
+approaches have been applied to the scheduling problem, see e.g.
+[7, 8] for an overview. The stochastic dual dynamic programming        We consider a planning period of 1 year comprising decision stages
+(SDDP) introduced in [9] has become particularly popular. The          of 1 week. The overall decision problem is then to find an
+SDDP method allows solving the scheduling problem without              operating strategy that maximises the expected profit for the entire
+discretising the state variables, and is therefore computationally     planning period while respecting all relevant constraints. The
+tractable for systems with multiple reservoirs. Although frequently    decision problem can be formulated as a multi-stage stochastic
+addressed in recent literature, see e.g. [10­14], the SDDP method      optimisation problem, and the expectation is to be taken over the
+does not easily facilitate non-convexities.                            stochastic variables. We assume that the probability distributions of
+                                                                       the stochastic variables can be discretised, and that problem can be
+    Several approaches incorporating treatment of energy, reserve      decomposed into weekly decision stages. Consequently, the
+capacity, and balancing markets in long- and medium-term               realisations of the stochastic variables for an entire week are
+hydropower scheduling methods have recently been presented.            known at the beginning of that week. The use of weekly decision
+Some authors have decomposed the scheduling problem into intra-        stages is the standard approach when computing water values for
+and inter-stage problems, as discussed in [15], where the inter-       producers in the Nordic market. For further discussion of decision
+stage problem will take care of the longer-term and strategic          stages and a visualisation of the corresponding scenario tree, see
+decisions, e.g. how much water to use in a given week, while intra-    [21].
+stage decisions concern the detailed operation using a much finer
+time-resolution. Based on this scheme, Abgottspon and Andersson            In the decomposition to an SDP problem, we define a set of
+[16] proposed a method for stochastic medium-term hydropower           system states St that comprises all information passed from one
+scheduling considering participation in both the day-ahead and
+secondary reserve markets. Inter-stage decisions regarding             decision stage t - 1 to the next t. A subset SP,t  St of these state
+operation of seasonal reservoirs are found by the use of SDP, and
+the shorter term intra-stage decisions, e.g. related to sales of       variables is endogenous to the optimisation problem and will be
+spinning reserves, are found by solving a multi-stage mixed-integer    described in Section 2.3. The stochastic variables being realised at
+problem. A different method for incorporating sales of spinning        the beginning of the current week t can be defined as state
+reserves in a medium-term hydropower scheduling model based on         variables SE,t  St, as described further in Section 2.2. Assuming
+linear programming was presented in [17]. It extends the hybrid
+SDP/SDDP algorithm in [18, 19] by allowing sequential sales of         we are in state {ste, stp}  St at the beginning of decision stage t, the
+reserve capacity and energy, treating both prices as stochastic.
+However, as documented in [20], the approximation error                decomposed decision problem in (1) is a function of the current
+introduced when linearising non-convex system characteristics in       week's profit Jt resulting from the immediate decisions xt, and the
+the system simulation can be substantial, particularly when
+considering sales of reserve capacity.                                 future expected profit
+
+    This work concerns the assessment of operational profitability     t(stp, ste) = max {Jt(xt, stp, ste) + E[t + 1(stp+ 1, ste+ 1) | ste]}  (1)
+for a hydropower plant considering sales of energy and spinning        xt
+reserve capacity. In Section 2, we present an SDP model suited for
+computing water values in this market context. Although the SDP        2.2 Stochastic variables
+method has limited capability to address multi-reservoir systems, it
+allows a detailed representation of the non-convex system              Three stochastic variables are considered in this work; the sum
+characteristics, which are of particular importance when               weekly inflow to the reservoir, and the weekly average energy and
+considering sales of spinning reserve capacity. In the presented       reserve capacity prices. We assume that the exogenous random
+model, we represent non-linearities using a mixed-integer linear       variables are Markovian, so that (1) represents a Markov decision
+programming (MILP) formulation, where non-convex functional            process. The Markovian property allows the conditional probability
+relationships are approximated to piecewise linear functions. The      distribution of future states to only depend on the current state.
+model allows representation of uncertainty in inflows and market       Thus, we are able to capture the weekly correlations in the
+prices. System operation is simulated using the water values           stochastic variables up to the first lag. The expected future value
+obtained from the SDP model. Consequently, by computing the            function is computed by taking the probability weighted average
+water values and simulating system operation without convexifying      over the NE discrete values in SE,t + 1. The process of defining the
+non-convex relationships, we add to the existing literature by
+assessing the approximation error in purely linear models such as      number of discrete values (nodes) to represent each stochastic
+[17]. We believe that the presented model is well suited for detailed  variable is in essence a trade-off between the relative importance of
+                                                                       the stochastic variable and computation time, see e.g. [22]. On the
+IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647          one hand, one would like to have many nodes to obtain high
+                                                                       accuracy, but on the other, we know that the computational time
+© The Institution of Engineering and Technology 2017                   increases exponentially with the number of states. The process of
+
+                                                                                                                                              1641
+defining the NE nodes in our case study is further discussed in                          ugK - ug0 = 0 g                                  (17)         17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+Section 3
+
+t(stp, ste) =                                                                            Vmin  vk  Vmax k                                 (18)
+
+ max {Jt(xt, stp, ste+ 1) +      (ste+ 1 | ste)  t + 1(stp+ 1, ste+ 1)} (2)              0  cb  Cmax b                                    (19)
+
+      xt            ste+ 1  NE
+
+                                                                                p, y, qD, qS  +, t + 1  
+
+In general, we assume that the stochastic variables are auto- and            u  {0, 1},  SOS-2,  SOS-2
+cross-correlated between weeks, and we compute a discrete
+Markov chain to represent these correlations. Similar approaches             The amount of energy sold to the day-ahead market and reserve
+were presented in [23, 24].                                                  capacity to the reserve market is optimised in (3) while considering
+                                                                             start-up costs and the expected future profit.
+2.3 Decision problem
+                                                                                 Rather than fixing vK and treat it in the intra-week SDP
+The decomposed weekly decision problem for week t is formulated
+as an MILP problem described by (3)­(19). For this problem, the              algorithm, we let the model treat it as a decision variable. This
+realisation of the current week's stochastic variables in ste is known.      technique was discussed in [25] and was referred to as re-
+These are the sum weekly inflow It, the weekly average energy                optimisation. We discretise the reservoir volume into n = 1...NP
+price tE, and the weekly average reserve capacity price tC. The
+initial state is defined by the initial storage and the stochastic           points, each with a corresponding volume Vn, and let V1 = Vmin and
+variables: st = v0, It, tE, tC . Note that for brevity of mathematical
+                                                                             VNP = Vmax and apply (20). Discrete values for the future expected
+formulation, the week index is only used to indicate change of
+week                                                                         profit t + 1(Vn, ste+ 1) are found in (21). These values are computed in
+
+                                                                             the SDP algorithm and serve as parameters in the weekly decision
+                                                                             problem, as will be described in Section 2.4
+
+                                                                             Vn - 1  Vn  Vn + 1, n = 2...NP - 1                           (20)
+
+                         kkEE                          bbCCcb
+   t(stp, ste) = max
+                                         pgk +                                             n-1
+
+                    kK            gG            b              (3)            t + 1(Vn, ste+ 1) = t + 1(V1, ste+ 1) +  i  (Vi + 1 - Vi),
+
+  -             ygk + t + 1(vK, ste+ 1)                                                    i=1                                            (21)
+
+          kKgG                                                               n = 2...NP
+
+                             NP                                              In (4), we require t + 1(vK, ste+ 1) to be a linear combination of the
+
+           t + 1(vK, ste+ 1) =   n  t + 1(Vn, ste+ 1)          (4)           discrete values in (21), where the variables n indicate the use of
+
+                            n=1                                              each point n. The final reservoir volume vK is found in (5). The
+
+                             NP                                              function t + 1(vK, ste+ 1) is not necessarily convex; thus, we model it
+
+                    vK =  nVn                                  (5)           as a special ordered set of type 2 (SOS-2), by adding (6) and
+                                                                             requiring that at most two n could be non-zero, and that these must
+                             n=1
+                                                                             be adjacent. Reservoir balances in (7) keep track of the reservoir
+                         NP                                                  volume in each time step k. Note that when k = 1, v0 enters as a
+                                                                             initial state on the right-hand side in (7).
+                         n = 1                                 (6)
+                                                                                 Hydropower generation is modelled as a piece-wise linear
+                        n=1                                                  function of discharge in (8)­(10). The formulation allows a non-
+                                                                             convex function where head effects are approximated. We
+           vk + Fk  qgDk + FkqkS = vk - 1 + ~kI k              (7)           discretise qD through each generator g into m = 1...Mg points, each
+
+                gG                                                           with a corresponding discharge Qgm, according to (22). A
+
+                    Mg                                                       generation of P(Qgm) can be found in (23), and we require pgk to be
+
+                pgk = gm  P(Qgm) g, k                          (8)           a linear combination of these values in (8). Note that P(Qgm) = 0
+
+                    m=1                                                      for m = 1
+
+                        Mg
+
+                 qgDk =      gmQgm g, k                        (9)           Qg, m - 1  Qgm  Qg, m + 1 g, m = 2...Mg - 1                  (22)
+
+                    m=1
+
+                    Mg                                                        P(Qgm)m - 1 giH
+                                                                                i = 1 H0
+                     gm = 1 g                                  (10)          =              (Qg, i + 1 - Qg, i)        g, m = 2...Mg      (23)
+
+                    m=1
+
+                pgk  Pgminugk g, k                             (11)          The variables gm indicate the use of each point m for a generator.
+                                                                             The generation pgk is not necessarily a concave function of
+                pgk  Pgmaxugk g, k                             (12)          discharge; thus, we model it as a SOS-2, by adding (10) and
+                                                                             requiring that at most two gm could be non-zero for each generator,
+            pgk -       Pgminugk  cb b, k  Kb                  (13)          and that these should be adjacent. The minimum and maximum
+                                                                             generation limits are enforced by (11) and (12), respectively.
+          gG    gG
+                                                                                 The reserve capacity cb is used for both down-regulation in (13)
+            Pgmaxugk -       pgk  cb b, k  Kb                  (14)          and up-regulation in (14). In line with the current market structure
+                                                                             for reserve capacity in Norway, reserve capacity is sold in blocks b
+          gG        gG                                                       covering a set of time steps Kb, e.g. all weekdays from midnight to
+                                                                             8:00 a.m. The reserve capacity sales result in a reserve capacity
+                 qgDk + qkS  Qmin k                            (15)          requirement which is tied to the entire power station and limits the
+                gG                                                           opportunities in the day-ahead market. In this work, we treat the
+                                                                             reserve capacity as a symmetric product, which is in line with the
+               ygk  g  ugk - ug, k - 1 g, k                    (16)          primary reserve market in Norway, but this requirement can easily
+
+1642                                                                                IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647
+
+                                                                                                 © The Institution of Engineering and Technology 2017
+be relaxed by introducing separate variables for down- and up-           spinning state at the end of the week ugK. The reservoir volume and    17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+regulation. Note that constraints ensuring that there is always
+enough water to activate the sold reserve capacity could be              the reserve capacity are limited in (18) and (19), respectively.
+included, as was done in [17, 26], but this was not considered of
+significant importance in the presented case study.                      2.4 Solution strategy
+
+    The total amount of water discharged and spilled to the              The SDP solution strategy is a combination of optimisation and
+downstream river should meet a minimum river-flow requirement            backward induction, see Fig. 1. We loop over the NP discrete initial
+in (15). This constraint is motivated by environmental
+considerations in the case study.                                        reservoir volumes in line 5 and the NE number of nodes in the
+
+    A start-up cost g is incurred whenever a generator goes from a       Markov model in line 7 to solve the weekly decision problem in
+                                                                         line 10. For each node ste in the Markov model, the expected future
+non-spinning to a spinning state. Incurred start-up costs are given
+by the variable ygk in (16). The time-coupling in (16) indicates that    profit t(Vn, ste) is computed in line 13. The water values are
+
+each unit's initial spinning state ug0 at the beginning of the week      computed in line 15.
+                                                                             The water values at the end of horizon are initialised to zero in
+should enter the state space. In our experience, this detail has little
+impact on the computed water values. Thus, it was simplified in          the first iteration. We consider a planning horizon of 1 year and
+(17), requiring that the initial spinning state should be equal to the   assume that the generation system and the expected market prices
+                                                                         and inflow do not change after that year. Under these static
+Fig. 1 Algorithm 1: SDP algorithm                                        conditions, we use the water values found for the beginning of the
+                                                                         first week (t = 0) in iteration j as the updated water values for the
+Fig. 2 Watercourse topology and technical data                           end of the last week (t = T) in iteration j + 1. The algorithm is
+                                                                         solved repeatedly until the expected water values in the water value
+                                                                         matrix  stabilise according to a pre-defined tolerance  in line 20.
+                                                                         Different convergence criteria can be defined, as discussed e.g. in
+                                                                         [22], but this is not further discussed here. Note that the
+                                                                         computation of water values in line 15 is not strictly necessary, as
+                                                                         one could store the expected future profit instead of the water
+                                                                         values and avoid (21). However, we prefer the direct formulation
+                                                                         for clarity of presentation and to preserve adequate scaling of the
+                                                                         optimisation problems.
+
+                                                                         3 Case study
+
+                                                                         We applied the presented model to the Maudal watercourse, located
+                                                                         in the south-western part of Norway. The system comprises a
+                                                                         single reservoir with 63Mm3 storage capacity and a power station,
+                                                                         as illustrated in Fig. 2. The system receives both storable and non-
+                                                                         storable inflow, and the expected annual values are indicated in
+                                                                         Fig. 2. The non-storable inflow enters downstream of the
+                                                                         generators, but can be subtracted from the minimum flow
+                                                                         requirement for the downstream river.
+
+                                                                             The operator considers reinvesting in generators, and is
+                                                                         evaluating a set of different possibilities. One of the key
+                                                                         uncertainties impacting this investment decision is how much
+                                                                         profit one should expect from selling reserve capacity in the future.
+                                                                         Two different investment alternatives are compared in the
+                                                                         following, cases A and B, both with two generators and a total
+                                                                         installed capacity of 24.8MW. Technical data for the different
+                                                                         generators are shown in Table 1, including the number of discrete
+                                                                         discharge points (Mg), maximum (Pmax) and minimum (Pmin)
+
+                                                                         generation, and the generator type. The Francis generator in case A
+                                                                         has a higher maximum efficiency, but does not have the ability of
+                                                                         the Pelton turbine to run at low output to deliver reserve capacity.
+                                                                         The maximum allowed sales of symmetric reserve capacity is 8.87
+                                                                         and 10.75MW for cases A and B, respectively. We assume start-up
+                                                                         costs of 100 and 50 for the largest (g1) and smallest (g2) generator,
+                                                                         respectively. These values are similar to those reported in [27].
+
+                                                                             The two cases were analysed in two different modes. First, in
+                                                                         the E-mode, we consider sales of energy only by letting Cmax = 0
+                                                                         in (19). Second, in the E+C mode, we allow selling in both the
+                                                                         energy and reserve capacity markets. The water values for the two
+                                                                         cases operated in the two different modes were obtained by using
+                                                                         the model presented in Section 2 and then used to simulate the
+                                                                         hydropower plant operation in a sequential optimisation process.
+
+Table 1Simulated cases
+
+Case                               Unit no.                    Mg        Pmax   Pmin   Type
+                                                                         21.11  6.57  Francis
+A                                  g1                          10        3.71   0.49  Pelton
+                                                                         16.06  2.34  Pelton
+A                                  g2                          12        8.79   0.97  Pelton
+
+B                                  g1                          13                                       1643
+
+B                                  g2                          13
+
+IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647
+© The Institution of Engineering and Technology 2017
+Fig. 3 Water values for case B in the E+C (grey) and E (black) mode     RAM. In each time stage, the state space is described by NP×NE=           17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                        21×5×15=1575 discrete states. The decomposed weekly decision
+Fig. 4 Water values for case B for week 15. Values for the E+C mode     problem for case D for a given week comprises 1075 variables
+(left) and the E mode (right) are shown                                 (443 binary) and 800 constraints. The SDP algorithm typically
+                                                                        converges in seven to ten iterations, and one iteration took on
+    The reservoir level was discretised in NP=21 equidistant            average 4h when using the MILP formulation. We emphasise
+points, which was considered appropriate for this particular            that the model has not been optimised for computational
+reservoir. The process of finding the discretised stochastic variables  performance, and expect that speed-up can be obtained e.g. by
+is described below. The hourly energy prices were sampled from an       adjusting the default SOS-2 structure; see [31, 32] for further
+ARIMA(2,0,3) model fitted to day-ahead prices, while reserve            details.
+capacity prices were sampled from a GARCH(1,1) model with
+ARMA(1,1) as the mean process fitted to primary reserve prices.             The results from this case study are presented in the following
+Both models were fitted with historical data from 2013 to 2015 for      subsections. First, the computed water values are analysed in
+Maudal's price area, NO2 in NordPool. No significant correlation        Section 3.1. Subsequently, we present simulation results obtained
+between day-ahead and reserve capacity prices was observed in the       by using the computed water values for dispatch in Section 3.2.
+historical data; therefore, independent models for the two price
+processes were chosen. From 1000 samples of each price, a               3.1 Water values
+discrete price model comprising 15 price nodes per stage (5 energy
+and 3 reserve capacity prices) was identified by following the          Fig. 3 shows the water value surfaces for the median price and
+approach discussed in [17]. No significant correlation between          inflow node for the two modes for case B. The E+C mode (grey
+inflow and price was detected in the historical record, which           surface) provides higher water values than the E mode (black
+justifies our use of a separate inflow model. A total of 1000 inflow    surface) most of the time. In general, the water values decrease
+samples generated from a VAR(1) model described in [28] were            faster with increasing reservoir level in the E+C mode. In certain
+used to create five inflow nodes per stage.                             periods of the year, the water values are higher at high reservoir
+                                                                        levels in the E mode. The pronounced increase in mode E+C in
+    The model was implemented in the AMPL modelling language            Fig. 3 for the summer season (around weeks 25­30) is primarily
+[29] using the CPLEX optimisation solver [30], version 12.6. We         due to expectation of high prices in the primary reserve capacity
+used an absolute MIPGAP of 1×10-5. All tests were carried out on        market for that season.
+an Intel Core i7-4940MX processor with 3.30GHz and 32GB
+1644                                                                        In order to explain the shape of the water value surface in
+                                                                        Fig. 3, we study two specific weeks in Figs. 4 and 5. Water values
+                                                                        for weeks 15 and 25 for case B are presented in Figs. 4 and 5, for
+                                                                        both modes. The bottom and top of the boxes indicate the lower
+                                                                        and upper quartiles, respectively. Note that, in addition to
+                                                                        uncertainty in energy price and inflow, mode E+C also faces
+                                                                        uncertainty in reserve capacity prices. The steeper shape in the E+
+                                                                        C mode in both Figs. 4 and 5 indicates that the risk of spillage
+                                                                        impacts the water values more in the E+C mode. In the E+C
+                                                                        mode, sales of up-regulation reserves are expected in the future,
+                                                                        which in turn will limit the generators ability to discharge, and
+                                                                        consequently increase the risk of spillage. This effect is evident in
+                                                                        Fig. 4. Furthermore, both Figs. 4 and 5 indicate that the water value
+                                                                        is likely to be higher in the E+C mode at low reservoir levels. This
+                                                                        is also evident in Fig. 3. In certain parts of the year, it will be
+                                                                        optimal to have generators spinning at energy prices below the
+                                                                        water value for the purpose of delivering reserves. Thus, water is
+                                                                        needed both to sell energy and reserve capacity, and consequently,
+                                                                        the value of the scarce resource is higher in the E+C mode. The
+                                                                        consequence of a low reservoir in week 25 is obviously more
+                                                                        pronounced in the E+C mode, since the producer may not be able
+                                                                        to keep the units spinning. This impact is similar to what will
+                                                                        typically be found when considering minimum flows [24].
+
+                                                                        3.2 Simulation results
+
+                                                                        Simulations were run to study the system performance and
+                                                                        operational profitability for the two cases in each mode. A set of
+                                                                        1000 scenarios, each with weekly prices and inflows for 1 year,
+                                                                        were sampled initially from the established Markov model and
+                                                                        used in the simulations. The simulations were arranged as weekly
+                                                                        decisions in sequence using the model formulation defined in
+                                                                        Section 2.3 and the water values obtained from the SDP model.
+
+                                                                            In order to test the importance of accurate representation of
+                                                                        non-convexities, the simulations were run three times using the
+                                                                        same scenario set. In the first run, both the SDP model and the
+                                                                        simulations were run using the proposed MILP formulation in
+                                                                        Section 2.3. In the second run, we relaxed the weekly decision
+                                                                        problem in (3)­(19) to an LP problem to resemble the degree of
+                                                                        detail typically used in medium- and long-term hydropower
+                                                                        scheduling models. Finally, in the third run, we relaxed the weekly
+                                                                        decision problem in the SDP model and simulated using an MILP
+                                                                        formulation. This combination resembles how practical
+                                                                        hydropower scheduling is often carried out, simulating the system
+                                                                        using a more detailed system representation than what is used
+                                                                        when computing the water values. The expected profits are
+
+                                                                               IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647
+
+                                                                                            © The Institution of Engineering and Technology 2017
+Fig. 5 Water values for case B for week 25. Values for the E+C mode    Fig. 6 Reservoir trajectories for case B, mode E (stapled), and E+C                        17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+(left) and the E mode (right) are shown                                (solid-drawn). 0, 25, 50, 75, and 100 percentiles
+
+Table 2Expected profits. All values are in percentage of the expected profit in the E mode for the respective case in run 1
+
+Run  Case  Mode  SDP   Sim.                                            En. sales  Cap. sales  Total
+
+1    A     E     MILP  MILP                                            100.00     0.00        100.00
+
+1    A     E+C   MILP  MILP                                            94.16      13.17       107.33
+
+1    B     E     MILP  MILP                                            100.00     0.00        100.00
+
+1    B     E+C   MILP  MILP                                            92.48      18.30       110.78
+
+2    A     E     LP    LP                                              100.33     00.00       100.33
+
+2    A     E+C   LP    LP                                              95.43      17.13       112.55
+
+2    B     E     LP    LP                                              100.73     0.00        100.73
+
+2    B     E+C   LP    LP                                              93.03      20.02       113.05
+
+3    A     E     LP    MILP                                            99.76      00.00       99.76
+
+3    A     E+C   LP    MILP                                            94.02      12.28       106.30
+
+3    B     E     LP    MILP                                            99.79      0.00        99.79
+
+3    B     E+C   LP    MILP                                            92.70      17.44       110.14
+
+presented in Table 2. All values are in percentage of the expected     spinning during the summer season, giving a lower trajectory in
+profit in the E mode for the respective case in run 1.                 autumn and early winter.
+
+    In all three runs and in both cases, the total profit increases        Fig. 7 shows the duration curve of generation for each generator
+when the opportunity to sell reserve capacity is introduced. This is   for case A operating in E (stapled) and E+C (solid-drawn) modes.
+expected since mode E in essence is a constrained version of mode      Both units are operating in a larger percentage of time in the E+C
+E+C. Table 2 also shows that the expected profit increases by 5.22     mode. Generator g1 operates 30% of the time at around 15.44
+and 2.27 percentage points for cases A and B, respectively, in the     MW in the E+C mode. This corresponds to the situation where the
+E+C mode when comparing run 2 and run 1. The increase in               system sells the maximum rate of reserve capacity (8.87MW). In
+expected profit when relaxing the problem formulation is primarily     this situation, g2 is running on minimum output, leaving 3.22MW
+due to the added flexibility of selling reserves without strictly      (3.71­0.49MW) for up-regulation, while g1 provides 8.87MW
+respecting the minimum power output requirement and the non-           down-regulation and 5.65MW up-regulation.
+convex production function. Note that this flexibility is highly
+dependent on characteristics of the hydropower system being                Fig. 8 shows the duration curve of generation for each generator
+studied, see e.g. [20] for a similar test on a different system.       for case B operating in E (stapled) and E+C (solid-drawn) modes.
+Comparing run 3 with run 1, reduction in expected total profit of      As for case A, both units are operating in a larger percentage of the
+1.03 and 0.64 percentage points is observed for cases A and B,         time in the E+C mode. Moreover, generator g2 produces less
+respectively, in the E+C mode. This difference serves to quantify      energy in the E+C than in the E mode and is primarily run at
+the approximation error when linearising non-convexities in the        minimum output to support g1 in delivering up-regulation reserves.
+SDP water value computation. As expected, we obtain a better
+result when the simulation and the water values are based on the       4 Conclusion
+same model formulation. This improvement comes at a significant
+increase in computational effort due to the vast amount of weekly      Accurate water values are of great importance when analysing the
+decision problems to be solved in the SDP model and the added          operational profitability of new investments in or upgrading of
+complexity of solving MILP problems over LP problems.                  existing hydropower stations. We present a model for optimal
+                                                                       scheduling of both energy and reserve capacity under uncertainty
+    Fig. 6 shows reservoir trajectory percentiles for case B in the E  in market prices and inflow. The model allows exact representation
+and E+C mode as stapled and solid-drawn lines, respectively. The       of non-convexities such as head-dependent production functions
+E+C mode follows a higher trajectory in the late winter period         and generator unit commitment.
+(weeks 10­15, before snow melt) to store enough water for the
+summer season. Owing to sales of reserve capacity in the E+C               The model was applied in a case study for a Norwegian
+mode, water is used more aggressively to keep the generators           hydropower producer, showing how the operational profitability of
+
+IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647                                                                                               1645
+
+© The Institution of Engineering and Technology 2017
+Fig. 7 Duration curves for the two generators in case A. E mode as         6 References                                                                              17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+stapled lines, E+C mode as solid-drawn
+                                                                           [1] Little, J.D.C.: `The use of storage water in a hydroelectric system', J. Oper.
+Fig. 8 Duration curves for generation, case B. E mode as stapled lines, E            Res. Soc. Am., 1955, 3, (2), pp. 187­197
++C mode as solid-drawn
+future investments in the generation system depends on whether             [2] Lindqvist, J.: `Operation of a hydrothermal electric system: a multistage
+and how reserve capacity sales is considered. The operational                        decision process', AIEE Trans.­ pt. III (Power Apparatus and Systems), 1962,
+pattern changes to less seasonal shifting of energy when a reserve                   81, (3), pp. 1­7
+capacity market is introduced. Moreover, the water values show a
+more pronounced variation for different reservoir fillings when            [3] Stage, S., Larsson, Y.: `Incremental cost of water power', Trans. Am. Inst.
+considering two markets, being more exposed to both the risk of                      Electr. Eng., 1961, 80, (3), pp. 361­364
+missing high-price periods and spillage.
+                                                                           [4] Turgeon, A., Charbonneau, R.: `An aggregation­disaggregation approach to
+    Models based on linear programming are traditionally used for                    long-term reservoir management', Water Resour. Res., 1998, 34, (12), pp.
+long-term hydropower scheduling. The presented model allows                          3585­3594
+representation of non-convex system characteristics and is well
+suited for systems with a few reservoirs. Thus, it can be used to          [5] Wolfgang, O., Haugstad, A., Mo, B., et al.: `Hydro reservoir handling in
+benchmark the scheduling policies from linear models, and to                         Norway before and after deregulation', Energy, 2009, 34, (10), pp. 1642­
+quantify the approximation errors. This was demonstrated in the                      1651
+case study, showing that the linear approximation significantly
+overestimated the operational profitability.                               [6] Neto, T.A.A., Pereira, M.V.F., Kelman, J.: `A risk-constrained stochastic
+                                                                                     dynamic programming approach to the operation planning of hydrothermal
+    In general, our findings point out the importance of taking                      systems', IEEE Trans. Power Apar. Syst., 1985, PAS-104, (2), pp. 273­279
+reserve capacity markets into account when upgrading and
+modernising existing systems. The long lifetime of such                    [7] Labadie, J.W.: `Optimal operation of multireservoir systems: state-of-the-art
+investments implies a significant risk if future market opportunities                review', J. Water Resour. Plan. Manage., 2004, 130, (2), pp. 93­111
+are not taken into account.
+                                                                           [8] Steeger, G., Barosso, L.A., Rebennack, S.: `Optimal bidding strategies for
+5 Acknowledgment                                                                     hydro-electric producers: a literature survey', IEEE Trans. Power Syst., 2014,
+This work was supported by the Research Council of Norway,                           29, (4), pp. 1758­1766
+grant 228731/E20.
+                                                                           [9] Pereira, M.V.F., Pinto, L.M.V.G.: `Multi-stage stochastic optimization applied
+                                                                                     to energy planning', Math. Program., 1991, 52, pp. 359­375
+
+                                                                           [10] Flach, B., Barroso, L., Pereira, M.: `Long-term optimal allocation of hydro
+                                                                                     generation for a price-maker company in a competitive market: latest
+                                                                                     developments and a stochastic dual dynamic programming approach', IET.
+                                                                                     Gener. Transm. Distrib., 2010, 4, (2), pp. 299­314
+
+                                                                           [11] Goor, Q., Kelman, R., Tilmant, A.: `Optimal multipurpose-multireservoir
+                                                                                     operation model with variable productivity of hydropower plants', J. Water
+                                                                                     Resour. Plan. Manage., 2011, 137, (3), pp. 258­267
+
+                                                                           [12] Cerisola, S., Latorre, J.M., Ramos, A.: `Stochastic dual dynamic
+                                                                                     programming applied to nonconvex hydrothermal models', Eur. J. Oper. Res.,
+                                                                                     2012, 218, pp. 687­897
+
+                                                                           [13] Abgottspon, H., Njálsson, K., Bucher, M.A., et al.: `Risk-averse medium-term
+                                                                                     hydro optimization considering provision of spinning reserves'. Int. Conf. on
+                                                                                     Probabilistic Methods Applied to Power Systems (PMAPS), Durham,
+                                                                                     England, 2014
+
+                                                                           [14] Steeger, G., Rebennack, S.: `Dynamic convexification within nested benders
+                                                                                     decomposition using Lagrangian relaxation: an application to the strategic
+                                                                                     bidding problem', Eur. J. Oper. Res., 2017, 257, (2), pp. 669­686
+
+                                                                           [15] Löhndorf, N., Wozabal, D., Minner, S.: `Optimizing trading decisions for
+                                                                                     hydro storage systems using approximate dual dynamic programming', Oper.
+                                                                                     Res., 2013, 61, (4), pp. 810­823
+
+                                                                           [16] Abgottspon, H., Andersson, G.: `Medium-term optimization of pumped hydro
+                                                                                     storage with stochastic intrastage subproblems'. Proc. 18th Power System
+                                                                                     Computation Conf., Wroclaw, Poland, 2014
+
+                                                                           [17] Helseth, A., Fodstad, M., Mo, B.: `Optimal medium-term hydropower
+                                                                                     scheduling considering energy and reserve capacity markets', IEEE Trans.
+                                                                                     Sustain. Energy, 2016, 7, (3), pp. 934­942
+
+                                                                           [18] Gjelsvik, A., Belsnes, M.M., Haugstad, A.: `An algorithm for stochastic
+                                                                                     medium-term hydrothermal scheduling under spot price uncertainty'. Proc.
+                                                                                     13th Power System Computation Conf., Trondheim, Norway, 1999
+
+                                                                           [19] Gjelsvik, A., Mo, B., Haugstad, A.: `Long- and medium-term operations
+                                                                                     planning and stochastic modelling in hydro-dominated power systems based
+                                                                                     on stochastic dual dynamic programming', in Pardalos, P., Rebennack, S.,
+                                                                                     Pereira, M., et al. (Eds): `Handbook of power systems I' (Springer, 2010), pp.
+                                                                                     33­55
+
+                                                                           [20] Hjelmeland, M.N., Helseth, A., Korpås, M.: `A case study on medium-term
+                                                                                     hydropower scheduling with sales of capacity', Energy Proc., 2016, 87, pp.
+                                                                                     124­131
+
+                                                                           [21] Helseth, A., Gjelsvik, A., Mo, B., et al.: `A model for optimal scheduling of
+                                                                                     hydro thermal systems including pumped-storage and wind power', IET.
+                                                                                     Gener. Transm. Distrib., 2013, 7, (12), pp. 1426­1434
+
+                                                                           [22] Nandalal, K.D.W., Bogardi, J.J.: `Dynamic programming based operation of
+                                                                                     reservoirs, applicability and limits' (Cambridge University Press, Cambridge,
+                                                                                     2007)
+
+                                                                           [23] Rajaraman, R., Kirsch, L., Alvarado, F.L., et al.: `The next generation of
+                                                                                     electric power unit commitment models', vol. 36, ch. 6 (Kluwer Academic
+                                                                                     Publishers, Boston, 2001)
+
+                                                                           [24] Guisandez, I., Perez-Diaz, J.I., Wilhelmi, J.R.: `The influence of
+                                                                                     environmental constraints on the water value', Energies, 2016, 9, (6), pp. 1­
+                                                                                     21
+
+                                                                           [25] Tejada-Guibert, J.A., Johnson, S., Stedinger, J.R.: `Comparison of two
+                                                                                     approaches for implementing multireservoir operating policies derived using
+                                                                                     stochastic dynamic programming', Water Resour. Res., 1993, 29, (12), pp.
+                                                                                     369­3980
+
+                                                                           [26] Chazarra, M., Garciá-González, J., Pérez-Díaz, J.I., et al.: `Stochastic
+                                                                                     optimization model for the weekly scheduling of a hydropower system in day-
+                                                                                     ahead and secondary regulation reserve markets', Electr. Power Syst. Res.,
+                                                                                     2016, 130, pp. 67­77
+
+                                                                           [27] Nilsson, O., Sjelvgren, D.: `Hydro unit start-up costs and their impact on the
+                                                                                     short term scheduling strategies of Swedish power producers', IEEE Trans.
+                                                                                     Power Syst., 1997, 12, (1), pp. 38­44
+
+                                                                           [28] Martino, S., Haff, I.H., Løland, A., et al.: `Statistical properties of historical
+                                                                                     inflow series for long-term models'. Tech. Rep. SAMBA/50/13, Norwegian
+                                                                                     Computing Center, 2014
+
+                                                                           [29] Fourer, R., Gay, D. M., Kerninghan, B. W.: `AMPL: a modeling language for
+                                                                                     mathematical programming' (Duxburry, 2003, 2nd edn.)
+
+1646                                                                       IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647
+                                                                                        © The Institution of Engineering and Technology 2017
+[30] `IBM ILOG CPLEX optimizer'. Available at http://www-01.ibm.com/            [32] Rebennack, S.: `Computing tight bounds via piecewise linear functions            17521424, 2017, 13, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-rpg.2017.0407 by Ntnu Norwegian University Of S, Wiley Online Library on [28/10/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+          software/                                                                       through the example of circle cutting problems', Math. Methods Oper. Res.,
+                                                                                          2016, 84, (1), pp. 3­57
+[31] Padberg, M.: `Approximating separable nonlinear functions via mixed zero-
+          one programs', Oper. Res. Lett., 2000, 27, (1), pp. 1­5
+
+IET Renew. Power Gener., 2017, Vol. 11 Iss. 13, pp. 1640-1647                   1647
+© The Institution of Engineering and Technology 2017
+

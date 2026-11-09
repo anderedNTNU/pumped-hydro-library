@@ -1,0 +1,1450 @@
+    A SURVEY ON THE APPLICATIONS OF STOCHASTIC DUAL
+           DYNAMIC PROGRAMMING AND ITS VARIANTS
+
+                                                        Bonn Kleiford Seranilla
+                               Luxembourg Center for Logistics and Supply Chain Management
+
+                                                       University of Luxembourg
+                                                    Luxembourg City, Luxembourg
+
+                                                     bonnkleiford@gmail.com
+
+                                                              Nils Löhndorf
+                               Luxembourg Center for Logistics and Supply Chain Management
+
+                                                       University of Luxembourg
+                                                    Luxembourg City, Luxembourg
+
+                                                    ABSTRACT
+
+           Stochastic Dual Dynamic Programming (SDDP) is widely recognized as the predominant methodol-
+           ogy for solving large-scale multistage stochastic linear programming (MSLP) problems. This paper
+           aims to contribute to the extant literature by conducting a comprehensive survey of the literature on
+           SDDP within the realm of practical applications. We systematically identify and analyze the various
+           domains where SDDP has been successfully employed to tackle MSP problems, with a particular
+           focus on real-world problems afflicted by the so-called curse-of-dimensionality. Furthermore, we
+           investigate the factors that have facilitated or hindered the adoption of SDDP in specific application
+           areas, shedding light on the limitations and potential barriers to its widespread utilization.
+
+Keywords Stochastic Dual Dynamic Programming; Approximate Dynamic Programming; Stochastic Programming
+
+1 Introduction
+
+Multi-stage stochastic programming (MSP) is a class of mathematical problems dealing with optimization of sequential
+decision-making under uncertainty. Solving real-world problems through MSPs presents considerable challenges,
+particularly when navigating extensive planning horizons and uncertainty scenarios. Such problems frequently run into
+the infamous curse-of-dimensionality, a phenomenon describing the exponential growth in computational requirements
+as the dimensionality of a certain problem increases.
+Enter Stochastic Dual Dynamic Programming (SDDP). Introduced in the seminal work by Pereira and Pinto (1991),
+SDDP proposes a powerful solution to bypass many of the obstacles associated with MSP problems, particularly the
+curse-of-dimensionality. Rooted in the principles of dynamic programming and duality, SDDP decomposes an MSP
+problem, iteratively approximating the expected cost-to-go functions without needing to tackle the entire problem
+space at once. Consequently, what previously seemed intractable becomes more computationally feasible, allowing
+practitioners to address large-scale MSP problems in various sectors, from energy planning to supply chain optimization.
+The conception of SDDP marked a paradigm shift in the approach to sequential decision-making under uncertainty.
+Previously, dealing with uncertainty often required, on one hand, simplification and even relaxation of the problem. This
+potentially leads to suboptimal solutions or ones that failed to mirror the full complexity of a real-world problem. On
+the other hand, solving the entire scale of MSPs through a tedious exploration and exploitation of the full scenario tree
+results to expensive computational efforts. However, with SDDP, it became possible to retain much of the intricacies of
+MSPs while still navigating through the expanse of uncertainties and stages.
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Nevertheless, while SDDP is a powerful methodology, it still comes with its challenges and limitations. Affected by
+factors ranging from computational restraints to domain-specific nuances, SDDP still has a long way to solve even larger
+problem instances mirroring real-world cases. Füllner and Rebennack (2021) present a more in-depth tutorial-type
+review of the various improvements and enhancements of SDDP.
+
+To appreciate the relevance of SDDP even further, it is imperative to consider the current challenges faced by different
+industries worldwide. With increasing globalization and competitiveness, where effects of decisions made today can
+cascade and amplify over time, industrial applications highlight the invaluable utility of SDDP. For instance, consider
+the domain of hydro-thermal power system planning, the premier application of SDDP. Governments and private
+companies across the world harnessing this renewable energy leverage SDDP to aid in their decision-making processes
+(Maceiral et al. 2018).
+
+Furthermore, as the eminence of SDDP continues to advance, its applications have prospered across a wide array of
+applications. Nonetheless, a significant proportion of the work in the extant literature is primarily focused within the
+field of energy planning. This survey endeavors to explore the breadth and depth of the applications underlining the
+significance of SDDP and its growing relevance in solving MSP problems.
+
+Through this review, we aim achieve two goals. First, to provide a comprehensive survey of the practical applications
+of SDDP in the extant literature. We deep-dive into this exploration of the literature in the lens of these different
+applications. Second, we aim to present a compelling discussion on the factors that have facilitated and, possibly,
+hindered the adoption of SDDP in specific application areas shedding light on the limitations and potential barriers to its
+widespread utilization. As we delve deeper into the sphere of SDDP and its applications, it is significant to understand
+not just where and how SDDP shines, but also where it can falter and require supplemental schemes. This perspective is
+crucial for both practitioners and researchers aiming to augment the boundaries of solving MSP problems.
+
+The remainder of the paper is organized as follows. Section 2 provides an overview of the history, evolution, and
+technicalities of SDDP. Section 3 covers the literature selection process. Section 4 constitutes one of the contributions
+of the paper and discusses the main statistical findings from our literature survey. Section 5 discusses various factors of
+adoption of SDDP in specific application areas. Section 6 contains some concluding remarks and provides guidance as
+to future research directions.
+
+2 Background
+
+Before the inception of SDDP thirty years ago, the method draws upon a rich lineage of inspirations and developmental
+precursors. In this section, we will briefly revisit three pivotal stepping-stone methods that laid the foundation for the
+evolution of SDDP: (a) Benders decomposition, (b) L-shaped method, and (c) nested Benders decomposition. We will
+then proceed to formally introduce SDDP and its variants and extensions.
+
+2.1 Overview of the History and Evolution of SDDP
+
+The origins of SDDP can be traced back from the groundbreaking method developed by Jacques Benders (Benders 1962)
+- Benders decomposition method. Benders decomposition method is a decomposition method for solving mixed integer
+programming problems - optimization problems where some variables are constrained to take real values and others
+only limited to integer values. The basic idea is to decompose the problem into two: a pure linear programming problem
+[called master problem (MP)] and a pure integer programming [called subproblem (SP)]. Benders decomposition
+proceeds by solving MP and SP iteratively to arrive to a solution for the overall problem by adding Benderscuts,
+some feasibility or optimality information from the sub-problem to the master problem. The leverage of the algorithm
+is the fact that two separate decomposed problems are more manageable to solve than the original mixed problem.
+Notwithstanding the number of iterations to solve each subproblem, this technique is still relatively quicker to arrive at
+the solution than solving the large mixed integer programs.
+
+Seven years later, Van Slyke and Wets (1969) expanded on this powerful algorithm and introduced the L-Shaped method.
+L-shaped method is an algorithm to solve stochastic programming problems ­ optimization problems where some,
+if not all, of the problem parameters take stochastic or uncertain values. For L-Shaped method, two-stage stochastic
+problems or stochastic linear problems with recourse are of interest where an initial decision is made succeeded by
+a second decision which allows remedial (recourse) action after an event have been observed to happen. Similar to
+Benders' decomposition, L-Shaped method is based on adding additional constraints (or cuts) to the original (in this
+case, first-stage) problem. These cuts ensure feasibility of the first-stage decision to the second-stage problem and
+assurance to obtain an optimal solution.
+
+                                                                      2
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Finally, the nested Benders decomposition (NBD) algorithm from Birge (1985) is an extension to L-Shaped decom-
+position such that the former proposes an algorithm for multi-stage stochastic programming problems. The simple
+idea behind nested Benders' decomposition is the notion of decomposing multi-stage problems into nested two-stage
+problems and recursively, then solving these with L-shaped method over the entire scenario tree structure. With the
+initial decision of the first-stage (root node), succeeding second-stage sub-problems will be solved. Thereupon, the
+initial decision will be viewed as a constant and the following stage nodes will become the first-stage (root node) of its
+own problem. This will continue further until the end of the planning horizon. As with L-shaped method, NBD solve
+the sub-problems with the current initial decision and use these solutions to create feasibility and optimality cuts. This
+means that parts of the problem of whichever stage of the tree can be solved as long as initial decision of a preceding
+node exists. The drawback of NBD is that the scenario tree grows exponentially in the number of stages and it becomes
+computationally expensive for large instances.
+
+2.2 SDDP Methodology and some extensions
+
+SDDP is a straightforward methodology for solving MSP problems by approximating the expected cost-to-go value
+functions of stochastic dynamic programming using piece-wise linear functions. Similar to Benders decomposition
+algorithm, SDDP algorithm incorporates Benders cuts ­ which are approximations of the second stage (or the next
+consecutive stages in the case of a multi-stage problem) ­ into the first stage (precedent or root) problem. These cuts
+provide upper and lower bounds for the optimal solution and are derived from the dual solutions of the problem of the
+succeeding stages.
+
+As mentioned, one of the significant advantages of SDDP is its avoidance of the curse-of-dimensionality associated with
+dynamic programming. With a few iterations, the upper and lower bounds converge, providing an optimal solution (or a
+near-optimal solution, based on a given tolerance). This convergence makes SDDP an efficient and effective approach
+for solving MSPs (Philpott and Guan (2008), Girardeau et al. (2015), and Guigues (2016)). The idea of SDDP stems
+from NBD but it includes the concept of sampling. In each iteration, not all the scenarios of the stochastic data process
+scenario tree will be explored but only a sample of those scenarios will be drawn and used. This will significantly
+reduce the number of linear programs to be solved.
+
+The vanilla SDDP algorithm rests upon several assumptions for its effective implementation. However, numerous
+refinements and advancements have emerged in recent years, enhancing the original method. As an illustration, an
+extension to the vanilla SDDP is the incorporation of stage-wise dependent uncertainty of the MSP. The original
+SDDP limits the problem in consideration to have its random data process stage-wise independent - the case where the
+uncertainty in different stages do not depend on each other. In this case, the respective value functions of the dynamic
+programming equations are independent of the data process. Löhndorf and Shapiro (2019) introduce two approaches:
+(1) the modelling of the random data process as an auto-regressive time series by adding state variables to the model and
+(2) the use of Markov chain discretization of the random data process. Additionally, the pioneering works of Guigues
+and Römisch (2012b), Guigues and Römisch (2012a), and Shapiro et al. (2013a) stand out as the initial trio of papers
+that expanded upon the original assumption of risk neutrality in MSP problems for SDDP. Their contributions extend
+towards encompassing various risk-averse problems.
+
+Furthermore, SDDP has been extended to tackle multistage stochastic integer programs (MSIPs). Stochastic Dual
+Dynamic Integer Programming (SDDiP) stands out as the primary computationally tractable method to obtain both a
+statistical lower bound and an optimal policy (Zou et al. 2019). As with SDDP, SDDiP involves a reformulation of the
+MSIP into a dynamic program. Under specific assumptions, SDDiP guarantees convergence to an optimal policy. Like
+SDDP, SDDiP assumes that the stochastic parameters in the MSIP follow a discrete distribution. A key ingredient to
+SDDiP is the binarization of all time-coupling state variables. By incorporating binary variables, SDDiP ensures the
+efficient representation and exploration of the decision space, resulting in a more manageable problem formulation.
+
+Finally, the evolution of SDDP remains an ongoing development, marked by continuous refinement and enhancement.
+Recent efforts are focused on finding of optimal policies quickly and extending its applicability to a wider array of
+real-world problems.
+
+3 Literature Selection and Analysis
+
+We conducted a comprehensive database search for papers that apply, utilize, develop, or enhance SDDP to primarily
+address optimization problems. The databases examined included Emerald Insight, Scopus, JSTOR, and Web of Science
+which included published journal articles until December 2022. We employed the keywords "stochastic dual dynamic
+programming," "SDDP," "stochastic dual dynamic integer programming," and "SDDiP." Publications not written in
+English, as well as those exclusive to conference proceedings and book chapters, were excluded from our consideration.
+
+                                                                      3
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+                                  Figure 1: Evolution of number of published works over time.
+
+Our approach to filtering relevant publications began with an evaluation of the title. If deemed pertinent, we proceeded
+to assess the abstract, followed by the introduction and conclusion. Only if the paper still appeared relevant after
+this thorough review did we analyze its entirety. This meticulous method led to the identification of 186 significant
+publications since the release of the seminal paper on the subject in 1991. The collective works surveyed are graphically
+illustrated in Fig. 1. These papers span 61 distinct journals, which are itemized in Table 1, covering a spectrum of
+research domains. We further dissected the significance of these scientific contributions by examining three primary
+research questions:
+
+       1. In which specific optimization problems is SDDP employed, and within which application sectors (e.g., energy,
+           finance, operations management)?
+
+       2. What are the key contributions of the research to SDDP (be it theoretical, methodological, or other)?
+
+       3. How valuable is SDDP in efficiently resolving the identified problem?
+
+Our survey unveiled several distinct fields of application. Predominantly, a significant portion of the papers concentrates
+on issues within the energy sector. The Brazilian hydro-thermal power system is a primary focus in this area. This
+problem manifests in various iterations -- different planning horizons, diverse geographical locations, and a range of
+different random data processes, to name a few. A secondary line of literature navigates challenges in the financial
+sector, such as portfolio optimization and asset allocation. Operations management is another prominent domain
+addressed, with a unique set of scientific works exploring issues like inventory, lot sizing, and production. Additionally,
+certain studies venture into more specialized areas, delving into matters related to disaster management and mining.
+
+4 Literature Review and Findings
+
+In this section, we provide an extensive analysis of various applications of SDDP as found in the extant literature. This
+examination is structured into distinct subsections that correspond to different fields of application. Notably, the field of
+energy applications, with its broad scope, is itself subdivided into various domains for a more comprehensive discussion.
+The distribution of works across these application areas is illustrated in Figure 2. While some studies are inherently
+dedicated to a specific application field, a significant number of papers span multiple domains. For instance, a work
+might address an energy system application while also incorporating important financial aspects. In such instances, we
+ensure that these papers are discussed and integrated into both [or more] relevant subsections.
+
+                                                                      4
+Seranilla and Löhndorf  Seranilla and Löhndorf                  Seranilla and Löhndorf
+
+Table 1: Classification of the papers according to the different journals.
+
+Journal                                                     Number
+
+European Journal of Operational Research                    19
+
+IEEE Transactions on Power Systems                          14
+
+Mathematical Programming                                    10
+
+IEEE Transactions on Sustainable Energy                     9
+
+Journal of Water Resources Planning and Management - ASCE 9
+
+International Journal of Electric Power and Energy Systems  9
+
+SIAM Journal on Optimization                                9
+
+Electric Power Systems Research                             7
+
+Water Resources Research                                    7
+
+Computational Management Science                            7
+
+INFORMS Journal on Computing                                5
+
+Annals of Operations Research                               5
+
+Computational Optimization and Applications                 5
+
+Operations Research Letters                                 5
+
+Optimization and Engineering                                4
+
+Energy Policy                                               4
+
+Operations Research                                         4
+
+Energies                                                    4
+
+IEEE Transactions on Smart Grid                             4
+
+IET Generation, Transmission, and Distribution              3
+
+Others                                                      43
+
+                          Figure 2: Distribution of research works across different application areas.
+
+4.1 Energy
+
+With reference to Figure 2, it is evident that the energy sector constitutes a majority of the research works focused on
+SDDP. This section explores diverse domains within the energy sector - applications related to hydro-thermal power
+system, problems associated with short-term economic dispatch and capacity expansion, the integration of various
+renewable energy sources, and optimization problems arising in energy markets, trading, and investments. Additionally,
+the integration of different energy storage systems and the intricacies of grid management are also discussed thoroughly.
+
+                                                                      5
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Figure 3: Distribution of research works across different geographical locations for hydro-thermal power production
+problem.
+
+4.1.1 Hydro-thermal Power Production Problem
+
+The hydro-thermal power production serves as a flagship problem application of the development of SDDP. The central
+question in this domain revolves around the optimal coordination between hydroelectric and thermal power generation
+sources to meet demand while minimizing costs and maintaining reservoir storage, considering the unpredictable nature
+of water inflows into hydroelectric reservoirs, and the fluctuating costs of thermal power generation. Managing these
+resources is crucial not just for economic efficiency but also for maintaining overall system reliability. Given the
+complexity arising from the multitude of reservoirs, interconnected systems, and uncertainty of inflows, traditional
+deterministic methods often fall short in providing practical solutions. This is where SDDP becomes invaluable.
+
+Since the introduction of SDDP over 30 years ago, with the Brazilian interconnected hydro-thermal power system
+serving as its premier case study, over 100 research publications have been dedicated to addressing the hydro-thermal
+power production problem using this method. The variations encountered within this domain typically stem from
+differences in planning horizons, modifications in the uncertainty processes, and diverse geographical contexts. Figure
+3 presents the distribution according to various geographical locations, while Figure 4 illustrates the distribution
+of research works based on distinct planning horizons. A detailed breakdown, encompassing planning horizons,
+geographical areas, and uncertainty processes related to the hydro-thermal power production problem, can be found
+in Tables B and B in the Appendix. For an in-depth discussion in this section, we categorize the literature based on
+temporal scales, which offer more consistent comparisons due to the similar objectives of the problems addressed. The
+distinct operational planning horizons are as follows: (1) long-term operational planning, covering a span of 3 or more
+years with monthly decision epochs; (2) medium-term operational planning, typically lasting 1 to 2 years with weekly
+or monthly decision epochs; and (3) short-term operational planning, extending over hours or days.
+
+Long-term Operational Planning. Long-term operation planning primarily focuses on multi-annual horizons (3 or
+more years), usually with a monthly decision epoch, ensuring that the system is resilient against seasonal variations
+and long-term climate changes. The main objective of the solving this problem is to ensure strategic reservoir storage
+decisions, ensuring that water resources are adequately maintained to meet future demands.
+
+Furthermore, with the seasonal uncertainty of water inflows, long-term planning ensures that reservoirs maintain optimal
+levels especially in handling drought and surplus events. This helps in preventing potential water shortages in dry
+periods and avoids overflow during wet periods. This is the reason that all, if not majority, of research works are
+devoted to understanding the inflow uncertainty. Sampling from the historical values is one of the easy go-to methods
+in choosing realizations of inflow uncertainty. Nonetheless, with the understanding that inflow has seasonal patterns,
+
+                                                                      6
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Figure 4: Distribution of research works across different planning horizons for hydro-thermal power production
+problem.
+
+forecasting techniques were also adapted to understand this random process. Various aut-oregressive processes and the
+inclusion of non-linearities are among the prominent techniques employed in this end.
+
+Long-term planning also involves prediction of future energy demand. Some factors that affect demand include
+population growth, industrial and local development, and economic trends. Forecasting demand correctly aids in
+ensuring the optimal operation of the system without frequent and costly re-adjustments. For example, works in Shapiro
+and Cheng (2021), Raby et al. (2009), and Sauma et al. (2011) include demand uncertainty in their models.
+
+A phenomenon in the long-term operation planning of hydro-thermal power production worth mentioning is the
+end-of-horizon effect. Policies derived from optimization models do not necessarily ensure a sustainable and reliable
+energy supply beyond the designated planning horizon. The reason being, optimal policies typically exhaust all energy
+reserves in the reservoirs at the end of the planning horizon. Thus, most works consider doubling the planning horizon
+(using 10 years instead of 5 years) in order to hedge from this phenomenon.
+
+As mentioned, a more detailed breakdown, encompassing planning horizons, geographical areas, and uncertainty
+processes related to the hydro-thermal power production problem, can be found in Table in the Appendix.
+
+Medium-term Operational Planning Medium-term operation planning serves as a link between the expansive outlook
+of long-term operational planning and the immediate requirements of short-term operational planning. Typically
+encompassing a 1 to 2-year planning horizon, medium-term operation planning operates with a monthly or weekly
+decision epoch, allowing for a more granular view of the system's operations than long-term planning.
+
+As hydro-thermal power systems cope with the unpredictability of inflows and other uncertainties, medium-term
+operation planning offers flexibility in accommodating issues that long-term operation planning usually overlooks.
+One example is the incorporation of planned maintenance schedules to ensure that energy production and distribution
+assets are kept at optimal levels. Additionally, medium-term operation planning is significant in response to unexpected
+disturbances in the system like technical malfunctions, sudden demand surges, or other external factors.
+
+Furthermore, works for medium-term operation planning often include the uncertainty of prices and costs. This provides
+producers, not only to be economically profitable with their operations, but also to perform optimally in energy trading.
+For example, the works in Kristiansen (2006), Löhndorf et al. (2013), de Matos et al. (2015), Helseth et al. (2016),
+Rebennack (2016), Hjelmeland et al. (2018), Hjelmeland et al. (2019), and Borges et al. (2022) include uncertainty in
+prices and costs for the medium-term operation planning of hydro-thermal power system.
+
+Water Resource Management Given the pivotal role of water resources in hydro-thermal power systems, making
+strategic reservoir storage decisions is crucial - ensuring that water reservoirs are optimally maintained, without
+compromising the ability to meet future energy demands. Hence, in the operational planning for hydro-thermal power
+production, the effective and sustainable management of these water resources is important.
+
+                                                                      7
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Various research works have been directed towards understanding and optimizing water resource management, particu-
+larly in the context of major river basins integral to hydro-thermal power systems. Notably, African river basins have
+been the subject of study, with Rougé and Tilmant (2016) looking at the Zambezi river basin, while Raso et al. (2017)
+focus on Mananatili river basin. In Europe, the Iberian peninsula, a significant hydro-thermal hub, is the subject of study
+in Pereira-Cardenal et al. (2016) and Macian-Sorribes et al. (2017). Shifting to the Middle East, Rougé et al. (2018)
+and Tilmant and Kelman (2007) explore the Tigris-Euphrates river basin considering its pivotal role in the region's
+energy landscape. Moreover, Treistman et al. (2020) propose innovative synthetic inflow scenario generation techniques
+tailored to the El Niño­Southern Oscillation, offering insights for the Brazilian hydro-thermal power system.
+
+Short-term Operational Planning - Economic Dispatch and Capacity Expansion The smallest coverage of time
+horizon is the short-term operation planning which zeroes in on daily or hourly scales. It focuses on fine-tuning
+generation schedules to respond to daily demand variations. Two domains are included in this area - economic
+dispatching and capacity expansion planning. The difference between the two lies in the objectives of the operation
+and planning of any power systems. Economic dispatch focuses on the short-term optimization of existing power
+generation units to meet the current electricity demand at minimum cost. It aims to determine the optimal output levels
+of each generator to match demands, while considering different factors such as fuel costs, transmission constraints,
+and generator constraints. On the other hand, capacity expansion planning deals with determining optimal additions or
+retirements of power generation units to meet future demand.
+
+The following works have made notable contributions to various aspects of short-term economic dispatch problems:
+Chabar et al. (2006), Papavasiliou et al. (2017), Stüber and Odersky (2020), Ding et al. (2021), Lan et al. (2022), and
+Pacaud et al. (2021). Moreover, economic dispatch has been extended to incorporate additional system dynamics. For
+instance, Lu et al. (2019) integrate energy reserves, while Street et al. (2017) delve into ancillary services. Additionally,
+Fatouros et al. (2017) explore the operation of distributed energy resources.
+
+Turning to generation expansion problems, researches and works encompass diverse perspectives. da Costa et al. (2020)
+include reliability constraints using a stochastic risk-averse approach, Ihsan et al. (2021) assess the performance of
+distributed hybrid renewable power plants in both on-grid and off-grid contexts, and Rebennack (2014) introduce the
+incorporation of emissions quotas as a critical factor.
+
+4.1.2 Renewable Energy
+
+With the significant attention that production planning for hydro-thermal power, a prominent renewable energy resource,
+has gained in SDDP research, it is only natural for similar focus to extend to other renewable energy sources. For
+instance, a couple of works have broadened the scope of hydro-thermal power production problem to incorporate
+additional renewable energy sources. As initiated in Raby et al. (2009) wind farms have also been integrated into
+the hydro-thermal power transmission system. Likewise, various other studies such as de Faria and Jaramillo (2017),
+Alvarez et al. (2018), da Silva Fernandes et al. (2019), Scheben et al. (2020), and Morillo et al. (2020) explore the
+coupling of hydro-thermal power and wind energy. Moreover, the integration of wind energy production has also been
+linked with power grid management and storage in Zéphyr and Anderson (2018), and with microgrid systems with
+storage in Guo et al. (2020). Wozabal and Rameseder (2020) address uncertainty in wind energy production for optimal
+bidding in the Spanish electricity market.
+
+Other applications integrating renewable energy sources include the economic dispatch problem with different renewable
+energy resource uncertainties as in Lu et al. (2019) and in Papavasiliou et al. (2017) for storage. Bao et al. (2019)
+investigate the optimization of renewable bioresources, and cogeneration biomass plants in Leocadio et al. (2020).
+Finally, Pacaud et al. (2022) and Aaslid et al. (2022b) discuss a complex combination of renewable energies and storage
+to optimize microgrids.
+
+4.1.3 Energy Markets, Trading, and Investments
+
+In addition to optimizing aspects such as planning, dispatch, and the expansion of energy systems, another critical
+domain of optimization involves the financial facets of energy ­ bidding, trading in energy markets, and investments.
+Energy markets present challenges marked by fluctuating market-clearing prices, dynamic demand patterns, and
+uncertain renewable energy production. Understanding energy market dynamics provides a framework to optimize
+bidding strategies capable of robust adaptation to these uncertainties. Trading strategies empower market participants to
+make real-time decisions that balance profit maximization and risk aversion. Moreover, the use of SDDP provides the
+ability to make dynamic and well-informed decisions.
+
+The work in Bonnans et al. (2012) initiated this field of application by addressing the optimal management of energy
+contracts. The model specifically provided bounds on the local and global quantities to be traded, considering
+uncertainties in prices. This is followed by Bruno et al. (2016) with a development of an MSP model to determine
+
+                                                                      8
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+optimal strategies for energy project investments with real options such as postponing, hedging with fixed forward
+contracts and other sources.
+
+Covering a range of optimal strategic bidding problems, Wozabal and Rameseder (2020) and Shinde et al. (2022) delve
+into day-ahead and intraday bidding strategies for electricity within a virtual power plant framework, incorporating
+renewable energy sources. Steeger and Rebennack (2017) address a single-price maker strategic bidding problem,
+backed by case studies involving El Salvador, Honduras, and Nicaragua. Shifting focus to the domain of natural gas
+storage valuation, Löhndorf and Wozabal (2021) investigate this issue through an asset-backed trading approach that
+takes into account agents' risk preferences.
+
+In the context of emissions trading, Zapletal et al. (2022) introduce a multi-stage planning approach involving carbon risk
+management and the innovative EU emissions management scheme. Their study compares EUA futures (derivatives)
+and banking. On a broader scale, Scheben et al. (2020) examine the impact of inflow randomness, revealing that
+a substantial integration of energy storage devices and renewable energies significantly influences electricity price
+structures within markets. This observation is supported by a case study conducted in Norway.
+
+4.1.4 Energy storage systems
+
+As the energy sector gravitates towards a more decentralized and renewable-centric paradigm, energy storage devices
+have emerged as viable solutions in energy systems, particularly in their ability to bridge the gap between intermittent
+energy production and demand uncertainty. These devices, from advanced battery systems to pumped hydroelectric
+storage, offer the capability to capture energy produced at a certain stage and utilize it at a later stage. Within the
+context of energy, MSP models have been instrumental to the optimal management and utilization of these storage
+devices become predominant.
+
+The integration of energy storage devices into management of energy systems poses new challenges and opportunities,
+and their exploration in the literature is relatively recent. Distributed energy storage modelled with MSPs were first
+addressed in Gangammanavar and Sen (2016). Building on this, Zéphyr and Anderson (2018) incorporate wind energy
+uncertainty considerations for power grids.
+
+Furthermore, within the broader spectrum of grid management leveraging the MSP framework, Asamov and Powell
+(2018) investigate energy storage in large transmission grids, while Bhattacharya et al. (2016) and Aaslid et al. (2022b)
+focus on optimizing energy storage in microgrids. Further advancements in microgrid systems is showcased by Pacaud
+et al. (2022) and Hafiz et al. (2019b), with a particular emphasis on integrating solar panels and batteries. Moreover,
+Guo et al. (2020) introduce a robust, data-driven approach to optimizing microgrids that harness wind energy, and
+Aaslid et al. (2022a) consider battery degradation.
+
+Other applications of energy storage devices in energy include work in Ding et al. (2021) illustrating the concept of
+virtual energy storage using distributionally robust SDDP. On the matter of gas storage, Terça and Wozabal (2021), van
+Ackooij and Warin (2020), and Löhndorf and Wozabal (2021) examine its pricing and valuation. Lastly, Alvarez et al.
+(2017) discuss hydroelectric storage in conjunction with batteries, and in Guan et al. (2018) concerning flood control
+applications.
+
+4.1.5 Grid management
+
+Electrical grid management has also received quite an attention for SDDP application. Works in Asamov and Powell
+(2018) and Yang and Nagarajan (2022) delve deep into large power grid management. Ding et al. (2020) and Lara et al.
+(2020) extend this with MSIP formulation solved by SDDiP. Additionally, Zéphyr and Anderson (2018) incorporate
+wind energy and storage elements, while Hafiz et al. (2019a) discuss the enhancement of grid resiliency against natural
+calamities.
+
+Meanwhile, the realm of microgrid management, Bhattacharya et al. (2016), Ding et al. (2021), Pacaud et al. (2022),
+Guo et al. (2020), Aaslid et al. (2022b), and Aaslid et al. (2022a) expansively cover its synergy with energy storage
+devices. Diving deeper into this area, Shi et al. (2019) explore the integration of varied distributed energy resources
+within microgrids. Furthermore, Carpentier et al. (2020) present an examination of an urban microgrid problem, while
+Pacaud et al. (2021) emphasize the aspect of economic dispatching within these systems.
+
+4.2 Finance
+
+Within the realm of finance, the MSP framework seamlessly aligns with the challenges of optimizing portfolio and
+asset investments. The seminal work presented in Dantzig and Infanger (1993) offers a comprehensive introduction
+to modeling portfolio optimization, commonly known in the literature as asset allocation, modelled as an MSP. A
+crucial feature of multi-stage asset allocation models is the investor's stage-wise capability to recalibrate the portfolio,
+
+                                                                      9
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+either by selling or purchasing specific assets, facilitating an ongoing optimization process. The uncertainties of this
+problem often revolve around the stochastic returns of the chosen investments, e.g., stocks and bonds, and the associated
+borrowing costs incurred when a specified financial target is elusive. Asset allocation problems, especially when
+considering large number of assets or over extended time horizons, can exhibit high dimensionality which present a
+computational challenge for SDDP method.
+
+Furthermore, understanding the behaviour of investors is inherently challenging. Investors naturally gravitate towards
+risk-aversion to effectively safeguard their investments, which also increases the difficulty of the problem. Homem-
+de Mello and Pagnoncelli (2016) comprehensively address the formal introduction of risk measures into MSPs, a
+methodology to which SDDP is easily adapted. Prior to this, three seminal works incorporate risk-aversion into portfolio
+optimization using SDDP. Specifically, Dupacová and Kozmík (2015) present a risk-averse MSP underpinned by a
+coherent risk measure. In contrast, both Kozmík (2015) and Kozmík and Morton (2015) apply a risk-averse formulation,
+but grounded in conditional value-at-risk as the risk metric. Subsequent studies, including Guigues (2017), Valladão
+et al. (2019), Waga et al. (2022), and Dowson et al. (2022b), built upon these foundational works.
+
+The asset allocation problem has further evolved, embracing diverse contexts. Reus and Prado (2022) delve into
+large-scale asset allocation, optimizing policies aligned with user-defined (synthetic) indices. Silva et al. (2021) solve a
+dynamic asset allocation case study underpinned by a data-centric prescriptive analytics framework. Meanwhile, Tsang
+et al. (2022) put forth a distributionally robust multi-period portfolio model, addressing ambiguity in asset correlations
+while maintaining fixed metrics for individual asset return mean and variance.
+
+From a technical perspective, asset allocation has also served as a platform to demonstrate advancements in SDDP
+techniques. For instance, Guigues (2014) present formulas that distribute optimality and feasibility cuts across nodes
+within the same stage. Various SDDP variants were introduced by Guigues et al. (2020), Guigues (2020), and Dupacová
+and Kozmík (2017), including regularized, inexact, and preprocessing via scenario tree reduction, respectively. Guigues
+and Monteiro (2021) add to the discourse with the stochastic dynamic cutting plane (StoDCuP) extension to SDDP.
+Bandarra and Guigues (2021) outline the nuances of single-cut and multi-cut SDDP, coupled with cut selection for asset
+allocation. Finally, Guigues (2021) tackle MSPs characterized by an uncertain number of stages.
+
+4.3 Operations Management
+
+Outside of energy and finance, operations management also presents an intriguing application area for SDDP. Domains
+within this sphere encompass inventory management, production and manufacturing, and facility location, among
+others.
+
+In the realm of inventory management, variations of the classical problem have been explored in references such as
+Parpas et al. (2015), Guigues (2017), Dowson et al. (2020), Shapiro and Cheng (2021), Ávila et al. (2022), and Guigues
+et al. (2023). Lot-sizing problems have also received attention. For instance, Ahmed et al. (2022) address a capacitated
+version, Quezada et al. (2022a) discuss the uncapacitated variant, and Thevenin et al. (2022) investigate a version
+incorporating component substitution.
+
+Shifting the focus to production and manufacturing, several studies stand out. Nannicini et al. (2021) tackle bike
+production with uncertain demand, incorporating aspects of backlog and re-balancing. Yildiz and Sütçü (2022) work on
+optimal pricing strategies for slow-moving items, while Tong et al. (2020) approach the challenges of central kitchen
+production and distribution. The pastoral dairy farm planning has also been delved into, with Dowson et al. (2019)
+and Dowson (2020) addressing specific instances. Moreover, Dowson et al. (2022b) provide insights into a particular
+routing problem.
+
+4.4 Other areas and works
+
+While energy, finance, and operations management dominate as the primary sectors for SDDP application, emerging
+innovative problems are gaining attention as new application areas. Notably, disaster management has begun benefiting
+from SDDP. For instance, Angün (2015) employs SDDP to address short-term disaster management and Hafiz et al.
+(2019a) harness SDDP to enhance grid resiliency against natural disasters through distribution service restoration. Raso
+et al. (2019) also apply SDDP for reservoir management--specifically focusing on drought and flood protection in
+the upper Seine-Aube river system. Furthermore, in the mining industry, Reus et al. (2019) leverage SDDP to devise
+optimal policies for more effective management of production incidents.
+
+4.4.1 Stochastic Dual Dynamic Integer Programming (SDDiP)
+
+In the context of SDDiP, several studies stand out for their noteworthy contributions. For instance, both Zou et al. (2019)
+and Ding et al. (2019) delve into issues surrounding airline revenue management. The classic OR problem of facility
+
+                                                                     10
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+location has also seen innovative applications in this domain. Yu and Shen (2022) explore a variant of the capacitated
+facility location problem, introducing elements of demand uncertainty. Meanwhile, Seranilla and Löhndorf (2023) not
+only implemented SDDiP for a COVID-19 vaccine facility location instance but also contrast it with a newly proposed
+methodology.
+
+Additionally, Quezada et al. (2022b) venture into the complexities of remanufacturing under uncertainty. Bakker
+et al. (2021) solve the problem of optimal timing of investments in mature oil and gas fields in the presence of price
+uncertainty, like a complex real options problem. For energy planning, Lara et al. (2020) and Hou et al. (2021) present a
+model on electric power infrastructure planning under uncertainty and Zou et al. (2018) solve a multi-stage stochastic
+unit commitment problem.
+
+5 Discussion
+
+In this section, we delve into the various factors that influence the adoption of SDDP in certain application domains.
+Our goal is to highlight the challenges and potential obstacles to its more widespread use. To provide a comprehensive
+perspective, our conclusions draw from both the extensive literature review in Section 4 and engaging discussions with
+prominent researchers in the SDDP and stochastic programming field. Specifically, we have pinpointed four key factors
+that play a pivotal role in the adoption of SDDP: (1) historical background, (2) state space limitation, (3) stage-wise
+independence assumption limitation, and (4) data availability.
+
+5.1 Historical background
+
+The success of SDDP in addressing its flagship application, the Brazilian hydro-thermal power production problem, in
+the seminal paper by Pereira and Pinto (1991), played a significant role in its widespread adoption, largely in other
+energy-related applications. Thus, in the broader academic and research communities, SDDP's evident success on
+this problem became a compelling narrative. This prompted a surge of literature on the subject. Many researchers
+were drawn to the challenge of refining the method, expanding its applications, or tailoring it for specific regional
+or technical nuances. This is highlighted by the literature - from the year of SDDP's inception in 1991 until 2016,
+all published works in the energy sector that utilized SDDP were centered exclusively on the hydro-thermal power
+production scheduling problem.
+
+This historical synergy between SDDP and the energy sector has profoundly shaped the trajectory of research and
+practical applications in this field. SDDP's resilience in handling large-scale, multi-stage stochastic optimization
+problems, a characteristic that is often inherent in many problems in the energy sector underscores why a bulk of
+literature on SDDP is anchored in this field of application.
+
+Over time, as the challenges of the energy sector evolved and expanded, the versatility of SDDP kept pace. It became
+the go-to methodology for many researchers, leading to a wave of academic publications and practical applications.
+Its historical successes in the energy sector spurred curiosity, experimentation, and eventually, a prolific presence in
+scholarly discourse - even parallel sessions in conferences are devoted to SDDP in the energy sector.
+
+Currently, when reviewing literature related to optimization, in the context of energy, the echoes of SDDP's historical
+triumphs are indisputable. Unfortunately, while it testifies to SDDP's efficacy in energy-related applications, it
+has inadvertently created a perception among some that SDDP is exclusively tailored for energy problems. This
+misconception limit the exploration and adoption of SDDP in diverse fields, potentially sidelining its benefits in contexts
+beyond energy.
+
+5.2 State space limitation
+
+At its core, SDDP is sophisticated and manages to solve intricate optimization problems, and it has showcased exemplary
+efficiency. While SDDP undeniably holds merits in solving many problems, its inherent limitations become more
+pronounced as the scale and complexity of problems increase. A fundamental assumption of SDDP is that consecutive
+stages should be linked by constraints via state variables - variables used to describe the mathematical state of a
+dynamical system. Naturally, as a problem's dimensionality expands, so does the number of required state variables.
+Unfortunately, SDDP's efficiency diminishes when tasked with handling an extensive number of state variables and
+begin to face significant computational and convergence challenges. For instance, the original flagship application on
+the Brazilian hydro-thermal power production scheduling problem only has 4 state variables per stage corresponding to
+the stored energy [water level] of each reservoir. This characteristic, in turn, has raised concerns about its performance
+in vast state spaces, leading to its subdued and limited utilization in other real-world problems.
+
+                                                                     11
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+The limitations in handling vast or high-dimensional state spaces can be a considerable deterrent for other problems.
+High-dimensional problems are increasingly common in numerous fields and a method that struggles with such scale
+naturally finds limited applicability. Consequently, researchers might be inclined to explore alternative methods that
+better cater to extensive state space requirements.
+
+Moreover, this state space limitation can sometimes lead to suboptimal solutions or expensive computations, which are
+not always feasible in real-world applications that demand both accuracy and efficiency. As a result, there might be
+a preference towards methods that offer a more balanced performance across various problem scales. While SDDP
+undeniably holds benefits and has proven valuable in some problems, the concerns about its performance in extensive
+state spaces have played a pivotal role in its adoption in other application areas.
+
+5.3 Stage-wise independence limitation
+
+Another fundamental assumption of SDDP is that the random data has to be stage-wise independent - new information
+becoming available at the time of decision does not depend on the history of the random process. This assumption,
+while simplifying the computational complexity in certain cases, becomes conflicting in the context of real-world
+applications. Many systems and processes, especially those of an economic, financial, or natural nature, inherently
+possess temporal dependencies, making them Markovian or semi-Markovian structure.
+
+Additionally, the stage-wise independence assumption can limit the accuracy and relevance of SDDP when applied to
+problems with evident temporal dependencies, potentially resulting in sub-optimal solutions. Thus, there's a risk of
+overlooking critical dependence, which can lead to significant discrepancy in decisions derived from the model. This
+limitation can avert researchers from utilizing SDDP in problems where capturing the dynamics of random data over
+time is crucial.
+
+Nonetheless, to address this issue, the work by Löhndorf and Shapiro (2019) introduced two approaches to include
+dependence of the random process - (1) to model the data process as an auto-regressive process and to add the time
+series transition equations and (2) another approach based on Markov Chain discretization of the Markovian data
+process using optimal quantization. Nonetheless, the first approach is restricted only to right-hand side uncertainty and
+linear cases, and the second approach, although allows modeling any parameter as Markovian data process, has no
+convergence guarantees.
+
+Hence, while SDDP holds significant potential in many optimization problems, the stage-wise independence assumption
+tempered on its universal applicability, steering its use toward more restricted domains.
+
+5.4 Data availability
+
+When a parameter of a on optimization problem is random or uncertain, trying to understand the distribution of this
+parameter can be a daunting challenge. This complexity is further highlighted especially if data is not readily available.
+The availability, or lack thereof, of data not only impedes precise modeling but also limits the accuracy and reliability
+of any derived solution. This phenomenon is universally observed across any problems in the field of decision-making
+under uncertainty for real-world applications. MSPs naturally falls into this category, where the success of the model
+often depend on the data for uncertain parameters. Consequently, SDDP methods, which operate under these conditions,
+might see restricted application in practice due to the inherent challenges posed by data limitations.
+
+5.5 Extensions and outlook
+
+Provided the challenges and potential obstacles presented above, we remain optimistic about SDDP's potential to
+overcome current limitations and address more complex problems. While its major applications have been in the
+hydrothermal energy sector, finance, and operations management, here are some other domains and specific applications
+where SDDP can be potentially applied:
+
+ Healthcare: The healthcare domain is rife with many complex optimization problems. This includes hospital resource
+           allocation, optimizing treatment plans for chronic illnesses over multiple periods, and surgery scheduling.
+          The uncertainties associated with disease spread, patient outcomes, and resource constraints make SDDP a
+           potential tool for driving productivity and efficiencies.
+
+ Disaster Preparedness and Response: Natural disasters, e.g., thunderstorms, earthquakes, and volcanic eruptions,
+           SDDP can be effective in optimizing resource allocation for disaster preparedness and formulating real-time
+           response policies as events unfold.
+
+                                                                     12
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+ Environmental Conservation: Optimization problems that involve habitat restoration, wildlife protection, or pollution
+           control over multiple periods, SDDP can help devise policies that account for the uncertainties in ecological
+           settings.
+
+ Urban Planning: City infrastructures are complex and interconnected. Whether it is deciding on networks for public
+           transportation, policies for waste management, or land-use planning over different time horizons, SDDP has
+           the potential to handle these problems.
+
+ Telecommunications: As communication needs and technologies rapidly evolve, there is a need to optimize network
+           designs, resource allocations, and service over time. SDDP can be a useful tool in making these decisions.
+
+ Education: Some common university and educational institution problems are course scheduling, resource allocation
+          (e.g., classrooms or laboratory facilities), and even strategic decisions like opening new programs or campuses.
+
+ Marine and Fisheries Management: SDDP can be beneficial from optimizing fishing schedules to route planning for
+           marine vessels to avoid ecologically sensitive areas.
+
+6 Concluding Remarks
+
+Since its inception in 1991, SDDP has, for over three decades, demonstrated a phenomenal performance and is still
+regarded as one of the go-to methods to solve MSPs. This survey presents a review of the practical applications of
+SDDP in the literature. A total of 186 significant publications, from 1991 to 2022, were examined from an in-depth
+search in multiple databases. Various advantages and challenges associated with SDDP were examined to pave way for
+an in-depth exploration of the literature, in the lens of these different applications.
+
+While its applications span to various fields, the energy sector has notably emerged as its predominant user, with
+approximately 76% of the articles reviewed deploying the SDDP methodology. This is followed by finance, operations
+management, and water resources domains. Delving deeper, the hydro-thermal power system production surfaced as the
+predominant domain, constituting roughly 60% of the literature. This is trailed behind by renewable energies, energy
+market, trading, and investments, energy storage devices, and grid management applications. This analysis is further
+enriched with an insightful discussion on the factors influencing the adoption of SDDP across distinct application areas.
+We have identified four factors - historical background, state space limitation, stage-wise independence assumption
+limitation, and data availability. Finally, given the ongoing research aimed at augmenting, developing, and enhancing
+SDDP, we remain optimistic about its potential to overcome current limitations and address more complex problems
+faced by the state-of-the-art.
+
+7 Acknowledgement
+
+The authors would like to thank all the academics and researchers during the International Conference on Stochastic
+Programming 2023 who obliged to be interviewed for their thoughts, opinions, and point of views, which brought a rich
+discussion on this literature survey. The authors would also like to thank Brean Mel Walag for his contribution on the
+literature aggregation and compilation.
+
+                        13
+Seranilla and Löhndorf       Seranilla and Löhndorf  Seranilla and Löhndorf
+
+A Detailed reference classification
+
+          Table 2: Reference classification (Hydro-thermal power production) - Brazil and Norway
+
+Location  Operation     Reference
+Brazil
+          Long-term     Pereira and Pinto (1991), Gorenstin et al. (1992), Mello et al. (1997), da Silva
+Norway                  and Finardi (2003), Maceira and Damázio (2006), Homem-de Mello et al. (2011),
+                        Zambelli et al. (2011), Guigues and Sagastizábal (2012), de Matos and Finardi
+                        (2012), Shapiro et al. (2013a), Guigues and Sagastizabal (2013), Pinto et al. (2013),
+                        Philpott et al. (2013), Shapiro et al. (2013b), Guigues (2014), Calili et al. (2014),
+                        Maceira et al. (2014), Oliveira et al. (2015), Brandi et al. (2015), de Castro et al.
+                        (2015), De Matos et al. (2015), Ferreira et al. (2015), Lohmann et al. (2016),
+                        Brigatto et al. (2017), Rego et al. (2017), Soares et al. (2017), De Matos et al.
+                        (2017), Street et al. (2017), de Faria and Jaramillo (2017), Brandi et al. (2017),
+                        Löhndorf and Shapiro (2019), Van Ackooij et al. (2019), Shapiro and Ding (2020),
+                        Machado and Bhagwat (2020), Treistman et al. (2020), Diniz et al. (2020), Liu
+                        and Shapiro (2020), Street et al. (2020), Street et al. (2020), Beltrán et al. (2020),
+                        Fredo et al. (2021), Machado et al. (2021), Shapiro and Cheng (2021), Resende
+
+                        et al. (2021), Dowson et al. (2022a), Larroyd et al. (2022), Ávila et al. (2022)
+
+          Medium-term   Löhndorf et al. (2013),Maceira et al. (2014), de Matos et al. (2015), Fredo et al.
+          Short-term    (2019), da Silva Fernandes et al. (2019), Treistman et al. (2020), Machado et al.
+                        (2021), Beltrán et al. (2021), Guigues et al. (2021), Siddig and Song (2022),Borges
+                        et al. (2022), Dornellas et al. (2022), Pedrini and Finardi (2022)
+                        Beltrán et al. (2021), Borges et al. (2022)
+
+          Long-term     Rotting and Gjelsvik (1992)
+
+          Medium-term   Mo et al. (2001), Kristiansen (2006), Helseth and Braaten (2015), Helseth et al.
+                        (2016), Hjelmeland et al. (2018), Hjelmeland et al. (2019), Scheben et al. (2020),
+                        Helseth and Mo (2022), Helseth et al. (2022)
+
+          Short-term    ---
+
+                                     14
+        Seranilla and Löhndorf  Seranilla and Löhndorf                            Seranilla and Löhndorf
+
+        B Detailed reference classification
+
+                   Table 3: Reference classification (Hydro-thermal power production) - Other locations
+
+Location           Operation    Reference
+
+New Zealand        Long-term    Duque and Morton (2020)
+
+                   Medium-term  Philpott and De Matos (2012), Philpott et al. (2018), Downward et al. (2020),
+                                Dowson and Kapelevich (2021)
+
+                   Short-term   Pritchard (2015)
+
+Central America    Long-term    Flach et al. (2010), Marques and Tilmant (2013), Rebennack (2014)
+
+                   Medium-term  Rebennack et al. (2011), Rebennack (2016), Steeger and Rebennack (2017)
+
+South America      Long-term    Raby et al. (2009), Sauma et al. (2011), Toledo et al. (2015), Morillo et al.
+                                (2020), Morillo et al. (2022)
+
+Canada             Long-term    Pina et al. (2017), Mbeutcha et al. (2021)
+
+                   Medium-term  Zhang and Ponnambalam (2005), Guan et al. (2018), Côté and Arsenault
+                                (2019)
+
+Nile River         Long-term    Goor et al. (2011), Kahsay et al. (2019), Tariku et al. (2021)
+
+Iberian Peninsula  Long-term    Pereira-Cardenal et al. (2016)
+
+                   Medium-term  Macian-Sorribes et al. (2017), Leclère et al. (2020)
+
+Senegal            Long-term    Espanmanesh and Tilmant (2022)
+
+                   Medium-term  Raso et al. (2017), Raso et al. (2020)
+
+Turkey/Iran        Long-term    Tilmant et al. (2007), Tilmant and Kelman (2007)
+
+                   Medium-term  Poorsepahy-Samian et al. (2016)
+
+China              Short-term   Li et al. (2022)
+
+Others             Medium-term  Borges (2022), Cerisola et al. (2012)
+
+                   Long-/Short-term Alvarez et al. (2017), Alvarez et al. (2018)
+
+                                             15
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+References
+
+Aaslid, P., Korpås, M., Belsnes, M.M., Fosso, O.B., 2022a. Stochastic operation of energy constrained microgrids
+        considering battery degradation. Electric Power Systems Research 212, 108462.
+
+Aaslid, P., Korpås, M., Belsnes, M.M., Fosso, O.B., 2022b. Stochastic optimization of microgrid operation with renewable
+        generation and energy storages. IEEE Transactions on Sustainable Energy 13, 1481­1491.
+
+van Ackooij, W., Warin, X., 2020. On conditional cuts for stochastic dual dynamic programming. EURO Journal on
+        Computational Optimization 8, 173­199.
+
+Ahmed, S., Cabral, F.G., Freitas Paulo da Costa, B., 2022. Stochastic lipschitz dynamic programming. Mathematical
+        Programming 191, 755­793.
+
+Alvarez, M., Rönnberg, S.K., Bermudez, J., Zhong, J., Bollen, M.H., 2017. A generic storage model based on a future
+        cost piecewise-linear approximation. IEEE Transactions on Smart Grid 10, 878­888.
+
+Alvarez, M., Rönnberg, S.K., Bermúdez, J., Zhong, J., Bollen, M.H., 2018. Reservoir-type hydropower equivalent model
+        based on a future cost piecewise approximation. Electric Power Systems Research 155, 184­195.
+
+Angün, E., 2015. Stochastic dual dynamic programming solution of a short-term disaster management problem.
+        Uncertainty Management in Simulation-Optimization of Complex Systems: Algorithms and Applications , 225­
+        250.
+
+Asamov, T., Powell, W.B., 2018. Regularized decomposition of high-dimensional multistage stochastic programs with
+        markov uncertainty. SIAM Journal on Optimization 28, 575­595.
+
+Ávila, D., Papavasiliou, A., Löhndorf, N., 2022. Parallel and distributed computing for stochastic dual dynamic
+        programming. Computational Management Science 19, 199­226.
+
+Bakker, S.J., Kleiven, A., Fleten, S.E., Tomasgard, A., 2021. Mature offshore oil field development: Solving a real options
+        problem using stochastic dual dynamic integer programming. Computers & Operations Research 136, 105480.
+
+Bandarra, M., Guigues, V., 2021. Single cut and multicut stochastic dual dynamic programming with cut selection for
+        multistage stochastic linear programs: convergence proof and numerical experiments. Computational Management
+        Science 18, 125­148.
+
+Bao, H., Zhou, Z., Kotsalis, G., Lan, G., Tong, Z., 2019. Lignin valorization process control under feedstock uncertainty
+        through a dynamic stochastic programming approach. Reaction Chemistry & Engineering 4, 1740­1747.
+
+Beltrán, F., Finardi, E.C., Fredo, G.M., de Oliveira, W., 2020. Improving the performance of the stochastic dual dynamic
+        programming algorithm using chebyshev centers. Optimization and engineering , 1­22.
+
+Beltrán, F., Finardi, E.C., de Oliveira, W., 2021. Two-stage and multi-stage decompositions for the medium-term
+        hydrothermal scheduling problem: A computational comparison of solution techniques. International Journal of
+        Electrical Power & Energy Systems 127, 106659.
+
+Benders, J., 1962. Partitioning procedures for solving mixed-variables programming problems. Numer. Math 4, 238­252.
+Bhattacharya, A., Kharoufeh, J.P., Zeng, B., 2016. Managing energy storage in microgrids: A multistage stochastic
+
+        programming approach. IEEE Transactions on Smart Grid 9, 483­496.
+Birge, J.R., 1985. Decomposition and partitioning methods for multistage stochastic linear programs. Operations research
+
+        33, 989­1007.
+Bonnans, J.F., Cen, Z., Christel, T., 2012. Energy contracts management by stochastic programming techniques. Annals
+
+        of Operations Research 200, 199­222.
+Borges, P., 2022. Cut-sharing across trees and efficient sequential sampling for sddp with uncertainty in the rhs.
+
+        Computational Optimization and Applications , 1­31.
+Borges, P., Sagastizábal, C., Solodov, M., Liberti, L., D'ambrosio, C., 2022. Profit sharing mechanisms in multi-owned
+
+        cascaded hydrosystems. Optimization and Engineering , 1­39.
+Brandi, R.B.S., Marcato, A.L.M., Dias, B.H., Ramos, T.P., da Silva Junior, I.C., 2017. A convergence criterion for
+
+        stochastic dual dynamic programming: application to the long-term operation planning problem. IEEE Transactions
+        on Power Systems 33, 3678­3690.
+Brandi, R.B.S., Ramos, T.P., Dias, B.H., Marcato, A.L.M., da Silva Junior, I.C., 2015. Improving stochastic dynamic
+        programming on hydrothermal systems through an iterative process. Electric Power Systems Research 123,
+       147­153.
+
+                                                               16
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Brigatto, A., Street, A., Valladao, D.M., 2017. Assessing the cost of time-inconsistent operation policies in hydrothermal
+        power systems. IEEE Transactions on Power Systems 32, 4541­4550.
+
+Bruno, S., Ahmed, S., Shapiro, A., Street, A., 2016. Risk neutral and risk averse approaches to multistage renewable
+        investment planning under uncertainty. European Journal of Operational Research 250, 979­989.
+
+Calili, R.F., Souza, R.C., Galli, A., Armstrong, M., Marcato, A.L.M., 2014. Estimating the cost savings and avoided co2
+        emissions in brazil by implementing energy efficient policies. Energy Policy 67, 4­15.
+
+Carpentier, P., Chancelier, J.P., De Lara, M., Pacaud, F., 2020. Mixed spatial and temporal decompositions for large-scale
+        multistage stochastic optimization problems. Journal of Optimization Theory and Applications 186, 985­1005.
+
+de Castro, C.M., Marcato, A.L., Souza, R.C., Junior, I.C.S., Oliveira, F.L.C., Pulinho, T., 2015. The generation of
+        synthetic inflows via bootstrap to increase the energy efficiency of long-term hydrothermal dispatches. Electric
+        Power Systems Research 124, 33­46.
+
+Cerisola, S., Latorre, J.M., Ramos, A., 2012. Stochastic dual dynamic programming applied to nonconvex hydrothermal
+        models. European Journal of Operational Research 218, 687­697.
+
+Chabar, R., Pereira, M., Granville, S., Barroso, L., Iliadis, N., 2006. Optimization of fuel contracts management and
+        maintenance scheduling for thermal plants under price uncertainty, in: 2006 IEEE PES Power Systems Conference
+        and Exposition, IEEE. pp. 923­930.
+
+da Costa, L.C., Thomé, F.S., Garcia, J.D., Pereira, M.V., 2020. Reliability-constrained power system expansion planning:
+       A stochastic risk-averse optimization approach. IEEE Transactions on Power Systems 36, 97­106.
+
+Côté, P., Arsenault, R., 2019. Efficient implementation of sampling stochastic dynamic programming algorithm for
+        multireservoir management in the hydropower sector. Journal of Water Resources Planning and Management 145,
+        05019005.
+
+Dantzig, G.B., Infanger, G., 1993. Multi-stage stochastic linear programs for portfolio optimization. Annals of Operations
+        Research 45, 59­76.
+
+De Matos, V.L., Morton, D.P., Finardi, E.C., 2017. Assessing policy quality in a multistage stochastic program for
+        long-term hydrothermal scheduling. Annals of Operations Research 253, 713­731.
+
+De Matos, V.L., Philpott, A.B., Finardi, E.C., 2015. Improving the performance of stochastic dual dynamic programming.
+        Journal of Computational and Applied Mathematics 290, 196­208.
+
+Ding, L., Ahmed, S., Shapiro, A., 2019. A python package for multi-stage stochastic programming. Optimization online ,
+       1­42.
+
+Ding, T., Qu, M., Huang, C., Wang, Z., Du, P., Shahidehpour, M., 2020. Multi-period active distribution network planning
+        using multi-stage stochastic programming and nested decomposition by sddip. IEEE Transactions on Power
+        Systems 36, 2281­2292.
+
+Ding, T., Zhang, X., Lu, R., Qu, M., Shahidehpour, M., He, Y., Chen, T., 2021. Multi-stage distributionally robust
+        stochastic dual dynamic programming to multi-period economic dispatch with virtual energy storage. IEEE
+       Transactions on Sustainable Energy 13, 146­158.
+
+Diniz, A.L., Maceira, M.E.P., Vasconcellos, C.L.V., Penna, D.D.J., 2020. A combined sddp/benders decomposition
+        approach with a risk-averse surface concept for reservoir operation in long term power generation planning. Annals
+        of Operations Research 292, 649­681.
+
+Dornellas, C.R., Leite da Silva, A.M., Costa, J.G., Machado Jr, Z.S., Marcato, A.L., Mello, J.C., 2022. Toward a new
+        nodal pricing policy of the brazilian transmission system considering multiple hydrological scenarios. International
+       Transactions on Electrical Energy Systems .
+
+Downward, A., Dowson, O., Baucke, R., 2020. Stochastic dual dynamic programming with stagewise-dependent objective
+        uncertainty. Operations Research Letters 48, 33­39.
+
+Dowson, O., 2020. The policy graph decomposition of multistage stochastic programming problems. Networks 76, 3­23.
+
+Dowson, O., Kapelevich, L., 2021. Sddp. jl: a julia package for stochastic dual dynamic programming. INFORMS
+        Journal on Computing 33, 27­33.
+
+Dowson, O., Morton, D., Downward, A., 2022a. Bi-objective multistage stochastic linear programming. Mathematical
+        Programming , 1­27.
+
+Dowson, O., Morton, D.P., Pagnoncelli, B.K., 2020. Partially observable multistage stochastic programming. Operations
+        Research Letters 48, 505­512.
+
+                                                               17
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Dowson, O., Morton, D.P., Pagnoncelli, B.K., 2022b. Incorporating convex risk measures into multistage stochastic
+        programming algorithms. Annals of Operations Research , 1­25.
+
+Dowson, O., Philpott, A., Mason, A., Downward, A., 2019. A multi-stage stochastic optimization model of a pastoral
+        dairy farm. European Journal of Operational Research 274, 1077­1089.
+
+Dupacová, J., Kozmík, V., 2015. Structure of risk-averse multistage stochastic programs. OR spectrum 37, 559­582.
+
+Dupacová, J., Kozmík, V., 2017. Sddp for multistage stochastic programs: preprocessing via scenario reduction.
+        Computational Management Science 14, 67­80.
+
+Duque, D., Morton, D.P., 2020. Distributionally robust stochastic dual dynamic programming. SIAM Journal on
+        Optimization 30, 2841­2865.
+
+Espanmanesh, V., Tilmant, A., 2022. Optimizing the management of multireservoir systems under shifting flow regimes.
+       Water Resources Research 58, e2021WR030582.
+
+de Faria, F.A., Jaramillo, P., 2017. The future of power generation in brazil: An analysis of alternatives to amazonian
+        hydropower development. Energy for Sustainable Development 41, 24­35.
+
+Fatouros, P., Konstantelos, I., Papadaskalopoulos, D., Strbac, G., 2017. Stochastic dual dynamic programming for
+        operation of der aggregators under multi-dimensional uncertainty. IEEE Transactions on Sustainable Energy 10,
+       459­469.
+
+Ferreira, P.G.C., Souza, R.C., Marcato, A.L.M., 2015. The par (p) interconfigurations model used by the brazilian electric
+        sector. International Journal of Electrical Power & Energy Systems 73, 45­55.
+
+Flach, B.C., Barroso, L., Pereira, M., 2010. Long-term optimal allocation of hydro generation for a price-maker company
+        in a competitive market: latest developments and a stochastic dual dynamic programming approach. IET generation,
+        transmission & distribution 4, 299­314.
+
+Fredo, G.L.M., Finardi, E.C., Larroyd, P.V., Picarelli, L.B., 2021. Inflow aggregation and run-of-the-river inflow energy
+        for reducing dimensionality in the long-term generation scheduling problem. IEEE Access 9, 98542­98560.
+
+Fredo, G.L.M., Finardi, E.C., de Matos, V.L., 2019. Assessing solution quality and computational performance in the
+        long-term generation scheduling problem considering different hydro production function approaches. Renewable
+        energy 131, 45­54.
+
+Füllner, C., Rebennack, S., 2021. Stochastic dual dynamic programming and its variants. Optimization Online .
+
+Gangammanavar, H., Sen, S., 2016. Two-scale stochastic optimization for controlling distributed storage devices. IEEE
+       Transactions on Smart Grid 9, 2691­2702.
+
+Girardeau, P., Leclere, V., Philpott, A.B., 2015. On the convergence of decomposition methods for multistage stochastic
+        convex programs. Mathematics of Operations Research 40, 130­145.
+
+Goor, Q., Kelman, R., Tilmant, A., 2011. Optimal multipurpose-multireservoir operation model with variable productivity
+        of hydropower plants. Journal of Water Resources Planning and Management 137, 258­267.
+
+Gorenstin, B., Campodonico, N., da Costa, J., Pereira, M., 1992. Stochastic optimization of a hydro-thermal system
+        including network constraints. IEEE Transactions on Power Systems 7, 791­797.
+
+Guan, Z., Shawwash, Z., Abdalla, A., 2018. Using sddp to develop water-value functions for a multireservoir system with
+        international treaties. Journal of Water Resources Planning and Management 144, 05017021.
+
+Guigues, V., 2014. Sddp for some interstage dependent risk-averse problems and application to hydro-thermal planning.
+        Computational Optimization and Applications 57, 167­203.
+
+Guigues, V., 2016. Convergence analysis of sampling-based decomposition methods for risk-averse multistage stochastic
+        convex programs. SIAM Journal on Optimization 26, 2468­2494.
+
+Guigues, V., 2017. Dual dynamic programing with cut selection: Convergence proof and numerical experiments. European
+        Journal of Operational Research 258, 47­57.
+
+Guigues, V., 2020. Inexact cuts in stochastic dual dynamic programming. SIAM Journal on Optimization 30, 407­438.
+
+Guigues, V., 2021. Multistage stochastic programs with a random number of stages: dynamic programming equations,
+        solution methods, and application to portfolio selection. Optimization Methods and Software 36, 211­236.
+
+Guigues, V., Juditsky, A., Nemirovski, A., 2021. Constant depth decision rules for multistage optimization under
+        uncertainty. European Journal of Operational Research 295, 223­232.
+
+                                                               18
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Guigues, V., Lejeune, M.A., Tekaya, W., 2020. Regularized stochastic dual dynamic programming for convex nonlinear
+        optimization problems. Optimization and Engineering 21, 1133­1165.
+
+Guigues, V., Monteiro, R.D., 2021. Stochastic dynamic cutting plane for multistage stochastic convex programs. Journal
+        of Optimization Theory and Applications 189, 513­559.
+
+Guigues, V., Römisch, W., 2012a. Sampling-based decomposition methods for multistage stochastic programs based on
+        extended polyhedral risk measures. SIAM Journal on Optimization 22, 286­312.
+
+Guigues, V., Römisch, W., 2012b. Sddp for multistage stochastic linear programs based on spectral risk measures.
+        Operations Research Letters 40, 313­318.
+
+Guigues, V., Sagastizábal, C., 2012. The value of rolling-horizon policies for risk-averse hydro-thermal planning.
+        European Journal of Operational Research 217, 129­140.
+
+Guigues, V., Sagastizabal, C., 2013. Risk-averse feasible policies for large-scale multistage stochastic linear programs.
+        Mathematical Programming 138, 167­198.
+
+Guigues, V., Shapiro, A., Cheng, Y., 2023. Duality and sensitivity analysis of multistage linear stochastic programs.
+        European Journal of Operational Research 308, 752­767.
+
+Guo, Z., Wei, W., Chen, L., Wang, Z., Catalão, J.P., Mei, S., 2020. Optimal energy management of a residential prosumer:
+       A robust data-driven dynamic programming approach. IEEE Systems Journal 16, 1548­1557.
+
+Hafiz, F., Chen, B., Chen, C., Rodrigo de Queiroz, A., Husain, I., 2019a. Utilising demand response for distribution
+        service restoration to achieve grid resiliency against natural disasters. IET Generation, Transmission & Distribution
+       13, 2942­2950.
+
+Hafiz, F., de Queiroz, A.R., Husain, I., 2019b. Coordinated control of pev and pv-based storages in residential systems
+        under generation and load uncertainties. IEEE Transactions on Industry Applications 55, 5524­5532.
+
+Helseth, A., Braaten, H., 2015. Efficient parallelization of the stochastic dual dynamic programming algorithm applied to
+        hydropower scheduling. Energies 8, 14287­14297.
+
+Helseth, A., Fodstad, M., Mo, B., 2016. Optimal medium-term hydropower scheduling considering energy and reserve
+        capacity markets. IEEE Transactions on Sustainable Energy 7, 934­942.
+
+Helseth, A., Mo, B., 2022. Hydropower aggregation by spatial decomposition--an sddp approach. IEEE Transactions on
+        Sustainable Energy 14, 381­392.
+
+Helseth, A., Mo, B., Hågenvik, H.O., Schäffer, L.E., 2022. Hydropower scheduling with state-dependent discharge
+        constraints: An sddp approach. Journal of Water Resources Planning and Management 148, 04022061.
+
+Hjelmeland, M.N., Helseth, A., Korpås, M., 2019. Medium-term hydropower scheduling with variable head under inflow,
+        energy and reserve capacity price uncertainty. Energies 12, 189.
+
+Hjelmeland, M.N., Zou, J., Helseth, A., Ahmed, S., 2018. Nonconvex medium-term hydropower scheduling by stochastic
+        dual dynamic integer programming. IEEE Transactions on Sustainable Energy 10, 481­490.
+
+Hou, S., Fan, Y., Yi, B.W., 2021. Long-term renewable electricity planning using a multistage stochastic optimization
+       with nested decomposition. Computers & Industrial Engineering 161, 107636.
+
+Ihsan, A., Brear, M.J., Jeppesen, M., 2021. Impact of operating uncertainty on the performance of distributed, hybrid,
+        renewable power plants. Applied Energy 282, 116256.
+
+Kahsay, T.N., Arjoon, D., Kuik, O., Brouwer, R., Tilmant, A., van der Zaag, P., 2019. A hybrid partial and general
+        equilibrium modeling approach to assess the hydro-economic impacts of large dams­the case of the grand ethiopian
+        renaissance dam in the eastern nile river basin. Environmental Modelling & Software 117, 76­88.
+
+Kozmík, V., 2015. On variance reduction of mean-cvar monte carlo estimators. Computational Management Science 12,
+        221­242.
+
+Kozmík, V., Morton, D.P., 2015. Evaluating policies in risk-averse multi-stage stochastic programming. Mathematical
+        Programming 152, 275­300.
+
+Kristiansen, T., 2006. Hydropower scheduling and financial risk management. Optimal Control Applications and Methods
+        27, 1­18.
+
+Lan, Y., Zhai, Q., Liu, X., Guan, X., 2022. Fast stochastic dual dynamic programming for economic dispatch in
+        distribution systems. IEEE Transactions on Power Systems .
+
+                                                               19
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Lara, C.L., Siirola, J.D., Grossmann, I.E., 2020. Electric power infrastructure planning under uncertainty: stochastic dual
+        dynamic integer programming (sddip) and parallelization scheme. Optimization and Engineering 21, 1243­1281.
+
+Larroyd, P.V., Pedrini, R., Beltrán, F., Teixeira, G., Finardi, E.C., Picarelli, L.B., 2022. Dealing with negative inflows in
+        the long-term hydrothermal scheduling problem. Energies 15, 1115.
+
+Leclère, V., Carpentier, P., Chancelier, J.P., Lenoir, A., Pacaud, F., 2020. Exact converging bounds for stochastic dual
+        dynamic programming via fenchel duality. SIAM Journal on Optimization 30, 1223­1250.
+
+Leocadio, C.M., Richa, C.S.G., Fortes, M.Z., Ferreira, V.H., Dias, B.H., 2020. Economic evaluation of a chp biomass
+        plant using stochastic dual dynamic programming. Electrical Engineering 102, 2605­2615.
+
+Li, Z., Yang, P., Yang, Y., Lu, G., Tang, Y., 2022. Solving stochastic hydro unit commitment using benders decomposition
+        and modified stochastic dual dynamic programming. Frontiers in Energy Research 10, 955875.
+
+Liu, R.P., Shapiro, A., 2020. Risk neutral reformulation approach to risk averse stochastic programming. European
+        Journal of Operational Research 286, 21­31.
+
+Lohmann, T., Hering, A.S., Rebennack, S., 2016. Spatio-temporal hydro forecasting of multireservoir inflows for
+        hydro-thermal scheduling. European Journal of Operational Research 255, 243­258.
+
+Löhndorf, N., Shapiro, A., 2019. Modeling time-dependent randomness in stochastic dual dynamic programming.
+        European Journal of Operational Research 273, 650­661.
+
+Löhndorf, N., Wozabal, D., 2021. Gas storage valuation in incomplete markets. European Journal of Operational Research
+        288, 318­330.
+
+Löhndorf, N., Wozabal, D., Minner, S., 2013. Optimizing trading decisions for hydro storage systems using approximate
+        dual dynamic programming. Operations Research 61, 810­823.
+
+Lu, R., Ding, T., Qin, B., Ma, J., Fang, X., Dong, Z., 2019. Multi-stage stochastic programming to joint economic
+        dispatch for energy and reserve with uncertain renewable energy. IEEE Transactions on Sustainable Energy 11,
+       1140­1151.
+
+Maceira, M., Damázio, J., 2006. Use of the par (p) model in the stochastic dual dynamic programming optimization
+        scheme used in the operation planning of the brazilian hydropower system. Probability in the Engineering and
+        Informational Sciences 20, 143­156.
+
+Maceira, M.E.P., Marzano, L., Penna, D.D.J., Diniz, A., Justino, T., 2014. Application of cvar risk aversion approach in
+        the expansion and operation planning and for setting the spot price in the brazilian hydrothermal interconnected
+        system, in: 2014 Power Systems Computation Conference, IEEE. pp. 1­7.
+
+Maceiral, M., Penna, D., Diniz, A., Pinto, R., Melo, A., Vasconcellos, C., Cruz, C., 2018. Twenty years of application of
+        stochastic dual dynamic programming in official and agent studies in brazil-main features and improvements on
+        the newave model, in: 2018 power systems computation conference (PSCC), IEEE. pp. 1­7.
+
+Machado, B.G.F., Bhagwat, P.C., 2020. The impact of the generation mix on the current regulatory framework for
+        hydropower remuneration in brazil. Energy policy 137, 111129.
+
+Machado, F.D., Diniz, A.L., Borges, C.L., Brandão, L.C., 2021. Asynchronous parallel stochastic dual dynamic
+        programming applied to hydrothermal generation planning. Electric Power Systems Research 191, 106907.
+
+Macian-Sorribes, H., Tilmant, A., Pulido-Velazquez, M., 2017. Improving operating policies of large-scale surface-
+        groundwater systems through stochastic programming. Water Resources Research 53, 1407­1423.
+
+Marques, G.F., Tilmant, A., 2013. The economic value of coordination in large-scale multireservoir systems: The parana
+        river case. Water Resources Research 49, 7546­7557.
+
+de Matos, V.L., Finardi, E.C., 2012. A computational study of a stochastic optimization model for long term hydrothermal
+        scheduling. International Journal of Electrical Power & Energy Systems 43, 1443­1452.
+
+de Matos, V.L., Sierra, M.A., Finardi, E.C., Decker, B.U., Milanezi, A.A., 2015. Stochastic model for energy com-
+        mercialisation of small hydro plants in the brazilian energy market. Computational Management Science 12,
+       111­127.
+
+Mbeutcha, Y., Gendreau, M., Emiel, G., 2021. Benefit of parma modeling for long-term hydroelectric scheduling using
+        stochastic dual dynamic programming. Journal of Water Resources Planning and Management 147, 05021002.
+
+Mello, J., Pereira, M., Granville, S., Lima, M., Alvarenga, S., 1997. Assessment of transmission cost recovery applying
+        marginal pricing in hydrothermal power systems. Electric power systems research 41, 67­74.
+
+                                                               20
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Homem-de Mello, T., De Matos, V.L., Finardi, E.C., 2011. Sampling strategies and stopping criteria for stochastic dual
+        dynamic programming: a case study in long-term hydrothermal scheduling. Energy Systems 2, 1­31.
+
+Homem-de Mello, T., Pagnoncelli, B.K., 2016. Risk aversion in multistage stochastic programming: A modeling and
+        algorithmic perspective. European Journal of Operational Research 249, 188­199.
+
+Mo, B., Gjelsvik, A., Grundt, A., 2001. Integrated risk management of hydro power scheduling and contract management.
+        IEEE Transactions on Power Systems 16, 216­221.
+
+Morillo, J.L., Zéphyr, L., Pérez, J.F., Anderson, C.L., Cadena, Á., 2020. Risk-averse stochastic dual dynamic programming
+        approach for the operation of a hydro-dominated power system in the presence of wind uncertainty. International
+        Journal of Electrical Power & Energy Systems 115, 105469.
+
+Morillo, J.L., Zephyr, L., Pérez, J.F., Cadena, A., Anderson, C.L., 2022. Distribution-free chance-constrained load balance
+        model for the operation planning of hydrothermal power systems coupled with multiple renewable energy sources.
+        International Journal of Electrical Power & Energy Systems 142, 108319.
+
+Nannicini, G., Traversi, E., Calvo, R.W., 2021. A benders squared (b 2) framework for infinite-horizon stochastic linear
+        programs. Mathematical Programming Computation 13, 645­681.
+
+Oliveira, F.L.C., Souza, R.C., Marcato, A.L.M., 2015. A time series model for building scenarios trees applied to
+        stochastic optimisation. International Journal of Electrical Power & Energy Systems 67, 315­323.
+
+Pacaud, F., Carpentier, P., Chancelier, J.P., De Lara, M., 2022. Optimization of a domestic microgrid equipped with
+        solar panel and battery: Model predictive control and stochastic dual dynamic programming approaches. Energy
+        Systems , 1­25.
+
+Pacaud, F., De Lara, M., Chancelier, J.P., Carpentier, P., 2021. Distributed multistage optimization of large-scale
+        microgrids under stochasticity. IEEE Transactions on Power Systems 37, 204­211.
+
+Papavasiliou, A., Mou, Y., Cambier, L., Scieur, D., 2017. Application of stochastic dual dynamic programming to the
+        real-time dispatch of storage under renewable supply uncertainty. IEEE Transactions on Sustainable Energy 9,
+        547­558.
+
+Parpas, P., Ustun, B., Webster, M., Tran, Q.K., 2015. Importance sampling in stochastic programming: A markov chain
+        monte carlo approach. INFORMS Journal on Computing 27, 358­377.
+
+Pedrini, R., Finardi, E., 2022. Long-term generation scheduling: A tutorial on the practical aspects of the problem
+        solution. Journal of Control, Automation and Electrical Systems , 1­16.
+
+Pereira, M.V., Pinto, L.M., 1991. Multi-stage stochastic optimization applied to energy planning. Mathematical
+        programming 52, 359­375.
+
+Pereira-Cardenal, S.J., Mo, B., Gjelsvik, A., Riegels, N.D., Arnbjerg-Nielsen, K., Bauer-Gottwein, P., 2016. Joint
+        optimization of regional water-power systems. Advances in water resources 92, 200­207.
+
+Philpott, A., de Matos, V., Finardi, E., 2013. On solving multistage stochastic programs with coherent risk measures.
+        Operations Research 61, 957­970.
+
+Philpott, A.B., De Matos, V.L., 2012. Dynamic sampling algorithms for multi-stage stochastic programs with risk
+        aversion. European Journal of operational research 218, 470­483.
+
+Philpott, A.B., Guan, Z., 2008. On the convergence of stochastic dual dynamic programming and related methods.
+        Operations Research Letters 36, 450­455.
+
+Philpott, A.B., de Matos, V.L., Kapelevich, L., 2018. Distributionally robust sddp. Computational Management Science
+       15, 431­454.
+
+Pina, J., Tilmant, A., Côté, P., 2017. Optimizing multireservoir system operating policies using exogenous hydrologic
+        variables. Water Resources Research 53, 9845­9859.
+
+Pinto, R.J., Borges, C.T., Maceira, M.E., 2013. An efficient parallel algorithm for large scale hydrothermal system
+        operation planning. IEEE Transactions on Power Systems 28, 4888­4896.
+
+Poorsepahy-Samian, H., Espanmanesh, V., Zahraie, B., 2016. Improved inflow modeling in stochastic dual dynamic
+        programming. Journal of Water Resources Planning and Management 142, 04016065.
+
+Pritchard, G., 2015. Stochastic inflow modeling for hydropower scheduling problems. European Journal of Operational
+        Research 246, 496­504.
+
+                                                               21
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Quezada, F., Gicquel, C., Kedad-Sidhoum, S., 2022a. Combining polyhedral approaches and stochastic dual dynamic
+        integer programming for solving the uncapacitated lot-sizing problem under uncertainty. INFORMS Journal on
+        Computing 34, 1024­1041.
+
+Quezada, F., Gicquel, C., Kedad-Sidhoum, S., 2022b. A stochastic dual dynamic integer programming based approach
+        for remanufacturing planning under uncertainty. International Journal of Production Research , 1­21.
+
+Raby, M., Ríos, S., Jerardino, S., Raineri, R., 2009. Integrating large wind farms into transmission planning of
+        hydrothermal system. Journal of Energy Engineering 135, 89­97.
+
+Raso, L., Bader, J.C., Weijs, S., 2020. Reservoir operation optimized for hydropower production reduces conflict with
+        traditional water uses in the senegal river. Journal of Water Resources Planning and Management 146, 05020003.
+
+Raso, L., Chiavico, M., Dorchies, D., 2019. Optimal and centralized reservoir management for drought and flood
+        protection on the upper seine­aube river system using stochastic dual dynamic programming. Journal of Water
+        Resources Planning and Management 145, 05019002.
+
+Raso, L., Malaterre, P.O., Bader, J.C., 2017. An effective streamflow process model for optimal reservoir operation using
+        stochastic dual dynamic programming. Journal of water resources planning and management 143, 11.
+
+Rebennack, S., 2014. Generation expansion planning under uncertainty with emissions quotas. Electric Power Systems
+        Research 114, 78­85.
+
+Rebennack, S., 2016. Combining sampling-based and scenario-based nested benders decomposition methods: application
+        to stochastic dual dynamic programming. Mathematical Programming 156, 343­389.
+
+Rebennack, S., Flach, B., Pereira, M.V., Pardalos, P.M., 2011. Stochastic hydro-thermal scheduling under co2 emissions
+        constraints. IEEE Transactions on Power Systems 27, 58­68.
+
+Rego, E.E., de Oliveira Ribeiro, C., do Valle Costa, O.L., Ho, L.L., 2017. Thermoelectric dispatch: From utopian planning
+        to reality. Energy Policy 106, 266­277.
+
+Resende, L.d.O., Valladão, D., Bezerra, B.V., Cyrillo, Y.M., 2021. Assessing the value of natural gas underground storage
+        in the brazilian system via stochastic dual dynamic programming. Top 29, 106­124.
+
+Reus, L., Pagnoncelli, B., Armstrong, M., 2019. Better management of production incidents in mining using multistage
+        stochastic optimization. Resources Policy 63, 101404.
+
+Reus, L., Prado, R., 2022. Need to meet investment goals? track synthetic indexes with the sddp method. Computational
+        Economics 60, 47­69.
+
+Rotting, T., Gjelsvik, A., 1992. Stochastic dual dynamic programming for seasonal scheduling in the norwegian power
+        system. IEEE Transactions on Power Systems 7, 273­279.
+
+Rougé, C., Tilmant, A., 2016. Using stochastic dual dynamic programming in problems with multiple near-optimal
+        solutions. Water Resources Research 52, 4151­4163.
+
+Rougé, C., Tilmant, A., Zaitchik, B., Dezfuli, A., Salman, M., 2018. Identifying key water resource vulnerabilities in
+        data-scarce transboundary river basins. Water Resources Research 54, 5264­5281.
+
+Sauma, E., Jerardino, S., Barria, C., Marambio, R., Brugman, A., Mejía, J., 2011. Electric-systems integration in the
+        andes community: Opportunities and threats. Energy Policy 39, 936­949.
+
+Scheben, H., Klempp, N., Hufendiek, K., 2020. Impact of long-term water inflow uncertainty on wholesale electricity
+        prices in markets with high shares of renewable energies and storages. Energies 13, 2347.
+
+Seranilla, B.K., Löhndorf, N., 2023. Optimizing vaccine distribution in developing countries under natural disaster risk.
+        Naval Research Logistics .
+
+Shapiro, A., Cheng, Y., 2021. Central limit theorem and sample complexity of stationary stochastic programs. Operations
+        Research Letters 49, 676­681.
+
+Shapiro, A., Ding, L., 2020. Periodical multistage stochastic programs. SIAM Journal on Optimization 30, 2083­2102.
+
+Shapiro, A., Tekaya, W., da Costa, J.P., Soares, M.P., 2013a. Risk neutral and risk averse stochastic dual dynamic
+        programming method. European journal of operational research 224, 375­391.
+
+Shapiro, A., Tekaya, W., Soares, M.P., da Costa, J.P., 2013b. Worst-case-expectation approach to optimization under
+        uncertainty. Operations Research 61, 1435­1449.
+
+Shi, Z., Liang, H., Huang, S., Dinavahi, V., 2019. Multistage robust energy management for microgrids considering
+        uncertainty. IET Generation, Transmission & Distribution 13, 1906­1913.
+
+                                                               22
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Shinde, P., Kouveliotis-Lysikatos, I., Amelin, M., 2022. Multistage stochastic programming for vpp trading in continuous
+        intraday electricity markets. IEEE Transactions on Sustainable Energy 13, 1037­1048.
+
+Siddig, M., Song, Y., 2022. Adaptive partition-based sddp algorithms for multistage stochastic linear programming with
+        fixed recourse. Computational Optimization and Applications 81, 201­250.
+
+da Silva, E.L., Finardi, E.C., 2003. Parallel processing applied to the planning of hydrothermal systems. IEEE Transactions
+        on Parallel and Distributed Systems 14, 721­729.
+
+Silva, T., Valladão, D., Homem-de Mello, T., 2021. A data-driven approach for a class of stochastic dynamic optimization
+        problems. Computational Optimization and Applications 80, 687­729.
+
+da Silva Fernandes, A., Oliveira, M.T., Marcato, A.L., Oliveira, E.J., Junior, I., Oliveira, E., 2019. Representation of wind
+        energy scenarios in the mid-term hydrothermal systems operation scheduling. Journal of Control, Automation and
+        Electrical Systems 30, 413­423.
+
+Soares, M.P., Street, A., Valladão, D.M., 2017. On the solution variability reduction of stochastic dual dynamic
+        programming applied to energy planning. European Journal of Operational Research 258, 743­760.
+
+Steeger, G., Rebennack, S., 2017. Dynamic convexification within nested benders decomposition using lagrangian
+        relaxation: An application to the strategic bidding problem. European Journal of Operational Research 257,
+        669­686.
+
+Street, A., Brigatto, A., Valladão, D.M., 2017. Co-optimization of energy and ancillary services for hydrothermal
+        operation planning under a general security criterion. IEEE Transactions on Power Systems 32, 4914­4923.
+
+Street, A., Valladão, D., Lawson, A., Velloso, A., 2020. Assessing the cost of the hazard-decision simplification in
+        multistage stochastic hydrothermal scheduling. Applied Energy 280, 115939.
+
+Stüber, M., Odersky, L., 2020. Uncertainty modeling with the open source framework urbs. Energy Strategy Reviews 29,
+       100486.
+
+Tariku, T.B., Gan, K.E., Tan, X., Gan, T.Y., Shi, H., Tilmant, A., 2021. Global warming impact to river basin of blue nile
+        and the optimum operation of its multi-reservoir system for hydropower production and irrigation. Science of The
+       Total Environment 767, 144863.
+
+Terça, G., Wozabal, D., 2021. Envelope theorems for multistage linear stochastic optimization. Operations Research 69,
+       1608­1629.
+
+Thevenin, S., Adulyasak, Y., Cordeau, J.F., 2022. Stochastic dual dynamic programming for multiechelon lot sizing with
+        component substitution. INFORMS Journal on Computing 34, 3151­3169.
+
+Tilmant, A., Kelman, R., 2007. A stochastic approach to analyze trade-offs and risks associated with large-scale water
+        resources systems. Water resources research 43.
+
+Tilmant, A., Lettany, J., Kelman, R., 2007. Hydrological risk assessment in the euphrates-tigris river basin: A stochastic
+        dual dynamic programming approach. Water International 32, 294­309.
+
+Toledo, F., Sauma, E., Jerardino, S., 2015. Energy cost distortion due to ignoring natural gas network limitations in the
+        scheduling of hydrothermal power systems. IEEE Transactions on Power Systems 31, 3785­3793.
+
+Tong, X., Yang, L., Luo, X., Rao, B., 2020. A stochastic dual dynamic programming method for two-stage distributionally
+        robust optimization problems. Optimization Methods and Software 35, 1002­1021.
+
+Treistman, F., Maceira, M.E.P., Penna, D.D.J., Damázio, J.M., Rotunno Filho, O.C., 2020. Synthetic scenario generation
+        of monthly streamflows conditioned to the el niño­southern oscillation: application to operation planning of
+        hydrothermal systems. Stochastic Environmental Research and Risk Assessment 34, 331­353.
+
+Tsang, M.Y., Sit, T., Wong, H.Y., 2022. Robust portfolio optimization with respect to spectral risk measures under
+        correlation uncertainty. Applied Mathematics & Optimization 86, 8.
+
+Valladão, D., Silva, T., Poggi, M., 2019. Time-consistent risk-constrained dynamic portfolio optimization with transac-
+        tional costs and time-dependent returns. Annals of Operations Research 282, 379­405.
+
+Van Ackooij, W., de Oliveira, W., Song, Y., 2019. On level regularization with normal solutions in decomposition methods
+        for multistage stochastic programming problems. Computational Optimization and Applications 74, 1­42.
+
+Van Slyke, R.M., Wets, R., 1969. L-shaped linear programs with applications to optimal control and stochastic
+        programming. SIAM journal on applied mathematics 17, 638­663.
+
+Waga, M., Valladão, D., Street, A., Silva, T., 2022. Disentangling shareholder risk aversion from leverage-dependent
+        borrowing cost on corporate policies. Computational Economics , 1­24.
+
+                                                               23
+Seranilla and Löhndorf  Seranilla and Löhndorf  Seranilla and Löhndorf
+
+Wozabal, D., Rameseder, G., 2020. Optimal bidding of a virtual power plant on the spanish day-ahead and intraday
+        market for electricity. European Journal of Operational Research 280, 639­655.
+
+Yang, H., Nagarajan, H., 2022. Optimal power flow in distribution networks under n­1 disruptions: A multistage
+        stochastic programming approach. INFORMS Journal on Computing 34, 690­709.
+
+Yildiz, B., Sütçü, M., 2022. A variant sddp approach for periodic-review approximately optimal pricing of a slow-moving
+        a item in a duopoly under price protection with end-of-life return and retail fixed markdown policy. Expert Systems
+       with Applications , 118801.
+
+Yu, X., Shen, S., 2022. Multistage distributionally robust mixed-integer programming with decision-dependent moment-
+        based ambiguity sets. Mathematical Programming 196, 1025­1064.
+
+Zambelli, M., Soares Filho, S., Toscano, A.E., Santos, E.d., Silva Filho, D.d., 2011. Newave versus odin: comparison
+        of stochastic and deterministic models for the long term hydropower scheduling of the interconnected brazilian
+        system. Sba: Controle & Automação Sociedade Brasileira de Automatica 22, 598­609.
+
+Zapletal, F., Smíd, M., Kozmík, V., 2022. Multi-stage stochastic optimization of carbon risk management. Expert Systems
+       with Applications 201, 117021.
+
+Zéphyr, L., Anderson, C.L., 2018. Stochastic dynamic programming approach to managing power system uncertainty
+       with distributed storage. Computational Management Science 15, 87­110.
+
+Zhang, J.L., Ponnambalam, K., 2005. Stochastic control for risk under deregulated electricity market--a case study using
+        a new formulation. Canadian Journal of Civil Engineering 32, 719­725.
+
+Zou, J., Ahmed, S., Sun, X.A., 2018. Multistage stochastic unit commitment using stochastic dual dynamic integer
+        programming. IEEE transactions on Power Systems 34, 1814­1823.
+
+Zou, J., Ahmed, S., Sun, X.A., 2019. Stochastic dual dynamic integer programming. Mathematical Programming 175,
+       461­502.
+
+                        24
+

@@ -1,0 +1,846 @@
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                            1
+
+Nonconvex Medium-Term Hydropower Scheduling
+by Stochastic Dual Dynamic Integer Programming
+
+             Martin N. Hjelmeland, Student Member, IEEE, Jikai Zou, Arild Helseth, Member, IEEE
+                                          and Shabbir Ahmed, Senior Member, IEEE
+
+   Abstract--Hydropower producers rely on stochastic optimiza-             model problem with the short-term (ST) operational schedul-
+tion when scheduling their resources over long periods of time.            ing problem, as discussed in [3]. The MTHS problem can be
+Due to its computational complexity, the optimization problem is           formulated as a multistage stochastic programming (MSSP)
+normally cast as a stochastic linear program. In a future power            problem, with many decision stages and uncertainty of inflow
+market with more volatile power prices, it becomes increasingly            and market prices.
+important to capture parts of the hydropower operational char-
+acteristics that are not easily linearized, e.g. unit commitment              Due to the complexity of the MTHS problem, it is typically
+and nonconvex generation curves.                                           approximated as a multistage stochastic linear programming
+                                                                           (MSSLP) problem. To further exploit the flexibility of hy-
+   Stochastic dual dynamic programming (SDDP) is a state-                  dropower by contributing in ancillary service markets, it
+of-the-art algorithm for long- and medium-term hydropower                  becomes increasingly important to capture parts of the opera-
+scheduling with a linear problem formulation. A recently pro-              tional characteristics that are inherently nonconvex. Noncon-
+posed extension of the SDDP method known as stochastic dual                vexities arise from binary variables used to model minimum
+dynamic integer programming (SDDiP) has proven convergence                 generation limits and unit commitments, and are vital for
+also in the nonconvex case. We apply the SDDiP algorithm to                capturing the generation units' capability to provide reserve
+the medium-term hydropower scheduling (MTHS) problem and                   capacity. There are also other types of nonconvexities that
+elaborate on how to incorporate stagewise dependent stochastic             occur in the MTHS problem, such as the generation-discharge
+variables on the right-hand sides and the objective of the opti-           function that is dependent on the water head, discharge from
+mization problem. Finally, we demonstrate the capability of the            multiple reservoirs to one power station and other topological
+SDDiP algorithm on a case study for a Norwegian hydropower                 constraints in the hydropower system. These nonconvexities
+producer.                                                                  should not only be represented in the ST operative models
+                                                                           but also in the MTHS models that provide the expected
+   The case study demonstrates that it is possible but time-               opportunity cost of water to them.
+consuming to solve the MTHS problem to optimality. How-
+ever, the case study shows that a new type of cut, known as                A. MSSP Problems
+strengthened Benders cut, significantly contributes to closing the
+optimality gap compared to classical Benders cuts.                            The MTHS problem can be formulated as a multistage
+                                                                           stochastic program, of the following general extensive form
+   Index Terms--Stochastic processes, Dynamic programming,
+Hydroelectric power generation, Integer programming.                       max         pnfn(xn, yn) : (xa(n), xn, yn)  Xn, n  T .
+
+                          I. INTRODUCTION                                  (xn,yn) nT
+
+T HE hydropower scheduling problem is difficult given its                                                                   (1)
+      stochastic and multistage nature, and a variety of different
+solution techniques have been applied to it, see e.g. [1], [2].            In the above formulation, T is a scenario tree given by a set
+In a liberalized power market, one typically decomposes the
+overall problem into three hierarchies (long-, medium-, and                of nodes, n, that describes the underlying stochastic process
+short-term) according to the system boundary, the level of                 {~t : t = 1, . . . , T }. Each node is assigned a probability
+required details in the hydro system and the representation
+of different stochastic variables [3], [4], [5]. In this work we           pn, and has a unique ancestor node a(n) and set of children
+consider the medium-term hydropower scheduling (MTHS)
+problem, aiming at maximizing a single producer's profit.                  nodes C(n). For each node we define xn and yn as vectors
+The MTHS problem links the long-term fundamental market
+                                                                           comprising the state and stage variables, respectively. The
+   M. N. Hjelmeland is with the Department of Electric Power Engineering,
+NTNU Norwegian University of Science and Technology, Trondheim, Nor-       state variables are those used to carry information from one
+way, e-mail: martin.hjelmeland@ntnu.no.
+                                                                           period to the next. The initial state of the system is x0, fn
+   A. Helseth is with SINTEF Energy Research, Trondheim, Norway.
+   J. Zou was with the H. Milton Stewart School of Industrial & Systems    is the objective function and Xn is the set of constraints.
+Engineering, Georgia Institute of Technology, Atlanta, GA, USA. He is now
+a Research Scientist at Amazon Web Services.                               Note that the constraint set comprises time-linking constraints,
+   S. Ahmed is with the H. Milton Stewart School of Industrial & Systems
+Engineering, Georgia Institute of Technology, Atlanta, GA, USA.            connecting the state variables in xa(n) and xn.
+   Manuscript received March 13, 2017; revised August 12, November 28,
+2017 and January 17, 2018; accepted February 1, 2018. This work was        The size of the MSSP in (1) grows dramatically with the
+supported by the Research Council of Norway under Grant 228731/E20.
+                                                                           number of decision stages and number of children nodes
+
+                                                                           considered in the scenario tree. Thus, MSSP problems are
+
+                                                                           often solved by decomposition [6]. Stagewise decomposition
+
+                                                                           [7] has become a popular technique for efficiently solving
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                  2
+
+the hydropower scheduling problems [8], [9]. Such a decom-                enters the objective function and thus introduces a nonconvex
+position scheme involves dividing (1) into subproblems for                term that is challenging to handle.
+each decision stage. Each subproblem comprises a part of the
+objective function corresponding to that stage and an expected               The SDDiP method is tested and verified on a hydropower
+future profit (EFP)1 function.                                            system in Norway. We evaluate the performance of the SDDiP
+                                                                          algorithm on the MTHS problem using different types of cuts
+B. Stochastic Dual Dynamic Programming                                    and provide recommendations for which types of cuts are most
+                                                                          efficient in solving the MTHS problem.
+   The stochastic dual dynamic programming algorithm
+(SDDP) presented in [10] is a stagewise decomposition                        The paper is organized as follows. In the next section,
+method for solving the long- and medium-term hydropower                   we will describe the basic modeling of the MTHS problem
+scheduling problem. For a scenario tree corresponding to a                followed by the fundamentals of the SDDiP method. The case
+stagewise independent stochastic process, the SDDP method                 study is presented in Section VI and computational results in
+proceeds by sampling in the scenario tree and sharing Benders             Section VII followed by concluding remarks in Section VIII.
+cuts between nodes belonging to the same stage. Proof of
+almost sure convergence for the SDDP algorithm has been                                        II. THE MTHS PROBLEM
+given by [11], and for risk averse problems in [12], [13].
+The SDDP algorithm has been frequently addressed in the                      In a liberalized electricity market the hydropower producer's
+recent literature. Some of the work involves time-inconsistent            primary objective is to find operational strategies for each
+policies [14], co-optimization of hydro- and wind power [15],             decision stage and maximize the total profit. For the Nordic
+joint treatment of energy and ancillary services [16], [17],              electricity market, it is assumed that there is a sufficient num-
+uncertainty in price [18] and uncertainty in inflow [19].                 ber of players such that a price-taker assumption is reasonable.
+
+   In spite of considerable research effort, see e.g. [20], [21],            The state variables, xt, in the MTHS problem considered
+[22], [23], [24], the SDDP method does not easily facili-                 here are reservoir levels, generator status, inflow and energy
+tate nonconvexities. As mentioned previously, nonconvexities              price. The stage variables are represented by yt and include
+arise, for example, when representing the detailed relationship           the operational decisions at that stage. First, let us assume
+between power output and water discharge [25], and the exact              that the set of state variables consists of both continuous and
+unit commitment of generators [26]. The core issue is how the             binary variables. For the MTHS problem, given by (2), we
+nonconvex EFP function can be modeled. In [21] McCormick                  want to find an operating strategy that maximizes profit in
+envelopes were applied to regions of the nonconvex function               (2a), comprising the revenues from selling energy and capacity
+between power, discharge and water head. In [22] Lagrangian               reserves, start-up cost and penalty functions ensuring relatively
+relaxation was used to convexify the EFP function, whereas                complete recourse. The expectation in (2a) is taken over the
+[24] applied locally valid cuts to represent the nonconvex EFP            stochastic parameter ~t, representing energy price and inflow.
+function. All the above methods produce solutions to different
+forms of relaxations rather than the original problem.                           max E             T              (2a)
+
+   Recently [27] proposed a method referred to as stochastic              (x1,y1),...,(xT ,yT )       ft(xt, yt)
+dual dynamic integer programming (SDDiP) allowing integer
+variables within the SDDP method, i.e. a solution to the                                          t=1
+multistage stochastic integer programming (MSSIP) problem.
+By approximating all state variables with binary variables, the           s.t. W xt + Hxt-1 + Gyt = h(~t)         (2b)
+authors were able to prove finite convergence as long as the
+cuts satisfy some sufficient conditions.                                  Byt = 0                                 (2c)
+
+   Another new and promising method that can be used to                   Cyt - Dxt  0                            (2d)
+solve the nonconvex MTHS problem is reported in [28]. As
+SDDiP it is an extension of SDDP for handling nonconvexities.             Cyt + Dxt  Cymax                        (2e)
+The significant difference is that instead of using cutting planes
+to describe the EFP function, step functions are used and that            xt, yt  Yt                              (2f)
+a monotonic increasing EFP function is required.
+                                                                          xt  Rk1 · Zk2 , yt  Rl1 · Zl2           (2g)
+C. Contributions
+                                                                          t  {1, 2, . . . , T },                  (2h)
+   In this work we apply the SDDiP method presented in [27]
+to the MTHS problem with a nonconvex function of power and                where the initial state vector x0 is given and W , H, G, B,
+discharge, incorporate stagewise dependencies in stochastic               C and D are matrices of suitable dimensions. The right-hand-
+variables and correlations between them (inflow and energy                side parameter vector, h(~t), is dependent on the random data
+price). We particularly extend the modeling from [27] with                vector ~t whose distribution is known, and where t are the
+stagewise dependency in energy price, since this dependency               realizations. Due to strong autocorrelation, both inflow and
+
+   1or expected future cost when considering cost minimization problems.  the energy price should be considered as an affine function of
+
+                                                                          state variables. Thus the profit function for stage t is
+
+                                                                          ft(xt, yt) = ct(xt)ytG + gt(yt),        (3)
+
+                                                                          comprising the energy price, ct(xt), multiplied with gener-
+                                                                          ation, ytG, and the remaining linear relationships in gt(yt).
+                                                                          Treatment of the bilinear expression in (3) will be addressed
+
+                                                                          in Section III-B.
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+
+    Transactions on Sustainable Energy                                                                      
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                                3
+
+                                                                                   
+                                                                                         III. THE SDDIP FORMULATION
+
+                                                                                  In this section, we reformulate the problem (2) to a form
+
+                                                                                  suitable for SDDiP. First, we describe how the stochastic
+
+                                                                                  processes are handled.
+
+                                                                                  A. Stochastic Processes
+
+                                                                                     We consider two types of uncertainties in the problem;
+                                                                                  inflow to the hydro reservoirs and energy price. For the
+                                                                                  sake of simplicity both processes are assumed to have a
+Fig. 1. Illustration of the nonconvex function of power, Pt, and discharge, qt    normal distribution. Since both stochastic processes exhibit a
+in a power station with two units in blue. It is conditioned that the first unit  seasonal pattern and are non-stationary processes, these are
+is started before the second. The dotted line illustrates the convex relaxation   normalized by subtracting the seasonal mean and dividing
+of the function.                                                                  by the seasonal standard deviation. Moreover, we shift the
+                                                                                  mean of the normalized value to ensure non-negative values.
+   The time-linking constraint, (2b), contains all reservoir                      The normalized and shifted series are then assumed to be
+balances, generator state time-couplings and the Vector Au-                       stationary and fitted to a Vector Autoregressive model with lag-
+toregressive model with lag-1 (VAR-1) constraints, outlined                       1 (VAR-1), which enables us to account for seasonal effects
+in Section III-A. The energy balance is given by (2c), where                      and capture correlations between the time series within the
+we assume that all power is sold to the market. Generation                        SDDiP framework. In order to get a manageable number
+and reserve capacity limits are included in (2d) and (2e).                        of stochastic outcomes of ~t, we applied the "Fast forward
+We assume that the hydropower producer can offer spinning                         selection" scenario reduction algorithm in [29], resulting in a
+reserve capacity, meaning that the generator has to be op-                        confined amount of scenarios with a corresponding probability.
+erating to provide this service. The reserve capacity is also                     Another known method to handle the uncertainty of energy
+assumed symmetric, i.e. an equal amount of both upwards and                       price in SDDP is by an outer Markov chain as proposed in
+downwards reserve capacity is sold. For conciseness, we also                      [30]. The drawback is then that there are two independent
+include constraints that limit spillage, bypass and generation                    stochastic processes in the model.
+from different reservoirs in (2f). In practice, spillage may
+only occur when the water head is greater than the bottom                            The VAR-1 model includes a state variable, t. Since it
+of the spillway. If, however, the optimization model finds that                   is a state variable, binary expansion has to be applied to it.
+the water has better utilization in a lower reservoir, it will                    After the scenario reduction and sampling of the stochastic
+spill or bypass water to that reservoir, even-though this might                   parameters are completed, a bound can be computed so that
+not be feasible in practice. By including binary variables and                    a finite support is guaranteed. Subsequently, we need to shift
+additional constraints in (2f), we can prohibit this behavior of                  the mean of the process by U such that t is non-negative.
+the model. Similar to when a power station can operate from                       The bound is then given by (4b) and t is the normalized and
+two different reservoirs with uneven head, we can restrict the                    shifted values. We can derive the following VAR-1 model,
+model to only operate from one reservoir at the time.                             which is included in (2b)
+
+   As an extension to the MTHS problem we include a                                                       t = t-1 + ~t          (4a)
+nonconvex relationship between power and discharge for each
+hydropower station, referred to as the generation function.                                               t  [0, 2U ]2,         (4b)
+Much work has been done recently, see [21], [22], to include
+a nonconvex generation function, also with water head depen-                      where  is the correlation matrix. Note that E[t] = U and
+dencies. Considering the modest water head variations of most                     E[~t] = U . The stochastic parameters for inflow and energy
+Norwegian hydropower stations and to limit the complexity of                      price are respectively given by
+the modelling, with added computational time, we omit this in
+our approach. Our experience has shown that it is important to                    It(t)                    = t t - U     + µt.  (5)
+include the nonconvex generation function when selling both                       ct(t)
+energy and reserve capacity in order not to overestimate the
+sales of capacity reserves [15]. This is especially imperative                    where the inflow, It(t), is the right-hand side of the reservoir
+for periods with low energy price and high capacity price.                        constraints and the energy price, ct(t), is expressed in the
+Then the model wants to operate the units at low power                            objective function (3). Note that t in the stochastic model
+outputs in order to participate in the capacity reserve market.                   is identical with xt in (3) as the stochastic model was not
+An illustration of a generation function is given in Figure 1.                    yet introduced. In order to solve the bilinear term in (3) an
+
+   For presentation simplicity, the reserve capacity price is                     approximation is applied.
+assumed to be deterministic, but as the work done in [16]
+shows, it could be extended to a stochastic variable.                             B. Approximation of the Energy Price
+
+                                                                                     To circumvent the computational complexity introduced
+                                                                                  by the bilinear term in (3), we apply an approximation by
+                                                                                  linear relaxation of the objective function term, ct(t)ytG. The
+                                                                                  relaxation is applied by using the binary expansion method to
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                                    4
+
+the energy price state variable, t. The method is based on                   The EFP function is then ti(xt), for a given iteration i of
+                                                                             the SDDP method, and constraint set Xt that describes a LP
+the fact that if t is an integer variable, t  {0, . . . , L}, it             relaxation of Xt. We see that this DP formulation is similar
+                                                                             to the SDDP method, where the EFP function is described by
+can be represented by  binary variables,  = log2(L) + 1,
+such that t = j=12j-1tj. Similarly, for the continuous                       hyperplanes, defined as
+
+case, t  [0, L], where t is given with  accuracy;  =
+
+log2(L/) + 1, hence t = j=12j-1tj. See e.g. [31] for                         it(xt) := max{t  Vt                                    (9a)
+
+further details about the binary expansion. In the following                                t  vtl+1 + tl+1xt, l  H(i), (9b)
+
+we use the notation t =                  Atj  tj  .   Thus,  we    redefine
+                                   j=1
+     r
+t =  j=1  Atj  xtj  ,  with  r  =  log2(2U/) + 1 and substitue               xt  Rk3 }.                                             (9c)
+
+t in (5). Moreover, we then replace the bilinear terms xtjytG                Where the set H(i) contains the cuts that are used to approx-
+                                                                             imate the EFP function up to iteration i. The cuts are repre-
+with auxiliary variables wtj, and constrain these by (6b)-(6e),              sented with a right hand side parameter vtl+1, the coefficient
+                                                                             tl+1 and t is a scalar variable representing the value of the
+for all j  {1, . . . , r}. The objective function becomes,                   EFP function. The different type of cuts that we have used in
+                                                                             our implementation will be outlined in Section IV-A.
+                            r
+                                                                                To solve the nonconvex MTHS problem we apply the SD-
+ft(xt, yt) =t Atj wtj + (µt - tU )ytG + g(yt) (6a)                           DiP method proposed in [27]. The key concept of the method
+                                                                             is that any function of binary variables can be represented as
+               j=1                                                           a convex polyhedral function. This can, therefore, be achieved
+                                                                             by applying the above-mentioned binary expansion to all
+     s.t. wtj - ytG  0                                             (6b)      integer and continuous state variables of the original problem.
+
+               wtj - Mtj xtj  0                                    (6c)         After the binary expansion is applied to the state variables
+                                                                             in (2g), xt  Rk1 × Zk2 , it is reformulated to xt  {0, 1}k,
+               wtj - ytG + Mtj (1 - xtj )  0                       (6d)      such that all state variables in the MTHS problem are binary
+                                                                             and representing the original continuous state variables to -
+               wtj  Rr, xtj  {0, 1}r                               (6e)      accuracy. Note that k = k1 + k2, as it depends on the binary
+                                                                             expansion.
+               j  {1, . . . , r}.                                  (6f)
+                                                                                Since the possible state variables solutions are given by a
+We fix Mtj to yG,max for all j, in order to get an accurate                  finite set of binary variables, we can generate a finite number
+relaxation.                                                                  of cuts to approximate it, as the convex hull of the binary state
+                                                                             space ensures that we can compute tight bounds. See Figure 2
+   Note that after the binary expansion is applied to the                    and its explanation below.
+state variable, t, (4a) becomes a constraint with only binary
+variables and a stochastic parameter. Thus, in order to ensure                  Another reformulation used in the SDDiP method is to
+feasibility of the model with all possible outcomes of ~t,                   generate local copies of the state variables. This reformulation
+the constraint is altered to a less than or equal constraint.                is crucial to ensure that one is able to generate cuts that
+                                                                             accurately approximate the EFP function. The DP formulation
+Implications of this are discussed in Section VII.                           of the problem with binary state variables becomes
+
+C. Dynamic Programming (DP) Formulation
+
+   From the MTHS problem given by (2) and the energy price
+approximation in (6), we have the following DP equation
+
+     Qt(xt-1,t-1) := max ft(xt, yt) + t(xt)                        (7a)
+                                 xt ,yt
+
+          s.t. (xt, yt)  Xt(xt-1, ~t)                              (7b)
+
+                    xt  Rk1 · Zk2 , yt  Rl1 · Zl2 .                (7c)      Qit(xt-1,t-1)  :=   max        ft(xt,  yt)  +  ti(xt)
+
+Problem (7) consists of the present objective function                                          xt ,yt ,zt                          (10a)
+f (xt, yt), the true EFP function t(xt) and constraint set Xt,
+with parameters xt-1 and ~t, described by (2b)-(2f) and (6b)-                s.t. (xt, zt, yt)  Xt (~t)                             (10b)
+(6f).                                                                                                                               (10c)
+                                                                             zt = xt-1                                              (10d)
+   As the MTHS problem contains integer stage variables the                                                                         (10e)
+EFP function is nonconvex with respect to the state variables.               zt  [0, 1]k
+Existing nested decomposition methods rely on convex relax-
+ation to approximate the EFP function, and convergence can                   xt  {0, 1}k, yt  Rl1 · Zl2 .
+therefore not be guaranteed.
+                                                                             Where (10c) is the essential copy constraint, connecting the
+   The traditional approach to solving the nonconvex problem
+in (7) has been to relax the problem formulation to an LP. We                previous state solution, xt-1, and the copy variable zt. The set
+are then able to define a convex relaxation of the EFP function              Xt is obtained by transforming all state variables in Xt into
+given by,                                                                    binaries. The EFP function, ti(xt), is defined as (9), with the
+                                                                             differentiation that all the state variables has to be binary.
+
+     Qti (xt-1 ,t-1 )        :=  max     ft(xt,  yt)  +  ti (xt )  (8a)                  IV. REVIEW OF THE SDDIP APPROACH
+
+                                 xt ,yt                                         The SDDiP approach builds on the same principles as
+                                                                             SDDP, where each main iteration comprises a forward and
+          s.t. (xt, yt)  Xt (xt-1, ~t)                             (8b)      a backward iteration, as shown in Algorithm 1. We can sum-
+                                                                             marize the main differences between SDDiP and SDDP into
+                    xt  Rk3 , yt  Rl3 .                            (8c)
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                                                                     5
+
+()            5            (1, 2)                                                 Algorithm 1 The SDDiP Method
+          3  + 1
+                                                                                  1: Set x0i , 0i , i  1, UB = + and LB = -,
+                                                                                  2: Apply binary expansion on continuous and integer state
+
+                                                                                       variables
+
+          21 +32 +1                                                               3: while i < imax or some other stopping criteria do
+                                                                                  4: Sample N scenarios i = 1k, . . . , Tk k=1,...,N
+      1 +42 +1                                                                    5: /* Forward Iteration */
+
+                                                    1  0,1                        6: for k=1,. . . ,N do
+
+0   1   2         3                                                               7:              for t=1,. . . ,T do
+
+Fig. 2. Illustration of the nonconvex EFP function (left) and the transformation  8:                  Solve       Qik    (xtik-1,      ti-k 1)
+into the binary state (right). Note that we are solving a maximization problem
+and thus the function is nonconcave, but in line with standard terminology, we                                       t
+refer to it as a nonconvex function. Assume that the continuous variable xt is                        Collect solution ft(xitk, ytik, tik), xitk, ytik, ztik
+transformed by two binary variables xt1 and xt2, such that xt = xt1 + 2xt2.       9:
+By constructing two hyperplanes (C1 and C2) in the binary state space, we can
+illustrate how they are projected to the continuous space. This illustrates how   10:             lbk  t=1,...,T ft(xtik, ytik, tik)
+by using binary state variables we are able to construct cuts that approximate
+a nonconvex function. The hyperplane C3 is added to show the tightest cut         11: /* Compute lower bound */
+we are able to generate from the convex relaxation of the nonconvex function.
+                                                                                  12:  µLBN1µ+kN=z1lbkNand                    2               1   kN=1(lbk    - µ)2
+                                                                                  13:                                                       N -1
+
+                                                                                  14: /* Backward Iteration */
+
+                                                                                  15: for t=T,. . . , 2 do
+
+                                                                                  16:             for k=1,. . . , N do
+
+three pillars; the requirement of discretization of state variables               17:                 for m C(t) do
+into binary variables, introduction of the copy variable and the
+different cut families it facilitates.                                            18:                       Solve a suitable relaxation of
+
+   Scenarios are sampled from the underlying stochastic pro-                      19:                       Qik      (xtik ,  ztik  ,  tik  )
+cess in line 4 in Algorithm 1. The forward iteration solves
+the problem given in (10) for each stage and scenario, pro-                                                    m
+viding candidate solutions to the problem in line 9 and an                                                  Collect cut coefficients and parameters
+confidence lower bound on the optimal value.                                      20:
+
+   The backward iteration operates along the N state trajecto-                    21:                 Add desired cut(s) as described in Sec. IV-A
+ries obtained in the previous forward iteration to compute cuts
+that are passed backward in time. The different types of cuts                     22: /* Compute upper bound */
+considered are described in the next section. The value of the
+objective function in the first stage will then represent an upper                23:  UB             Qi    (x0i  ,  0i )
+bound of the true optimal solution in line 23. Convergence is
+achieved if the lower bound is within a statistical confidence                                           1
+interval of the upper bound.                                                      24: i  i + 1
+
+                                                                                     2) Lagrangian Cuts (L): This cut family is based on La-
+                                                                                  grangian relaxation, where we relax the copy constraint (10c).
+                                                                                  The Lagrangian multiplier is obtained by
+
+                                                                                                  ¯ti := argmin Lti(¯t) + ¯t xt-1 ,                                  (12)
+
+                                                                                                                     ¯t
+
+A. Cut Families                                                                   and Lit is defined as
+
+   SDDiP is defined on a notion of valid and tight cuts. A                             Lti (¯t )  :=   max ft(xt,             yt,   t)  +      ti(xt)  -  ¯t  zt  (13a)
+cut is valid and tight if it supports the EFP function. For
+maximization problems, it is only valid if it provides an upper                                       xt ,yt ,zt                                                  (13b)
+approximation of the EFP function. An illustration is given in                                                                                                    (13c)
+Figure 2, where the cuts C1, C2 and C3 are all valid, but only                                        s.t. (zt, xt, yt)  Xt (~t)                                  (13d)
+C1 is tight when the state variable has the value 1.
+                                                                                                                  zt  [0, 1]k
+   The different cut families that could be used within SDDiP
+are briefly described below.                                                                                      xt  {0, 1}k, yt  Rl1 · Zl2 .
+
+   1) Benders Cuts (B): Benders cuts (see [32]) are con-                          Lagrangian relaxation often aims to relax complicating con-
+structed by solving the LP relaxation of problem (10). We                         straints and divide the problem into smaller subproblems that
+obtain the following Benders cut for stage t in iteration i                       can more easily be computed. Our aim, however, is to find
+                                                                                  good multipliers that make the Lagrangian cuts as tight as
+    t          qtm   QLP   +  (mi )  (xt - xti)  .  (11)                          possible. It is essential for the convergence of SDDiP that the
+                                                                                  Lagrangian cuts can be generated in a sufficient manner, in
+                        m                                                         regard to both computation time and tightness. By repeatedly
+                                                                                  solving (12) and updating the Lagrange multipliers ¯t, e.g.
+        mC(t)                                                                     using the subgradient [33] or level [34] methods, one can
+                                                                                  construct tight and valid Lagrangian cuts, as described in [27].
+   Where mi is a vector of dual values corresponding to                           Nevertheless whichever method we use to get the Lagrangian
+(10c), qtm is the probability of going to a child node m, in                      multiplier, ¯ti, the cut we construct is of the following form,
+decision stage t and QLP is the optimal LP relaxation value.
+                                                                                                  t                  qtm[Lim(¯mi ) + (¯mi ) xt].                     (14)
+                                        m
+                                                                                                      mC(t)
+Convergence is not guaranteed with only Benders cuts for
+SDDiP. In some practical scheduling cases, the Benders cuts
+may be far from tight, as we will see in the Section VI-B.
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                                        6
+
+                                                                                 Where Q(x) is a value function dependent on the binary
+                                                                              state x, and y1 and y2 are local variables. First, by dualizing
+                                                                              the time-linking constraint and providing x = 1 as a candidate
+                                                                              solution one gets the following Lagrangian cut   1.5x, this
+                                                                              is essentially the method proposed by [22], [21] and as the
+Fig. 3. Illustration of improvement for the strengthened Benders cut (C2)     small example shows it does not necessarily provide tight cuts.
+compared to Benders cut (C1) by generating a tighter right-hand-side param-   Furthermore, let's add a copy constraint z = x, z  [0, 1] and
+eter, equaling the distance of A. t(xt) is the LP relaxation of the original  swap x with z in the time-linking constraint. By dualizing
+nonconvex function t(xt).                                                     the copy constraint we can compute the Lagrangian cut  
+                                                                              -1 + 3x, with x = 1 as a candidate solution. For x = 0
+   3) Strengthened Benders Cuts (SB): The strengthened Ben-                   we get that   0, such that we are able to provide a tight
+ders cuts presented in [27] are parallel to the regular Benders               approximation of Q(x).
+cut and are at least as tight. They are not guaranteed to be
+tight, but they may improve the solution quality significantly                   As proven in [27] and partially illustrated above, the SDDiP
+compared to the Benders cuts, as illustrated in Figure 3. The                 algorithm will converge if Lagrangian or integer optimality
+increased precision comes at a modest increase in computation                 cuts are added. Benders and strengthened Benders cuts will
+time.                                                                         not guarantee convergence, but will often serve to improve
+                                                                              convergence rate in concert with Lagrangian or integer opti-
+   Strengthened Benders cuts are constructed as follows. First,               mality cuts. Benders cuts are by far the least computational
+we solve the LP relaxation of problem (10). Then problem                      demanding type of cuts since their construction only involves
+(13) is solved with ¯t equals to the optimal LP dual solution                 solving LP problems. For this reason, we only add Benders
+with respect to constraint (10c), ti. From the solution of the                cuts until a stable upper bound is reached. Subsequently, we
+latter problem we obtain the right-hand side Lti(ti) and then                 add the other cut families to further tighten the EFP functions.
+construct the following strengthened Benders cut
+                                                                              C. The Approximate SDDiP Problem
+t           qtm[Lm i (mi ) + (mi ) xt].  (15)
+                                                                                 The SDDiP method depends on the aforementioned three
+    mC(t)                                                                     pillars to ensure finite convergence. However, we are still able
+                                                                              to use some of its features if we do not restrict the state
+   The strengthened Benders cuts do not require the state                     variables to be binary. Finite convergence can then no longer
+variables to be binary and can such be used to achieve good                   be guaranteed, with the trade-off of reduced computational
+solutions to problems that do not possess highly nonconvex                    complexity. We reformulate (7) by applying the same concepts
+properties.                                                                   of copy variables and copy constraints. For this problem we
+                                                                              can only compute Benders and Strengthened Benders cuts.
+   4) Integer Optimality Cuts (I): The last family of cuts we                 This is done in the same manner as for the (10) in Section
+have used in our method is the integer optimality cuts [35],                  IV-A1 and IV-A3. Results from this approach is also reported
+[36]. The integer optimality cuts are valid, tight and finite and             in Section VI-B
+will, therefore, guarantee convergence. They are also very fast
+to generate, as they only rely on the solution obtained in the                V. BOUNDING THE EFP FUNCTION
+forward iteration.
+                                                                                 Due to the bilinear objective term introduced when consider-
+                                                                              ing uncertain energy price, we relaxed the problem by artificial
+                                                                              variables and constraints containing the big-M notation in (6).
+                                                                              As we will elaborate, it is difficult to obtain tight bounds for
+                                                                              that problem formulation. Consider the case where a given
+                                                                              energy price state variable is xtj = 1, we then have
+
+B. Cut Discussion                                                             tE,j  =  Qi       =  Qi       · wtj  =  Qi       · Mtj ,  (17)
+                                                                                                              xtj
+   As mentioned in Section I-B, the Lagrangian cuts proposed                                 t           t                  t
+by [27], and used in this paper, differentiate from the La-
+grangian cuts proposed by [22], [21]. Instead of introducing                           xtj         wtj                wtj
+copy constraints they dualize the time-linking constraints and
+are therefore not able to guarantee tight cuts, even-though they              where tE,j is the dual value for the copy constraints for that
+in many cases are stronger than the Benders cuts. This can be                 energy price state variable in (10c).
+shown by a small example. Consider,
+                                                                                 From a practical standpoint, it is obvious that there are time
+Q(x) = min{y1 + y2 : 2y1 + y2  3x,       (16)                                 periods and scenarios where ytG is far from yG,max. In this
+    y1 ,y2                                                                    sense the proposed relaxation method has the same drawback
+                                                                              as the integer optimality cut, but now the big-M notation
+            y1  {0, 1, 2}, y2  [0, 3]}                                        cascades into all types of cuts, making it hard to compute
+                                                                              cuts that are tight for not only the given candidate solution
+                                                                              but nearby solutions as well. A modest upside is that the big-
+                                                                              Ms depend on a physical value and not the expected future
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                        7
+
+profit, contributing to a tighter formulation than for the integer       103                                      B
+optimality cuts.                                                       102.5                                      SB
+                                                                                                                  SB+I
+   Given the nature of the problem at hand, different techniques         102                                      SB+L
+could be applied in order to make the big-Ms tighter by adding                                                    Opt
+some heuristics on the bounds of yt. Nevertheless, for an
+MTHS problem with a price taker assumption and no demand,           %  101.5
+this has proven difficult, as the only limiting constraints are
+generation limits and available water in the reservoirs.               101
+
+   Observe that the big-M formulation is only required for our         100.5
+implementation of the uncertainty of the energy price. The
+following theorem establishes a method for constructing an             100
+upper bound to this problem so as to be able to evaluate the
+policy quality.                                                               100  200            300        400  500
+
+Theorem 1. Let v be the optimal value of the MTHS problem                                         iteration
+in (2) with price uncertainty, and vLP be the optimal value
+of its LP relaxation. Let v¯LP be the optimal value of the LP       Fig. 4. Illustration of the upper bound for SDDiP of the MTHS problem with
+relaxation where the uncertain energy price is replaced by its      6 stages, convex generation function and expected values for the stochastic
+expected value. Then                                                parameters. Values are given with the optimal value as base.
+
+                           v  vLP  v¯LP.                            50. Lastly, a final simulation of 300 forward scenarios was per-
+                                                                    formed to evaluate the policy by calculating a 95% confidence
+   For brevity, we omit a detailed proof of the above result and    interval of the lower bound. For an even comparison between
+provide a sketch. Note that the first inequality is simply owing    the different methods we use the same scenarios in the forward
+to the LP relaxation. Since the price uncertainties are only on     iteration. Computations were performed on a Dell Latitude
+the right-hand side (recall the modeling approach discussed in      E7240 with an Intel Core i7-4600U processor with 2.7 GHz
+Section III-B), we know that the optimal value of LP relaxation     clock rate and 16 GB RAM. The problem was formulated in
+is a concave function of the uncertain parameters [6]. It follows   Python 3.5 with Gurobi 7.0 as the mathematical solver. We
+by Jensen's inequality that vLP  v¯LP, hence an upper               did not implement any parallel processing except from default
+bound to the original problem can be constructed by using           settings in the MIP solver.
+the upper bound computed with only Benders cuts applied to
+the problem where energy price is modeled by its expected           A. Validation
+value.                                                                 In order to validate the convergence properties of our imple-
+
+                          VI. CASE STUDY                            mentation of the SDDiP method for the MTHS problem, a case
+                                                                    was constructed with only 6 decision stages, convex genera-
+   For the case study, we considered a Norwegian hydropower         tion function and the stochastic parameters modeled by their
+reservoir system that consists of reservoirs with both short-       expected value. The upper bounds for different combinations
+and long-term storage capacity. The case study is documented        of cut families are illustrated in Figure 4. Due to the reduced
+in previous publications [15], [26]. The system contains three      scale of the problem it is possible to compute the true optimal
+hydropower reservoirs, with two power stations and a total          value, illustrated by the lower line in the figure. The figure
+installed capacity of 414 MW. One of the modeling issues            shows the results from iteration 3 to 567, where convergence
+with this system is that the two lower reservoirs, with uneven      is obtained using strengthened Benders and Lagrangian cuts
+water head, are connected to the same power station, such           (SB+L). The reason to use Lagrangian and integer optimality
+that the station can only generate from one of them at a            cuts combined with strengthened Benders is that strengthened
+time. Considering that one of the reservoir's size is 2% of         Benders cuts rapidly find a good stable solution, that the
+the other with an equal amount of inflow, linear SDDP tended        other cuts can start from. From the figure, it is clear that
+to overestimate its ability to avoid spillage. This is handled      Benders (B) and strengthened Benders (SB) does improve
+more precisely in the SDDiP framework.                              only up to a certain point, from there either Lagrangian or
+                                                                    integer optimality cuts are required to obtain convergence.
+   The mean and standard deviation parameters for the stochas-      This does, however, come at a cost of significant increase of
+tic processes were extracted from price forecasts obtained from     computational time. The benefit of using strengthened Benders
+a fundamental market model using inflow from 70 years of            cuts compared to Benders cuts is also evident, as we see the
+historical data as input. For simplicity, we only use a single      gap is almost reduced by half.
+inflow and energy price series in this work, as extensions to
+multiple are straightforward.                                       B. Results
+
+   The stagewise decision problem of the SDDiP formulation             Now we turn to the 52-stage MTHS problem defined in
+consists of 137 constraints, 182 variables (120 continuous and      Section II where two different case studies were performed.
+62 binary), 52 decision stages and 9 branches for each decision     First, in Case I we modeled only uncertainty of inflow, then
+stage. In each forward iteration we sampled 2 scenarios and         in Case II we also included uncertainty of the energy price.
+restricted the number of forward and backward iterations to
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR                                   8
+
+                                        TABLE I                                                             TABLE II
+    CASE I, INFLOW UNCERTAINTY. SDDIP (TOP) AND APPROXIMATE         CASE II, INFLOW AND ENERGY PRICE UNCERTAINTY. SDDIP (TOP) AND
+
+                                PROBLEM (BOTTOM).                                          APPROXIMATE PROBLEM (BOTTOM).
+
+B                   UB      stat. LB   gap      time                B              UB       stat. LB   gap    gap    time
+B-SB             [kEUR]     [kEUR]     [%]       [s]                B-SB         [kEUR]     [kEUR]     [%]    [%]     [s]
+B-SB-I                                                              B-SB-I
+                47 353.72  40 776.87  13.89     16 792                         107 469.94  42 276.74  60.66  11.24  11 788
+B               42 907.58  41 135.43   4.13     17 716              B           84 380.16  43 802.85  48.09   7.37  13 896
+B-SB            42 854.80  41 197.25   3.87     30 277              B-SB        84 291.78  43 748.69  48.10   7.50  18 966
+
+                47 030.08  40 973.28  12.88         742                        107 449.36  42 444.20  60.50  10.80   2 279
+                42 906.90  41 350.85   3.63      1 176                          84 367.26  43 891.43  47.98   7.15   2 869
+
+Subsequently, we tested the SDDiP method using Benders,                     12 104
+                                                                            10
+strengthened Benders and integer optimality cuts. Lagrangian                                                 Case II/B-SB
+                                                                             8                               Case II/B-SB
+cuts were omitted due to computational requirement. We                       6                               Case I/B-SB/Ap.
+                                                                                                             Case I/B-SB/Ap.
+also computed the approximate problem, as defined in Sec-                                                    Case I/B-SB
+                                                                                                             Case I/B-SB
+tion IV-C, with the Benders and strengthened Benders cut
+
+families. Recall that for the approximate problem the state         [kEUR]
+
+variables are not required to be binary. The solution of the
+
+approximate problem, when only using Benders cuts, will also
+
+give an indication on how well the generic SDDP method                      4
+
+performs for the MTHS problem.
+
+    The expected profit for the given case study with a final
+
+simulation of 300 forward scenarios is shown in Table I                     2
+                                                                                   5
+and Table II for Case I and II, respectively. The reported                            10 15 20 25 30 35 40 45 50
+                                                                                                             iterations
+computation time includes final simulation and the gap is given
+
+as  U  B-LB  .
+        UB
+                                                                    Fig. 5. Convergence plot for the different case studies with Benders and
+    We obtained good solutions after 50 iterations in both the      strengthened Benders cuts. The solid line indicates the upper bound and the
+                                                                    other the expected lower bound. One can clearly observe how large the gap
+SDDiP and for the approximate problem. The approximate              difference is between Case I and II. The approximate method also follows
+                                                                    SDDiP close as seen for the dashed and dash-dot lines.
+problem is solved faster as there are less binary variables,
+
+and the convergence gap is better for the given amount of
+
+iterations. When comparing the solutions from the Benders to
+
+the strengthened Benders cut families, for both SDDiP and           effort. We believe this is due to the characteristics of the
+                                                                    presented MTHS case; it seems more important to adjust the
+the approximate problem, a significant improvement of the           right-hand side of the EFP function than to fine-tune its shape
+                                                                    by adjusting the cut coefficients. Many Norwegian hydropower
+convergence gap is observed. This can also be seen in the           stations have high water head and their generation functions
+                                                                    are not significantly affected by head variations. It may be that
+convergence plot in Figure 5. We see that after iteration 20        a nonconvex generation function with water head dependencies
+                                                                    found in other systems, e.g. as reported in [22], will lead to a
+when the strengthened Benders cuts were added, both the             more pronounced shape of the EFP function, further justifying
+                                                                    the need for Lagrangian and integer cuts.
+upper and lower bound for both cases improves.
+                                                                       Due to the introduction of very large numbers in the
+    The case with uncertain energy price results in a large         constraint matrix when adding integer optimality cuts, we have
+                                                                    observed increased computation time for the subproblems.
+gap. When using strengthened Benders cuts a significant             When comparing the computation time between the first stage
+                                                                    subproblem for Case II after 50 iterations with SB and SB+I
+improvement is observed compared to only Benders cuts.              we observe an increase from 0.02 to 0.08 seconds. It is clear
+                                                                    that the added constraints with large coefficients make it diffi-
+By using the upper bound from Theorem 1 we can use the              cult for the solver to find a solution quickly. Subsequently, the
+                                                                    integer optimality cuts do not provide good enough solution
+approximate problem's value with Benders cuts and compute           improvements to justify the added computational burden we
+                                                                    observe, as seen in Table I and II.
+a tighter gap, referred to as gap in Table II. It shows that even-
+                                                                       Lastly, we observed that the lower bounds are higher for
+though the upper bound initially was very high, the policy that     the approximate problem, when comparing computations with
+                                                                    the same cut families, e.g. for Case I with Benders cuts the
+it provides is quite good. Notably is the improvement with          approximate problem has a lower bound of 40 973.28 and
+                                                                    the SDDiP problem has 40 776.87. This follows from how
+strengthened Benders cuts for the approximate problem with
+
+superior policy and computation time compared to the other
+
+results.
+
+                          VII. DISCUSSION
+
+   We found that the integer cuts are not very computationally
+efficient compared to solution improvement when applied for
+the given case study. Lagrangian cuts were omitted from the
+large case due for the same reason, and are therefore not
+represented. On the other hand, the strengthened Benders cut
+significantly improves solution quality compared to ordinary
+Benders cuts with only a modest increase in computational
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR  9
+
+the VAR-1 model is altered to a less than or equal constraint                    [5] S.-E. Fleten and T. K. Kristoffersen, "Short-term hydropower produc-
+to ensure feasibility of the model, as discussed in Section                           tion planning by stochastic programming," Computers & Operations
+III-B. In the final simulation, where we compute the lower                            Research, vol. 35, no. 8, pp. 2656­2671, 2008.
+bound, there are some extreme scenarios where the model
+are required to use an artificial penalty variable that ensures                  [6] J. R. Birge and F. Loveaux, Introduction to Stochastic Programming.
+relative complete recourse. Since the inflow state in the SDDiP                       Springer, 2 ed., 2011.
+formulation is somewhat less than that of the approximate,
+due to the relaxation of the equality constraint, a subsequently                 [7] J. R. Birge, "Decomposition and partitioning methods for multi-stage
+higher penalty is observed in the order of the difference of the                      stochastic linear programs," Operations Research, vol. 33, pp. 989­1007,
+lower bounds that explains this observation.                                          1985.
+
+                         VIII. CONCLUSION                                        [8] M. V. F. Pereira and L. M. V. G. Pinto, "Stochastic optimization of a
+                                                                                      multireservoir hydroelectric system: A decomposition approach," Water
+   With the earlier mentioned challenges flexible power pro-                          Resources Research, vol. 21, no. 6, pp. 779­792, 1985.
+ducers encounter, we believe that binary state expansion and
+the SDDiP algorithm gives the producers a useful tool to                         [9] J. Jacobs, G. Freeman, J. G. Grygier, D. Morton, G. Schultz, K. Staschus,
+address new challenges that involve nonconvexities in the                             and J. Stedinger, "SOCRATES: A system for scheduling hydroelectric
+modeling.                                                                             generation under uncertainty," Annals of Operations Research, vol. 59,
+                                                                                      no. 1, pp. 99­133, 1995.
+   We observed that our method performs very well when
+omitting the uncertainty modeling of energy price, due to the                   [10] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+drawback of the big-M formulation. Nonetheless, it allowed us                         optimization applied to energy planning," Mathematical Programming,
+to model the stochastic processes within a unified framework                          vol. 52, pp. 359­375, 1991.
+and we showed that the resulting policy from SDDiP is
+very good. Methods to improve the implementation of the                         [11] A. B. Philpott and Z. Guan, "On the convergence of stochastic dual dy-
+uncertainty of the energy price will be investigated in future                        namic programming and related methods," Operations Research Letters,
+research, including methods on how to avoid the relaxation of                         vol. 36, no. 4, pp. 450­455, 2008.
+the VAR-1 constraint.
+                                                                                [12] A. Shapiro, W. Tekaya, J. P. da Costa, and M. P. Soares, "Risk
+   In the case study, we found that the strengthened Benders                          neutral and risk averse stochastic dual dynamic programming method,"
+cuts are superior to Benders cuts in finding good policies and                        European Journal of Operational Research, vol. 224, no. 2, pp. 375­391,
+bounds. We also found that the strengthened Benders cuts                              2013.
+can be used in an approximate SDDiP method to provide
+satisfying results for nonconvex MTHS problems, that also                       [13] A. Philpott and V. de Matos, "Dynamic sampling algorithms for multi-
+includes a nonconvex generation function. To eventually close                         stage stochastic programs with risk aversion," European Journal of
+the optimality gap, however, one would have to use SDDiP and                          Operational Research, vol. 218, no. 2, pp. 470 ­ 483, 2012.
+add either Lagrangian or Integer optimality cuts. Further, we
+observed that adding Integer optimality cuts did not improve                    [14] A. Brigatto, A. Street, and D. M. Valladao, "Assessing the cost of
+the results enough to justify the increased computational time.                       time-inconsistent operation policies in hydrothermal power systems,"
+We emphasize that these findings are case-specific, and expect                        IEEE Transactions on Power Systems, 2017. DOI: 10.1109/TP-
+that the efficiency of Lagrangian and Integer optimality cuts                         WRS.2017.2672204.
+will be higher in scheduling problems with more pronounced
+nonconvexities.                                                                 [15] M. N. Hjelmeland, M. Korpa°s, and A. Helseth, "Combined SDDP and
+                                                                                      simulator model for hydropower scheduling with sales of capacity," in
+                        ACKNOWLEDGMENT                                                2016 13th International Conference on the European Energy Market
+                                                                                      (EEM), pp. 1­5, June 2016.
+   The authors would like to thank the anonymous reviewers
+for their valuable comments and suggestions to improve the                      [16] A. Helseth, M. Fodstad, and B. Mo, "Optimal medium-term hydropower
+quality of the paper.                                                                 scheduling considering energy and reserve capacity markets," IEEE
+                                                                                      Transactions on Sustainable Energy, vol. PP, no. 99, pp. 1­9, 2016.
+                             REFERENCES
+                                                                                [17] A. Street, A. Brigatto, and D. M. Valladao, "Co-optimization of energy
+ [1] J. W. Labadie, "Optimal operation of multireservoir systems: State-of-           and ancillary services for hydrothermal operation planning under a
+      the-art review," Journal of Water Resources Planning and Management,            general security criterion," IEEE Transactions on Power Systems, 2017.
+      vol. 130, no. 2, pp. 93­111, 2004.                                              DOI: 10.1109/TPWRS.2017.2672555.
+
+ [2] G. Steeger, L. A. Barroso, and S. Rebennack, "Optimal bidding strategies   [18] S. Rebennack, "Combining sampling-based and scenario-based nested
+      for hydro-electric producers: A literature survey," IEEE Transactions on        Benders decomposition methods: application to stochastic dual dynamic
+      Power Systems, vol. 29, no. 4, pp. 1758­1766, 2014.                             programming," Mathematical Programming, vol. 156, no. 1, pp. 343­
+                                                                                      389, 2016.
+ [3] O. B. Fosso, A. Gjelsvik, A. Haugstad, B. Mo, and I. Wangensteen,
+      "Generation scheduling in a deregulated system. the norwegian case,"      [19] H. Poorsepahy-Samian, V. Espanmanesh, and B. Zahraie, "Improved
+      IEEE Transactions on Power Systems, vol. 14, no. 1, pp. 75­81, 1999.            inflow modeling in stochastic dual dynamic programming," Journal of
+                                                                                      Water Resources Planning and Management, vol. 142, no. 12, 2016.
+ [4] R. Scharff, J. Egerer, and L. So¨der, "A description of the operative
+      decision-making process of a power generating company on the Nordic       [20] B. Flach, L. Barroso, and M. Pereira, "Long-term optimal allocation
+      electricity market," Energy Systems, vol. 5, pp. 349­369, 2014.                 of hydro generation for a price-maker company in a competitive mar-
+                                                                                      ket: latest developments and a stochastic dual dynamic programming
+                                                                                      approach," IET Generation, Transmission & Distribution, vol. 4, no. 2,
+                                                                                      pp. 299­314, 2010.
+
+                                                                                [21] S. Cerisola, J. M. Latorre, and A. Ramos, "Stochastic dual dynamic
+                                                                                      programming applied to nonconvex hydrothermal models," European
+                                                                                      Journal of Operational Research, vol. 218, pp. 687­897, 2012.
+
+                                                                                [22] F. Thome, M. V. F. Pereira, and M. Granville, Sergio Fampa, "Non-
+                                                                                      convexities representation on hydrothermal operation planning using
+                                                                                      SDDP." http://www.psr-inc.com/publicacoes/, Working paper, 2013.
+
+                                                                                [23] G. Steeger and S.Rebennack, "Dynamic convexification within nested
+                                                                                      benders decomposition using lagrangian relaxation: An application to the
+                                                                                      strategic bidding problem," European Journal of Operational Research,
+                                                                                      vol. 257, no. 2, pp. 669­686, 2017.
+
+                                                                                [24] H. Abgottspon, K. Nja´lsson, M. A. Bucher, and G. Andersson, "Risk-
+                                                                                      averse medium-term hydro optimization considering provision of spin-
+                                                                                      ning reserves," in International Conference on Probabilistic Methods
+                                                                                      Applied to Power Systems (PMAPS), (Durham, England), 2014.
+
+                                                                                [25] A. Diniz and M. E. P. Maceira, "A four-dimensional model of hydro
+                                                                                      generation for the short-term hydrothermal dispatch problem considering
+                                                                                      head and spillage effects," IEEE Transactions on Power Systems, vol. 23,
+                                                                                      no. 3, pp. 1298 ­ 1308, 2008.
+
+                                                                                [26] M. N. Hjelmeland, A. Helseth, and M. Korpa°s, "A case study on
+                                                                                      medium-term hydropower scheduling with sales of capacity," Energy
+                                                                                      Procedia, vol. 87, pp. 124 ­ 131, 2016.
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+This article has been accepted for publication in a future issue of this journal, but has not been fully edited. Content may change prior to final publication. Citation information: DOI 10.1109/TSTE.2018.2805164, IEEE
+                                                                                         Transactions on Sustainable Energy
+
+IEEE TRANSACTIONS ON SUSTAINABLE ENERGY, SPECIAL ISSUE, CLASS FILES, VOL. XX, NO. XX, MONTH YEAR  10
+
+[27] J. Zou, S. Ahmed, and X. A. Sun, "Stochastic dual dynamic integer
+      programming," Submitted for publication, 2016. Available at Opti-
+      mization Online: http://www.optimization-online.org/DB HTML/2016/
+      05/5436.html.
+
+[28] A. B. Philpott, F. Wahid, and F. Bonnans, "MIDAS: A mixed integer
+      dynamic approximation scheme," Optimization-online, 2016.
+
+[29] H. Heitsch and W. Ro¨misch, "Scenario reduction algorithms in stochastic
+      programming," Computational Optimization and Applications, vol. 24,
+      pp. 187­206, 2003.
+
+[30] A. Gjelsvik, B. Mo, and A. Haugstad, Long- and Medium-term Oper-
+      ations Planning and Stochastic Modelling in Hydro-dominated Power
+      Systems Based on Stochastic Dual Dynamic Programming, book sec-
+      tion 2, pp. 33­55. Energy Systems, Springer Berlin Heidelberg, 2010.
+
+[31] F. Glover, "Improved linear integer programming formulations of nonlin-
+      ear integer problems," Management Science, vol. 22, no. 4, pp. 455­460,
+      1975.
+
+[32] J. F. Benders, "Partitioning procedures for solving mixed-variables
+      programming problems," Numerische mathematik, vol. 4, no. 1, pp. 238­
+      252, 1962.
+
+[33] M. Held, P. Wolfe, and H. P. Crowder, "Validation of subgradient
+      optimization," Mathematical programming, vol. 6, no. 1, pp. 62­88,
+      1974.
+
+[34] C. Lemare´chal, A. Nemirovskii, and Y. Nesterov, "New variants of
+      bundle methods," Mathematical programming, vol. 69, no. 1, pp. 111­
+      147, 1995.
+
+[35] G. Laporte and F. V. Louveaux, "The integer l-shaped method for
+      stochastic integer programs with complete recourse," Operations re-
+      search letters, vol. 13, no. 3, pp. 133­142, 1993.
+
+[36] G. Angulo, S. Ahmed, and S. S. Dey, "Improving the integer l-shaped
+      method," INFORMS Journal on Computing, vol. 28, no. 3, pp. 483­499,
+      2016.
+
+        Martin N. Hjelmeland received the M.Sc. degree in electric power engineer-
+        ing from the Norwegian University of Science and Technology (NTNU) in
+        2015. He is currently pursuing a Ph.D. at the same location where his research-
+        topic is on medium-term hydropower scheduling in multiple markets.
+
+        Jikai Zou received the B.S degree in Mathematics from Peking University,
+        Beijing, China, in 2000; the M.S. and PhD degrees in Operations Research,
+        respectively, from Purdue University, West Lafayette, IN, in 2013, and Georgia
+        Institute of Technology, Atlanta, GA, in 2017.
+
+        Arild Helseth (M'10) was born on Stord, Norway in 1977. He received the
+        M.Sc. and Ph.D. degrees in electrical power engineering from the Norwegian
+        University of Science and Technology. Currently he works at SINTEF
+        Energy Research with hydro-thermal and hydropower scheduling models and
+        methods.
+
+        Shabbir Ahmed is the Anderson-Interface Chair and Professor in the H.
+        Milton Stewart School of Industrial & Systems Engineering at the Georgia
+        Institute of Technology. His research interests are in stochastic and discrete
+        optimization. He is a Fellow of INFORMS and a Senior Member of IEEE.
+
+1949-3029 (c) 2018 IEEE. Personal use is permitted, but republication/redistribution requires IEEE permission. See http://www.ieee.org/publications_standards/publications/rights/index.html for more information.
+

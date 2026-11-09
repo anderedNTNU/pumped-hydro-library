@@ -1,0 +1,816 @@
+                                                              Renewable Energy 194 (2022) 571e581
+
+                                                 Contents lists available at ScienceDirect
+
+                                             Renewable Energy
+
+                                journal homepage: www.elsevier.com/locate/renene
+
+A stochastic dynamic programming model for hydropower scheduling
+with state-dependent maximum discharge constraints
+
+Linn Emelie Schaffer a, *, Arild Helseth b, Magnus Korpås a
+
+a Department of Electric Power Engineering, Norwegian University of Science and Technology (NTNU), Trondheim, Norway
+b SINTEF Energy Research, Trondheim, Norway
+
+article info                    abstract
+
+Article history:                We present a medium-term hydropower scheduling model that includes inflow- and volume-dependent
+Received 5 February 2022        environmental constraints on maximum discharge. A stochastic dynamic programming algorithm (SDP)
+Accepted 17 May 2022            is formulated to enable an accurate representation of nonconvex relationships in the problem formu-
+Available online 26 May 2022    lation of smaller hydropower systems. The model is used to assess the impact of including state-
+                                dependent constraints in the medium-term hydropower scheduling on the calculated water values.
+Keywords:                       The model is applied in a case study of a Norwegian hydropower system with multiple reservoirs. We
+Environmental factors           find that the maximum discharge constraint significantly impacts the water values and simulated
+Hydroelectric power generation  operation of the hydropower system. A main finding is that the nonconvex characteristics of the envi-
+Optimisation methods            ronmental constraint are reflected in the water values, implying a nonconvex objective function. Oper-
+Power generation scheduling     ation according to the computed water values is simulated for cases with and without the environmental
+Stochastic processes            constraint. Even though operation of the system changes considerably when the environmental
+                                constraint is included, the total electricity generation over the year is kept constant, and the total loss in
+                                expected profit is limited to less than 0.8%.
+
+                                  © 2022 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY license
+                                                                                                                   (http://creativecommons.org/licenses/by/4.0/).
+
+1. Introduction                                                           flexible resources is expected to increase as the transition of the
+                                                                          European power system moves forwards. In the transition towards
+    Through the European Green Deal, the EU has set ambitious             a low-carbon system, hydropower can play an important role as a
+targets for both climate change mitigation and broader environ-           flexibility provider by responding to rapid fluctuations in inter-
+mental sustainability [1]. To align capital flows with these policy       mittent renewable generation and load [7]. Additional constraints
+goals, the EU is in the process of defining requirements for envi-        on operation may reduce this flexibility potential. To correctly
+ronmentally sustainable activities. Hence, power producers have           represent hydropower operation requires properly accounting for
+strong incentives to operate in an environmentally sustainable way.       environmental constraints imposed on hydropower production.
+
+    Like all power plants, hydropower operations may modify the               In this research we are concerned with operational hydropower
+surrounding ecosystems [2]. The environmental concerns of hydro-          scheduling, i.e., the sequence of decisions that are made leading up
+power operations are often related to alteration of the flow regime       to the actual operation of the system. Due to the computational
+downstream the plant [3], but can also be related to the changes in       complexity, the scheduling problem is normally solved for different
+water temperatures or changed water volumes in the reservoirs. To         planning horizons and technical details. Medium-term hydropower
+protect ecological and recreational interests, regulation often imposes   scheduling considers reservoir management under uncertainty
+mitigation measures and limitations on operation, see e.g., Refs. [4,5].  over a planning horizon of several months up to a few years. In
+                                                                          contrast, short-term scheduling usually concerns operational de-
+    Environmental regulation should be incorporated as constraints        cisions over a period of days to weeks, and typically accounts for
+in optimisation-based hydropower scheduling models. Omitting              more technical details. In the decentralised Nordic system,
+such constraints can result in misestimation of hydropower elec-          medium-term scheduling models are used to compute water
+tricity generation, revenues, and the amount of flexibility hydro-        values, which are an essential input to the operational short-term
+power can provide to the electricity system [6]. The need for             models [8]. The purpose of water values is to reflect the long-
+                                                                          term value of short-term operational decisions.
+  * Corresponding author.
+     E-mail address: linn.e.schaffer@ntnu.no (L.E. Schaffer).                 State-of-the-art methods to solve the medium-term scheduling
+                                                                          of hydropower systems use stochastic dual dynamic programming
+
+https://doi.org/10.1016/j.renene.2022.05.106
+0960-1481/© 2022 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+L.E. Schaffer, A. Helseth and M. Korpås                                                                                       Renewable Energy 194 (2022) 571e581
+
+Nomenclature                                                                     uh            Scaling factor, distributing the weekly sum inflow Z^t
+
+                                                                                 4k            to each reservoir h
+
+                                                                                 Fj,t(...)     Distribution factor of inflow to each time step k
+                                                                                 Jhj;t ð...Þ
+Index Sets                                                                       qk            Expected future profit matrix, in stage t,iteration j
+                                                                                 xt
+Dh          Set of discharge segments per hydropower plant h                                   Water value matrix for reservoir h, stage t, iteration j
+                                                                                 CR
+G           Set of subsets used in the triangle method                           CS            Scaling factor for price variability in time stage k
+                                                                                 FkH
+H           Set of hydropower plants                                             FC            Environmental state in stage t
+                                                                                 FVn,m
+Hhup        Set of hydropower plants with outlet to plant h                                    Penalty  cost  for  low  reservoir  filling,  in    V
+                                                                                 J                                                               Mm3
+                                                                                 K                                                  V
+J           Set of iterations in SDP algorithm                                   Pr(...)       Penalty  cost  for  spillage,  in  m3 =s
+                                                                                 Qhlim
+K           Set of time steps within each stage                                                Conversion factor, number of hours in time step k
+                                                                                 Qhmin
+N           Set of reservoir segments per reservoir                                            Conversion  factor,  flow  to  volume,    Mm3
+            Set of combinations of discrete reservoir storage                    Qhm;dax                                                 m3 =s
+     Comb   segments that includes segment l for reservoir h                                   Expected future profit for reservoir segments n and
+N    l;h                                                                         sp
+            Set of g for each diagonal g used in the triangle                    sut
+                                                                                 T             m, in V
+            method                                                               tA
+N    Diag   Set of endogenous states                                             tB            Maximum number of iterations in SDP algorithm
+     g      Set of stochastic states
+                                                                                 tC
+                                                                                               Number of time steps in each stage
+                                                                                 tD
+Sp                                                                                             Transition probability matrix
+Su                                                                               tE
+                                                                                               Regulatory maximum discharge limit of hydropower
+T           Set of stages                                                        VVnhslie;mhg  plant h, in m3/s
+                                                                                 Vh
+Decision Variables                                                               Vhmax         Minimum discharge limit of hydropower plant h, in
+                                                                                 Vhmin         m3/s
+                                                                                 Zh
+atþ1        Expected  future             profit     in  stage  t,  in    V                     Maximum discharge per reservoir h and discharge
+bh,n                                                                   MWh                     segment d, in m3/s
+
+            Auxiliary variable for segment n in reservoir h
+
+cg          Auxiliary variable for set g                                                       Endogenous state
+
+gn,m        Weighting variable for reservoir segments n, m                                     Stochastic state in stage t
+
+fk,h        Spillage in time step k from reservoir h, in m3/s                                  Number of stages in the planning horizon
+
+pk,h        Generated electricity in time step k from hydropower                               First stage when the inflow is above a given threshold
+
+            station h, in MW                                                                   Time-dependent activation stage of the
+
+qk,h,d      Discharge in time step k per segment d from reservoir                              environmental constraint (16)
+            h, in m3/s
+                                                                                               First stage when the reservoir level is above a given
+
+uk,h        Slack variable used to penalise low storage volumes                                threshold
+
+            in time step k in the reservoir h, in Mm3                                          Stage from when "no decrease in storage volume is
+
+vk,h        Storage volume in reservoir h, time step k, Mm3                                    allowed"
+
+                                                                                               Stage when the environmental regulation is
+
+Parameters                                                                                     deactivated
+                                                                                               Environmental threshold for reservoir h, in Mm3
+D           Change in water value matrix                                                       Volume of each segment n in reservoir h, in Mm3
+                                                                                               Initial storage volume in reservoir h, in Mm3
+hh,d        Efficiency per hydropower plant h and discharge                                    Maximum storage volume in reservoir h, in Mm3
+                                                                                               Minimum storage volume in reservoir h, in Mm3
+            segment   d,  MW                                                                   Inflow to reservoir h, in Mm3
+                          m3 =s
+H^
+            Hydropower plant restricted by the state-dependent
+
+            maximum discharge constraint
+
+Z^t         Sum inflow per stage t, in Mm3
+
+lt          Power   price  in            stage  t,  in    V
+                                                        MWh
+
+(SDDP) [9] algorithms. These algorithms decompose the problem                    [21e23]. The method has the advantage that it can represent
+without discretising the state variables (such as reservoir volume               nonconvex and nonlinear relationships. The main drawback of the
+and inflow), making it computationally tractable for systems with                method is that the state variables have to be discretised, causing the
+multiple reservoirs. For medium-term scheduling in the Nordic                    problem to grow exponentially in size with the number of state
+market, the combined SDP/SDDP method described in Ref. [10] is                   variables (e.g., reservoirs). The method is therefore best suited to
+widely used. It combines SDDP with an outer layer based on sto-                  solve systems with a small number of reservoirs, unless an aggre-
+chastic dynamic programming (SDP) [11] to treat uncertainty in                   gation technique is used like in Refs. [24e26]. Despite of this
+market prices. Still, a major drawback of the method is that non-                weakness, the SDP method is very well suited for accurate sched-
+convexities cannot be easily treated in the modelling.                           uling of hydropower systems with pronounced nonconvexities.
+
+    Nonconvex problem formulations are typically needed to repre-                    Regulators have imposed a wide range of environmental con-
+sent the complex interaction between power output and water [12],                straints on hydropower systems. Ecological flow requirements and
+and unit commitment of generators [13]. The challenge of repre-                  maximum ramping rates are often applied, and may have signifi-
+senting nonconvex relationships in the SDDP algorithm has                        cant impact on the flexibility of the hydro system. These constraints
+frequently been addressed in the literature by the use of approxi-               have been extensively studied in the technical literature, see e.g.,
+mations, e.g., Refs. [14e17]. A few studies also consider accurate               Refs. [27e29], and can be included in hydropower scheduling
+modelling of non-convexities by the use of SDP [18] or stochastic                models without compromising the convexity requirement of the
+dual dynamic integer programming (SDDiP), such as in Refs. [19,20].              SDDP algorithm. However, fewer research studies consider envi-
+                                                                                 ronmental constraints that involve state-dependencies or logical
+    SDP was used early on in hydropower planning, as it allows for               conditions, which can not easily be treated in a convex model
+explicit representation of uncertainty, e.g., in inflow and price
+
+                                                                            572
+L.E. Schaffer, A. Helseth and M. Korpås                                                                          Renewable Energy 194 (2022) 571e581
+
+formulation [30]. Furthermore, only a very limited number of                   constraint on maximum discharge (Section 2.2), the stochastic
+studies discuss the impact of environmental constraints on water               variables (Section 2.3) and the solution strategy (Section 2.4). The
+values. To the best of our knowledge, the impact of environmental              case study in Section 3 presents calculated water values (Section
+constraints on water values has only been discussed in Refs. [31,32].          3.2) and results from the simulations (Section 3.3).
+In Ref. [32], an SDP-based model is used to evaluate the sensitivity
+of the water values to environmental flows and ramping re-                     2. Hydropower scheduling model
+strictions. The authors of [31] find that incorporating the same
+environmental constraints into a linear programming based water                    In the following we present a medium-term hydropower
+value model has significant impacts on the profitability of hydro-             scheduling model that is formulated for a hydropower cascade
+power plants with one or at most two turbines.                                 operated by a single hydropower producer assumed to be a risk-
+                                                                               neutral price taker. The model maximises profit from operating
+    This research considers the representation of a particular type of         the hydropower system for a presumed stationary future system
+state-dependent environmental constraint in the medium-term                    state. The operation of the system is optimised for weekly decision
+scheduling of hydropower operation. Several European countries                 stages over a horizon of one year.
+consider lake water alterations to be relevant mitigation measure to
+reduce impacts from water regulations [33], one example being state-               The hydropower scheduling problem is a multi-stage stochastic
+dependent maximum discharge regulations. In the Nordic region,                 optimisation problem. To solve the problem, we decompose the
+such constraints are imposed on several reservoirs, and are likely to be       overall problem into several smaller subproblems, using the princi-
+implemented in other hydropower reservoirs in the future. The pur-             ples of SDP [11]. By decomposing the problem, we obtain one
+pose of the regulation is to retain inflow during spring, to meet the          separate decision problem for each stage and state of the system. The
+ecological and recreational needs for high water levels in the reservoir       SDP algorithm solves the decision problem, described in Section 2.1,
+through summer. In other regions, volume-dependent maximum                     for all stages and system states until convergence, as described in
+discharge constraints are also used to allocate available water be-            Section 2.4. The scope of potential system states is divided into a set
+tween irrigation purposes and electricity production [17].                     of discrete states. The discrete states include all the information that
+                                                                               is passed between the decision stages, from t À 1 to t. The set of
+    Volume-dependent maximum discharge regulation in long- and                 states comprise subsets of endogenous states Sp and exogenous
+medium-term hydropower scheduling has previously been studied                  stochastic state variables Su. The storage volume in the reservoirs is
+by the use of SDDiP in Ref. [20] and approximated using SDDP in                the endogenous state variable. The stochastic state variables are: the
+Ref. [17]. We accurately represent state-dependent maximum
+discharge constraints in a medium-term hydropower scheduling                   weekly average energy price l, the weekly total inflow into the
+model based on SDP. Compared to Ref. [17], a different type of                 system Z^ and the environmental state variable x. The stochastic
+maximum-discharge regulation is considered. Furthermore, we use
+a different methodology (based on SDP) allowing an accurate                    variables are represented by a discrete Markov chain, as described in
+formulation of state-dependent constraints. Compared to Ref. [20],             Section 2.3. The environmental state variable indicates if the so-
+we use a more mature methodology (SDP) and take a broader view                 called "low-inflow period" has ended. In practice, the variable in-
+of state-dependencies, studying a formulation of the maximum                   dicates whether the inflow level has exceeded a certain threshold
+discharge constraint with a dynamically defined constraint period              over a shorter period of time. The extension of the discrete Markov
+dependent on inflow. SDP-based models have previously been used                chain to include an environmental state variable is explained further
+to study environmental constraints in Refs. [31,32], but not for               in Section 2.3, while the environmental constraint is described
+environmental constraints that include state-dependencies such as              thoroughly in Section 2.2. The implementation of the environmental
+those discussed here.                                                          constraint in the SDP algorithm is described in Section 2.4.
+
+    The developed model is tested on a two-reservoir case study of a           2.1. The weekly decision problem
+Norwegian hydro system. We discuss how the state-dependent
+environmental constraint modifies the resulting water value                    The decision problem is solved for all system states, i.e., com-
+curves from the SDP algorithm, further distinguishing our research
+from Refs. [17,20], and use the water values to simulate operation of          binations of discrete reservoir volumes and stochastic nodes in the
+the system. The simulation results show the impact of the
+constraint on reservoir operation and economics. The novel                     Markov chain. Since the stochastic variables are known at the
+contribution of this research is twofold in that we:
+                                                                               beginning of the stage, each single decision problem is solved as a
+  Formulate a medium-term hydropower scheduling model based
+    on SDP that accurately treats state-dependencies in the                    deterministic problem. The stochastic nature of the problem is
+    maximum allowed discharge from hydropower stations.
+    Maximum discharge depends on the state variables reservoir                 managed in the SDP algorithm. Uncertainty is represented through
+    volume, weekly inflow and a variable indicating if the low-                the price and inflow states, and the uncertainty of future realisa-
+    inflow period has ended.                                                   tions of the stochastic variables are reflected in the expected water
+                                                                               values. Each stage is divided into K number of time steps.
+  Assess the impact of including such state-dependent maximum
+    discharge constraints on the water value curves and shed light                 The objective function (1) maximises the immediate profit of the
+    on the potential impacts that system operation guided by such
+    curves may have. The assessment is carried out for a hydro-                decisions and the impact on the expected future profit given by atþ1.
+    power cascade in Norway.
+                                                                               The expected future profit is a function of the stochastic state of the
+    The remainder of this paper is structured as follows: Section 2            system and the resulting storage volume in the reservoirs at the end
+describes the developed hydropower scheduling model; a case                    of the stage. Spillage of water is penalised according to a low cost CS.
+study is presented in Section 3; and concluding remarks are found              Furthermore, operation of the reservoirs below a filling degree of
+in Section 4. Section 2 comprises subsections describing the weekly            10% is penalised to represent risk-aversion of the producer.
+decision problem (Section 2.1), the state-dependent environmental
+                                                                                                   (  XX               XX
+
+                                                                               at ðsp; stuÞ  ¼ max lt FkHqk pk;h À CS      fk;h
+
+                                                                                                      k2K  h2H         k2Kh2H             (1)
+
+                                                                                                   XX                               )
+
+                                                                                             À CR          uk;h þ atþ1ðvh2H;k¼K ; stuþ1Þ
+
+                                                                                                   k2Kh2H
+
+                                                                               The energy production is a function of the discharge, qk,h,d, from
+
+                                                                          573
+L.E. Schaffer, A. Helseth and M. Korpås                                                                       Renewable Energy 194 (2022) 571e581
+
+each of the reservoirs, as given in (2). The maximum and minimum             vk;h À X bh;nVhse;ng ¼ 0
+
+discharge is limited by (3) and (4). Furthermore, the discharge is                      n2N            c k ¼ K; h2H  (11)
+                                                                                                                     (12)
+bounded by the availability of water in the reservoirs. The reservoir
+
+balance (5), keeps track of the change in water volume in each                     X
+
+reservoir, where the volumes, vk,h, are bounded by (6). To calibrate         cg ¼          gn;m        c g2G
+the reservoir management, a soft-constraint on minimum reservoir
+                                                                                   fn;mg2N  Diag
+                                                                                            g
+volume is used to reflect the risk-aversion of the producer.
+
+pk;h À     X  hh;dqk;h;d ¼ 0 c k2K; h2H                       (2)            p; v; q; f ; g; u2Rþ; atþ12R            (13)
+
+        d2Dh                                                                     Nonconvex characteristics in the expected future profit function
+
+qk;h;d Qhm;dax c k2K; h2H; d2Dh                               (3)            are dealt with by restricting the weighing variables (g). In the
+                                                                             optimal solution, a maximum of two adjacent weights (g) in each
+X     qk;h;d ! Qhmin c k2K; h2H                               (4)
+                                                                             dimension can have non-zero values, thereby forming a square of
+d2Dh                                                                         adjacent weighting variables that can be active. Such behaviour can
+                                                                             be enforced by special ordered sets of type 2 (SOS2) [37]. In SOS2,
+                       0                    1                                only two adjacent variables in the set can be non-zero. SOS2 are
+                                                                             included in most commercial solvers, such as CPLEX, which is used in
+vk;h À vkÀ1;h þ FC @           X  qk;h;d þ fk;hA
+                                                                             this research. In (14), bh is defined as one SOS2 for each dimension h
+                 0          d2Dh         1
+                                                                             (i.e., for each reservoir). By using four weights to describe a point in
+            XX                                                (5)            two dimensions, the model is given the freedom to decide which
+                 @          qk;j;d þ fk;jA ¼ 4kZh                            points to use. To ensure one unique solution, we force the model to
+      ÀF C
+                                                                             use a predefined set of weights (3 out of 4) by defining the set c to be
+            j2Hhup d2Dj                                                      a SOS2 in (15) [37]. The set c comprises the sum of the weights g in
+
+              c k2Kn1; h2H                                                   the diagonal direction, hence forming a triangle of adjacent
+                                                                             weighting variables. Piecewise-linear formulations of functions in
+Vhmin þ 0:1*ðVhmax À VhminÞ                                                  two and three dimensions are thoroughly discussed in Ref. [35]. The
+                                                                             SOS2 defined in (14) and (15) can be removed if the future profit
+           vk;h þ uk;h Vhmax                                  (6)            function is concave, changing the formulation from an MILP to an LP.
+
+      c k2K; h2H                                                             bh SOS À 2 c h2H                        (14)
+
+While (1)e(6) describes the general decision problem, the
+
+following equations present the interpolation in the expected                c SOS À 2                               (15)
+
+future profit function for a system with two reservoirs. The ex-
+
+pected future profit atþ1 is a function of the storage volume in the
+
+reservoirs at the end of the stage, and is bounded by (7)-(12). A
+
+two-dimensional, piecewise-linear approximation obtained by the              2.2. Activation of the environmental regulation
+
+triangle method is used to represent atþ1. The triangle method                   The purpose of the considered state-dependent maximum
+                                                                             discharge regulation is to meet the needs of ecological habitat and
+approximates multidimensional functions by the use of linear tri-            recreational use for high water levels in the hydropower reservoir
+                                                                             in summer. Due to high seasonal and yearly variations in inflow,
+angles, see e.g., Refs. [34,35]. The method was chosen for its ability       time-dependent minimum reservoir level constraints may lead to
+                                                                             inefficient reservoir management during the low-inflow, winter
+to approximate nonconvex functions and its simplicity [36]. The              period and increased system costs. To avoid this, the regulation is
+                                                                             rather formulated as a state-dependent restriction on discharge
+formulation can be adapted to larger hydropower systems by                   from the reservoir. As discussed in section 1, formulations that
+                                                                             include state-dependencies can present modelling challenges. We
+expanding the dimensions of the expected future profit                       here present a general formulation of the regulation where a se-
+                                                                             lection of different requirements can be included:
+approximation.
+                                                                               Other than to honour minimum flow obligations, no discharge is
+The optimal expected future profit is obtained by convex com-                    allowed within a given period of time, unless the storage volume
+                                                                                 in the reservoir reaches a given threshold. If the required
+bination of the expected future profit points FVn,m using the                    threshold is reached, discharge is permitted as long as the
+                                                                                 storage volume is kept above the threshold.
+weighting variables gn,m, as given by (7)-(9). The points are calcu-
+                                                                               The constraint can be activated by a given date or by the-end of
+lated for each of the discrete reservoir states in the previous stage,           the "low-inflow period", i.e., inflow levels above a given
+                                                                                 threshold over a short period. This is normally the beginning of
+and given as input to the optimisation problem. The sum of the                   the snow-melting in spring.
+
+weighting variables in each dimension are used to find the total               From a given date and until the end of the restriction period,
+                                                                                 discharge from the reservoir is permitted as long as the storage
+weight of the discrete volume segments for each reservoir in (10)-               volume in the reservoir does not decrease.
+
+(11), binding the expected future profit to the storage volumes in               The above regulation can be expressed mathematically by a set
+                                                                             of constraints. The activation and/or deactivation criteria defined in
+the reservoirs at the end of the stage.
+
+atþ1 À     XX         gn;mFVn;m ¼ 0                           (7)
+
+           n2N m2N
+
+XN         XN         gn;m  ¼  1                              (8)
+
+      n¼1        m¼1
+
+gn;m 1; c n2N ; m2N                                            (9)
+                                                              (10)
+bl;h ¼      X                     c l2N ; h2H
+
+                    gn;m
+
+        fn;mg2N  comb
+                 l;h
+
+                                                                        574
+L.E. Schaffer, A. Helseth and M. Korpås                                                                                                                            Renewable Energy 194 (2022) 571e581
+
+the regulation are often formulated as logical conditions dependent                              feasibility issues, these can be avoided by including a slack-variable
+                                                                                                 that is penalised in the objective function in (18) and (19).
+on the state variables, i.e., storage volume in the reservoirs and
+                                                                                                 2.3. Stochastic variables
+inflow. The state-dependent conditions are illustrated in Fig. 1. The
+dependencies on both inflow and storage volume in the reservoir                                      We consider three exogenous stochastic variables in this
+                                                                                                 research; the total weekly inflow into the system, the weekly
+are handled in the SDP algorithm, as described in section 2.4.                                   average energy price and the environmental state, i.e., if the inflow
+                                                                                                 has been above a certain threshold. Inflow normally has a strong
+The different types of constraints imposed by the maximum                                        weekly correlation, while inflow and price tend to be negatively
+                                                                                                 correlated in hydro-dominated systems. The environmental state
+discharge regulation are described by (16)-(19). Depending on the                                variable is an extension of the inflow state. For computational
+                                                                                                 simplicity, we assume that the stochastic variables can be described
+current state of the system, the constraints are added to the formu-                             by discrete nodes using a Markov decision process. The following
+                                                                                                 procedure is used to generate the Markov chain:
+lation before the decision problem is solved. The first part of the
+                                                                                                   Inflow and price data is given as input to the model, e.g., his-
+environmental regulation is a regulatory maximum discharge ca-                                       torical or forecasted data.
+
+pacity constraint. When the constraint period is initiated, (16) re-                               An auto-regressive model is fitted to the input data. Serial cor-
+                                                                                                     relation in inflow and cross-correlation between inflow and
+places (3) to restrict release from the reservoir only to serve                                      price is considered.
+
+downstream requirements for minimum river flows. The constraint is                                 10 000 scenarios are sampled from the auto-regressive model.
+                                                                                                   A given number of discrete nodes per week are generated from
+activated by inflow above a certain threshold (in tA) or by a given date,
+tB.                                                                                                  the scenarios, using K-means clustering. Each node represents
+                                                                                                     one inflow value and one price value.
+ X            Qhlim  c k2K; h ¼ H^                              (16)                               The transition probabilities are determined by counting the
+      qk;h;d                                                                                         share of scenarios transitioning between the different nodes
+                                                                                                     from one week to the next.
+d2Dh
+                                                                                                     In addition, information on the environmental state is required.
+    When (and if) the storage volume in the reservoir reaches the                                The environmental state represents a binary variable, indicating
+predefined threshold Vhlim, constraint (16) is relaxed and replaced                              whether the inflow has been above a certain threshold. For the
+with a minimum reservoir level regulation, (17)e(18). (17) is active                             weeks when this is applicable, the Markov chain is expanded with
+for the first week the storage volume in the reservoir reaches the                               an additional environmental state (activated and not activated) in
+wanted threshold (in tC), while (18) becomes active from the                                     each of the nodes, as illustrated in Fig. 2. The transition probabilities
+following week. When (17) or (18) are active, discharge is permitted                             are updated by multiplying with the probability of inflow above (or
+but the storage volume in the reservoir must be kept above the                                   below) the threshold in each node, presuming that the inflow level
+threshold.                                                                                       has not previously been above the threshold. Once the environ-
+                                                                                                 mental state is activated, it can only be deactivated by the reservoir
+vk¼K;h ! Vhlim c h ¼ H^                                         (17)                             storage level reaching above the given threshold or by a given date.
+
+vk;h ! Vhlim c k2K; h ¼ H^                                      (18)                             2.4. Solution strategy
+
+    Finally, for a given period, tD-tE, the storage volume in the                                    The hydropower scheduling problem is solved using the SDP
+reservoir is not permitted to decrease. This constraint is shown in                              algorithm described in Algorithm 1. The algorithm is based on
+(19). The formulation ensures that the storage level in the reservoir                            backwards recursion and solves the decision problem for each stage
+at the end of a stage is equal or higher than the storage level at the                           and state of the system for a planning horizon of one year. To ac-
+beginning of the stage. The storage level could also be bounded                                  count for end-of horizon effects, an iterative approach is used until
+over each time step k.                                                                           the water values in the last and first stage converge. The algorithm
+
+vk;h ! Vh c k ¼ K; h ¼ H^                                       (19)
+
+    The formulation assumes that the reservoir level can be main-
+tained once above the threshold. This can be challenging in some
+hydropower systems due to minimum flow requirements or
+negative inflow (e.g., evaporation). While we did not encounter
+
+Fig. 1. Illustration of the state-dependent conditions in the environmental regulation.          Fig. 2. Illustration of a Markov chain with two nodes per stage representing unique
+Within the orange shaded period, the constraint can be activated by inflow above a               price and inflow values, and an additional environmental state in t ¼ 3 to 4. The
+defined threshold, illustrated by point tA. Similarly, the no discharge restriction can be       additional nodes are illustrated in yellow.
+deactivated within the green shaded area by storage volume above the reservoir
+threshold, as illustrated by point tC.
+
+                                                                                            575
+L.E. Schaffer, A. Helseth and M. Korpås                                                                                                             Renewable Energy 194 (2022) 571e581
+
+iterates over all stages ðT Þ, all reservoir states ðSpÞ and all stochastic       updated for each hydropower plant in lines 8e11. The expected
+states ðSuÞ in lines 4e6. Sp comprises all combinations of discrete               future profits for all end reservoir states are updated in line 12.
+storage volumes for the reservoirs in the system. The stochastic
+variables are updated in line 7, while reservoir specific data is                     The decision problem is solved in line 13 following the
+
+                                                                             576
+L.E. Schaffer, A. Helseth and M. Korpås                                                                                                        Renewable Energy 194 (2022) 571e581
+
+procedure described in algorithm 2. The algorithm checks if any of           Fig. 3. Topology of the modelled system. Reservoirs (triangles), power plants (rect-
+the environmental conditions described in Section 2.2 are met, and           angles), and water routes for discharge (solid lines) and spillage (dashed lines) are
+solves the associated decision problem with the corresponding                shown. Maximal values for discharge (m3/s), production (MW), reservoir volumes
+constraints included, i.e., (16), (17), (18) or (19). The inflow             (Mm3) and average yearly inflow (Mm3) are given (not considering the environmental
+dependent early activation of the constraint is included as a sto-           constraint).
+
+chastic state x in the discrete Markov chain. The environmental
+
+constraints are only included in a selection of the subproblems, but
+the non-concave characteristics of the expected future profit
+function may carry down to earlier stages before fading out. For
+efficiency, the expected future profit approximation is checked for
+concavity before each subproblem is solved. If the function is
+concave, (14) and (15) are relaxed and the problem is solved as an
+LP. If the problem is solved for a system without the environmental
+regulation, the decision problem is an LP described by (1)-(13).
+
+    The solution of the optimisation problem for all stochastic states
+sut is used to calculate the expected future profit, in line 16. The
+
+expected future profit is stored to matrix F. The water values are
+calculated and stored to the water value matrix J in line 18,
+
+following a similar approach as in Ref. [18]. When an iteration is
+completed, convergence is determined in line 23, by comparing the
+calculated water values in the last and first stage. If the algorithm
+has not converged in iteration j, the water value matrix and the
+expected future profit matrix for the last stage T is updated with the
+values from the first stage in iteration j, in lines 25 and 26, before
+the next iteration.
+
+                                                                             the type described in Section 2.2. The discharge limitation can be
+
+                                                                             activated by inflow above the weekly average from week 15 and, at
+
+                                                                             the latest, in week 19. The discharge limitation is active until week
+                                                                             32, or until the storage volume in the reservoir is above 146 Mm3. If
+                                                                             the storage volume in the reservoir reaches 146 Mm3, discharge is
+
+                                                                             permitted as long as the water level stays above the threshold. From
+
+                                                                             week 33 to week 35, the reservoir storage is not allowed to be
+
+                                                                             reduced. The constraint is deactivated in week 35. In addition, a
+                                                                             minimum discharge of 3 m3/s is imposed on the lower reservoir.
+
+                                                                             Two cases are considered; without the environmental regula-
+
+                                                                             tion, wo/Env, and with the environmental regulation, w/Env. In the
+
+                                                                             w/Env case, the decision problem is solved with the environmental
+
+                                                                             regulation, as given in Section 2.4. The SDP model is solved for one
+
+                                                                             year of weekly decision stages, comprising three price periods of
+
+                                                                             56 h each. A high intra-week price variation is assumed. Each of the
+
+                                                                             reservoirs are discretised into 20 equidistant points, giving 400
+
+                                                                             combinations of reservoir states. Since the focus of this research is
+
+                                                                             on the modelling of the environmental constraint, a relatively
+
+3. Case study                                                                coarse representation of uncertainty and time discretization is
+
+3.1. Case Description                                                        included. A discrete Markov chain with 10 nodes per stage is used,
+
+    This case study assesses the impact of the state-dependent               each comprising a unique price and inflow value. In the weeks
+maximum discharge regulation on water values, simulated reser-
+voir operation and profit from the simulated operation of the sys-           when early activation of the environmental constraint could occur,
+tem. First, water values are calculated in the SDP model, before
+optimal operation of the system is simulated for a selection of              the environmental state variable is added, leading to a total of 20
+scenarios.
+                                                                             nodes per stage.
+    The described model is applied to the hydropower system
+shown in Fig. 3. The hydropower system is based on Bergsdals-                The discrete Markov chain is generated using inflow data from
+vassdraget in Western Norway. The system comprise several hy-
+dropower reservoirs and power plants, of which the two upper                 58 historical years and power prices generated based on the same
+reservoirs and power plants are modelled here. The modelled part
+of the system has a total generation capacity of approximately               inflow data. Alternatively, forecasted weather data from climate
+55 MW and a reservoir storage capacity of up to 360 Mm3.
+                                                                             models can be used, see e.g., Ref. [38]. The power prices were
+    The lower of the two modelled reservoirs has a state-dependent
+environmental maximum discharge constraint. The constraint is of             provided from the long-term hydropower scheduling model EMPS
+
+                                                                             [25], based on a low emission dataset of the European power sys-
+
+                                                                             tem for 2030 [39]. The penalty cost of spilling water is set low, CS ¼
+
+                                                                             10À3 mV3=s. The cost of drawing down the reservoir below 10% of the
+
+                                                                             storage  capacity  is  set  to  approximately  150    V  and  580    V  for  the
+                                                                                                                                 Mm3            Mm3
+
+                                                                             lower and upper reservoirs, respectively.
+
+                                                                             The simulation is conducted as weekly decisions in a sequence,
+
+                                                                             solving the decision problem formulated in Section 2.1 as a short-
+
+                                                                             term operational problem for each week. The same technical
+
+                                                                        577
+L.E. Schaffer, A. Helseth and M. Korpås                                          Renewable Energy 194 (2022) 571e581
+
+details as in the SDP model are included. The water values calcu-                function.
+                                                                                     The increasing water values with increasing reservoir storage
+lated in the SDP model are used as input to the weekly decision
+                                                                                 volumes in the w/Env case are a direct result of the state-dependent
+problem to evaluate the value of the water in the reservoir at the               maximum discharge constraint. The largest differences in the water
+                                                                                 values between the two cases can be seen when the strictest part of
+end of each week. For the w/Env case, the logical conditions for                 the environmental regulation is active (week 18e32) and back-
+                                                                                 wards in time (towards week 1). In the weeks when the constraint
+activating the environmental constraint, as described in Section 2.2,            is active and the storage volume in the reservoir is lower than the
+                                                                                 threshold (146 Mm3), the water values are higher in the w/Env case
+are checked each time the weekly decision problem is solved.                     than in the wo/Env case. Since discharge from the reservoir is
+                                                                                 strictly limited over a longer period, the model cannot take
+When (and if) the conditions are met, the associated constraints,                advantage of the potential high prices within this period, unless the
+                                                                                 threshold is reached. As a result, the water values are higher in the
+i.e., (16), (17), (18) or (19), are added to the decision problem.               w/Env case compared to the wo/Env case for storage volumes where
+                                                                                 the maximum discharge capacity restriction can be deactivated
+The model was implemented in Julia v1.5 using the Jump                           early.
+
+package [40] and the CPLEX 12.10 solver [41]. The relative MIP gap                   The water values are calculated from the last to the first week of
+is set to zero and the absolute MIP gap to 10À10.The case study was              the year, hence the impact of the constraint on the water values
+                                                                                 from later weeks affects the earlier weeks. Week 32 is the last week
+carried out on an Intel Core i7-8650U processor with 16 GB RAM.                  when the maximum discharge capacity restriction is active. Fig. 5
+                                                                                 compares the water values from the two cases for selected
+One iteration of the wo/Env case solved 208k decision problems in                weeks. No large differences can be seen after the constraint is
+                                                                                 deactivated; this is, for example, shown in Fig. 5a. In week 32
+approximately 440 s. One iteration of the w/Env case solved 224k                 (Fig. 5b), the difference between the water value curves for the two
+                                                                                 cases becomes more distinct. The local peak in the water value
+decision problems in approximately 1860 s, whereof approximately                 curve for the w/Env case in Fig. 5b is a result of discharge being
+                                                                                 permitted when the storage volume in the reservoir reaches the
+40% of the decision problems were solved as MILP. By reducing the                threshold. Moving forwards in time, this effect is being shifted to-
+                                                                                 wards lower storage volumes, as shown in Fig. 5c and d.
+number of problems solved as MILP, the solution time of the w/Env
+                                                                                 3.3. Simulation results
+case was reduced with around 30%. The algorithm converged in
+                                                                                     Simulations were run for 1000 scenarios, randomly selected
+16e20  iterations  with  a  convergence  criterion  of  10À3          V  .       from the originally sampled scenarios. The wo/Env case and the w/
+                                                                    Mm3          Env case were simulated for the same scenarios, using water values
+                                                                                 from the SDP model for each of the cases accordingly. The final
+Advanced tuning of the applied MIP solver and use of parallel                    simulations are conducted to test the calculated water values in an
+                                                                                 operational decision-making setting, as well as to demonstrate the
+processing could serve to improve the computational efficiency                   effect of the environmental constraint on operation of the system.
+
+[42].                                                                                The activation and deactivation of the maximum discharge ca-
+                                                                                 pacity restriction varies between the scenarios because of the state-
+3.2. Water values                                                                dependent nature of the conditions. Fig. 6 shows when the
+                                                                                 maximum discharge constraint is activated and deactivated in the
+    The water values are the main result from the SDP model. We                  w/Env case for the simulated scenarios. In approximately 85% of the
+are especially interested in how the water values change when                    scenarios, the storage volume in the reservoir reaches the threshold
+including the state-dependent maximum discharge constraint. This                 before week 33, deactivating the maximum discharge constraint.
+is of high importance in real-life hydropower scheduling, as the                 The discharge limitation is activated by high inflow before week 19
+water values provide essential information for short-term decision               in 50% of the scenarios. Even so, inflow-dependent activation was
+making.                                                                          found to only have muted impact on the strategy and simulated
+                                                                                 economic results for the case considered. Still, under other price
+    The upper reservoir is not directly impacted by the environ-                 assumptions inflow-dependent activation could be of higher
+mental regulation in the w/Env case but can be actively used to help             importance.
+manage the regulation. If it is optimal to adjust the reservoir
+management of the upper reservoir to reach the threshold in the                      The results from the simulations show a considerable change in
+lower reservoir more rapidly, this would be reflected in the water               optimal operation when the environmental constraint is included.
+values of the upper reservoir. However, only minor or no changes                 Fig. 7 compares the change in storage volume in the lower reservoir
+were seen in the water values for the upper reservoir, implying that             over a year for the wo/Env and w/Env cases. In general, the storage
+it is not economically profitable to release more water from the                 volume in the reservoir is kept higher in the w/Env case. The largest
+upper reservoir to reach the reservoir threshold in the lower                    difference can be seen in the spring and summer weeks, when the
+reservoir earlier. This result is sensitive to several factors, such as          environmental regulation is active. In this period, no discharge is
+the expected power prices in the weeks when the constraint is                    permitted if the storage level is below the reservoir threshold. For
+active, the strictness of the constraint and the efficiency of the               several weeks in this period, the median reservoir storage volume
+lower power plant compared to the upper power plant. Since small                 is raised from below 100 Mm3 in the wo/Env case to over 150 Mm3
+or no changes were seen in the water values of the upper reservoir,              in the w/Env case, demonstrating the effectiveness of the constraint
+the rest of this section only considers the water values of the lower            to achieve the underlying purpose of reaching the threshold.
+reservoir. The water values presented for the lower reservoir are
+given for a medium storage level in the upper reservoir (i.e.,                       For most of the simulated scenarios, the storage volume in the
+$ 85Mm3).
+
+    Fig. 4 shows the calculated water values for the wo/Env case and
+the w/Env case. The water values change with the storage volume in
+the reservoir and the week of the year. In the wo/Env case, the water
+values are non-increasing with increasing storage volume in the
+reservoir. This will always be the result from linear hydropower
+scheduling models where the expected future profit is a concave
+function. For low storage volumes in the reservoir, the water value
+is high because of the risk of emptying the reservoir. For higher
+storage volumes in the reservoir, the water value decrease as the
+risk of spilling water increase. The water value is zero when water
+has to be spilled because of full reservoirs. In the w/Env case, the
+same behaviour of high and low water values can be observed for
+low and high storage volumes, respectively. However, the water
+values also sometimes increase with increasing storage volumes.
+For this case, the expected future profit is therefore a nonconcave
+
+                                                                            578
+L.E. Schaffer, A. Helseth and M. Korpås                                                  Renewable Energy 194 (2022) 571e581
+
+Fig. 4. Calculated water values for the lower reservoir in the two cases plotted for the storage volume in the reservoir and week of the year.
+
+Fig. 5. Water values calculated in the w/Env case (dashed lines) and the wo/Env case (solid lines). The vertical lines give the reservoir threshold.
+
+Fig. 6. Activation and deactivation of the maximum discharge restriction per week,       Fig. 7. Simulated storage volume in the lower reservoir in the wo/Env (purple) and w/
+given in share of scenarios.                                                             Env (green) cases. Min/max (dotted lines), quartiles (dashed lines) and the medians
+                                                                                         (solid lines) are shown. The horizontal line gives the reservoir threshold.
+
+lower reservoir reaches the reservoir threshold in week 25e30 in                         constraint in the calculation of the water values. Furthermore, the
+the w/Env case. This means that the optimal operation of the res-                        reservoir storage volume is also kept higher in the autumn and
+ervoirs lies within the reservoir volume segments where the                              winter weeks in the w/Env case compared to the wo/Env case.
+maximum discharge capacity constraint has the largest impact on                          Higher storage volumes throughout the year, and not only when
+the water values, indicating the importance of including the                             the constraint on discharge is active, can be explained by the
+
+                                                                                    579
+L.E. Schaffer, A. Helseth and M. Korpås                                                                           Renewable Energy 194 (2022) 571e581
+
+Table 1
+Average profit and electricity generation.
+
+Case                                     Reservoir  Profit [/yr]               Production [MWh/yr]                Profit week 19e35 []
+
+wo/Env                                   Upper      5.16Eþ06                   1.04Eþ05                           1.20Eþ06
+w/Env                                    Lower      4.19Eþ06                   9.00Eþ04                           1.16Eþ06
+Difference                               Total      9.34Eþ06                   1.94Eþ05                           2.36Eþ06
+                                         Upper      5.15Eþ06                   1.04Eþ05                           1.24Eþ06
+                                         Lower      4.12Eþ06                   8.98Eþ04                           7.16Eþ05
+                                         Total      9.27Eþ06                   1.94Eþ05                           1.95Eþ06
+                                         Upper      À0.10%                     À0.0%                              3.12%
+                                         Lower      À1.60%                     À0.22%                             À38.46%
+                                         Total      À0.77%                     À0.11%                             À17.23%
+
+differences in water values. Higher water values for higher storage            modelling of such regulations. This conclusion is further strength-
+volumes in the w/Env case give the model an incentive to keep                  ened by the optimal reservoir operation being within the non-
+more water in the reservoir when coming into the constraint                    concave area of the expected future profit function for most of the
+period.                                                                        simulated scenarios, as demonstrated by the simulation results. If
+                                                                               the future profit function is used as boundary condition in opera-
+    A selection of average numeric results from the completed                  tional short-term scheduling models, the nonconcave shape may
+simulations are given in Table 1. The total yearly profit from the             impact the results substantially.
+system is reduced by around 72 k(0.8%) in the w/Env case compared
+to the wo/Env case. In the period when the constraint is active, week              The substantial impact on the calculated water values and
+19e35, the total profit from electricity generation is reduced by              reservoir operation observed in this study support further research
+approximately 17% or 406 k. By shifting the electricity generation,            on nonconvex environmental constraints. To strengthen the find-
+the model manages to keep the total generation in the w/Env case               ings from this study, future research should investigate the impact
+close to the total generation in the wo/Env case, significantly                of using accurate water values, compared to water values based on
+reducing the total loss in profit. This means that the loss in profit is       simplified problem formulations, in operation of hydropower sys-
+mainly caused by a lower average realised price of electricity, and            tems with environmental regulation. Furthermore, a wider selec-
+not reduced sales of electricity. Still, it should be mentioned that the       tion of cases and hydropower watercourses with different
+economic results are sensitive to the power price assumptions used             variations of the state-dependent maximum discharge constraint
+in the simulations. Higher power prices in the constrained period              could be analysed. Finally, a broader analysis to evaluate how well
+can increase the cost of restricting production in this period, and            the constraint meets the underlaying purpose of the environmental
+vice versa.                                                                    regulation, as well as other unintended consequences like flood
+                                                                               risk, could be of interest.
+
+4. Conclusion                                                                  Declaration of competing interest
+
+    We present a medium-term hydropower scheduling model                           The authors declare that they have no known competing
+comprising an accurate representation of inflow- and volume-                   financial interests or personal relationships that could have
+dependent environmental constraints on maximum discharge.                      appeared to influence the work reported in this paper.
+Such constraints cause a pronounced nonconvexity in the sched-
+uling problem. The proposed model can solve nonconvex model                    Acknowledgment
+formulations for smaller systems, by applying an SDP-algorithm,
+where binary variables are only required to represent the non-                     The work was founded by the Research Council of Norway (PNO
+convex characteristics of the expected future value function. By               257588).
+dynamically checking for nonconvexities in the value function, we
+find that the number of weekly decision problems solved as MILPs               References
+can be reduced significantly. Still, the required discretization of the
+state space leads the SDP-algorithm to scale poorly for larger sys-             [1] The European green deal. https://ec.europa.eu/info/strategy/priorities-2019-
+tems with more reservoirs.                                                            2024/european-green-deal_en. (Accessed 3 June 2021).
+
+    The model is applied to a case study of a Norwegian hydropower              [2] M. Mattmann, I. Logar, R. Brouwer, Hydropower externalities: a meta-analysis,
+system with multiple reservoirs. Simulations of the system with                       Energy Econ. 57 (2016) 66e77.
+and without the environmental constraint show a substantial dif-
+ference in operation of the reservoir to which the constraint is                [3] N.L. Poff, J.K. Zimmerman, Ecological responses to altered flow regimes: a
+imposed. In the case with the environmental constraint, the storage                   literature review to inform the science and management of environmental
+volume in the reservoir reaches the wanted threshold for most of                      flows, Freshw. Biol. 55 (1) (2010) 194e205.
+the scenarios. Still, the total electricity generation over the year is
+maintained and total loss in profit is limited to approximately 0.8%.           [4] B. Kohler, A. Ruud, Ø. Aas, D.N. Barton, Decision making for sustainable natural
+                                                                                      resource management under political constraints e the case of revising hy-
+    The calculated water values were found to change considerably                     dropower licenses in Norwegian watercourses, Civ. Eng. Environ. Syst. 36 (1)
+when the state-dependent maximum discharge constraint was                             (2019) 17e31.
+included in the SDP model. For the reservoir to which the constraint
+was imposed, the water values were found to both increase and                   [5] L.-R.D. Kosnik, Balancing environmental protection and energy production in
+decrease with increasing storage volumes in the reservoir, reflect-                   the federal hydropower licensing process, Land Econ. 86 (3) (2010) 444e466.
+ing that the expected future profit function is nonconcave. The
+distinct changes in the calculated water values when the environ-               [6] I. Guisandez, J.I. Perez-Díaz, J.R. Wilhelmi, Assessment of the Economic Impact
+mental regulation was considered show the importance of accurate                      of Environmental Constraints on Annual Hydropower Plant Operation, Energy
+                                                                                      Policy, 2013, pp. 1332e1343.
+
+                                                                                [7] E.G. Dimanchev, J.L. Hodge, J.E. Parsons, The role of hydropower reservoirs in
+                                                                                      deep decarbonization policy, Energy Pol. 155 (2021).
+
+                                                                                [8] A. Helseth, A.C.G. de Melo, Scheduling toolchains in hydro- dominated sys-
+                                                                                      tems - evolution, current status and future challenges, SINTEF, Trondheim,
+                                                                                      Tech. Rep. (2020), 00757, 2020. [Online]. Available: https://hdl.handle.net/
+                                                                                      11250/2672581.
+
+                                                                                [9] M.V. Pereira, L.M. Pinto, Multi-stage stochastic optimization applied to energy
+
+                                                                          580
+L.E. Schaffer, A. Helseth and M. Korpås                                                                                                                       Renewable Energy 194 (2022) 571e581
+
+       planning, Math. Program. 52 (1e3) (1991) 359e375.                                    [27] M.A. Olivares, J. Haas, R. Palma-Behnke, C. Benavides, A framework to identify
+[10] A. Gjelsvik, M. Belsnes, A. Haugstad, An algorithm for stochastic medium-term                 Pareto-efficient subdaily environmental flow constraints on hydropower
+                                                                                                   reservoirs using a grid-wide power dispatch model, Water Resour. Res. 51 (5)
+       hydrothermal scheduling under spot price uncertainty, in: Proceedings. 13th                 (2015) 3664e3680.
+       Power Systems Computation Conference 2, 1999, pp. 1079e1085, 1999.
+[11] R. Bellman, Dynamic programming and stochastic control processes, Inf.                 [28] I. Guisandez, J.I. Perez-Díaz, J.R. Wilhelmi, Approximate formulae for the
+       Control 1 (3) (1958) 228e239.                                                               assessment of the long-term economic impact of environmental constraints
+[12] A.L. Diniz, M.E. Pin~eiro Maceira, A four-dimensional model of hydro genera-                  on hydropeaking, Energy 112 (2016) 629e641.
+       tion for the short-term hydrothermal dispatch problem considering head and
+       spillage effects, IEEE Trans. Power Syst. 23 (3) (2008) 1298e1308.                   [29] S. Steinschneider, A. Bernstein, R. Palmer, A. Polebitski, Reservoir manage-
+[13] W. van Ackooij, I. Danti Lopez, A. Frangioni, F. Lacalandra, M. Tahanan, Large-               ment optimization for basin-wide ecological restoration in the Connecticut
+       scale unit commitment under uncertainty: an updated literature survey, Ann.                 river, J. Water Resour. Plann. Manag. 140 (9) (2014).
+       Oper. Res. 271 (1) (2018) 11e85.
+[14] A. Helseth, M. Fodstad, B. Mo, Optimal medium-term hydropower scheduling               [30] L.E. Schaffer, A. Adeva-Bustos, T.H. Bakken, A. Helseth, M. Korpås, Modelling of
+       considering energy and reserve capacity markets, IEEE Trans. Sustain. Energy                environmental constraints for hydropower optimization problems e a review,
+       7 (3) (2016) 934e942.                                                                       in: 2020 17th International Conference On the European Energy Market (EEM).
+[15] S. Cerisola, J.M. Latorre, A. Ramos, Stochastic dual dynamic programming                      Plus 0.5em Minus 0.4emIEEE, 2020, pp. 1e7.
+       applied to nonconvex hydrothermal models, Eur. J. Oper. Res. 218 (3) (2012)
+       687e697.                                                                             [31] I. Guisandez, J.I. Perez-Díaz, W. Nowak, J. Haas, Should environmental con-
+[16] Q. Goor, R. Kelman, A. Tilmant, Optimal multipurpose-multireservoir opera-                    straints be considered in linear programming based water value calculators?
+       tion model with variable productivity of hydropower plants, J. Water Resour.                Int. J. Electr. Power Energy Syst. 117 (2020).
+       Plann. Manag. 137 (3) (2011) 258e267.
+[17] E. Pereira-Bonvallet, S. Püschel-Løvengreen, M. Matus, R. Moreno, Optimizing           [32] I. Guisandez, J.I. Perez-Díaz, J.R. Wilhelmi, The influence of environmental
+       hydrothermal scheduling with non-convex irrigation constraints: case on the                 constraints on the water value, Energies 9 (6) (2016).
+       Chilean electricity system, in: Energy Procedia, vol. 87, 2016, pp. 132e140,
+       plus 0.5em minus 0.4emElsevier Ltd.                                                  [33] J.H. Halleraker, W. Van De Bund, M. Bussettini, R. Gosling, S. Dobbelt-Grüne,
+[18] A. Helseth, M. Fodstad, M. Askeland, B. Mo, O.B. Nilsen, J.I. Perez-Díaz,                     J. Hensman, J. Kling, V. Koller-Kreimel, P. Pollard, Working group ECOSTAT
+       M. Chazarra, I. Guisandez, Assessing hydropower operational profitability                   report on common understanding of using mitigation measures for reaching
+       considering energy and reserve markets, IET Renew. Power Gener. 11 (13)                     good ecological potential for heavily modified water bodies - Part 1: impacted
+       (2017) 1640e1647.                                                                           by water storage, Publications Office of the European Union, Luxembourg,
+[19] M.N. Hjelmeland, J. Zou, A. Helseth, S. Ahmed, Nonconvex medium-term                          Tech. Rep. EUR 28413 EN, 2016. [Online]. Available: https://www.ecologic.eu/
+       hydropower scheduling by stochastic dual dynamic integer programming,                       14545.
+       IEEE Trans. Sustain. Energy 10 (1) (2019) 481e490.
+[20] A. Helseth, B. Mo, H.O. Hågenvik, Nonconvex environmental constraints in               [34] I. Guisandez and J. I. Perez-Díaz, "Mixed integer linear programming formu-
+       hydropower scheduling, in: International Conference on Probabilistic                        lations for the hydro production function in a unit-based short-term sched-
+       Methods Applied to Power Systems, PMAPS), 2020.                                             uling problem," Int. J. Electr. Power Energy Syst., vol. 128, 2021.
+[21] J.D.C. Little, The use of storage water in a hydroelectric system, J. Oper. Res.
+       Soc. Am. 3 (2) (5 1955) 187e197.                                                     [35] R. Misener, C.A. Floudas, Piecewise-linear approximations of multidimen-
+[22] J. Lindqvist, Operation of a hydrothermal electric system: a multistage deci-                 sional functions, J. Optim. Theor. Appl. 145 (2010) 120e147.
+       sion process, Trans. Am. Inst. Electr. Eng.Part III: Power Apparatus and Sys-
+       tems 81 (3) (1962) 1e6.                                                              [36] C. D'Ambrosio, A. Lodi, S. Martello, Piecewise linear approximation of func-
+[23] J.A. Tejada-Guibert, S.A. Johnson, J.R. Stedinger, Comparison of two ap-                      tions of two variables in MILP models, Oper. Res. Lett. 38 (1) (2010) 39e46.
+       proaches for implementing multireservoir operating policies derived using
+       stochastic dynamic programming, Water Resour. Res. 29 (12) (1993)                    [37] P.H. Williams, Model Building In Mathematical Programming, 5th Edition e
+       3969e3980.                                                                                  Wiley, fifth ed., 2013 plus 0.5em minus 0.4emWest Sussex: Wiley.
+[24] A. Turgeon, R. Charbonneau, An aggregation-disaggregation approach to long-
+       term reservoir management, Water Resour. Res. 34 (1998) 3585e3594.                   [38] B. Mo, O. Wolfgang, J. Styve, The Nordic power system in 2020 e impacts from
+[25] O. Wolfgang, A. Haugstad, B. Mo, A. Gjelsvik, I. Wangensteen, G. Doorman,                     changing climatic conditions, in: H.H. Pikkarainen (Ed.), Conference on Future
+       Hydro reservoir handling in Norway before and after deregulation, Energy 34                 Climate and Renewable Energy: Impacts, Risks and Adaptation Conference
+       (10) (2009) 1642e1651.                                                                      Proceedings Conference Proceedings, plus 0.5em minus 0.4emOslo: Norwe-
+[26] N.V. Arvanitidis, J. Rosing, Composite representation of a multireservoir hy-                 gian Water Resources and Energy Directorate, 2010, pp. 44e45.
+       droelectric power system, IEEE Trans. Power Apparatus Syst. PAS-89 (2)
+       (1970) 319e326.                                                                      [39] L.E. Schaffer, B. Mo, I. Graabak, Electricity prices and value of flexible gener-
+                                                                                                   ation in Northern Europe in 2030, in: International Conference on the Euro-
+                                                                                                   pean Energy Market, EEM, 2019.
+
+                                                                                            [40] I. Dunning, J. Huchette, M. Lubin, JuMP: a modeling language for mathematical
+                                                                                                   optimization, SIAM Rev. 59 (2) (2015) 295e320.
+
+                                                                                            [41] IBM CPLEX optimizer. http://www-01.ibm.com/software/. (Accessed 1 July
+                                                                                                   2021).
+
+                                                                                            [42] Y. Ma, P.-a. Zhong, B. Xu, F. Zhu, Y. Xiao, Q. Lu, Multidimensional parallel
+                                                                                                   dynamic programming algorithm based on spark for large-scale hydropower
+                                                                                                   systems, Water Resources Management 2020 34:11 34 (11) (2020)
+                                                                                                   3427e3444.
+
+                                                                                       581
+

@@ -1,0 +1,574 @@
+                                                                                                                                               ETH Library
+
+Multi-horizon Modeling in Hydro
+Power Planning
+
+      Conference Paper
+       Author(s):
+
+       Abgottspon, Hubert ; Andersson, Göran
+       Publication date:
+       2016-01
+       Permanent link:
+       https://doi.org/https://doi.org/10.3929/ethz-b-000117060
+       Rights / license:
+       Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International
+       Originally published in:
+       Energy Procedia 87, https://doi.org/10.1016/j.egypro.2015.12.351
+
+       This page was generated automatically upon download from the ETH Zurich Research Collection.
+       For more information, please consult the Terms of use.
+                                           Available online at www.sciencedirect.com
+
+                              ScienceDirect
+
+                                                            Energy Procedia 87 (2016) 2 ­ 10
+
+            5th International Workshop on Hydro Scheduling in Competitive Electricity Markets
+
+               Multi-horizon modeling in hydro power planning
+
+                                                     Hubert Abgottspon, Go¨ran Andersson
+
+                                                               Power Systems Laboratory, ETH Zurich, Switzerland
+
+      Abstract
+      In this paper, a novel modeling framework is proposed, the multi-horizon modeling approach. This approach allows a very detailed
+      and transparent modeling of many problems in hydro power planning by simultaneously being computationally very efficient. The
+      model is applied to a complex pumped storage hydro power plant in a liberalized market environment in order to give decision
+      support for the self-scheduling of it. The modeling framework is compared to three alternative state-of-the-art modeling approaches.
+      The results suggest that multi-horizon models are especially valuable for the modeling of hydro power plants with different types
+      of reservoirs.
+      ©c 22001166TThheeAAutuhtohrosr.sP.uPbulibshliesdhebdy bEylseEvliseervLietdr.LTthdi.s is an open access article under the CC BY-NC-ND license
+      P(hetetpr-:/r/ecvreieawtivuecnodmermroensps.oonrgs/ilbicileintyseos/fbSyI-NncT-nEdF/4E.0n/)e.rgi AS.
+       Peer-review under responsibility of SINTEF Energi AS
+      Keywords: medium-term; hydro scheduling; multi-horizon; stochastic dual dynamic programming;
+
+     1. Introduction
+
+         Hydro power plants (HPPs) in the Alps, and in other regions with similar topology, have typically two different types
+     of reservoirs. The first type is storage reservoirs, which store water inflows in order to be able to produce during dry
+     seasons. The second type of basins is balancing reservoirs. In comparison with the storage reservoirs, they are very
+     small. Their role is to balance out water flows, i.e. to provide a necessary amount of water for generation or pumping.
+     Whereas the filling of storage reservoirs define the medium-term operation strategy of a HPP, the balancing reservoirs
+     are very important to consider in the daily operation of it. In order to consider both types of reservoirs in a medium-
+     term hydro power planning (MTHP) optimization, a short time step is often modeled. Alternatively, the balancing
+     reservoirs can also be aggregated in some way in order to reduce the computational complexity of solving the problem.
+
+         The proposed modeling approach can be said to lie in between these two ideas, having both a short time step and
+     some aggregation in the same model. The model is as such, that the operating policies are calculated for daily time
+     stages (and not hourly) only for the storage reservoirs (and not for the balancing reservoirs), which is the aggregation
+     part of the model. This multi-stage stochastic program is decomposed into interstage and intrastage subproblems.
+     The daily interstage problem handles the water management of the storage reservoirs. The intrastage subproblems, on
+     the other hand, manages the hourly operation of the plant. In this subproblem, the balancing reservoirs and the hourly
+     electricity market are considered and therefore a short time step for the operation of the plant can be considered.
+
+          Corresponding author:
+           E-mail address: hubert.abgottspon@alumni.ethz.ch
+
+1876-6102 © 2016 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY-NC-ND license
+(http://creativecommons.org/licenses/by-nc-nd/4.0/).
+Peer-review under responsibility of SINTEF Energi AS
+doi:10.1016/j.egypro.2015.12.351
+                  Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10                                3
+
+The nested decision structure, see Fig. 1 for two examples of it, can be depicted as a multi-horizon decision tree [1].
+Thus, the modeling based on such a structure, is proposed to be called multi-horizon modeling.
+
+   In this paper the multi-horizon modeling approach is compared with three traditional modeling solutions. The
+different models are discussed and applied to a MTHP problem of a complex hydro power plant in Switzerland. All of
+the models are solved by dualized stochastic dual dynamic programming (SDDP) in order to cope with the complex
+structure and non-concave value functions of the HPP.
+
+   The contribution of this paper is the evaluation of the multi-horizon modeling concept against traditional modeling
+approaches. The application of such models allows very detailed and computationally efficient formulations of many
+different hydro power planning problems. It outperforms traditional modeling techniques considerably. The reasons
+are manyfold, but the most important ones are that both dynamic programming and mathematical solvers are combined
+in an efficient way, and that physical differences of reservoirs are exploited which is, to the best of the authors'
+knowledge, an original idea.
+
+   In the literature about MTHP, most work apply traditional models, i.e. to either consider a short time step for all
+of the reservoirs or to aggregate the balancing reservoirs. The most important works, which use models similar in
+spirit to multi-horizon ones, are as follows: In [3], inter- and intrastage problems are termed explicitly and used in a
+decoupled way for a MTHP optimization. Similarly, as in [4,5], price duration curves are used to model the short-term
+bidding. Thus, smaller basins would have to be aggregated in such approaches. In [2], the idea of inter- and intrastage
+problems are applied in order to incorporate day-ahead and intra-day bidding in a MTHP optimization. As in [6], the
+bidding is modeled as specifying a supply curve with fixed price points. Similar to the previous mentioned works,
+smaller basins would have to be aggregated in such an approach or be considered as state variables, which is one of
+the variants evaluated in this paper here.
+In our previous works [7­11], multi-horizon models are used for different applications but are not compared to tradi-
+tional modeling techniques. Additionally, apart from [11], an algorithm based on stochastic dynamic programming
+(SDP) is used instead of SDDP.
+
+Nomenclature
+
+t                  {0, ..., T }, time stage [day]
+                   {1, . . . , 24}, intrastage time stage [h]
+
+Nt                Number of data samples per time stage (representing interstage uncertainty)
+vstor(t), vbal()  Filling of storage/balancing reservoirs [1000m3]
+Q(t, vstor)       Value function [e]
+u(), p()          Electricity generation in turbines / pumped electricity [MW]
+fu(u), fp(p)      Function: used/produced energy to water flow [1000m3]
+a(), o()          Charges from upstream reservoirs / overflow (spillage) [1000m3]
+c()               Electricity market price [e/MW]
+m()
+                  Position in energy market [MW]
+s
+                   S, intrastage scenarios
+A                  S, bundle of intrastage scenarios with the same decisions up to some stage 
+                  Set of all bundles in a stage , which can also be subject to interstage uncertainty
+U (A )
+                  Set of bundles, i.e. children of the bundle A
+
+2. Multi-horizon modeling approach
+
+   The idea of the proposed modeling approach is that storage and balancing reservoirs are considered both with their
+inherent dynamics. Further, a decomposition of the problem into inter- and intrastage subproblems makes an efficient
+implementation of the model possible. The proposed model can be described as follows:
+
+  1. Interstage problem (master problem):
+         · is formulated dynamically with daily time stages and storage reservoirs as state variables.
+         · is possibly subject to interstage uncertainty
+4  Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10
+
+   a)                    b)                                   interstage decision
+
+                                                              intrastage decision
+
+   Fig. 1. Two examples of multi-horizon decision trees. a) The instrastage uncertain data is revealed at once at the beginning of the intrastage
+   problem. Therefore, the intrastage problem is deterministic. b) The intrastage uncertain data in the intrastage problem is revealed every three hours
+   for the next three hours, thus, it is a stochastic problem. Note that in both examples the interstage problem is subject to uncertainty.
+
+          · output are operation policies (water values) and profit-to-go function.
+
+   2. Intrastage problem:
+
+          · has hourly time steps and state variables are the balancing reservoirs.
+          · is formulated as a multistage stochastic program with possibly stochastic water inflows and market prices.
+          · decision variables are the day-ahead market bidding and production operation.
+
+   It is clear that the overall problem is considered stochastically but note that the intrastage subproblems themselves are
+   also stochastic multistage problems. The disclosure of uncertain realizations of inflows and prices can be modeled
+   differently, which leads to the nested decision trees as depicted in Fig. 1.
+
+      The proposed model formulation mimics the way operators typically think about a MTHP problem, which is water
+   release or filling of the storage reservoirs under unknown optimal short-term operation. Therefore, the policies sug-
+   gested by such a model will support operators particularly.
+   Because of the decomposition of the problem, the water balance for the balancing reservoirs is not respected from
+   one interstage to the other. That is, the fillings at the beginning and end of each intrastage subproblem are given and
+   fixed beforehand. Thus, the model neglects that with balancing reservoirs water from one day to the next one could
+   be stored. This simplification is meaningful if there is a strong daily autocorrelation in the operation pattern of the
+   balancing reservoirs. In Switzerland this is the case because of the high influence of the demand on the electricity
+   market prices and because of temperature driven water inflows.
+   The formulation is very flexible in how to model the disclosure of stochastic processes in the intrastage problem. For
+   instance, the water inflow process can be modeled as being disclosed once every day and would, therefore, be known
+   24 hours ahead. A day-ahead market can be modeled similarly whereas a possible intra-day market is preferably
+   subject to an intrastage uncertainty, e.g. a disclosure of the prices of and for every three hours as depicted in Fig. 1 b).
+
+      Algorithms based on SDP (as in [7­10]) or SDDP (as in [11]) can be applied for solving the overall problem. The
+   multi-stage stochastic program in the intrastage problem, however, is formulated as its deterministic equivalent and
+   a commercial solver is used to solve it. Therefore, the exploitation of the strengths of dynamic programming and
+   efficient mathematical solvers is possible. That is, the curse of dimensionality in time is avoided by the decomposition
+   in time. But, this is done only to daily time stages because the deterministic equivalent of a stochastic problem with
+   hourly stages and a daily time horizon is manageable by mathematical solvers very efficiently. [12]
+
+      Note that the balancing reservoirs are not part of the state vector of the interstage problem. Therefore, the number
+   of balancing reservoirs complicates only the intrastage problem, but, only moderately. More important is the modeling
+   of the information disclosure in the intrastage scenario tree. The size of the variable vectors, and with that also the
+   number of constraints in the intrastage problem, depend on the sum of the number of bundles (nodes in the tree) for
+   each time step  ||.
+
+   3. Mathematical model and solution methodologies
+
+   In order to formulate the mathematical model, the state variables, which are the fillings of the reservoirs, are
+
+   separated into storage vstor(t) and balancing vbal(t) reservoir variables. Then, the recursive optimality equation is:
+
+                                                                                         
+                       Nt u,mp,oa,vx,m               24                                  j)
+   Qt(vts-to1r) =  1                                 =1    E  [c()m()]  +  Qt+1(vtstor,                                    (1)
+                   Nt  j=1
+                                                         A j
+        Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10                                                   5
+
+s.t.:   vbBal  =  vbal  - oB       -        fu(uB ) +  fp(pB ) + aB  ,  A-1       j-1,    B         U (A-1 ),          (1a)
+
+                   A-1                                                                                                 (1b)
+
+                                   T                                                                                   (1c)
+                                                                                                                       (1d)
+        vtstor, j = vts-to1r, j -           fu(us) - fp(ps) - as - otj , s  S j
+
+                                   =1
+
+        mA = uA - pA , A  j, 
+        0  u, p, o, vstor, vbal  ubt , lbt  m  ubt
+
+There are Nt number of possible intrastage subproblems. Note that even if Nt = 1, the intrastage subproblem can
+
+still involve multiple scenarios since it is based on a possibly stochastic scenario tree.
+
+The optimal value of the intrastage subproblem, max      24  E  [c()m()],  can  be  seen  as  an  estimation  of  the  short-term
+                                                         =1
+revenue. It is formulated with the help of scenario trees with the intrastage time stage   {1, . . . , 24}, where the time
+
+duration is one hour. The short-term revenue, therefore, is the expected product of prices c() and market positions
+
+m() over all bundles A. The market position m is defined in the constraints of the intrastage subproblem in (1c) as
+the difference of electricity generation and pumping. It is the amount of energy which is sold or bought back at the
+
+day-ahead spot market. This variable would not be needed for the considered application, but it makes the formulation
+
+more streamlined, especially for extensions of the model, like the consideration of multiple markets.
+
+The intrastage subproblem is subject to the water balance constraints. For the balancing reservoirs, these constraints
+
+have to hold for each hour , which is specified in (1a). For the storage reservoirs, however, the water balance is
+
+maintained only for the interstage t in (1b). Therefore, the filling of the storage reservoirs are not known at an hourly
+
+resolution and only the sum over the hourly in- and outflows for each intrastage scenario s is used for calculating the
+reservoir filling vtstor, j at the end of an interstage t. Note that this filling varies depending on the scenario j but has to
+stay the same for each intrastage scenario s  S j, similar to a here-and-now decision. This also prevents having to
+
+calculate the profit-to-go Qt+1 multiple times.
+Finally, all variables are positive except for the market position m. The market position can be bounded in order to
+
+introduce some crude form of risk control.
+
+The problem (1) can be solved with SDP as done in [10]. In this paper, however, SDDP is used, which makes
+
+particularly sense if the model consists of more than a few storage reservoirs. Since some of the intrastage decisions
+
+are integer ones (e.g. due to forbidden zones for pumping and other operation rules), dualized SDDP is applied to solve
+
+the problem similarly as it was done in our previous work [11]. Further, although multi-horizon models would allow
+
+stochastic intrastage subproblems, in this paper, a relatively simple deterministic intrastage problem is considered, as
+
+depicted in Fig. 1 a). Note that stochasticity is still considered but only at the interstage level. This model is referred
+
+in the course of this paper as the multi-horizon model.
+
+4. Evaluation against three traditional procedures
+
+   There are two obvious modeling alternatives when dealing with storage and balancing reservoirs. The first alterna-
+tive is to model an hourly time step, which allows the consideration of a detailed HPP model. The second alternative
+is to aggregate balancing reservoirs in a way that a longer time step is sufficient and, thus, less computational effort is
+needed. Both alternatives are used in academia and practice. A third alternative builds up also on the decomposition
+of inter- and intrastage subproblems, however, it does not exploit the different types of reservoirs.
+The alternative models are explained next and then compared with the multi-horizon model. The models are applied
+to a Swiss hydro power plant with 10 reservoirs depicted in Fig. 2. 4 reservoirs can be considered as storage reservoirs
+with capacities of 15 to 94 Mio m3 and typically emptied once per year. The other 6 reservoirs have capacities of
+0.02 to 0.08 Mio m3. They can be emptied within a few hours and, therefore, are regarded as balancing reservoirs.
+Finally, there are aggregated units of 12 turbines and 8 pumps installed with a total capacity of 1.125 GW and 424 MW
+respectively.
+
+4.1. 1. Alternative: MTHP models with hourly time steps
+
+   Although hourly time steps seem to be the natural choice for modeling a MTHP problem with balancing reservoirs,
+a closer look reveals many difficulties of such an approach. A model with hourly time steps, only storage reservoirs
+6                                                          Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10
+
+   Anlageschema der Kraftwerke Oberhasli AG
+
+   Engstlensee                                                                                           Guttannen              Aaretal                               Totensee         Trübtensee       Stausee
+              Gental                                                                                             Mattenalpsee           Stausee                           Grimselpass                      Oberaar
+                                                                                                                      Gaulisee             Gelmer
+                                 Sustenpass
+                                                Gadmental
+
+                                                                                        Triftsee                                                                                       Stausee
+                                                                                                                                                                                          Grimsel
+                                                                                                                                                   Stausee
+                                                                         Innertkirchen                                                                Räterichsboden                   Kraftwerke       Staumauer
+                                                                                                                                                                                       Fuhren           Zulaufstollen/Druckschacht
+                                                                                                                                                                                       Hopflauenen      Wasserfassung
+                                                                                                                                                                                       Innertkirchen 2  Wasserschloss
+                                                                                                                                                                                       Innertkirchen 1
+                                                                   Aare                                                                                                                Handeck 1
+                                                                                                                                                                                       Handeck 2
+                                                                                                                                                                                       Handeck 3
+                                                                                                                                                                                       Grimsel 1
+                                                                                                                                                                                       Grimsel 2
+
+   Fig. 2. Overview of the Kraftwerke Oberhasli AG (KWO) hydro power plant.1
+
+   as state variables, and without considering balancing reservoirs somehow is not reasonable. Because in such a case
+   the HPP model would have to be aggregated, a detailed analysis of it does not make sense. Therefore, the only choice
+   is to consider the balancing reservoirs as well. For a model with hourly consideration of both storage and balancing
+   reservoirs the application of SDDP will be troublesome. The reason for this is that the fillings of balancing reservoirs
+   are very volatile (in a MTHP perspective) and therefore difficult to predict. In such a setting, the convergence of SDDP
+   will be poor and an application of SDP is more meaningful. As a conclusion, one can say that a model with hourly
+   time steps only make sense if the balancing reservoirs are also considered as states and if the model is solved with
+   SDP.
+   However, also SDP is troublesome to use in the setting considered in this paper. The more states, the more SDP
+   suffers from the curse of dimensionality. Additionally, the discretization of the states has to be relatively fine in order
+   to be able to estimate profit-to-go functions properly for hourly time steps. Such an approach would require vast
+   computational resources for the here discussed power plant and, therefore, SDP-algorithms are not considered further.
+
+      A relative simple trick allows the usage of SDDP even for hourly time steps, which is a candidate model for the
+   discussed HPP. If the fillings of very volatile reservoirs are neglected in the calculation of the value function, then,
+   the convergence of SDDP is less of an issue. In principle, this means to consider only the storage reservoirs as state
+   variables, whereas the balancing ones are considered but only with a constant filling. Since even hourly fillings of the
+   storage reservoirs will not fluctuate much, they can be predicted well and SDDP can be applied.
+   This model will be referred in this paper as the hourly model. The recursive optimality equation of it looks as follows:
+
+                                                           Qt (vts-to1r )                         =  1   Nt    max              ctjmtj  + Qt+1(vtstor, j)                                                                           (2)
+                                                                                                     Nt  j=1
+                                                                                                              u, p,o,v,m
+
+                                                           s.t.:                                  vtstor,bal, j = vts-to1r,bal, j - ot - fu(ut) + fp(pt) + at                                                                       (2a)
+                                                                                                  vtbal, j = vbt-a1l, j = vb0al                                                                                                     (2b)
+                                                                                                  mt = ut - pt                                                                                                                      (2c)
+                                                                                                  0  u, p, o, vstor, j, vbal, j  ubt , lbt  m  ubt                                                                                  (2d)
+
+      In comparison to the problem (1), t has a time duration of one hour. Therefore, the subproblem for a scenario j
+   is very small and consists of one decision per pump, turbine, etc. Further, the water balances of both balancing and
+   storage reservoirs are assured in the same way in (2a). In the course of the algorithm, the fillings of the balancing
+   reservoirs are not tracked, since they are not part of the state space. Therefore, their filling is kept constant in (2b) and
+   is not important for the outcome of the optimization.
+
+   1 Kraftwerke Oberhasli AG, "anlageschema-kwo.pdf", Retrieved from http://www.kwo.ch, November 2015.
+          Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10                                            7
+
+The implementation of such an algorithm is quite similar to implementing a multi-horizon approach. The key differ-
+ence is that there are more time steps but the subproblems are smaller.
+
+   Note that whereas the balancing reservoirs are considered in the optimization and no aggregation of turbines and
+pumps are necessary, the fillings of these reservoirs stay constant and no water can be stored. Therefore, short-term
+operation is modeled unrealistically. Further, this hourly stage-wise independent formulation allows only a poor
+representation of the MTHP problem. That is because in a recursive dynamic programming algorithm, there is only the
+knowledge of the expected future. When there are no price or water inflows states, then the autoregressive nature of
+such processes are not exploited. For instance, in such a model, relative high prices in the evening because of high
+demand can not be anticipated.
+
+4.2. 2. Alternative: MTHP model with daily time steps
+
+   Another option to model the MTHP problem for a complex HPP is by performing a temporal aggregation of it to
+daily time steps. For a time horizon in MTHP problems of typically a few years, such an aggregation is appropriate.
+However, an aggregated time step leads also to the need of aggregating the market and the HPP model. Aggregating
+an hourly electricity market to a daily one or even further can be meaningful. Possibilities of how to do that in this
+context are also shown in [10]. In contrast to the market model, the implications on the HPP model can be more
+awkward. A daily view on balancing reservoirs is not reasonable. Such reservoirs are then often aggregated, which
+mostly also implies an aggregation of turbines and pumps which is troublesome, especially for the here considered
+complex power plant.
+Out of these reasons, a similar trick as the one applied to the hourly model can be chosen: The balancing reservoirs
+are considered, but they are not modeled as state variables. The filling of these balancing reservoirs stays therefore
+the same, but no aggregation of turbines and pumps is necessary. Further, since a daily time step is modeled, only the
+daily average values of production and market decisions are considered. This model will be referred in the paper as
+the daily model.
+With these modifications, the mathematical model is the same as (2) with the time step t modeling a duration of one
+day. Whereas previously, the constant filling of the balancing reservoirs led to model inaccuracies, this issue is here
+less prominent since the detailed operation is not considered explicitly. On the other hand, the performance of the HPP
+may be under- or overestimated considerably with a daily view.
+
+4.3. 3. Alternative: MTHP model with daily time steps and intrastage subproblems
+
+The decomposition of a problem into inter- and intrastage problems allows a third alternative modeling approach.
+
+The idea is to consider all reservoirs as states in a daily interstage problem as also done in [2]. This model is similar to
+
+the proposed multi-horizon model in equation (1), however, the physical differences of the reservoirs are not exploited.
+
+This model will be referred in this paper as the daily intrastage model. Its mathematical model can be formulated as
+
+follows:                                                                          
+
+          Qt(vt-1) =  1   Nt u,mp,oa,vx,m  24    E  [c()m()]  +  Qt+1(vtj)          (3)
+                      Nt                   =1
+                          j=1                  A j
+
+          s.t.:       vj = vj-1 - oj - fu(uj) + fp(pj) + aj ,                       (3a)
+                      vj=0 = vt-1                                                   (3b)
+                      vtj = vj=24                                                   (3c)
+                      m = u - p ,                                                   (3d)
+                                                                                    (3e)
+                      0  u, p, o, v  ubt , lbt  m  ubt
+
+   In comparison to the formulation (1), the model does not differentiate between storage and balancing reservoirs.
+Therefore, the value of the fillings in the balancing reservoirs are considered in the calculation of the value function
+Q(t, v). On the other hand, the water balance of the storage reservoirs are formulated in hourly resolution in (3a). As
+in (1), the value function is evaluated only in daily resolution. The linkage between the inter- and intrastage problem
+8                   Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10
+
+              optimization gap [%]    multi-horizon                                                                                                                     %                 multi-horizon
+                                                                                                                      simulation profit / lower bound [MEuro]       %                     hourly model
+                                      hourly model                                                                                                                                        daily model
+                                                                                                                                                                                          daily intrastage
+                                      daily model                                                                                                              120
+                                      daily intrastage
+         20
+                                                                                                                                                               100
+         10
+                                                                                                                                                                    %                        %
+          0
+             0                                                                                                                                                 80                         simulation profit
+                                                                                                                                                                                          lower bound
+   a)
+                20  100               120                                                                                                                      00   20     100                              120
+
+                running time [hours]                    b)                                                                                                          running time [hours]
+
+   Fig. 3. Comparison of computational complexity and modeling accuracy: a) Optimization gap as the difference of the lower and upper bound of
+   the SDDP algorithms in %. After less than 12 hours all methods saturated only the hourly formulation needed a few days. Note that the gap of
+   the daily intrastage model stayed around a relative high 6 %. b) Simulation profit (solid lines) and lower bound of the SDDP algorithms (dashed
+   lines). Stabilization of the lower bound and simulation profit indicates a converged algorithm and, respectively, that the operation policies are not
+   improving anymore. Further, a small difference between simulation profit and lower bound points to high model accuracy.
+
+   is performed in the constraints (3b) and (3c).
+
+      This daily intrastage model appropriately allows only deterministic intrastage problems whereas in the multi-
+   horizon formulation (1) also stochastic ones would be possible (as depicted in Fig. 1 b)). This is because the in-
+   troduction of stochasticity would complicate the problem here to a great extent, since for each intrastage scenario
+   a different profit-to-go value Qt+1(vt) would have to be calculated.2 However, in the setting here, a deterministic
+   intrastage problem is sufficient.
+
+      Whereas from the modeling point of view the model is more precise than the formulation (1), the complexity to
+   solve such a problem is relatively high. First, because of a higher number of state variables and second, because the
+   daily filling of balancing reservoir are not important from a MTHP perspective and, therefore, SDDP will have difficulties
+   in converging to stable filling values (as it will be shown later). Hence, such a model seems to be more appropriate
+   for HPPs with only one type of reservoirs.
+
+   4.4. Comparison of computational complexity and modeling accuracy
+
+      Multi-horizon models as well as the three introduced traditional models are now compared regarding the compu-
+   tational complexity, if the models are optimized by a SDDP algorithm. The implementation was done in Matlab and
+   solved on a computer with two Intel Xeon E5 processors at 2.2 GHz. 16 individual processor cores were available in
+   total but only 8 of them were used. Linear, quadratic, and mixed-integer linear programs were solved by the mathe-
+   matical solver IBM ILOG CPLEX 12.4.
+   To keep the computational burden low as well as to achieve a meaningful comparison, all of the optimizations are per-
+   formed without considering different scenarios of water inflows and market prices, although they would allow it. The
+   models are formulated for a time horizon of one year. Dualized SDDP algorithms (since no stochasticity is considered,
+   strictly speaking DDP algorithms) are used with a cutting plane selection method based on level one dominance and
+   maturity of the cuts (see also [13­16]).
+
+      Fig. 3 a) depicts the development of the optimization gap over running time of the SDDP algorithms. It is not
+   clear a priori which optimization gaps relate to good operation policies. However, some structural insights about the
+   convergence and the computational requirements of the different methods can be given.
+   After around 30 hours, the gap of the multi-horizon formulation did not improve anymore but stayed at a 0.5 %,
+
+     2 This would require that the cutting planes would have to be considered multiple times within each intrastage subproblem. Therefore, if
+   stochastic intrastage scenarios would be needed, a better modeling formulation would be to consider shorter time stages t and to consider the
+   additional uncertainty as interstage scenarios.
+Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10                                                                           9
+
+indicating an almost optimal solution to the formulated problem. In comparison, the formulation of the hourly model,
+due to a higher number of subproblems and lower convergence rate, needed more than 4 days of running time until
+the optimization gap stabilized at around 5 %. Notable was also the high memory requirement because of hourly sets
+of hypercuts, which are very similar but, nevertheless, have to be stored individually.
+In the daily formulation, the subproblems to solve are of similar size as the ones of the hourly formulation but there
+are 24 times less of them. Additionally, the convergence of the algorithm should be slightly better. These findings
+were qualitatively confirmed. After only 2 hours and approximately 50 iterations, the optimization gap converged to
+0.5 %. Interestingly, the daily intrastage formulation converged almost as fast, with a gap of 7 % in half an hour of
+running time. However, the further convergence was very slow with a gap of still around 6 % after two days, which
+confirms the difficulties in finding optimal balancing reservoir fillings.
+
+   In order to analyze the modeling accuracy an operation simulation was performed. The simulation is constructed
+out of sequential hourly optimizations. In the hourly optimizations, the water values, depending on the method hourly
+or daily ones for storage or all reservoirs, are used as water opportunity costs and a mixed-integer linear program is
+formulated to find the optimal hourly operation. Note that such an operation simulation is much more realistic than
+the forward step of the SDDP algorithm of the different models.
+For a proper operation simulation study, the simulation would have to be repeated for different sampled uncertain data.
+Nevertheless, here are presented only the results from one simulation run. Further, the chosen sample of uncertain
+data is the one which was already used in the optimization. The reason for performing such an in-sample simulation
+is to be able to compare how well the approaches approximate the original problem. Practical experience would have
+to answer the questions if a close representation of the model is necessary and how valuable their policies are.
+
+   Fig. 3 b) shows the lower bound of the algorithms (dashed lines), which are the operation values estimated by the
+SDDP forward steps. In addition, the evolutions of the operation simulation profits is depicted (solid lines). These
+profits increase in running time of the SDDP algorithms because better policies can be used. However, note that the
+simulation profits can not be compared directly among the different methods, because a higher simulation profit could
+also be due to overfitting.3 Further, interesting to note is that in all simulations a comparable small amount of spillage
+was present. So the reason for higher simulation profits is primarily because of a different use of the water in time.
+Out of Fig. 3 b), several questions regarding the modeling accuracy of the different models can be answered. First, a
+stabilization of the lower bound indicates convergence of the method. In line with the discussion of the computational
+complexity, the daily model convergence in less than one hour whereas the multi-horizon and daily intrastage model
+need a couple of hours until their lower bound stabilizes. Again, the hourly model requires a few days.
+Second, the stabilization of the simulation profit indicates operation policies which are not improving anymore. Inter-
+estingly, the further improvement of the different optimization gaps indeed leads to better policies. Therefore, similar
+observations as given before are valid regarding the necessary running time.
+
+   Finally and most importantly, a smaller difference between the simulation profit and the lower bound indicates a
+better model accuracy. The daily model lead to a undervaluation of the performance of more than 10 %. This result
+may suggest that the HPP is operationally quite flexible. Therefore, the performance of the plant depends more on
+being able to take the opportunities on the hourly market, which is not well modeled with a daily view on it, and not
+so much on restrictive hourly water balances.
+On the other hand, the difference of the hourly model was also more than 10 %, however, it overvalued the perfor-
+mance. This could point to a unnecessary detailed optimization of a poor model.
+The difference for the daily intrastage model of 4-6 % is much better. The model undervalues the performance where
+the reason could be the relative high optimization gap. In comparison, the difference in the multi-horizon model is
+only 2-3 % which demonstrates its accuracy and superiority to the other models. The model slightly overvalues the
+performance which could be due to the deterministic model of the intrastage problem.
+
+  3 Consider for instance a deterministic optimization. A policy based on it would lead to much more profit for the given scenario, however, most
+probably not for different possible scenarios because the policy has been overfitted to the given scenario.
+10  Hubert Abgottspon and Göran Andersson / Energy Procedia 87 (2016) 2 ­ 10
+
+    5. Concluding remarks
+
+       In this paper, a novel modeling approach, the multi-horizon modeling, was proposed and evaluated against tradi-
+    tional modeling approaches. For a medium-term hydro power planning optimization of complex hydro power plants
+    with a few reservoirs of different sizes, multi-horizon models are a very efficient modeling approach both from the
+    modeling as well as from the computational point of view.
+    It was shown that the traditional models either suffer from model inaccuracies or high computational complexity. A
+    daily aggregated model performed reasonably well, but it neglects hourly flexibility leading to an underestimation of
+    the operation opportunities. But an extension of it to hourly time steps was even more troublesome, which could be
+    explained by the issue of optimizing a poor model in a more detailed way. The third alternative approach decomposes
+    the problem into inter- and intraday problems similarly to multi-horizon models. However, because it does not exploit
+    the different physical types of reservoirs, it is difficult to close the optimization gap which leads to suboptimal solu-
+    tions.
+    Multi-horizon models, on the other hand, showed a number of advantages. They are more realistic, have less model-
+    ing issues since no aggregation is necessary and have a computational complexity which is almost as good as the one
+    from aggregated models. Therefore, proper constructed multi-horizon models solved with stochastic dual dynamic
+    programming are applicable for complex medium-term hydro power planning problems possibly solvable in less than
+    a day and simultaneously allow many modeling details.
+
+     References
+
+     [1] Kaut, M., Midthun, K., Werner, A., Tomasgard, A., Hellemo, L., Fodstad, M.. Multi-horizon stochastic programming. Computational
+          Management Science 2013.
+
+     [2] Lo¨hndorf, N., Wozabal, D., Minner, S.. Optimizing trading decisions for hydro storage systems using approximate dual dynamic program-
+          ming. Operations Research 2013.
+
+     [3] Pritchard, G., Philpott, A., Neame, P.. Hydroelectric reservoir optimization in a pool market. Mathematical Programming 2005.
+     [4] Densing, M.. Hydro-electric power plant dispatch-planning: Multi-stage stochastic programming with time-consistent constraints on risk.
+
+          Ph.D. thesis; Eidgeno¨ssische Technische Hochschule Zu¨rich, ETH Zu¨rich; 2007.
+     [5] Densing, M.. Dispatch planning using newsvendor dual problems and occupation times: Application to hydropower. European Journal of
+
+          Operational Research 2013.
+     [6] Fleten, S.E., Kristoffersen, T.K.. Stochastic programming for optimizing bidding strategies of a nordic hydropower producer. European
+
+          Journal of Operational Research 2007.
+     [7] Abgottspon, H., Andersson, G.. Approach of integrating ancillary services into a medium-term hydro optimization. In: XII SEPOPE:
+
+          Symposium of Specialists in Electric Operational and Expansion Planning. 2012.
+     [8] Abgottspon, H., Bucher, M., Andersson, G.. Stochastic dynamic programming for unified short- and medium-term planning of hydro power
+
+          considering market products. In: 12th IEEE International Conference on Probabilistic Methods Applied to Power Systems (PMAPS). 2012.
+     [9] Abgottspon, H., Andersson, G.. Strategic bidding of ancillary services for a hydro power producer. In: 10th International Conference on the
+
+          European Energy Market (EEM). 2013.
+    [10] Abgottspon, H., Andersson, G.. Medium-term optimization of pumped hydro storage with stochastic intrastage subproblems. In: Power
+
+          Systems Computation Conference (PSCC), Wroclaw, Poland. 2014.
+    [11] Abgottspon, H., Nja´lsson, K., Bucher, M.A., Andersson, G.. Risk-averse medium-term hydro optimization considering provision of spinning
+
+          reserves. In: International Conference on Probabilistic Methods Applied to Power Systems (PMAPS 2014), Durham, UK. 2014.
+    [12] Bixby, R., Rothberg, E.. Progress in computational mixed integer programming--a look back from the other side of the tipping point. Annals
+
+          of Operations Research 2007.
+    [13] Cerisola, S., Latorre, J.M., Ramos, A.. Stochastic dual dynamic programming applied to nonconvex hydrothermal models. European Journal
+
+          of Operational Research 2012.
+    [14] Thome, F., Pereira, M., Granville, S., Fampa, M.. Non-convexities representation on hydrothermal operation planning using sddp; 2013.
+
+          URL: http://www.psr-inc.com.br/portal/psr/publicacoes/; working paper.
+    [15] Homem-de Mello, T., de Matos, V.L., Finardi, E.C.. Sampling strategies and stopping criteria for stochastic dual dynamic programming: a
+
+          case study in long-term hydrothermal scheduling. Energy Systems 2011.
+    [16] de Matos, V.L., Philpott, A., Finardi, E.C.. Improving the performance of stochastic dual dynamic programming. Optimization Online 2012.
+

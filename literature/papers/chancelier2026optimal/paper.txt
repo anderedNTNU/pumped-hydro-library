@@ -1,0 +1,1158 @@
+Computational Management Science (2026) 23:16
+https://doi.org/10.1007/s10287-026-00564-7
+ ORIGINAL PAPER
+
+Optimal operation and valuation of electricity storage
+systems in intraday markets
+
+Jean-Philippe Chancelier1 · Michel De Lara1 · Tanguy Lindegaard2 ·
+François Pacaud3 · Teemu Pennanen4 · Ari-Pekka Perkkiö5
+
+Received: 19 April 2025 / Accepted: 27 January 2026 / Published online: 9 April 2026
+© The Author(s) 2026
+
+Abstract
+This paper applies computational techniques of convex stochastic optimization to
+optimal operation and valuation of electricity storage systems in the face of uncer-
+tain electricity prices. Our valuations are based on the indifference pricing principle,
+which builds on optimal trading strategies and calibrates to the user's financial
+position, market views and risk preferences. The underlying optimization problem
+is solved with the Stochastic Dual Dynamic Programming algorithm, which is ap-
+plicable to various specifications of storage systems, and it allows for e.g. hard
+constraints on storage capacity and charging speed. We illustrate the approach in
+intraday trading where the agent charges or discharges a battery over a finite num-
+ber of delivery periods, and the electricity prices are subject to bid-ask spreads and
+significant uncertainty. Optimal strategies are found in a matter of minutes on a
+regular PC. We find that the corresponding trading strategies and battery valuations
+vary consistently with respect to the agent's risk preferences as well as the physical
+characteristics of the battery.
+
+1Introduction
+
+The growing proportion of renewable energy generation increases the uncertainties
+and seasonalities of supply and the price of electricity. This creates financial incen-
+tives to use batteries and other electricity storage systems for trading electricity in
+order to benefit from the price fluctuations. It can be expected that when the overall
+storage capacity increases and such activities become more popular, the aggregate
+supply and price fluctuations will diminish. Further discussion and references on the
+
+This research benefited from the support of the FMJH Program Gaspard Monge for optimization and
+operations research and their interactions with data science.
+
+Extended author information available on the last page of the article
+
+                                                           13
+16 Page 2 of 25  J.-P. Chancelier et al.
+
+topic can be found e.g. in Yu and Foggo (2017) and the survey article Weitzel and
+Glock (2018).
+
+   This article proposes mathematical models and computational tools for optimal
+operation and valuation of batteries and other electricity storage systems in the con-
+text of electricity trading. Economically sensible valuation and optimization tech-
+niques will facilitate the expansion of the overall storage capacity, which will be
+necessary for the development of resilient power systems based on renewables. The
+presented techniques optimize storage management strategies in the face of uncertain
+electricity prices, and they adapt to the trader's financial position, risk preferences as
+well as different market conditions. Besides the simple model specifications studied
+in this paper, the techniques can be applied to various specifications of the storage as
+well as to extensions where the agent might have existing storage, production facili-
+ties or consumption or a mixture of the above.
+
+   We start by developing a stochastic optimization model for finding optimal strate-
+gies for charging and discharging an energy storage over time,subject to physical con-
+straints. The aim is to optimize a user-specified risk measure of the terminal wealth,
+which depends on the uncertain price fluctuations as well as on the decision maker's
+strategy. Realistic models of the storage result in stochastic optimization problems
+that fail to be analytically solvable. This is partly due to the fact that a physical stor-
+age has capacity constraint,s which amount to state constraints in the corresponding
+optimal control formulation. We will employ the stochastic dual dynamic program-
+ming algorithm which is able to handle convex instances of such problems compu-
+tationally in cases where the underlying risk factors are Markovian; see Dowson and
+Kapelevich (2021) and its references.
+
+   Being able to solve the optimal storage management problem numerically allows
+us to compute indifference prices for batteries and other storage systems. Indiffer-
+ence pricing is a general approach for determining economically meaningful prices
+of (financial) products whose cashflows cannot be replicated by trading liquid finan-
+cial instruments; see e.g. the collection (Carmona 2009) and the references there.
+In the numerical illustrations, we study an intraday trading problem where an agent
+manages a battery by charging or discharging it over 24 delivery periods, and the
+trading takes place in the intraday market. We show, in particular, how the physical
+characteristics of the storage and the trader's risk preferences affect the valuations.
+
+   Optimal management of power systems under uncertainty has been recently
+surveyed in Roald et al. (2023), with the stochastic dual dynamic programming
+(SDDP) algorithm identified as one of the most promising methods for the manage-
+ment of energy storage systems (Löhndorf et al. 2013; Mégel et al. 2015; Löhndorf
+and Wozabal 2021; Zheng et al. 2022). As opposed to alternatives such as model
+predictive control (see e.g. Arnold and Andersson (2011)), SDDP takes explicitly
+into account the future uncertainties when optimizing decisions. Continuous-time
+approaches based on solving the Hamilton-Jacobi-Bellman equations, on the other
+hand, struggle with state constrain,ts which are necessary for realistic descriptions
+of storage syste,ms which usually involve hard constraints on the amount of stored
+energy. The recent paper (Picarelli and Vargiolu 2021) studies the optimal operation
+of a pumped hydroelectric storage with state constraints. The authors assume posi-
+tive electricity prices and linear utility funct,ions which do not support general risk
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 3 of 25 16
+
+preferences. They treat state constraints by the "level set approach", where nondiffer-
+entiable penalty functions are added to the objective. Similar techniques were applied
+by Germain et al. (2023) in the context of mean field games with some applications
+to renewable energy. Closer to the present paper is Löhndorf and Wozabal (2021)
+which studied gas storage valuation using the SDDP algorithm. As opposed to that
+of Löhndorf and Wozabal (2021), our model allows for lending or borrowing money
+in a cash account/money market. This avoids "discounting" future cashflows and it
+leads to a more natural notion of the indifference price of a storage in terms of money
+paid at the time of purchase. Moreover, thanks to the explicit modeling of the agent's
+cash position, we avoid the delicate "asset-backed trading strategies" of Löhndorf
+and Wozabal (2021) that, at a given point t in time, involve planned future decisions
+in addition to the decisions to be implemented at time t.
+
+   In the context of electricity markets, indifference pricing has been studied in Por-
+chet et al. (2009) and Callegaro et al. (2017) in the continuous-time setting. The first
+one applied indifference pricing to production facilities that are controlled by switch-
+ing between a finite number of states. The second one studied the pricing of a general
+class of structured contracts. A particularly interesting example there is a "virtual
+storage" contract, which resembles a physical storage in terms of the generated cash-
+flows. The numerical computations in Callegaro et al. (2017), however, are based on
+finite difference approximations of the associated Hamilton-Jacobi-Bellman (HJB),
+which do not adapt well to state constraints.
+
+   The rest of this paper is organized as follows: Sect. 2 starts with a formulation of
+the battery management problem as a stochastic optimization problem. The problem
+is then used to define the indifference price of a battery. The section concludes with a
+simple model of the electricity prices observed at the end of the intraday market for
+each delivery period. Section 3 reformulation of the storage management problem as
+an instance of a standard convex control problem. Section 4 gives a short review of
+the dynamic programming theory and the Stochastic Dual Dynamic Programming
+algorithm for the general problem formulation from Sect. 3. Section 5 gives the com-
+putational results for a battery management problem over 24 delivery periods.
+
+2 Battery management in the intraday market
+
+Consider the problem of managing a battery by charging or discharging it over a
+finite number T of delivery periods. Before 30 September 2025, there were 24 one-
+hour delivery periods in a day, while after that date, this was changed to 96 15-minute
+delivery periods. At the beginning of each delivery period, the trader decides on the
+amount of energy bought or sold during the delivery period. The energy is used to
+charge or discharge the battery. The agent aims to maximize the total revenue gener-
+ated by trading over the T periods.
+
+   Section 2.1 below gives a brief description of the intraday electricity market, and
+Sect. 2.2 formulates the optimization problem that will be studied in the remainder
+of the paper. Section 2.3 recalls the notion of indifference price and discusses its
+numerical computation. Section 2.4 describes the stochastic model that will be used
+to describe electricity prices in the computational experiments in Sect. 5.
+
+                                                           13
+16 Page 4 of 25                                                               J.-P. Chancelier et al.
+
+2.1 The intraday market
+
+During each delivery period, energy can be bought or sold at the imbalance prices;
+see RTE (2024). The imbalance prices are published a couple of minutes after the end
+of the delivery period, so they remain unknown during the delivery period when the
+physical electricity trading occurs. Electricity can be traded also before the delivery
+period in the intraday market, which is essentially a futures market for the physical
+commodities of energy delivered over the delivery periods. Each delivery period is
+associated with one futures market. Much like exchange-traded securities, the intra-
+day market is based on the double auction mechanism where traders submit limit
+orders in continuous time. All unmatched orders are recoded in the limit order book
+that gives the marginal futures prices for buying electricity in a given delivery period.
+
+   At any given time t, the limit order book for a given delivery period t  t can be
+represented by a nondecreasing marginal price curve st,t : R  R so that the cost
+of buying u units of energy is given by
+
+                                                  ^u
+
+                                   St,t (u) := st,t (v)dv;                                     (1)
+
+                                                  0
+
+see e.g., [Pennanen (2011), Section 2]. Since st,t is nondecreasing, the cost func-
+tion St,t is convex, and the best bid and ask prices are given by its left- and right-
+derivatives at the origin:
+
+s-t,t  =         lim  St,t (u)  =  lim st,t  (u)  and  s+t,t  = lim St,t (u)  = lim st,t (u);  (2)
+                         u                                       h0 u             u0
+                 h0                u0
+
+see [Rockafellar (1970), Theorem 24.2]. We always have st-,t < s+t,t , since other-
+wise, the best bid and ask offers would have been matched and taken out of the limit
+order book.
+
+2.2 The optimization problem
+
+When trading at the imbalance prices, one has to make trading decisions before
+knowing the associated prices. To avoid such a price risk, one can trade in the intra-
+day markets where the futures prices for each delivery period are observable in real
+time. This gives rise to a continuous-time portfolio optimization problem where one
+manages a portfolio of futures contracts, one for each delivery period. Such high-
+dimensional portfolio optimization problems are, in general, difficult to solve. More-
+over, a mathematical formulation of such a problem would require a stochastic model
+for the high-dimensional forward curve that gives the futures prices for each delivery
+period. Even if one was able to solve the associated optimization problem, one would
+be faced with the "model risk" that comes with the specification of such high-dimen-
+sional stochastic models.
+
+   We take the intermediate approach where energy for the tth delivery period is
+traded in the intraday market, but only just before the closing of the correspond-
+ing futures market. For example, we could observe the limit order book for the tth
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 5 of 25 16
+
+delivery period a small unit  of time (e.g. 5 seconds) before the intraday market for
+that period closes. We denote the corresponding cost function by St := St-,t; see
+Eq. (1). Unlike the imbalance prices, the cost function St is known at time t when
+
+making the decision to trade energy for the tth delivery period.
+   We study a simple storage with a maximum capacity of Xe and maximum charg-
+
+ing and discharging speeds of U and U , respectively. If u units of energy is input
+to the storage, the charging level increases by c(u) units. The function c : R  R
+is strictly increasing and satisfies c(u)  u for every u  R. Again, negative u cor-
+responds to discharging the battery. If x units of energy is stored at the beginning of
+period [t, t + 1[, the charging level will be (1 - l)x units at the end of the period. The
+constant l  [0, 1] describes proportional storage loss per period.
+
+   To formulate the battery management problem mathematically, we describe
+the uncertainties and information by a probability space (, F, P ) and a filtration
+(Ft)Tt=0, respectively, and assume that each cost function St is an Ft-measurable
+convex normal integrand1. The problem can then be written as
+
+maximize E[v(XTm)] over (Xm, Xe, U )  N
+
+subject to X0m = xm 0 ,
+
+X0e = 0,
+
+Xtm = Xtm-1 - St(Ut) t = 1, . . . , T,                                (3)
+Xte = (1 - l)Xte-1 + c(Ut) t = 1, . . . , T,
+
+Xte  [0, Xe] t = 1, . . . , T,
+
+Ut  [-U , U ] t = 1, . . . , T,
+
+where Xtm is the cash position and Xte is the amount of stored energy, respectively, at
+time t. The control variable Ut specifies the amount of energy bought at time t. Here
+and in what follows, N denotes the space of nonanticipative (i.e. (Ft)Tt=0-adapted)
+strategies. The constraint (Xm, Xe, U )  N thus means that decisions taken at time t
+can only depend on the information observed by time t. As usual, negative purchases
+are interpreted as sales. The initial wealth xm 0 is fixed. The utility function  : R  R
+is assumed increasing and concave.
+
+2.3 Indifference pricing
+
+Indifference pricing is a general principle for defining economically meaningful val-
+ues of (financial) products in incomplete markets where prices cannot be determined
+by arbitrage arguments alone; see e.g. Carmona (2009) and Pennanen (2014) and
+their references. In general, indifference prices are subjective in the sense that they
+depend on an agent's existing financial position, risk preferences and views con-
+cerning the future development of the underlying risk factors (as described by their
+
+1Recall that a function f : Rn ×   R is an Ft-measurable normal integrand if the epigraphical map-
+ping   epi f (·, ) is a closed-valued and Ft-measurable; see e.g. [Rockafellar and Wets (1998), Chap-
+ter 14].
+
+                                                           13
+16 Page 6 of 25                                           J.-P. Chancelier et al.
+
+probabilistic model). For replicable claims, however, the indifference prices coincide
+with risk-neutral valuations; see [Pennanen (2014), Theorem 4.1].
+
+   We will study an agent who considers renting a battery for a fixed time period
+[0, T]. The indifference price for renting the battery is the maximum amount the
+agent could pay for it without worsening their financial position. In the context of
+problem (3), the indifference price is given by
+
+                  := sup{p  R|(xm 0 - p, Xe)  (x0m, 0)},  (4)
+
+where, for any x, X  R, (x, X) denotes the optimum value of (3) when x0m = x
+and Xe = X. Thus, (xm 0 - p, Xe) is the highest achievable expected utility when
+the agent pays p units of cash in exchange for getting access to a battery with maxi-
+mum capacity Xe. The value (xm 0 , 0), on the other hand, is the highest achievable
+expected utility for the agent if they decide not to rent the battery. The indifference
+price is thus the highest sensible price for an agent who measures their wellbeing by
+the expected utility of terminal wealth as in problem (3).
+
+   Note that, in this simple model where the agent either manages the battery or does
+nothing at all, we simply have (x0m, 0) = v(x0m). The indifference principle can
+equally well be applied in situations where the agent already owns storage and is
+considering renting more of it. Similarly, one could study situations where the agent
+has consumption or production facilities or any mixture of the above. In model (3),
+we have assumed that all revenue is invested in cash, but one could extend the model
+also by allowing investments in alternative assets. The model would then involve
+additional decision variables that describe the investment strategy. The indifference
+pricing principle applies equally well in such more complicated situations.
+
+   If the function x  (x, U ) is continuous and strictly increasing, the indifference
+price  is the unique solution to the equation
+
+                 (x0m - , Xe) = (x0m, 0)                  (5)
+
+provided a solution exists. Finding a solution of the equation (5) is a nontrivial prob-
+lem in general since a single evaluation of the function  requires the numerical
+solution of problem (3). The task simplifies, however, in the case of the exponential
+utility function
+
+                 (z)  =  1 [1  -  exp(-z)],               (6)
+                         
+
+where  > 0 is a given risk aversion parameter.
+
+Proposition 1 In the case of the exponential utility function (6), the indifference
+price (4) is given by
+
+                                  = - ln(1 - (0 , X e)) .
+                                                     
+
+13
+Optimal operation and valuation of electricity storage systems in...           Page 7 of 25 16
+
+Proof The change of variables Xtm  Xtm - x in problem (3) shows that the opti-
+mum value (x0m, Xe) is not affected if we set the initial wealth xm 0 to zero and add
+x0m units of cash to the terminal wealth XTm instead. Thus, in the case of exponential
+utility, the optimum value function satisfies
+
+                    (x, U ) = e-x(0, U ) + 1 (1 - e-x).
+                                                     
+
+Equation (5) can thus be written as
+
+e-(x0m-)(0, Xe) + 1 (1 - e-(x0m-)) = e-x0m (0, 0) + 1 (1 - e-xm 0 )
+                                                                             
+
+or equivalently
+
+                    e(0, Xe)         -  1 e  =   (0,  0)              -  1.
+                                                                         
+
+This has the unique solution
+
+                    =  ln(1   -  (0, 0))  - ln(1  -  (0, Xe)) ,
+                                           
+
+where (0, 0) = 0.                                                              
+
+Proposition 1 implies that the indifference price of the battery in (4) can be found by
+solving only one instance of problem (3). In problems where the agent has e.g. pro-
+duction facilities, the computation of the indifference price would require the solution
+of two optimization problems since, in that case, the computation of the optimum
+value (0, 0) obtained without renting the battery becomes nontrivial, unlike in the
+proof above.
+
+2.4 The electricity price model
+
+In the numerical illustrations in Sect. 5 below, we assume both St and c to be posi-
+tively homogeneous in the decision variables. More specifically, we will assume that
+
+                                     {  st+()u    if u  0,
+                                        s-t ()u   if u  0,
+                       St(u, ) =                                               (7)
+
+where s+t and s-t denote the best ask and the best bid prices, respectively, just before
+the tth delivery period; see (2). The bid and ask prices are modeled as stochastic
+processes. The above assumption can be justified for a small trader whose trades are
+unlikely to exceed the liquidity available at the best bid and ask prices. Larger orders
+may dig deeper into the limit order book so that the marginal prices would move
+
+                                                                               13
+16 Page 8 of 25                J.-P. Chancelier et al.
+
+against the trader according to equation (1). Simple stochastic models for the full
+limit order book can be found e.g. in Malo and Pennanen (2012).
+
+   For simplicity, we will assume that s-t = st -  and st+ = st + , where  > 0 is
+constant and only the mid-price st is stochastic. We will assume that
+
+                                          st = s¯t + t,
+
+where t is a zero-mean stochastic process and s¯t is the day-ahead price for the tth
+delivery period observed after the day-ahead auction. The logic is that, being futures
+prices for energy in the coming delivery periods, the day-ahead prices should be
+close to the expected intraday prices of the corresponding delivery periods. Consis-
+tent positive or negative deviations from day-ahead prices would allow for simple
+"statistical arbitrage" trades, so one would expect the prices to converge according
+to supply and demand. Figure 1 plots the historical time series of day-ahead and ID1
+prices for France in 2024 at hourly granularity. The plot in the bottom of Fig. 1 shows
+the difference of the two series.
+
+   The ID1 index is a weighted average of executed trades during the last hour before
+the closure of the intraday market. We take it as a proxy for the intraday mid-price in
+our statistical model below.
+
+   We will describe the process  = (t) by the autoregressive time series model
+
+                 t = at-1 + t  (8)
+
+Fig. 1 Time series of day-ahead and ID1 prices (the top plot) and their difference (bottom plot) for
+France in 2024
+
+13
+Optimal operation and valuation of electricity storage systems in...         Page 9 of 25 16
+
+where t are iid Gaussians with zero mean. We estimate the coefficient a  R with
+a linear regression from 8760 observations of t (365 days of hourly data). Table 1
+summarizes the results of the linear regression. The high p-value of the intercept sup-
+ports the assumption that  has zero mean. We will assume that the random term t
+in (8) follows the zero-mean Gaussian distribution. Its variance is estimated from the
+regression residuals
+
+                                        rt = t+1 - a^t.
+
+3 Convex control reformulations
+
+This section reformulates the storage management problem (3) as a convex stochastic
+optimal control problem. For generality, we will allow for the general control format
+of [Carpentier et al. (2023), Section 6.2] where, at each stage t, the system may be
+controlled by both Ft-1-measurable and Ft-measurable controls; see also Pennanen
+and Perkkiö (2026). Such formulations arise naturally, e.g. when trading in both
+intraday and imbalance markets. Other instances can be found in Parra et al. (2024).
+
+   Consider the optimal control problem
+
+            [  T-1                        ]
+
+minimize E          Lt(Xt, Utb, Uta+1) + J (XT ) over (X, U b, U a)  N , (9a)
+
+               t=0
+
+                               subject to X0 = x0,                           (9b)
+
+Xt+1 = Ft(Xt, Utb, Uta+1) t = 0, . . . , T - 1 a.s.,                         (9c)
+
+where the state Xt and the controls2 Utb and Uta are random variables taking val-
+ues in RN , RMb and RMa . The functions Lt : RN × RMb × RMa ×   R and
+J : RN ×   R are extended real-valued convex normal integrands and, for each t,
+
+ Ft(xt, Utb, Uta+1, ) := At+1()xt + Btb+1()Utb + Bta+1()Uta+1 + Wt+1(),
+
+where At+1, Btb+1 and Bta+1 are Ft+1-measurable random matrices of appropriate
+dimensions and Wt+1 are Ft+1-measurable random vectors. As before, the set N
+
+Table 1 Results of the linear  Slope a^                               Value  p-value
+regression (8)                 Intercept                              0.48   0.00
+                               R2                                     -0.13  0.65
+                                                                      0.23   .
+
+2The superscript b in Utb stands for "before" (in the sense of a decision taken at the beginning of the time
+interval [t, t + 1[), whereas the superscript a in Uta stands for "after" (in the sense of a decision taken at
+the end of the time interval [t, t + 1[).
+
+                                                           13
+16 Page 10 of 25                                    J.-P. Chancelier et al.
+
+denotes the space of adapted stochastic processes. The vector x0  RN is a given
+initial state.
+
+   The format of problem (9) is quite general and can accommodate various kinds
+of storage systems and market specifications. Besides storage management and elec-
+tricity trading, it can include production facilities and/or consumption of electricity.
+The computational techniques discussed below apply to such situations as well. Both
+production and consumption may create stronger incentives to buy storage systems.
+The indifference pricing approach described in Sect. 2.3 applies directly to such
+modifications.
+
+   Problem (3) does not fit the format of (9), in general, since the functions St and c
+are nonlinear. However, when the cost functions are of the form (7), we can rewrite
+the budget constraint in (3) as the linear equation
+
+                  Xtm = Xtm-1 - st+Ut+ + s-t Ut-,
+
+where Ut+ and Ut- are the positive and negative parts, respectively, of the control
+variable Ut. As to the battery, we will assume that the function c is of the form
+
+                              {  c+u  if u  0,
+                                 c-u  if u  0
+                  c(u) =                                            (10)
+
+where c+ and c- are constants such that 0 < c+  c-. We can then write the battery
+constraint in the linear form
+
+                          Xte = (1 - l)Xte-1 + c+Ut+ - c-Ut-.
+
+When the cost function is given by Equation (7) and the function c is given by Equa-
+tion (10), Problem (3) can be written with linear system equations as
+
+    maximize      E[v(XTm)] over (Xm, Xe, U )  N
+    subject to
+                  X0m = x0m,                                        (11a)
+                  X0e = 0,
+
+                  Xtm = Xtm-1 - s+t Ut+ + st-Ut- t = 1, . . . , T,
+
+    Xte = (1 - l)Xte-1 + c+Ut+ - c-Ut- t = 1, . . . , T,            (11b)
+
+                  Xte  [0, Xe] t = 0, . . . , T,                    (11c)
+
+                  Ut+  [0, U ] t = 0, . . . , T,                    (11d)
+
+                  Ut-  [0, U ] t = 0, . . . , T .                   (11e)
+
+Consider also the relaxation
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 11 of 25 16
+
+     maximize    E[v(XTm)] over (Xm, Xe, U^ , U )  N
+     subject to
+                 X0m = x0m,                                             (12a)
+                 X0e = 0,
+
+                 Xtm = Xtm-1 - s+t U^t + s-t Ut t = 1, . . . , T,
+
+     Xte = (1 - l)Xte-1 + c+U^t - c-Ut t = 1, . . . , T,                (12b)
+                  Xte  [0, Xe] t = 0, . . . , T,                        (12c)
+
+                 U^t  [0, U ] t = 0, . . . , T,                         (12d)
+
+                 Ut  [0, U ] t = 0, . . . , T,                          (12e)
+
+where we allow U^ and U to take strictly positive values at the same time. Problem
+12 is a convex stochastic control problem. If we add the complementarity constraint
+that U^tUt = 0 for every t, then Problem (12) is equivalent to Problem (11). Thus,
+Problem (12) is a relaxation of Problem (11) and thus, its optimum value of (12) is at
+least as high as that of (11). Adding the complementarity constraint would, however,
+destroy convexity and make the problem difficult to solve, in general. The following
+Proposition 2 gives a simple condition under which the complementarity condition is
+redundant in the sense that, the optimum values in problems (12) and (11) coincide,
+and the optimal solutions of problem (11) are easily constructed from the solutions
+of (12).
+
+Proposition 2 Assume that
+
+                           st-    s+t  .                                (13)
+                           c-     c+
+
+Then the optimum values of (11) and (12) coincide. Moreover, if (X m, X e, U^ , U ) is
+feasible in (12), and we define (X¯ m, X¯ e, U¯ ) by setting
+
+                           Ct := c+U^t - c-Ut                           (14)
+
+and
+
+                           U¯t := Ct+/c+ - Ct-/c-,                      (15a)
+
+     X¯tm := X¯tm-1 - s+t U¯t+ + st-Ut-, X¯0m = x0m,                    (15b)
+
+                                  X¯te := Xte, X¯0e = 0,                (15c)
+then (X¯ , U¯ ) is feasible in (11) and
+
+                                                                        13
+16 Page 12 of 25                                                                              J.-P. Chancelier et al.
+
+                                          E[v(X¯Tm)]  E[v(XTm)].                                           (16)
+
+Proof As already pointed out, the optimum value of Problem (11) is dominated by
+that of Problem (12). To prove the converse, it suffices to prove the second claim of
+statement.
+
+   Let (Xm, Xe, U^ , U ) be feasible in Problem (12), and define (X¯ m, X¯ e, U¯ ) accord-
+ing to (14) and (15a)-(15c). We first show that (X¯ m, X¯ e, U¯ ) is feasible in Prob-
+
+lem (11). For each t = 1, . . . , T , we have to consider two cases according to the sign
+
+of Ct but we just consider the case Ct  0 as the case Ct  0 is treated in a similar
+way. If Ct  0, then U¯t  0 and thus,
+
+        U¯t- = 0      and                 0      U¯t+  =  U¯t  =  U^t  -  c-  Ut    U^t    U  ,    (17)
+                                                                          c+
+
+where the last inequality holds since U^t satisfies (12d). By (17), U¯ satisfies con-
+straints (11d) and (11e). Since Ct  0, we get
+
+s+U¯t+  -  s-U¯t-  =  s+U(¯t                        )     (as U¯t+ = U¯t and U¯t- = 0 when U¯t  0)
+                   =  s+ U^t                     Ut                                               (by (17))
+                              -              c-
+                                             c+                                                        (18)
+
+                    s+U^t - s-Ut
+
+where the last inequality holds by assumption (13). On the other hand,
+
+c+U¯t+ - c-U¯t- = c+(Ct/c+)                               (by (15a) as Ct+ = Ct and Ct- = 0 when Ct  0)(19)
+                    = c+t U^t - c-t Ut ,
+
+where the second equality holds by (14). Proceeding in a similar way when Ct  0
+shows that (18) and (19) holds for arbitrary Ct.
+
+   Equation (19) together with the initial conditions implies that Xe and X¯ e coin-
+cide and thus, X¯ e satisfies (11c) since Xe satisfies (12c). Thus, we have proved that
+(X¯ m, X¯ e, U¯ ), is feasible in Problem (11).
+
+   It remains to prove (16). Since the utility function v is nondecreasing, it suffices
+show that XTm  X¯Tm. We use induction on t. Clearly, X0m = x0m = X¯0m. Assume
+now that that Xtm-1  X¯tm-1. We get
+
+           (                              )
+Xtm = Xtm-1 - st+U^t - st-Ut
+           (                              )                                                       (by (12a))
+ X¯tm-1 - s+t U^t - s-t Ut
+ X¯tm-1 - (s+U¯t+ - s-U¯t-)                                               (by the induction assumption)
+                                                                                                   (by (18))
+= X¯tm,                                                                                             (by (11a))
+
+so, by induction, Xtm  X¯tm for all t = 0, . . . , T .                                                          
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 13 of 25 16
+
+Problem (12) is in the format of (9) without the here-and-now controls U b. Indeed,
+problem (12) is an instance of (9) with N = 2, M b = 0, M a = 2,
+
+                            J (xT ) = -(xm T ),
+
+Uta = (Ut, U^t) and
+
+                      {     if Xte  [0, Xe], U^t+1  [0, U ] and Ut+1  [0, U ],
+                            otherwise.
+Lt(Xt, Utb, Uta+1) =     0
+                         +
+
+We can thus use the numerical techniques described in Sects. 4.2 and 4.3 below. In
+particular, since there are no here-and-now controls, we can use the SDDP Julia pack-
+age described in Dowson and Kapelevich (2021).
+
+4 Stochastic dual dynamic programming
+
+In general, problem (9) does not allow for analytical solutions, so we will resort to
+computational techniques based on dynamic programming. Section 4.1 reviews the
+general dynamic programming theory for optimal control problems of the form (9).
+In particular, Theorem 3 characterizes optimal solutions in terms of Bellman func-
+tions (aka cost-to-go functions) while Theorem 5 shows that when the underlying
+randomness is driven by a Markov process, the Bellman functions only depend on
+the current system state Xt and the current value of the Markov process. Section 4.2
+presents the discretization of Markov processes. Section 4.3 describes a version of
+the stochastic dual dynamic programming algorithm for problems of the form (9).
+
+4.1 Stochastic dynamic programming
+
+We will assume throughout that there is a stochastic process  = (t)tT=0 such that
+Lt-1, At, Btb, Bta and Wt in () depend on  only through t := (s)ts=0 and JT
+depends on  only through T . We will also assume that t takes values in Rdt and
+we denote
+
+                                      dt := d0 + · · · + dt
+
+and d = dT . Without loss of generality, we will assume that  = Rd and that t()
+is the projection of  to its tth component and that Ft is the -algebra on Rd gen-
+erated by the projection   t := (0, . . . , t). In particular, P is the distribution
+of . With a slight misuse of notation we will write Lt(xt, Utb, Uta+1, t+1) instead
+of Lt(xt, Utb, Uta+1, ) and similarly for other Ft+1-measurable random elements.
+
+   It follows that the Ft-conditional expectation of an Ft+1-measurable quasi-inte-
+grable random variable   (t+1) has a pointwise representation
+
+                                                                      13
+16 Page 14 of 25                                                                                            J.-P. Chancelier et al.
+
+               [                     ]        ^
+             E (
+                  t+1       )|    t      :=                 (t, t+1)dt(t, dt+1) t  Rdt ,
+
+                                                 Rdt+1
+
+where t is a regular t-conditional distribution of t+1; see, e.g., [Pennanen and
+
+Perkkiö (2024), Section 2.1.5]. Note that t+1 = (t, t+1). We say that a func-
+tion h : Rn × Rdt+1  R is lower bounded if there is an integrable function
+m : Rdt+1  R such that h(x, t+1)  m(t+1) for all (x, t+1)  Rn × Rdt+1 .
+Given a lower bounded measurable function h : Rn × Rdt+1  R, we denote
+
+                        ^                     h(x, t, t+1)dt(t, dt+1) (x, t)  Rn × Rdt .
+E[h(x, t+1)|t] :=
+
+                                         t+1
+
+We say that a sequence of lower-bounded measurable functions Jt : RN × Rdt  R
+solves the Bellman equations for () if JT = J and
+
+Jt(xt, t) = inf             E     inf    {Lt  (xt  ,  Utb,  Uta+1, t+1)     +  Jt+1(Ft(xt,  Utb,  Uta+1, t+1),      t+1)}  t  (20)
+
+                       Utb        Uta+1
+
+for all t = 0, . . . , T - 1 and P-almost every . Bellman equations of the above
+form (20), together with optimal feedbacks, can be derived3 from the framework of
+[Carpentier et al. (2023), Section 6] (and Carpentier et al. (2023), [Section 3.3] for
+optimal feedbacks), which first analyzed Bellman equations in the case of nonlinear
+system dynamics with decision-hazard-decision information structures. The follow-
+ing result is from [Pennanen and Perkkiö (2026), [Theorem 1].
+
+Theorem 3 (Optimality principle) If (Jt)Tt=0 is a solution of (20) such that each
+Jt : RN ×  t  R is a lower bounded convex normal integrand, then the optimum
+value of () equals J0 (x0 ) and an (X¯ , U¯ b, U¯ a)  N solves () if and only if X¯ 0 = x0
+and
+
+U¯tb(t)  argmin                E      inf     a  {Lt  (X¯t  ,  Utb, Uta+1,  t+1)  +  Jt+1(Ft(X¯t,  Utb,  Uta+1, t+1),  t+1)}  t    ,
+
+                 Utb RM b         Uta+1 RM
+
+U¯ta+1(t+1)     argmin {Lt(X¯t(t),            U¯tb(t),      Uta+1,  t+1)    +  Jt+1(Ft(X¯t(t),    U¯tb(t),  Uta+1,  t+1),  t+1)},
+
+               Uta+1 RM a
+
+X¯t+1(t+1) = Ft(X¯t(t), U¯tb(t), U¯ta+1(t+1), t+1)
+
+for all t = 0 , . . . , T - 1 and P-almost every .
+
+   The next result gives sufficient conditions for the existence of solutions to the Bell-
+man equations (20). Given a normal integrand h : Rn ×   R, the function h,
+
+3In [Carpentier et al. (2023), Sect. 6], Proposition 13 can be extended to the case where instantaneous
+costs, dynamics and conditional distribution of the next uncertainty all three depend upon the whole
+sequence of past uncertainties (and not only upon the last uncertainty). The proof requires an adaptation
+of Appendix D in the preprint version of Carpentier et al. (2023) (which contains additional material com-
+pared to the published version (Carpentier et al. 2023)). We can then obtain a variant of [Carpentier et al.
+(2023), Equation (42)] that corresponds to Equation (20) above. Then, optimal feedbacks can be deduced
+from [Carpentier et al. (2023), Subsect. 3.3].
+
+13
+Optimal operation and valuation of electricity storage systems in...                Page 15 of 25 16
+
+obtained from h by defining h(·, ), for each   , as the recession function of
+h(·, ), is a positively homogeneous convex normal integrand; see e.g. Pennanen and
+Perkkiö (2024) [Example 14.54a] or Pennanen and Perkkiö (2024) [Theorem 1.39].
+The following is Pennanen and Perkkiö (2026) [Theorem 2] with the first stage run-
+ning cost redefined as + unless X0 = x0.
+
+Theorem 4 (Existence of solutions) Assume that the set
+
+                  T -1
+
+(X, U b, U a)  N        Lt(Xt, Utb, Uta+1) + J (XT )  0,
+
+                  t=0
+
+X0 = 0 , Xt = AtXt-1 + BtbUtb-1 + BtaUta , t = 1, . . . , T a.s.
+
+is linear. Then the control problem () has an optimal solution and the associated
+Bellman equations (20) have a unique solution (Jt)tT=0 of lower-bounded convex
+normal integrands.
+
+   The following is from Pennanen and Perkkiö (2026) [Theorem 3].
+
+Theorem 5 (Markovianity) Let (Jt)tT=0 be a sequence of lower-bounded normal inte-
+grands that solve (20). Assume that  = (t)tT=0 is a Markov process and that Lt-1 ,
+At, Btb, Bta and Wt depend on  only throug (t, t-1 ). Then Jt depends on t only
+through t. If  is a sequence of independent random variables and if Lt-1 , At, Btb,
+Bta and Wt do not depend on t-1 , then Jt do not depend on  at all.
+
+4.2 Discretization of Markov processes
+
+In general, the Bellman equations (20) do not allow for analytical solutions. We will
+
+therefore resort to numerical approximations and assume, as in Theorem 5, that there
+is a Markov process  = (t)Tt=0 such that Lt-1, At, Bt and Wt depend on  only
+through (t-1, t). We will first approximate the Markov process  by a finite-state
+
+Markov chain, and then use the Stochastic Dual Dynamic Programming (SDDP)
+
+algorithm to solve the discretized problem; see Sect. 4.3 below.
+
+   We will discretize  using integration quadratures as in Tauchen and Hussey
+
+(1991) in the context of option pricing. To that end, we assume that the t-conditional
+
+distribution of t+1 has density pt(·|t). Given a strictly positive probability density
+t+1 on Rdt+1 , the conditional expectation of a random variable   (t+1) will
+be approximated by
+
+         ^
+
+E[|t] =  Rdt+1    (t+1)pt(t+1|t)dt+1
+
+=        ^        (t+1)  pt(t+1|t)      t+1                              (t+1)dt+1
+                         t+1(t+1)
+           Rdt+1
+
+          N   (ti+1  )  pt(ti+1|t)      wti+1                         ,
+                        t+1(ti+1)
+         i=1
+
+                                                                                    13
+16 Page 16 of 25                                                                                            J.-P. Chancelier et al.
+
+where (ti+1, wti+1)Ni=1 is a quadrature approximation of the density t. A natural
+
+choice for t+1 would be the unconditional density of t+1 provided it is available
+
+in closed form. Constructing such approximations for t = 0, . . . , T and conditioning
+each t+1 with the quadrature points ti obtained at time t results in a finite state Mar-
+kov chain where, at each t, the process (t)Tt=0 takes values in the finite set {tj}jN=1
+
+and the transition probability from tj to ti+1 is given by
+
+                                          ptji  :=      pt(ti+1|tj          )  wti+1     .
+                                                        t+1(ti+1            )
+
+Sufficient conditions for the weak convergence of such discretizations are discussed
+in Karr (1975).
+
+4.3 Stochastic dual dynamic programming algorithm
+
+The stochastic dual dynamic programming (SDDP) algorithm is a computational
+technique for solution of Bellman equations in convex stochastic optimization prob-
+lems governed by finite-state Markov chains. The algorithm is based on successive
+approximation of the cost-to-go functions (Jt)Tt=0 by polyhedral lower approxima-
+tions. The SDDP algorithm was introduced in Pereira and Pinto (October 1991) for
+stagewise independent processes  and later extended to finite-state Markov processes
+ in Infanger and Morton (1996); see also Philpott and de Matos (2012); Löhndorf
+and Shapiro (2019) and the references there. The following version of the SDDP
+algorithm from Pennanen and Perkkiö (2026) applies to control problems of form ().
+Note that, when the underlying process  is a finite-state Markov chain, the condi-
+tional expectations below are finite sums weighted by the transition probabilities.
+
+0. Initialization: Choose convex (polyhedral) lower-approximations Jt0 of the
+    cost-to-go functions Jt and set k = 0.
+
+1. Forward pass: Sample a path k of  and define Xk by X0k = x0 and
+
+Utbk  argmin E               inf       a  {Lt  (Xtk  ,  Utb,  Uta+1)   +       Jtk+1(Ft(Xtk, Utb,   Uta+1))}  tk  ,
+
+            Utb RM b     Uta+1 RM
+
+Uta+k1     argmin        {Lt  (Xtk  ,  Utbk, Uta+1,     tk ,  tk+1)    +  Jtk+1 (Ft (Xtk ,  Utbk ,  Uta+1,  tk, tk+1),  tk+1)},
+
+          Uta+1 RM a
+
+Xtk+1 = Ft(Xtk, Utbk, Uta+k1, tk, tk+1).
+
+2. Backward pass: Let JTk+1 := J and, for t = T - 1, . . . , 0,
+
+J~tk+1 (Xtk ,  tk )  :=    inf     E       inf       a  {Lt   (Xtk  ,  Utb  ,  Uta+1  )  +  Jtk++11(Ft(Xtk, Utb, Uta+1))}  tk  ,
+
+                         Utb RM b      Uta+1 RM
+
+          Vtk+1  J~tk+1(Xtk, tk)
+
+and let
+
+13
+Optimal operation and valuation of electricity storage systems in...       Page 17 of 25 16
+
+Jtk+1(xt, tk) := max{Jtk(xt, tk), J~tk+1(Xtk, tk) + Vtk+1 · (xt - Xtk)} xt  RN .
+
+   Set k := k + 1 and go to 1.
+
+Above, the dot " " stands for the Euclidean inner product. The minimization prob-
+
+lems in the above algorithm are two-stage stochastic optimization problems, while
+
+the original problem (9) has T decision stages. Note also that the third minimization
+
+in the forward pass is one of the second-stage problems already solved in the second
+minimization. The functions Jtk generated by the algorithm are polyhedral lower
+approximations of the true cost-to-go functions Jt. It follows that the minimization
+
+problems in the above recursions are finite-dimensional optimization problems that
+can be solved with standard convex optimization solvers. If the functions Lt and J are
+
+polyhedral, the problems are LP problems.
+   In the decision-observation format, where only the control U b is present, the two-
+
+stage problems reduce to a single-stage stochastic optimization problem, while in the
+observation-decision format without the U b control, only deterministic single-stage
+
+problem need to be solved. This version of the algorithm is implemented e.g. in the
+
+Julia package described in Dowson and Kapelevich (2021).
+
+Fig. 2 AR-1 process and its discretization as a Markov chain with 3 quadrature points per period
+
+Table 2 Time to compute 1000 iterations of SDDP as we increase the number N of quadrature points in the
+discretization of the AR process
+
+N         1    2                4   8                                 16   32                     64
+
+Time (s)  201  44               77  144                               270  820                    1820
+
+                                                                                13
+16 Page 18 of 25  J.-P. Chancelier et al.
+
+Fig. 3 Convergence of SDDP as we increase the number of quadrature points in the discretization
+
+5 Computational results
+
+Section 5.1 describes the data used in the specification of the model presented in
+Section 2. Section 5.2 presents the computational results obtained with the SDDP
+algorithm for the storage management problem (3). In particular, we study the accu-
+racy and computational times obtained when the number N of quadrature points is
+increased. Section 5.3 builds on the numerical optimization and calculates indiffer-
+ence prices of different specifications of energy storage systems.
+
+5.1Data
+
+In the numerical studies below, we consider the problem of battery management over
+one day in the intraday market. We make hourly decisions, so the number of decision
+stages is T = 24. We set the leakage rate to l = 0 as there is practically no leakage
+in a 24-hour period considered here. Furthermore, we set the discharging efficiency
+to c- = 1.05, the charging efficiency to c+ = 0.95, and the bidask spread coeffi-
+cient to  = 1. These values are not derived from empirical data, but can be easily
+adjusted without affecting the computations. Throughout this section, we assume that
+the maximum charging and discharging speeds are equal, and we express them as a
+fraction  of the battery capacity. In other words, U = U = Xe.
+
+   We discretize the one-dimensional Markov process  from Sect. 2.4 using the
+conditional quadratures described in Sect. 4.2. We choose the sampling densities t
+to be Gaussian with zero mean and variance 2. The corresponding measures are
+then approximated by Gauss-Hermite quadrature. For simplicity, we use the same
+number N of quadrature points in each stage t. We solve the resulting discretized
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 19 of 25 16
+
+Fig. 4 Optimum value estimates for an increasing number of quadrature points. The red and blue val-
+ues are given by SDDP, while the green values are obtained with out of sample simulation using the
+optimized Bellman functions
+
+Bellman equations with the Julia package SDDP.jl Dowson and Kapelevich (2021)
+which implements the Markov chain SDDP algorithm outlined in Sect. 4.3. Figure 2
+illustrates the discretization of the log-price over 15 days with N = 3 quadrature
+points per time.
+
+5.2 Optimization of storage operation
+
+We study the performance of SDDP as we increase the number N of quadrature points
+per period. For each N, we run 1000 iterations of SDDP. The risk aversion parameter
+ is set to 0.03 and the capacity to X¯e = 1MWh. In the convergence analysis of this
+subsection, we will assume that  := U /Xe = 0.4.
+
+   Table 2 gives the computation times for 1000 iterations of the SDDP algorithm
+for increasing the number N of quadrature points per stage. The computation time
+increases roughly linearly with N.
+
+   Each backward pass of the SDDP algorithm gives an upper bound for the optimum
+value in terms of the piecewise linear approximations of the Bellman functions. The
+convergence of the upper bounds is depicted in Fig. 3 for varying number N of grid
+points per stage. In the deterministic case where N = 1, the algorithm converges in
+less than 10 iterations. The convergence becomes slower when N increases, but for
+N  4, the upper bounds almost coincide.
+
+   In order to evaluate the quality of the cost-to-go functions provided by the SDDP
+algorithm, we perform an out-of-sample evaluation along 10000 scenarios randomly
+
+                                                           13
+16 Page 20 of 25  J.-P. Chancelier et al.
+
+Fig. 5 Kernel density plots of the terminal wealth in out-of-sample simulations using 10000 scenarios
+for different values of the risk aversion parameter  in the exponential utility function (6). The charg-
+ing speed is set to  = 0.4 for the top figure, and to  = 1 for the bottom figure. The capacity is set
+to X¯e = 1MWh
+
+drawn from the continuously distributed Markov process described in Sect. 2.4. In
+each scenario, we implement the control obtained as in the forward pass of the SDDP
+algorithm as described in Sect. 4.3. However, since the random out-of-sample values
+of t will not coincide with the Markov states sit in the finite-state approximation, we
+use the control obtained in the state sit nearest to the sampled value of t.
+
+   Figure 4 plots the out-of-sample estimates of the objective values together with
+the upper bounds found after 1000 iterations of the SDDP algorithm. The figure also
+plots "in-sample" averages obtained by evaluating the objective along scenarios ran-
+domly drawn from the finite-state Markov chain approximation of the continuously
+distributed Markov process . The out-of-sample averages increase and tend towards
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 21 of 25 16
+
+Fig. 6 Indifference prices (in euros) of storage systems with different storage capacities. Different col-
+ors correspond to agents with different risk aversion parameters. Prices are given in euros and capacity
+in MWh. The charging speed is set to  = 0.4
+
+Fig. 7 Indifference prices (in euros) of storage systems with different charging speeds. The horizontal
+axis gives the maximum hourly change in stored energy in units of the total storage capacity. Different
+colors correspond to agents with different risk aversion parameters. The capacity is set to X¯m = 1
+MWh
+
+                                                           13
+16 Page 22 of 25  J.-P. Chancelier et al.
+
+Fig. 8 Indifference prices (in euros) obtained with different values of the volatility parameter  in the
+AR process (8). Different colors correspond to different risk aversions. The charging speed is set to
+ = 0.4 and the capacity to X¯m = 1MWh
+
+the SDDP upper bound as we increase N. This is expected, as the Markov discretiza-
+tion is an approximation of the reference AR-1 process. However, for N > 8, the
+improvements seem marginal.
+
+5.3 Valuation of energy storage systems
+
+As observed in Sect. 5.2, the SDDP algorithm gives fairly accurate results already
+with N = 8 quadrature points per period. From now on, we fix N = 8 and proceed
+to compute indifference prices of storage using the numerical evaluations of the opti-
+mum value function of (3) as described in Sect. 2.3. Since we are working with the
+exponential utility function, the indifference prices are given by Proposition 1 after
+the solution of just one instance of the battery management problem. This section
+studies the dependence of the optimal solutions and the indifference prices when we
+vary the parameters of the battery and the trader's risk aversion.
+
+   Figure 5 displays kernel-density plots of the terminal wealth obtained with strate-
+gies optimized for different risk aversion. As expected, higher risk aversion results
+in a thinner left tail of the terminal wealth distribution. The plots the kernel density
+estimates for two values of the charging speed. The effect of the risk aversion seems
+to influence the terminal wealth more for batteries with a higher charging speed. A
+highly risk-averse agent will tend to operate a battery more sparingly due to the mar-
+ket price risk. A less risk-averse agent, on the other hand, tends to take full advantage
+of a high-speed battery.
+
+   Figure 6 plots indifference prices for batteries with different capacities and agents
+with different risk aversions. As one might expect, the valuation of a storage increases
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 23 of 25 16
+
+with the storage capacity. With higher risk aversion, however, the valuations seem to
+saturate for larger capacities. This is quite natural as a highly risk-averse agent will
+avoid large positions in stored electricity due to the price risk. Figure 7 plots the
+indifference prices for storage systems with different charging speeds. Again, the
+valuations are more sensitive for less risk-averse agents. Finally, Fig. 7 gives indif-
+ference prices for varying values of the volatility parameter  in the electricity price
+model (8). The volatility can be thought of as the agent's uncertainty concerning the
+evolution of electricity prices. For all levels of risk aversion, higher volatility makes
+the storage more valuable to the agent (Fig. 8).
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party material in this
+article are included in the article's Creative Commons licence, unless indicated otherwise in a credit line
+to the material. If material is not included in the article's Creative Commons licence and your intended use
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit ht t p: / / c r eat iveco mm o ns .o rg/l ic e n 
+se s/ b y /4 .0/ .
+
+References
+
+Arnold M, Andersson G (2011) Model predictive control of energy storage including uncertain forecasts.
+      In Power systems computation conference (PSCC), Citeseer, Stockholm, Sweden, vol 23, pp 24­29
+
+Callegaro G, Campi L, Giusto V, Vargiolu T (2017) Utility indifference pricing and hedging for structured
+      contracts in energy markets. Math Methods Oper Res 85(2):265­303
+
+Carmona R (ed) (2009) Indifference pricing: theory and applications. Princeton series in financial engi-
+      neering. Princeton University Press, Princeton, NJ
+
+Carpentier P, Chancelier J-P, De Lara M, Martin T, Rigaut T (2023) Time block decomposition of multi-
+      stage stochastic optimization problems. J Convex Anal 30(2):627­658
+
+Dowson O, Kapelevich L (2021) SDDP.jl: a Julia package for stochastic dual dynamic programming.
+      INFORMS Journal on Computing 33(1):27­33
+
+Germain M, Pham H, Warin X (2023) A level-set approach to the control of state-constrained McKean-
+      Vlasov equations: application to renewable energy storage and portfolio selection. Numer Algebra
+      Control Optim 13(3­4):555­582
+
+Infanger G, Morton DP (1996) Cut sharing for multistage stochastic linear programs with interstage
+      dependency. Math. Programming, 75(2):241­256. Approximation and computation in stochastic
+      programming
+
+Karr AF (1975) Weak convergence of a sequence of Markov chains. Z. Wahrscheinlichkeitstheorie und
+      Verw. Gebiete, 33(1):41­48
+
+Löhndorf M, Wozabal D (2021) Gas storage valuation in incomplete markets. Eur J Oper Res
+      288(1):318­330
+
+Löhndorf N, Shapiro A (2019) Modeling time-dependent randomness in stochastic dual dynamic program-
+      ming. Eur J Oper Res 273(2):650­661
+
+Löhndorf N, Wozabal D, Minner S (2013) Optimizing trading decisions for hydro storage systems using
+      approximate dual dynamic programming. Oper Res 61(4):810­823
+
+Malo P, Pennanen T (2012) Reduced form modeling of limit order markets. Quant Finance 12(7):1025­1036
+Mégel O, Mathieu JL, Andersson G (2015) Stochastic dual dynamic programming to schedule energy
+
+      storage units providing multiple services. In 2015 IEEE Eindhoven PowerTech, pages 1­6. IEEE
+Martinez Parra C, De Lara M, Chancelier J-P, Carpentier P, Janin J-M, Ruiz M (2024) A two-times-
+
+      cale decision-hazard-decision formulation for storage usage values calculation. arXiv preprint
+      arXiv:2408.17113
+
+                                                           13
+16 Page 24 of 25  J.-P. Chancelier et al.
+
+Pennanen T (2011) Arbitrage and deflators in illiquid markets. Finance Stoch 15(1):57­83
+Pennanen T (2014) Optimal investment and contingent claim valuation in illiquid markets. Finance Stoch
+
+      18(4):733­754
+Pennanen T, Perkkiö A-P (2024) Convex stochastic optimization­dynamic programming and duality in
+
+      discrete time, vol 107. Probability Theory and Stochastic Modelling. Springer, Cham
+Pennanen T, Perkkiö A-P (2026) Dynamic programming and dimensionality in convex stochastic control.
+
+      Optimization Letters 20:257­273
+Pereira MVF, Pinto LMVG (1991) Multi-stage stochastic optimization applied to energy planning. Math
+
+      Program 52:359­375
+Philpott AB, de Matos VL (2012) Dynamic sampling algorithms for multi-stage stochastic programs with
+
+      risk aversion. European Journal of Operational Research 218(2):470­483
+Picarelli A, Vargiolu T (2021) Optimal management of pumped hydroelectric production with state con-
+
+      strained optimal control. J. Econom. Dynam. Control, 126:Paper No. 103940, 21
+Porchet A, Touzi N, Warin X (2009) Valuation of power plants by utility indifference and numerical com-
+
+      putation. Math Methods Oper Res 70(1):47­75
+Roald LA, Pozo D, Papavasiliou A, Molzahn DK, Kazempour J, Conejo A (2023) Power systems optimi-
+
+      zation under uncertainty: a review of methods and applications. Electric Power Systems Research
+      214:108725
+Rockafellar RT (1970) Convex analysis. Princeton Mathematical Series, No. 28. Princeton University
+      Press, Princeton, N.J
+Rockafellar RT, Wets RJ-B (1998) Variational analysis, vol 317. Grundlehren der Mathematischen Wis-
+      senschaften [Fundamental Principles of Mathematical Sciences]. Springer-Verlag, Berlin
+RTE (2024) Imbalance settlement price, htt p s ://ww w.serv i ce s-rte .co m/en/view-dat a -pu bl i sh e d- by- rte/ba 
+      la nc ing . h t ml
+Tauchen G, Hussey R (1991) Quadrature-based methods for obtaining approximate solutions to nonlinear
+      asset pricing models. Econometrica. https://doi.org/10.2307/2938261
+Weitzel T, Glock CH (2018) Energy management for stationary electric energy storage systems: a system-
+      atic literature review. Eur J Oper Res 264(2):582­606
+Yu N, Foggo B (2017) Stochastic valuation of energy storage in wholesale power markets. Energy Eco-
+      nomics 64:177­185
+Zheng N, Jaworski J, Xu B (2022) Arbitraging variable efficiency energy storage using analytical stochas-
+      tic dynamic programming. IEEE Trans Power Syst 37(6):4785­4795
+
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+Authors and Affiliations
+
+Jean-Philippe Chancelier1 · Michel De Lara1 · Tanguy Lindegaard2 ·
+François Pacaud3 · Teemu Pennanen4 · Ari-Pekka Perkkiö5
+
+ Teemu Pennanen
+     teemu.pennanen@kcl.ac.uk
+
+     Jean-Philippe Chancelier
+     jean-philippe.chancelier@enpc.fr
+
+     Michel De Lara
+     michel.delara@enpc.fr
+
+     Tanguy Lindegaard
+     tanguy.lindegaard-ext@natixis.com
+
+     François Pacaud
+     francois.pacaud@mineparis.psl.eu
+
+13
+Optimal operation and valuation of electricity storage systems in...  Page 25 of 25 16
+
+     Ari-Pekka Perkkiö
+     a.perkkioe@lmu.de
+
+1 CERMICS, ENPC, Institut Polytechnique de Paris, CNRS, Marne-la-Vallée, France
+2 Gas and Power Origination, Natixis, 7 promenade Germaine Sablon, 75013 Paris, France
+3 Centre Automatique et Systèmes, Mines Paris-PSL, 60 boulevard Saint Michel,
+
+     75006 Paris, France
+4 Department of Mathematics, King's College London, Strand, WC2R 2LS London, UK
+5 Mathematics Institute, Ludwig-Maximilian University of Munich, Theresienstr. 39,
+
+     80333 Munich, Germany
+
+                                                                      13
+

@@ -1,0 +1,355 @@
+  Combined SDDP and simulator model for
+hydropower scheduling with sales of capacity
+
+                   Martin N. Hjelmeland                                    Arild Helseth
+                       Magnus Korpa°s                                SINTEF Energy Research
+
+         Department of Electric Power Engineering                        Trondheim, Norway
+Norwegian University of Science and Technology (NTNU)
+
+                       Trondheim, Norway
+                  {martin.hjelmeland@ntnu.no}
+
+   Abstract--In following work, we investigate the importance           In 1996, the European Union issued an internal electricity
+of detailed hydropower scheduling modelling when including           market directive (1996/92/EC) to gradually open the electricity
+sales of capacity, which adds complexity that is not easily          markets for all member states. Alongside the political agenda
+incorporated in a Linear Programming (LP) problem. In the pro-       to assemble a common European energy market there has
+posed approach, we use the profit-to-go function obtained from       been an even greater push towards a sustainable energy
+a Stochastic Dual Dynamic Programming (SDDP) scheduling-             development. With the large-scale entry of non-dispatchable
+model in a Simulator Model, based on Mixed Integer Program-          generation, strengthened and possible new market mechanisms
+ming (MIP), and perform detailed simulations. The Simulator          are required to attain secure operation of the electricity grid.
+Model allows a more complex problem description, than by the         Due to the flexibility of hydropower, volumes in the balancing
+LP formulation in the SDDP model. The Simulator Model may            markets in Norway have been low, and therefore low incentives
+therefore be used to give an estimate of the LP approximation,       for hydropower producers to assess models with multiple
+which is used for providing the opportunity cost in short-           market clearing. With an increasing share of renewables and
+term hydropower scheduling models or conceivably for making          stronger grid connection to other countries, this perception
+investment decisions.                                                may alter.
+
+   For the given case study, the expected profit from selling           Due to the complexity and large computation time detailed
+capacity was 29.2% higher than the linear SDDP Model to the          model imposes, a clear differentiation has been done for
+Simulator Model. The overall profit loss was reduced by 0.93%,       hydropower scheduling. Typically the scheduling comprises
+quantifying the overestimation of profit in the SDDP Model. This     a long-, medium- and short-term model depending on the
+illustrates the importance of detailed modelling when considering    modelling objective [2]. The long-term model may represent
+sales of capacity.                                                   an aggregated system model and is e.g. used for expansion
+                                                                     planning, price forecasting, and system studies, preferably with
+   Index Terms--Stochastic processes, Power system analysis          large system boundaries [3]. The medium-term model is linked
+computing, Optimal scheduling, Hydroelectric power generation        with the long-term model by price and individual water values
+                                                                     are calculated for a more detailed part of the larger system.
+                          I. INTRODUCTION                            Detailed water values for a river-system may then be used as
+                                                                     the opportunity cost as the end-of-horizon valuation of water
+   With the introduction of a liberalized power market, power        when running the short-term scheduling, a detailed model
+producers have been more eager for robust and efficient              often defined as a Mixed Integer Programming (MIP) problem
+optimization models for their power scheduling. In Norway the        [4­6].
+liberalization started in 1991 after the Energy act, stating that
+power producers were no longer obliged to supply electricity            Around 1990, two papers on the Stochastic Dual Dynamic
+but instead could maximize their profits. In the following           Programming (SDDP) algorithm for multi-stage stochastic
+year a paper on the EMPS model (EFI's Multi-area Power-              optimizations problems was presented in [7, 8]. In the years
+market Simulator), which had been developed and used in the          to come numerous alternations and improvements on the
+Nordic regions since the 1970's, was published [1]. The model        algorithm has been presented. Such as grid modelling in [9],
+mimics the market clearing process and is frequently used by         convergence properties in [10] and bidding strategy for a
+market players to provide price forecasts. A single producer's       large hydropower portfolio in [11]. Latter years developments
+hydropower strategy need to consider relevant uncertainties,         include the relations of non-convexities. [12] was treated
+such as inflows and energy prices. The decision process consist      with use of McCormick envelopes to model the non-convex
+of the choice to either store water today and produce tomorrow       relationship between power, discharge and water head. Later,
+or vice-versa, i.e. a multi-stage stochastic problem.                [13] used Lagrangian relaxation to assess two procedures on
+                                                                     convexification of the cost-to-go function and the non-convex
+   Funded by The Research Council of Norway, Project No. 228731/E20
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskape9li7ge8-U1n-iv5e0rs9it0et-.1D2o9w8n-lo5a/d1e6d/o$n3N1o.0ve0m©be2r 0041,620I2E6 EatE20:58:30 UTC from IEEE Xplore. Restrictions apply.
+components. In [14] a SDDP algorithm with local cuts was                      ·
+proposed in order to capture the non-convexities resulting from               ·
+a detailed system description and supply of spinning reserves.
+                                                                                                                        ·
+   The primary frequency reserve (PFR) market in Norway for                                                             ·
+providing weekly Frequency Containment Reserves - Normal
+(FCR-N) has especially shown an income potential for hy-                      ·
+dropower producers during the summer months. With high                        ·
+reservoir fillings, low prices and high inflow, hydropower
+producers are set to either produce at maximum to avoid           Figure 1. Simplified overview over the models. The Simulator Model is
+spillage or not produce due to allegedly low power prices.        run after convergence is reached in the Strategy Model. Cuts refer to the
+The market for PFR in Norway displays many of the same            hyperplanes that the profit-to-go function consists of.
+characteristics to other markets and minor changes are need
+to represent these differences. Comprehensive market details      A. Strategy Model
+can be found in [15].
+                                                                     For each time stage, t, and realizations of stochastic vari-
+   In this paper a combined Stochastic Dynamic Program-           ables, t, the hydropower scheduling problem is solved, called
+ming (SDP)/SDDP method presented in [16] and extended             the one-stage dispatch problem. The forward and backward
+to incorporate capacity reservation in [17], is applied together  iterations of the Strategy Model are carried out iteratively
+with a simulator. First, a strategy (represented by the profit-   to generate an improved representation of the profit-to-go
+to-go function) is found from a updated version of the            function until convergence. The LP problem representing the
+SDP/SDDP model described [17], hereby referred to as the          one-stage dispatch problem in the Strategy Model will be
+Strategy Model. This model allows both delivery of energy         discussed in this section. Section II-B will cover the one-stage
+to the day-ahead market and sales of capacity to the PFR          dispatch problem for the Simulator Model.
+market. Subsequently the obtained strategy is applied in the
+MIP-based Simulator Model over the two year period of             t(xt-1, t) = max Lt(xt, ut, ct) + t+1(xt, t+1) (1)
+analysis to find detailed schedules for hydropower stations
+considering operation in both markets. The Simulator Model        subject to
+has the capability to represent more accurately a non-convex
+generation-discharge relation, minimum power requirement                      Axt + But = Cxt-1 + Dat(t)                   (2)
+and head dependencies, if desirable. These details are of
+particular importance when considering operation in a capacity                Eut = dt                                     (3)
+reserve market, which requires the committed capacity to be
+spinning. The Simulator Model can therefore act as benchmark                  Fut + ct  bt                                 (4)
+to quantify the approximation errors that the Strategy Model
+impose.                                                                       ulb  ut  uub                                 (5)
+
+   The purpose of the presented approach is to quantify the                   xlb  xt  xub                                 (6)
+influence a capacity reserve market has on the medium-term
+hydropower scheduling, considering accurate modelling of the                  clb  ct  cub                                 (7)
+physical system.
+                                                                     Problem (1)-(7) exhibit the main structure in the one-stage
+   In Section II the Strategy Model and the Simulator Model       dispatch problem with state variables, xt, decision variables,
+will be presented. Section III describes a case study on          ut, and realization of the stochastic parameter t. xt repre-
+a Norwegian hydropower system followed by results and             sents, in this model, the amount of water in a reservoir and
+discussions. Conclusions from the research and case study are     the state of the power station, while ut includes the water dis-
+finally given in Section IV.                                      charge, spillage and bypass. The function Lt in the objective
+                                                                  function is made up by three major terms; income from selling
+                         II. METHODOLOGY                          energy and capacity, and a penalty function. The penalties
+                                                                  includes spillage, tank water and start-up costs. Inflow to the
+   An overview of the two models can be seen in Figure 1.         reservoir is modelled with a first order autoregressive model,
+Inflow series and power prices used in this model has weekly      elaborated in [18], such that for extreme cases when the
+stochastic time stages. In order to scale the model further       reservoir is empty you might also receive negative inflow. The
+down, a weekly profile with resolution similar to the PFR         model can therefore use the very costly tank water to fill up
+market is added, represented by 21 time steps within the week.    the reservoir. This ensures that relatively complete recourse of
+                                                                  the stochastic model is obtained.
+   It is assumed that the reader has previous knowledge about
+SDDP, such that details regarding the method are neglected.          One of the characteristic with hydropower scheduling mod-
+For interested readers the following articles are suggested [7,   els is the relation between state variables from one time
+8, 16, 17].                                                       stage to another. This is expressed in constraint (2), where
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 20:58:30 UTC from IEEE Xplore. Restrictions apply.
+the reservoir balance is included. Matrices A, B, C and D                        TABLE I. PROBLEM CHARACTERISTICS FOR CASE STUDY.
+represent coupling between reservoirs and E consists of the
+efficiencies regarding production and discharge in the energy                    Variables                         Strategy             Simulator
+balance constraint (3). Linearized start-up costs, included in                   Constraints
+(2), were implemented in a similar manner as in [19,20], with                    Dispatch problems, per iteration     1 036  2 233 (585 binary)
+a linear approximation of the power stations state (on/off).                                                            567                  2 121
+                                                                                                                                             5 200
+   The delivery of capacity is incorporated in (4), where                                                          293 600
+ct is the amount of capacity available for sale, hence also
+included in the objective function. The constraints includes a                      For both markets it is assumed that the hydropower producer
+symmetrical delivery of capacity, such that for delivering a                     is a risk-neutral price-taker. With many actors and the large
+certain amount of capacity the power station must be able to                     energy volumes traded on the day-ahead market this is a good
+regulate both up and down an equal amount. The matrix F                          assumption. However, the volumes for the PFR market are
+represents the relations between power and discharge and bt                      low, such that an improved representation could be beneficial
+the power limits.                                                                for this market.
+
+   The delivery of PFR is limited by the turbine governor,                       B. Simulator Model
+such that both the droop setting and size of the power station
+limits the amount for providing PFR, included in (7). The other                     The core distinctions of the Simulator Model is the MIP
+variables are bounded by (5) and (6).                                            formulation of the one-stage dispatch problem. This enables
+                                                                                 a more complex modelling and subsequently more realistic
+   Impacts of head variations impose non-convex properties                       results. The hydropower system for both models are the same,
+that hydropower scheduling models should consider. Due to                        however, the Simulator Model is able to include binary state
+its complexity and minor significant impact for the proposed                     variables, non-convex power-discharge function and distinct
+case study, this was currently not treated.                                      operation from different reservoirs, such that a power station
+                                                                                 could not generate while discharging from multiple reservoirs.
+       pE,pC
+                                                                                    During the research it was found that one of the main issues
+                                                                    18 6         with a linear model when considering provision of PFR is
+                                                                    17 5         that in time periods with low power prices and high PFR
+                                                                    16 4         prices, the model tended to operate the power station at a
+                                                                                 minimum level. E.g. the power station was operated at 10 MW
+                                                                     63          in order to provide 10 MW of PFR, even though the technical
+                                                                     52          lower limit of the station was 50 MW. This weakness was
+                                                                     41          significantly improved by reducing the solution space, such
+                                                                      33         that when selling maximum amount of PFR, the power station
+                                                                     22          had to operate above minimum generation limit. This issue
+                                                                     11          was omitted by introducing binary variables in the Simulator
+                                                                                 Model. Together with the restriction to only generate from one
+Figure 2. (Left) Illustration of the dynamic recursion between time stages       reservoir at the time, this significantly improved the validity
+for energy and capacity prices. For the energy price, different price nodes are  of the results given by the Simulator Model.
+used with probabilities from going to one price node to another in next time
+stage. The figure illustrates the underlying modelling of the prices and not        As Figure 1 illustrates, after the Strategy Model has con-
+the magnitudes. (Right) Illustration of the six different time-blocks for the    verged and a solution is obtained, the profit-to-go function,
+weekly PFR market, i.e. the capacity for time-block 1 must be available for      represented by cuts, is utilized in the Simulator Model. Since
+certain hours for all weekdays, i.e. time step 1,4,7,10 and 13.                  the profit-to-go function was made for a different optimization
+                                                                                 problem, a distinct convergence gap is expected. This may be
+   1) Price models: In order to ensure a convex function in                      seen as the main drawback of the model, but it ensures a quick
+SDDP, the power price will have to be described in other                         and efficient evaluation of the results obtained by the Strategy
+terms than in the continuous state space. This is achieved                       Model.
+by discretizing the power price and using a Markov chain
+to describe the transition for the power price between time                                                III. CASE STUDY
+stages. In short, the SDDP model is solved for each of the
+discretized power prices and transitions between them are used                      The case study is based on a hydropower system under
+to calculate the expected profit-to-go function, illustrated by                  construction in south-west of Norway, shown in Figure 5.
+the transition between different price nodes from one time                       Power station 1 and 2 has installed capacity of 13.8 MW
+stage to another in Figure 2. The PFR price is also described by                 and 400 MW, respectively. The price series for capacity
+a deterministic price series in this work, but could be described                reserves are given by the actual prices from 2013 and 2014.
+stochastically as in [21], this would however significantly                      A simulation with the EMPS model from 2013 gave the price
+increase the problem size.                                                       series for energy, such that the capacity and energy prices were
+                                                                                 coupled in time.
+   As seen in Figure 2 there are six different periods for
+providing PFR. If you commit a certain amount in period 1                           In order to get a honest comparison between the two models,
+you must provide the same amount every weekday.                                  all Simulator Model runs utilized the scenarios for inflow and
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 20:58:30 UTC from IEEE Xplore. Restrictions apply.
+          51%                  51%                                               TABLE II. EXPECTED VALUES FOR THE SIMULATOR MODEL, GIVEN IN
+         7%                   7%                                                        PERCENTAGE WITH THE STRATEGY MODEL AS BENCHMARK.
+
+      1  .  1              1  .  1                                                                                    Generation          -1.0     Profit              -1.48
+      1                    1                                                                                          Energy Profit     -0.99      End Value of Water   3.26
+                                            .                                                                         Capacity Profit  -29.18      Total Profit        -0.93
+
+                                 24%
+
+       24%                    91%     []    [/3]
+      91%                             [3/]
+
+                   25%     2  .  2        25%                                    rate and 16 GB RAM. The CPU time for the Strategy Model
+                  2%       2             2%                                      was 11 h and 4 min and 41 min for the Simulator Model.
+
+                                      3  .  3                                       Some selected results, in percentage with the Strategy
+                                      3                                          Model as benchmark, are given in Table II. It is shown that
+2        3                                                                       the expected total profit, referring to the sum of profits and
+2  .  2  3  .  3                                                                 the end value of the water, was reduced by 0.93%. The profit
+                                                                                 from sales of capacity was reduced by 29.2%. This significant
+Figure 5. System used in the Simulator Model (left). Simplified system used      reduction from sales of capacity comes as a result of the
+in the Strategy Model (right). Size of reservoir and inflow given as percentage  tightened system description with minimum generation and
+of the whole system. Power station 2 has two operating points in regard to       operating reservoir constraints, and it shows how vital the
+which reservoir it is operating from. Pn, Qn and En.eqvn refer to the power-     system description is when considering provision of PFR.
+discharge relations for the given power station and reservoir n.
+                                                                                    Figure 3 shows the convergence of both models. It can
+spot price that were sampled in the last forward iteration by                    be seen that there is some uncertainty concerning the gap
+the Strategy Model.                                                              in the Strategy Model, as a new sampling of inflow and
+                                                                                 power price is carried out for each iteration. As expected
+   The simulation was carried out with 50 scenarios in the                       an convergence gap is observed in the Simulator Model, in
+forward iteration of the Strategy Model and hence the same                       percentage calculated to 0.68%.
+amount in the Simulator Model. The sampling of 50 scenarios
+could favourably have been increased, but due to long com-                          The duration curve depicted in Figure 4 shows how gener-
+putation time and promising in-sample stability this was not                     ation, for the entire hydropower system, is shifted from less
+done. The power prices were discretized into 7 price nodes                       high power output to increased output at around 150 MW.
+while the number of inflow samples in the backward iteration                     This is first seen because of the binary constraints, but also
+were 8. There were carried out 15 iterations of the Strategy                     as a result of the detailed power-discharge modelling, where
+Model and a final simulation with the Simulator Model.                           the power station 2 has beneficial properties around this point.
+                                                                                 Also, due to the minimum generation limit in the Simulator
+   The number of variables and constraints in the one-stage                      Model, no generation beneath this limit is obtained, as opposed
+dispatch problem for the two models is displayed in Table I,                     to the Strategy Model where this is observed with some power
+together with the total number of problems. It can be seen                       outputs of around 50 MW.
+that the Simulator Model has a significant increase in both
+variables and constraints for the problem described in the case                     The proposed method does not improve the profit-to-go
+study.                                                                           strategy used by short-term models, as in [12­14], but in-
+                                                                                 stead gives a rapid benchmark of how far away the linear
+A. Results and Discussion                                                        approximation is from the true value. This can be very efficient
+                                                                                 for making investment decisions, where additional electricity
+   All simulations were carried out on a Dell Latitude E7240
+with an Intel Core i7-4600U processor with a 2.7 GHz clock
+
+1500                                                                                                                  450
+1480
+1460                                  Upper Strategy Limit                                                            400                                              Strategy
+1440                                  Lower Strategy Limit                                                                                                             Simulator
+                                      Upper Simulator Limit
+                                      Lower Simulator Limit                                                           350
+Objective value [MNOK]
+                                                                                                                [MW]  300
+
+1420                                                                                                                  250
+
+1400                                                                                                                  200
+
+1380                                                                                                                  150
+
+1360                                                                                                                  100
+
+1340                                                                                                                  50
+
+1320                                                                                                                  0
+
+1300                                                                                                                       0  1  2     3        4       5  6  7        8
+
+         2     4  6     8     10 12 14 16 18                                                                                                       [h]                 × 10 5
+
+                           Iteration
+
+Figure 3. Convergence of both the Strategy and Simulator Model.                  Figure 4. Duration curve from the Strategy and Simulator Model.
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 20:58:30 UTC from IEEE Xplore. Restrictions apply.
+markets are included. An example could be to either invest in               [3] O. Wolfgang, A. Haugstad, B. Mo, A. Gjelsvik, I. Wangensteen, and
+a Pelton turbine that provides good generation efficiency over                   G. Doorman, "Hydro reservoir handling in Norway before and after
+a large amount of different discharge values, such that delivery                 deregulation," Energy, vol. 34, no. 10, pp. 1642­1651, 2009.
+of reserves are fairly cheap, or to invest in a Francis turbine
+with a higher maximum efficiency but with a higher cost of                  [4] E. K. Aasga°rd, G. S. Andersen, S. E. Fleten, and D. Haugstvedt, "Evalu-
+providing capacity reserves.                                                     ating a stochastic-programming-based bidding model for a multireservoir
+                                                                                 system," IEEE Transactions on Power Systems, vol. 29, no. 4, pp. 1748­
+                          IV. CONCLUSION                                         1757, 2014.
+
+   A realistic approach for medium-term hydropower schedul-                 [5] O. B. Fosso and M. M. Belsnes, "Short-term hydro scheduling in a lib-
+ing operating in both day-ahead and capacity reserve mar-                        eralized power system," in Power System Technology, 2004. PowerCon
+kets has been formulated and tested. The Simulator Model                         2004., vol. 2, Conference Proceedings, pp. 1321­1326 Vol.2.
+proposed has a detailed description of the power-discharge
+function and minimum generation for hydropower. When mod-                   [6] S.-E. Fleten and T. K. Kristoffersen, "Short-term hydropower produc-
+elling the accurate power-discharge function, generation will                    tion planning by stochastic programming," Computers & Operations
+give more realistic results regarding the unit's operating point.                Research, vol. 35, no. 8, pp. 2656­2671, 2008.
+The minimum generation restriction also provides realistic
+results concerning how the hydropower units are operated.                   [7] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+Following by the reduced flexibility in the system a profit                      optimization applied to energy planning," Mathematical Programming,
+reduction was observed, adjusted with the end value of water,                    vol. 52, no. 1-3, pp. 359­375, 1991.
+by 0.93%.
+                                                                            [8] M. V. F. Pereira, "Optimal stochastic operations scheduling of large
+   By generating the profit-to-go function from the Strategy                     hydroelectric systems," International Journal of Electrical Power &
+Model and applying it in the same system with above-                             Energy Systems, vol. 11, no. 3, pp. 161­169, 1989.
+mentioned modifications, a prompt solution is obtained, de-
+pendent on the system size and simulation period. It can                    [9] B. G. Gorenstin, N. M. Campodonico, J. P. da Costa, and M. V. F.
+be observed that the Strategy Model overestimated the value                      Pereira, "Stochastic optimization of a hydro-thermal system including
+of selling capacity by around 29%. Even though this value                        network constraints," IEEE Transactions on Power Systems, vol. 7, no. 2,
+is case-specific, it demonstrates the importance of detailed                     pp. 791­797, 1992.
+modelling when considering sales of capacity.
+                                                                           [10] A. B. Philpott and Z. Guan, "On the convergence of stochastic dual dy-
+   Further work should consist of generating an improved                         namic programming and related methods," Operations Research Letters,
+representation of the profit-to-go function that is to be used                   vol. 36, no. 4, pp. 450­455, 2008.
+by the Simulator Model and hence reducing its convergence
+gap. Nevertheless, the finding from the case study with 0.68%              [11] B. C. Flach, L. A. Barroso, and M. V. F. Pereira, "Long-term optimal al-
+gap demonstrate encouraging properties in terms of finding                       location of hydro generation for a price-maker company in a competitive
+the optimal solution. Improvements of the representation of                      market: latest developments and a stochastic dual dynamic programming
+the capacity market should also be empathized in regard to                       approach," IET Generation, Transmission & Distribution, vol. 4, no. 2,
+validity of prices and conceivable volumes.                                      pp. 299­314, 2010.
+
+    NOMENCLATURE                                                           [12] S. Cerisola, J. M. Latorre, and A. Ramos, "Stochastic dual dynamic
+                                                                                 programming applied to nonconvex hydrothermal models," European
+t Stochastic parameter for time stage t.                                         journal of operational research : EJOR, vol. 218, no. 3, (1.5), pp. 687­
+A, B, C, D, E, F System specific matrices. Representing                          697, 2012.
+
+    coupling between reservoirs, relations between water                   [13] F. Thome, M. V. F. Pereira, and M. Granville, Sergio Fampa,
+                                                                                 "Non-convexities representation on hydrothermal operation planning
+    discharge, energy and capacity.                                              using sddp," working paper, 2013, accessed: 07.10.2015. [Online].
+                                                                                 Available: http://www.psr-inc.com.br/portal/psr/publicacoes/
+at(t) Inflow as a function of a realization of the stochastic
+          parameter t.                                                     [14] H. Abgottspon, K. Njalsson, M. A. Bucher, and G. Andersson, "Risk-
+                                                                                 averse medium-term hydro optimization considering provision of spin-
+ct  Capacity for sale.                                                           ning reserves," International Conference on Probabilistic Methods Ap-
+                                                                                 plied to Power Systems 2014 (PMAPS 2014), Durham, UK, 2014.
+ut Decision variable. Representing discharge of water.
+xlb, ulb, clb Lower bounds for the variables.                              [15] ENTSO-E, "Network code on load-frequency control and reserves,"
+                                                                                 2013. [Online]. Available: https://www.entsoe.eu/
+xub, uub, cub Upper bounds for the variables.
+                                                                           [16] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+xt State variable. Representing reservoir volume and                             tic medium-term hydrothermal scheduling under spot price uncertainty,"
+          state of a power station.                                              Power System Computation Conference (PSCC), p. 7, June 28 - July
+                                                                                 2nd, 1999 1999.
+                            REFERENCES
+                                                                           [17] A. Helseth, B. Mo, M. Fodstad, and M. N. Hjelmeland, "Co-optimizing
+[1] O. Botnen, A. Johannesen, A. Haugstad, S. Kroken, and O. Frystein,           sales of energy and capacity in a hydropower scheduling model," in
+     "Modelling of hydropower scheduling in a national/international con-        PowerTech, 2015 IEEE Eindhoven, June 2015, pp. 1­6.
+     text," Hydropower '92, 1992.
+                                                                           [18] A. Gjelsvik, B. Mo, and A. Haugstad, Long- and Medium-term Oper-
+[2] O. B. Fosso, A. Gjelsvik, A. Haugstad, B. Mo, and I. Wangensteen,            ations Planning and Stochastic Modelling in Hydro-dominated Power
+     "Generation scheduling in a deregulated system. the norwegian case,"        Systems Based on Stochastic Dual Dynamic Programming, ser. Energy
+     IEEE Transactions on Power Systems, vol. 14, no. 1, pp. 75­81, 1999.        Systems. Springer Berlin Heidelberg, 2010, book section 2, pp. 33­55.
+
+                                                                           [19] G. Warland, A. Haugstad, and E. S. Huse, "Including thermal unit start-
+                                                                                 up costs in a long-term hydro-thermal scheduling model," Power System
+                                                                                 Computation Conference (PSCC), 2008.
+
+                                                                           [20] A. Helseth, A. Gjelsvik, B. Mo, and U. Linnet, "A model for optimal
+                                                                                 scheduling of hydro thermal systems including pumped-storage and
+                                                                                 wind power," IET Generation, Transmission & Distribution, vol. 7,
+                                                                                 no. 12, pp. 1426­1434, December 2013.
+
+                                                                           [21] A. Helseth, M. Fodstad, and B. Mo, "Optimal medium-term hydropower
+                                                                                 scheduling considering energy and reserve capacity markets," IEEE
+                                                                                 Transactions on Sustainable Energy, pp. 1­9, 2016. [Online]. Available:
+                                                                                 http://dx.doi.org/10.1109/TSTE.2015.2509447
+
+Authorized licensed use limited to: Norges Teknisk-Naturvitenskapelige Universitet. Downloaded on November 04,2026 at 20:58:30 UTC from IEEE Xplore. Restrictions apply.
+

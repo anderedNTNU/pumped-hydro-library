@@ -1,0 +1,524 @@
+                                     Electric Power Systems Research 234 (2024) 110615
+                                          Contents lists available at ScienceDirect
+
+                                Electric Power Systems Research
+
+                                 journal homepage: www.elsevier.com/locate/epsr
+
+Approximating hydropower systems by feasibility spaces in stochastic dual
+dynamic programming
+
+Arild Helseth
+
+SINTEF Energy Research, Trondheim, Norway
+
+ARTICLE INFO                    ABSTRACT
+
+Keywords:                       This work investigates and improves methodology for approximating hydropower systems by feasibility spaces,
+Power generation scheduling     which can be embedded in the stochastic dual dynamic programming algorithm and applied in the context long-
+Hydroelcetric power generation  term hydrothermal scheduling. The feasibility spaces are derived from optimization of the detailed hydropower
+Optimization methods            system and are expressed in few dimensions to facilitate efficient computations. Test results from a case
+Stochastic processes            study for the Norwegian power system demonstrate how feasibility spaces serve to realistically constrain the
+                                hydropower system.
+
+1. Introduction                                                             basins [20]. In general terms, ER parameters are fitted so that the
+                                                                            simulated results of the equivalent system are similar to those obtained
+    Long-term scheduling (LTS) of hydropower storages is an important       from the detailed system. As discussed in [21], and later demonstrated
+task in hydro-dominated power systems which is typically accommo-           in [22], local constraints on reservoirs, flows and generations seen in
+dated in a single computer model with a planning horizon of multiple        the detailed system are difficult to account for in aggregated models,
+years. LTS models are important in toolchains for operational plan-         possibly leading to suboptimal use of hydropower resources. More-
+ning [1], and are frequently used for planning tasks, such as system        over, ER parameters are typically estimated prior to running the LTS
+analyses [2], expansion planning [3], and maintenance planning [4].         optimization models, and the parameter state-dependencies cannot be
+As LTS models are normally not used for detailed system dispatch,           easily accounted for.
+the need for technical details in such models constitutes a trade-off
+between accuracy of results and computation time. On the one hand,              A different technique was presented in [23], constraining decisions
+explicit treatment of physical reservoirs, plants, and waterways in         related to the aggregated hydropower system by feasibility spaces de-
+hydro-dominated systems may lead to excessive computation times. On         fined by linear inequalities (or cuts). These linear inequalities can be
+the other, system simplifications in LTS models could lead to time-         directly derived from optimization of the detailed hydropower system.
+inconsistent policies [5], revealing a need for embedding more details      The feasibility spaces were embedded in the SDDP algorithm in [23],
+from the short-term scheduling into LTS models [6].                         where aggregated reservoir volumes and inflows constitute the state
+                                                                            variables. The state-dependency was accounted for, allowing feasibility
+    A variety of methodologies have been proposed for solving the LTS       spaces to be shared between different states within a given decision
+problem, and the use of methods based on optimization has matured           stage in the SDDP algorithm. A similar methodology is presented
+over the last decades [7]. In particular the stochastic dual dynamic pro-   in [24], where low-dimensional hydropower surfaces are computed
+gramming (SDDP) algorithm introduced in [8] has been widely applied         for complex power plants based on a optimization of the detailed
+in operative scheduling models [9,10], and is subject to improvements       hydropower system. Differently from [24], the feasibility spaces in [23]
+and extensions by the research community [11­13].                           represent cascaded systems and are demonstrated in a context of a
+                                                                            stochastic scheduling model.
+    Equivalent representations (ER) of the reservoirs and plants in a sys-
+tem or an area is a commonly used technique to reduce dimensionality            Being a direct derivation from optimization of the detailed system,
+and computation time in hydrothermal scheduling models [9,10,14­            and with a well-defined state-dependency that can be accounted for
+18]. The use of ERs, where the sum of potential energy in the reservoirs    in LTS algorithms such as SDDP, the feasibility spaces are worthwhile
+is represented rather than the water in each reservoir, was introduced      further exploration. In this work the SDDP algorithm is applied to an
+in [19], and is often found to be a reasonable approximation for sys-       aggregated representation of the Norwegian hydropower system which
+tems with large regulation capability and hydrologically homogeneous
+
+   Submitted to the 23rd Power Systems Computation Conference (PSCC 2024). This work was funded by The Research Council of Norway Project No. 344220.
+      E-mail address: arild.helseth@sintef.no.
+
+https://doi.org/10.1016/j.epsr.2024.110615
+Received 7 September 2023; Received in revised form 3 March 2024; Accepted 11 June 2024
+Available online 24 June 2024
+0378-7796/© 2024 The Author(s). Published by Elsevier B.V. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+A. Helseth                                                                                             Electric Power Systems Research 234 (2024) 110615
+
+is constrained by feasibility spaces. The work in [23] is extended in          of stage . This variable will gradually be constrained by Benders
+two ways. First, the dimensionality of the feasibility space is signif-        cuts constructed in the SDDP backward iterations. The SDDP forward
+icantly reduced to improve computational performance. Second, the              iterations provide simulated state space trajectories corresponding to a
+method is demonstrated on a representation of the Norwegian power              set of sampled inflow scenarios.
+system. Consequently, this work contributes to further develop and
+verify the application of feasibility spaces within the SDDP algorithm             In Section 2.2 we elaborate on the stage-wise decision problem in
+for the purpose of striking a better balance between hydropower system         (2), while the creation of feasibility spaces is described in Section 3.
+representation and computation time in LTS models.
+                                                                               2.2. Stage-wise decision problem
+    The paper is outlined as follows. First, the overall problem is de-
+scribed followed by a detailed mathematical formulation of the de-                 The decision problem for a decision stage  with time steps   
+composed stage-wise decision problem in Section 2. Subsequently,               is defined as an LP problem in (3), detailing the general formulation
+the process of creating feasibility spaces is elaborated in Section 3.         in (2). The system is grouped into price areas    which are
+Computational experiments with the presented model are presented in            simply referred to as areas in the following. It is assumed that decisions
+Section 4, before concluding in Section 5.                                     related to hydropower describe an aggregated response per area, with
+                                                                               no grid bottlenecks within the area. In the formulation below hourly
+2. Problem description                                                         time steps are assumed without explicit conversion between energy
+                                                                               and power, to ease presentation. Note that some technical constraints,
+2.1. Problem formulation and decomposition                                     such as ramping constraints, may need a finer time resolution to
+                                                                               meet their intended purpose. Variable units are either in e (), MWh
+    The LTS optimization problem can be defined as in (1), where  are          ( , , , ,  , , , ,  ), or MW ().
+the state variables  the stage variables for each decision stage . One
+seeks an operating strategy minimizing the expected cost of supplying                                             [               (3a)
+electricity in (1a), while accounting for the end-of-horizon valuation         (-1, -1) = min    
+of stored water in  ( ), and respecting constraints in (1b)­(1d). A                                                               (3b)
+planning horizon of multiple years is assumed, with weekly decision                                               
+stages, and with a finer time discretization, referred to as time steps,                                                          (3c)
+within the week. The stage variables represent the operational decisions                                            ]
+to be made in each stage and time step, while state variables transfer               -   +  + 
+
+information about the system state between stages.                                         
+
+                                                                               -1 = -1
+
+                                                                                = -1 + 
+
+                    {             }                                             =  +                                              (3d)
+
+                                            (1a)                                +   +  - ,-1 -  = 0
+                        (, ) +  ( )
+      min E                                                                                                                       (3e)
+                    =1
+(1,1),...,( , )
+
+s.t.  + -1 +  = ()                          (1b)                                +   -   + 
+       = 0                                  (1c)
+      (, )                                  (1d)                                               
+
+                                                                                           -           -                     ,    (3f)
+
+                                                                                    +
+
+                                                                                       +       -
+
+                                                                                                                                  (3g)
+
+  {1, 2, ... ,  }                                                              
+
+                                                                                    -                                        ,    (3h)
+                                                                                            
+    The constraints are indicated in (1b)­(1d), where the initial state
+vector 0 is given,  is the feasible set for the decision variables of               +                                        ,    (3i)
+decision stage , and , , , and , are matrices of suitable dimen-
+sions. The expectation in (1a) is taken over the stochastic inflow. Inflow                 
+to the EERs is represented by a vector autoregressive model of first
+order according to the procedure described in [25]. The right-hand-side         - ,-1 -   0                                  ,    (3j)
+parameter vector () in (1b) is dependent on the random vector of
+inflow ``white noise''  whose distribution is known, and where  are            ,-1 - , -   0                                 ,    (3k)
+the realizations. Although the focus is on uncertainty in inflow in this
+work, other uncertainties such as wind power and electricity demand             +   +                                             (3l)
+can in principle be included in the autoregressive model and treated
+within the SDDP algorithm. Examples of joint treatment of inflow and                           
+wind power uncertainty within SDDP can be found in [26].
+                                                                                +  +  +  
+    The problem in (1) can be classified as a multi-stage stochastic
+optimization problem, which may be efficiently solved by decompo-                 + ,-1 +                                    ,    (3m)
+sition techniques [27]. This work applies the SDDP algorithm, which                                                               (3n)
+is a sampling-based variant of multi-stage Benders decomposition. The           -   = 0
+problem in (1) can be decomposed into stage-wise nested linear pro-                                                          ,    (3o)
+gramming (LP) problems of type:                                                                                              ,    (3p)
+
+                                                                               0            
+
+                                                                                          
+
+                                                                               0            
+
+                                                                                          
+
+                                                                                                                                  (3q)
+
+                                                                               -                                             ,    (3r)
+
+                                                                                                                       [  ]
+
+                                                                                    The vectors of energy volumes (-1 = ,-1,  ) and normalized
+
+ (-1 )      =  min  (,  )  +  ()            (2a)                                               [    ]
+                                            (2b)
+                ,                                                              inflows (-1 = ,-1,  ) from the previous stage are considered
+
+s.t. (, )  (-1, )                                                              state variables, so that  = [-1, -1]. The objective in (3a) seeks
+
+                                                                               to minimize the costs associated with operation of the system in the
+
+    In short, the SDDP algorithm consists of forward and backward              current decision stage and the expected cost of operating system in
+iterations, repeatedly solving stage-wise decision problems of type (2).
+The variable  expresses the future expected cost seen from the end             the future. The current cost comes from thermal generation () at
+
+                                                                               marginal cost  and curtailment of price-inelastic demand () at
+
+                                                                            2
+A. Helseth                                                                                        Electric Power Systems Research 234 (2024) 110615
+
+marginal cost , while the coverage of price-elastic demand ()                    Fig. 1. Illustration of the process for creating feasibility cuts.
+is seen as a revenue with marginal value . The sets  and 
+comprise the thermal generators and price-elastic demands in area ,              four variables: stored energy at the end of the decision period (),
+respectively. The future expected cost is represented by  which is               energy production ( ), maximum allowed ramping (), and reserved
+constrained by Benders cuts in (3l).                                             capacity ( ). State variable decisions are classified as  = {}, stage
+                                                                                 variable decisions as  = { , ,  }, and initial states as -1 =
+    In (3b) a copy of the reservoir volume state variables are taken,            {,-1, }.
+for the ease of finding their dual values . The weekly normalized
+inflow ( = [, ]) to each area is described in (3c), as a vector                      The detailed hydropower problem per area  and decision stage  is
+autoregressive model of first order. The correlation matrix () and
+residuals () are fitted to observations, where residuals are adapted to          formulated as in (4), where , , , , and  are matrices of suitable
+a three-parameter lognormal distribution according to [25], and where
+the normalized inflow is converted to energy inflow () by using the              dimensions.
+standard deviation () and mean () in (3d).
+                                                                                                                                                     (4a)
+    Hydro energy storage balances per area are provided in (3e), where
+the energy storage () is balanced against hydropower generation                   min
+( ), spillage ( ), initial storage, and inflow. An energy balance for
+each price area and time step is defined in (3f), allowing exchange of           ( , )
+energy () between connected areas to + and from - area . Price-
+inelastic demand () and wind power ( ) are treated as parameters                 s.t.  + ,-1 = 0                                                     (4b)
+in the energy balances.
+                                                                                  +  +  +  = 0                                                       (4c)
+    A reserve capacity requirement () for the system is included in
+(3g), where reserved capacity per area ( ) is accounted for in genera-           The objective is to minimize constraint violations in (4c) expressed by
+tion limits of the area in (3h) and (3i). As a simplification, it is assumed     a vector of slack variables . The matrix  and decision variables 
+that (i) the hydropower system should cover the reserve requirement              represent the basic constraints of the detailed system. The creation of
+ alone, (ii) that the area contributions are constant over the week
+and symmetric with respect to up- and down-regulation capacity, and              feasibility cuts follows three steps:
+that (iii) reserves can be exchanged across the system without grid                  (1) Disaggregate decisions. The initial state ,-1 is distributed to
+bottlenecks.
+                                                                                 the corresponding detailed hydropower problem defined in (4). This
+    In (3j) and (3k) a maximum allowed ramping rate () limits the
+ability to change hydropower generation upwards and downwards be-                involves mapping the initial energy storage and sum energy inflow to
+tween time steps, respectively. Note that the ramping rate is a decision
+variable that enters the feasibility cuts, as described in Section 3.            the detailed reservoirs. The matrix  in (4b) provides this mapping.
+
+    Benders cuts in (3l) are constructed in the backward iteration of the        Note that to preserve convexity of the SDDP algorithm, the mapping
+SDDP algorithm and comprise elements from cut coefficient vectors ,
+, and , where  and  are extracted as dual values from (3b) and                   cannot be state-dependent. In this work a time dependent mapping
+(3c), respectively.
+                                                                                 was used, distributing energy inflow and initial energy storage to the
+    Feasibility cuts in (3m) constrain decisions related to the
+hydropower system for a specific area, and are expressed in the di-              individual reservoirs according to their relative shares of average inflow
+mensions of end volume (), sum energy production ( ), maximum
+allowed ramping rate (), reserve capacity ( ), initial storage (-1),             and energy storage capability, respectively.
+and inflow (), and where , , and  denote the feasibility cut                         (2) Define requirements. The hydropower stage () and state ()
+coefficients. The derivation of feasibility cuts is further described in
+Section 3. Note that (3n) defined the auxiliary variable  to ease the            decisions obtained from the solution of (3) define requirements in (4c),
+formulation in (3m). Variable boundaries are presented in (3o)­(3r).
+                                                                                 formulated as linear inequalities with slack variables . Trial sched-
+3. Feasibility spaces                                                            ules of stored energy (), energy production ( ), maximum allowed
+                                                                                 ramping (), and reserved capacity ( ) provide the requirements in
+    Ideally, the detailed hydropower system should be considered ex-             (4c).
+plicitly in the problem formulation in Section 2.2. For large-scale
+hydropower systems this typically involves several hundreds of stor-                 (3) Check for feasibility. If the requirements defined in (4c) are all
+ages with separate time series for inflow, substantially increasing the
+state space to be considered in the SDDP algorithm. Instead, a spatial           met, the trial decisions are feasible. If not, at least one of the dual values
+decomposition technique is applied where the system problem in (3)
+is viewed as the master problem providing the aggregate hydropower               () of constraints (4c) is nonzero, and a feasibility cut of type (3m) is
+schedule per area, and where a set of detailed hydropower problems
+per area of type (4) are the subproblems in which the feasibility of             created.
+aggregated schedules is tested. The subproblems are formulated as
+LP problems under the assumption that hydropower operational costs                   Step (2) above differs from [23] in that the sum energy for the whole
+can be neglected. In this setup, details in the hydropower system are            decision period ( ) rather than the energy produced per time step
+coordinated between the master and subproblems through feasibility               ( ) is formulated as a requirement. Thus, the number of constraints
+cuts which, under conditions elaborated in [23], may provide an exact            in (4c) and, consequently, the dimensionality of the feasibility cut is
+approximation of the detailed hydropower system.
+                                                                                 reduced. For studies with many time steps within each decision stage, a
+    The feasibility cuts in (3m) coordinate aggregate hydropower de-
+cisions (, ) provided the initial state -1 with a detailed system                large number of feasibility cuts were needed with the approach in [23]
+description, as illustrated in Fig. 1 and described below. In (3), the
+operation of the hydropower system for each area  is represented by              to adequately approximate the high-dimensional feasibility space. This
+
+                                                                                 became a bottleneck for large-scale systems. With the formulation in
+
+                                                                                 (3m), the dimensionality of the feasibility cut does not depend on the
+
+                                                                              3
+A. Helseth                                                                                                     Electric Power Systems Research 234 (2024) 110615
+
+                                                                                               Fig. 3. Area topology for the Norwegian power system.
+
+                                                                                         Table 1
+                                                                                         Hydropower per area.
+
+                                                                                         Area    10 Mm3          10 MW   [TWh]                         [GW]
+
+     Fig. 2. Feasibility space for area 4 in week 1 for case presented in Section 4.     1     30              36       3.85                          2.94
+                                                                                                               52       9.87                          3.24
+number of time steps, and thus the computational burden is signifi-                      2     50              25       8.91                          2.31
+cantly reduced when solving (3) with many time steps. The maximum                                              53       13.16                         5.02
+allowed ramping rate supplements the sum-energy requirement, testing                     3     26              31       13.98                         4.18
+the ramping capability of the detailed hydropower system. Assumptions                                          53       13.20                         7.17
+regarding the frequency of this requirement in (4c) are needed since                     4     63              92       10.30                         5.00
+decisions per time step are not communicated to (4). In this study the                                         24       11.54                         2.80
+detailed hydropower system was required to ramp up and down to meet                      5     34              31       7.79                          2.40
+ once per day.
+                                                                                         6     69              397      92.60                         35.06
+    As elaborated in [23], feasibility cuts can be created either prior
+to running SDDP or as an integral part of the SDDP algorithm. In this                    7     108
+work, feasibility cuts were computed beforehand for each area. Each of
+the stage and state variables were discretized in 5 values according to                  8     34
+their extremal values, and (4) was solved for each possible combination
+to obtain feasibility cuts, according to the three steps described above.                9     47
+Redundant and numerically similar cuts were removed.
+                                                                                         Sum   461
+    Finally, a set of feasibility cuts of type (3m) was obtained for each
+area. These cut sets can be seen as state-dependent feasibility spaces                   allowing 7 parallel worker processes in both the forward and backward
+for each area. For visualization of such spaces, one can discretize cut                  iterations.
+variables and find the binding cut for each combination of discrete
+variables. This was done for area 4 in the case study presented in                           Computational tests were carried out on a description of the Nor-
+Section 4, as illustrated in Fig. 2. As documented in Table 1, area                      wegian power system. The system description includes possible future
+4 has 63 reservoirs with at least 10 Mm3 storage capacity and 53                         expansions towards 2030, but excludes existing connections to the
+power stations with at least 10 MW installed capacity. Fig. 2 spans the                  surrounding European power system, treating Norway as an isolated
+dimensions volume (), sum energy ( ), and ramping (). The initial                        system. The system comprises 9 areas, connected together as shown
+reservoir level, inflow, and reserve capacity requirements were fixed to                 in Fig. 3. Characteristics of the detailed hydropower systems within
+take average values. A feasible combination of ,  ,  should be within                    each area are provided in Table 1, listing the number of reservoirs ()
+the surface in Fig. 2. As seen from Fig. 2, the maximum possible storage                 and power plants () exceeding defined limits. Many of the physical
+at the end of the decision period decreases both with increasing energy                  reservoirs and power stations are part of complex hydropower cascades,
+production and with increasing ramping rate.                                             and each area comprise multiple cascades. The hydropower system
+                                                                                         accounts for more than 35 GW installed capacity and 92 TWh storage
+4. Computational experiments                                                             capacity and has an average annual inflow of 152 TWh. Hydropower is
+                                                                                         supplemented by approximately 9.5 GW thermal generation capacity
+4.1. Case description                                                                    and 7.0 GW of installed wind power capacity to serve the demand.
+                                                                                         The computational experiments are conducted on a realistic represen-
+    The SDDP algorithm with aggregated hydropower description and                        tation of the Norwegian hydropower system balanced with fictitious
+                                                                                         demand and supply from other technologies. The reduced system size
+with feasibility cuts was implemented in Julia, using the JuMP                           allowed demonstration of the proposed methodology on a large-scale
+                                                                                         hydropower system while keeping computation times at a reasonable
+package [28], solving LP problems with CPLEX version 20.1. The                           level. Note that a wider system boundary, e.g., including Northern
+computational tests reported were conducted on an Intel Core i7-9850H                    Europe, is possible without modifications of the proposed methodology.
+processor with maximum frequency of 4.60 GHz and 64 GB RAM,
+                                                                                             A scheduling horizon of 3 years was applied with weekly decision
+                                                                                         stages and with 42 4-h time steps within each week. The statistical
+                                                                                         model for energy inflow was derived based on data from 126 inflow
+                                                                                         time series considering a period of 30 years (1961­1990) with weekly
+                                                                                         inflow measurements. The SDDP model was run with 70 inflow scenar-
+                                                                                         ios in each forward SDDP iteration, and 7 discrete inflow white noise
+                                                                                         terms were sampled at each stage in the backward SDDP iterations.
+                                                                                         Consequently, a total of 70 × 156 = 10 920 decision problems of type
+
+                                                                                      4
+A. Helseth                                                                                                   Electric Power Systems Research 234 (2024) 110615
+
+                                                                              Fig. 5. Duration curves for generation for areas 6 (left) and 7 (right).
+
+            Fig. 4. Simulated power prices for cases Base and Feas.
+
+(3) were solved in the forward iteration and 70 × 7 × 156 = 76 440            Fig. 6. Duration curves for changes in generation (ramping) for areas 6 (left) and 7
+in the backward iteration. A maximum number of 80 SDDP iterations             (right).
+was applied in the experiments. Feasibility cuts were created prior to
+the SDDP run, as described in Section 3, providing between 50­130             Results from these detailed simulations are not always as one ex-
+feasibility cuts per area and decision stage. Advanced cut management
+for treatment of Benders and feasibility cuts was not considered.             pects, since the simulated system differs from the aggregated system
+
+    The SDDP model was run for two cases: A Base case with no feasibil-       that was used when computing SDDP strategies. While one in the
+ity cuts, and a Feasibility case where feasibility cuts of type (3m) were
+included. This resulted in different strategies in terms of Benders cuts      simulation considers inflows to physical reservoirs, the strategies are
+of type (3l) for each case. These strategies were used in two different
+simulations: An Aggregate simulation using sampled energy inflow              computed based on a statistical model for inflow per area. Moreover,
+scenarios according to (3c) together with the model formulation in (3),
+and a Detailed simulation using detailed historical inflow observations       the feasibility cuts used in case Feas were computed assuming a fixed
+and a detailed description of the hydropower system, as applied in (4),
+embedded in (3).                                                              and balanced mapping of aggregate initial reservoir and inflow to
+
+4.2. Simulation results -- aggregate                                          the detailed system (step 1 in Section 3), and thus do not capture
+
+    After computing Benders cuts of type (3l), a final forward simulation     the true variability in the detailed system. Still, detailed simulations
+was conducted for each of the Base and Feas cases with 2000 sepa-
+rately sampled inflow scenarios. Since the operation of the hydropower        on historical data are important as they serve to validate the new
+system is more constrained in case Feas than in case Base, the cost of
+operation is higher in the former. Fig. 4 shows that the simulated power      methodology on the problem that motivated its creation.
+prices, found as the dual values of (3f), for area 1 are significantly
+higher in case Feas than in case Base. The price spikes around weeks                                                                                          (
+20 and 70 indicate a tight power balance around the beginning of the
+snow melting period.                                                          The       total  cost  for  a  simulated  sequence  was  found  as                  -
+
+    The duration curves for hydropower generation for areas 6 and 7                                                                                  =1,...,
+are shown in Fig. 5. Utilization of the maximum generation capacity
+in case Feas is clearly lower than in Base, shifting more generation            )
+at lower output. Furthermore, time series of changes in generation are         , where  is expressed in (3a). In addition, the difference in stored
+presented as duration curves in Fig. 6, indicating the limited ramping
+capability in case Feas compared to Base.                                     water at the end of horizon was accounted for according to a common
+
+4.3. Simulation results -- detailed                                           reference value. The total cost of operating the system was lower in 21
+
+    The detailed hydropower system was simulated using historical             out of 30 simulated sequences, and was on average 7.2% lower when
+observations from 30 historical inflow years (1961­1990) and with
+the strategies from the Base and Feas cases. In these simulations, the        following the Feas rather than the Base strategy.
+stage problem consisted of the problem defined in Section 2, but with
+a detailed description of the hydropower system including historical          The average simulated power prices for all areas and simulated
+inflow time series associated with each physical reservoir. Years were
+arranged in 30 sequences to be simulated, defining 1961­1963 as the           scenarios for the two first years are shown in Fig. 7. The prices obtained
+first sequence,1962­1964 the second, and so on.
+                                                                              following the Feas strategy are more stable than for the Base strategy,
+
+                                                                              with lower price spikes when the power balance is particularly tight
+
+                                                                              around weeks 18 and 70.
+
+                                                                              The simulated operation of detailed hydropower reservoirs provide
+
+                                                                              an indication of how well the aggregated strategies in cases Base and
+
+                                                                              Feas reflect the hydropower details. In Fig. 8, simulated trajectories for
+
+                                                                              the large reservoir Svartisen, located in area 8, are shown. Although the
+
+                                                                              simulated operation of the majority of individual reservoirs are more
+
+                                                                              balanced in the Feas case, similar to what we observe in Fig. 8, there are
+
+                                                                              many examples where the Feas case provides poor reservoir handling
+
+                                                                              as well.
+
+                                                                              4.4. Computational performance
+
+                                                                                  Running the SDDP model with the problem setup and technical
+                                                                              specifications defined in Section 4.1 took 10.7 and 27.6 h for cases
+                                                                              Base and Feas, respectively. Thus, including feasibility cuts in case
+                                                                              Feas increases computation time with a factor of 2.7. As a comparison,
+
+                                                                           5
+A. Helseth                                                                                                                               Electric Power Systems Research 234 (2024) 110615
+
+                                                                                          Simulation results based on SDDP strategies with and without fea-
+                                                                                      sibility spaces were compared, demonstrating how these spaces con-
+                                                                                      strain hydropower operation. A simulation explicitly including the
+                                                                                      detailed hydropower system indicated better resource utilization when
+                                                                                      following SDDP strategies based on feasibility spaces.
+
+                                                                                      CRediT authorship contribution statement
+
+                                                                                          Arild Helseth: Formal analysis, Methodology, Project administra-
+                                                                                      tion, Validation, Visualization, Writing ­ original draft.
+
+                     Fig. 7. Average power prices for cases Base and Feas.            Declaration of competing interest
+
+            Fig. 8. Reservoir trajectories for Svartisen for cases Base and Feas.         The authors declare that they have no known competing finan-
+                                                                                      cial interests or personal relationships that could have appeared to
+results from [23] [Table 1, cases REF and STAT-FC] on a much smaller                  influence the work reported in this paper.
+data set and with a higher-dimensional feasibility cuts, indicate a ratio
+of 8.7 (Case REF took 370 s while case STAT-FC took 3204 s.).                         Data availability
+
+    For the Feas case, a stage LP problem of type (3) comprises around                    The authors do not have permission to share data.
+10k variables and 4k constraints, out of which approximately 25%
+are feasibility cuts. As a comparison, when simulating with detailed                  References
+hydropower, the stage LP problem comprises 350k variables and 158k
+constraints. Such problem sizes would lead to prohibitive computation                   [1] A. Helseth, A.C.G. Melo, Q.M. Ploussard, B. Mo, M.E.P. Maceira, A. Botterud,
+times if solved within the SDDP algorithm using the parameterization                           N. Voisin, Hydropower scheduling toolchains: Comparing experiences in Brazil,
+defined in Section 4.1.                                                                        Norway, and USA and implications for synergistic research, J. Water Resour.
+                                                                                               Plan. Manage. 149 (7) (2023).
+    Note that the computation time for case Feas depends on the
+discretization when creating feasibility cuts. Some experiments with                    [2] A. Philpott, Z. Guan, Models for Estimating the Performance of Electricity Mar-
+different discretizations were conducted, revealing that finer discretiza-                     kets with Hydro-Electric Reservoir Storage, Tech. Rep., University of Auckland,
+tion did not improve result quality significantly, and that coarser                            New Zealand, 2013.
+discretization tends to compromise result quality.
+5. Conclusion                                                                           [3] S. Jaehnert, O. Wolfgang, H. Farahmand, S. Völler, D. Huertas-Hernando,
+                                                                                               Transmission expansion planning in Northern Europe in 2030 - Methodology
+    This work presents a computationally efficient approximation of                            and analyses, Energy Policy 61 (2013) 125­139.
+hydropower systems by feasibility spaces which can be embedded
+within the SDDP algorithm and applied to the long-term hydrothermal                     [4] R.M. Chabar, S. Granville, M.V.F. Pereira, N.A. Iliadis, Optimization of Fuel
+scheduling problem. The feasibility spaces can be derived based on                             Contract Management and Maintenance Scheduling for Thermal Plants in Hydro-
+optimization of the detailed hydropower system prior to running SDDP,                          Based Power Systems, in: ser. Energy, Natural Resources and Environmental
+and their state-dependency can be accounted for.                                               Economics, Springer, Berlin, Heidelberg, 2010, pp. 201­219, ch. 13.
+
+                                                                                        [5] A.W. Rosemberg, A. Street, J.D. Garcia, D. Valladão, T. Silva, O. Dowson,
+                                                                                               Assessing the cost of network simplifications in long-term hydrothermal dispatch
+                                                                                               planning models, IEEE Trans. Sustain. Energy 13 (1) (2021) 196­206.
+
+                                                                                        [6] L. Bernardinelli, L.S.A. Martins, Equilibrium approach to the single solution of
+                                                                                               longer- and shorter-term hydro-thermal scheduling problems, in: 6th Interna-
+                                                                                               tional Conference on Clean Electrical Power, Santa Margherita Ligure, Italy,
+                                                                                               2017.
+
+                                                                                        [7] A.R. de Queiroz, Stochastic hydro-thermal scheduling optimization: An overview,
+                                                                                               Renew. Sustain. Energy Rev. 62 (2016) 382­395.
+
+                                                                                        [8] M.V.F. Pereira, L.M.V.G. Pinto, Multi-stage stochastic optimization applied to
+                                                                                               energy planning, Math. Program. 52 (1991) 359­375.
+
+                                                                                        [9] A. Gjelsvik, B. Mo, A. Haugstad, Handbook of power systems i, in: Ch. Long-
+                                                                                               and Medium-Term Operations Planning and Stochastic Modelling in Hydro-
+                                                                                               Dominated Power Systems Based on Stochastic Dual Dynamic Programming,
+                                                                                               Springer, 2010, pp. 33­55.
+
+                                                                                      [10] M. Maceira, D. Penna, A. Diniz, R. Pinto, A. Melo, C. Vasconcellos, C. Cruz,
+                                                                                               Twenty years of application of stochastic dual dynamic programming in official
+                                                                                               and agent studies in Brazil ­ Main features and improvements on the NEWAVE
+                                                                                               model, in: Proc. 20th Power System Computation Conference, 2018.
+
+                                                                                      [11] A. Papavasiliou, Y. Mou, L. Cambier, D. Scieur, Application of stochastic dual
+                                                                                               dynamic programming to the real-time dispatch of storage under renewable
+                                                                                               supply uncertainty, IEEE Trans. Sustain. Energy 9 (2) (2018) 547­558.
+
+                                                                                      [12] M.N. Hjelmeland, J. Zou, A. Helseth, S. Ahmed, Nonconvex medium-term
+                                                                                               hydropower scheduling by stochastic dual dynamic integer programming, IEEE
+                                                                                               Trans. Sustain. Energy 10 (1) (2018) 481­490.
+
+                                                                                      [13] A.L. Diniz, M.E.P. Maceira, C.L.V. Vasconcellos, D.D.J. Penna, A combined
+                                                                                               SDDP/Benders decomposition approach witha risk-averse surface concept for
+                                                                                               reservoir operation in long-term power generation planning, Ann. Oper. Res.
+                                                                                               292 (2020) 649­681.
+
+                                                                                      [14] O.J. Botnen, A. Johannesen, A. Haugstad, S. Kroken, O. Frøystein, Modelling
+                                                                                               of hydropower scheduling in a national/international context, in: E. Brock, D.
+                                                                                               Lysne (Eds.), Hydropower 92, Lillehammer, 1992.
+
+                                                                                      [15] L. Söder, J. Rendelius, Two-station equivalent of hydropower systems, in: Power
+                                                                                               System Computation Conference, Liege, Belgium, 2005.
+
+                                                                                      [16] M.E.P. Maceira, V.S. Duarte, D.D.J. Penna, M.P. Tcheou, An approach to consider
+                                                                                               hydraulic coupled systems in the construction of equivalent reservoir model in
+                                                                                               hydrothermal operation planning, in: Power System Computation Conference,
+                                                                                               PSCC, Stockholm, Sweden, 2011.
+
+                                                                                   6
+A. Helseth                                                                                                                                      Electric Power Systems Research 234 (2024) 110615
+
+[17] E. Blom, L. Söder, D. Risberg, Performance of multi-scenario equivalent                  [23] A. Helseth, B. Mo, Hydropower aggregation by spatial decomposition--An SDDP
+         hydropower models, Electr. Power Syst. Res. 187 (2020).                                      approach, IEEE Trans. Sustain. Energy 14 (1) (2023) 381­392.
+
+[18] V.L. de Matos, E.C. Finardi, A computational study of a stochastic optimization          [24] Q. Ploussard, T.D. Veselka, K. Oikonomou, N. Voisin, Hydro-economics tradeoff
+         model for long term hydrothermal scheduling, Int. J. Electr. Power Energy Syst.              surfaces to guide unit commitment in production cost models, Appl. Energy 324
+         43 (1) (2012) 1443­1452.                                                                     (119728) (2022).
+
+[19] N.V. Arvanitidis, J. Rosing, Composite representation of a multireservoir hy-            [25] M.E.P. Maceira, C.V. Bezerra, Stochastic streamflow model for hydroelectric
+         droelectric power system, IEEE Trans. Power Appar. Syst. 89 (2) (1970)                       systems, in: Proc. 5th Conf. on Probabilistic Methods Applied To Power Systems,
+         319­326.                                                                                     1997.
+
+[20] M.V.F. Pereira, L.M.V.G. Pinto, Stochastic optimization of a multireservoir              [26] M.E.P. Maceira, A.C.G. Melo, J.F.M. Pessanha, C.B. Cruz, V.A. Almeida, T.C.
+         hydroelectric system: A decomposition approach, Water Resour. Res. 21 (6)                    Justino, Combining monthly wind and inflow uncertainties in the stochastic
+         (1985) 779­792.                                                                              dual dynamic programming ­ Application to the Brazilian interconnected system,
+                                                                                                      Energy Syst. (2023).
+[21] V.R. Sherkat, R. Campo, K. Moslehi, E.O. Lo, Stochastic long-term hydrothermal
+         optimization for a multireservoir system, IEEE Trans. Power Appar. Syst. 104 (8)     [27] J.R. Birge, F. Louveaux, Introduction to Stochastic Programming, second ed.,
+         (1985) 2040­2050.                                                                            Springer, 2011.
+
+[22] J.L. Brandao, Performance of the equivalent reservoir modelling technique                [28] I. Dunning, J. Huchette, M. Lubin, JuMP: A modeling language for mathematical
+         for multi-reservoir hydropower systems, Water Resour. Manage. 24 (2010)                      optimization, SIAM Rev. 59 (2) (2017) 295­320.
+         3101­3114.
+
+                                                                                           7
+

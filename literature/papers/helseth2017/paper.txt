@@ -1,0 +1,604 @@
+IET Generation, Transmission & Distribution
+
+Research Article
+
+Detailed long-term hydro-thermal scheduling                                           ISSN 1751-8687
+for expansion planning in the Nordic power                                            Received on 16th June 2017
+system                                                                                Revised 27th August 2017
+                                                                                      Accepted on 3rd September 2017
+Arild Helseth1 , Birger Mo1, Arild Lote Henden1, Geir Warland1                        E-First on 1st November 2017
+                                                                                      doi: 10.1049/iet-gtd.2017.0903
+1SINTEF Energy Research, Sem Saelands vei 11, 7465 Trondheim, Norway                  www.ietdl.org
+  E-mail: arild.helseth@sintef.no
+
+Abstract: The authors describe a method for long-term hydro-thermal scheduling allowing treatment of detailed large-scale
+hydro systems. Decisions for each week are determined by solving a two-stage stochastic linear programming problem
+considering uncertainty in weather and exogenous market prices. The overall scheduling problem is solved by embedding such
+two-stage problems in a rolling horizon simulator. The method is verified on data for the Nordic power system, studying the
+incremental changes in expected socio-economic surplus for expansions in both the transmission and generation systems.
+Comparisons are made with a widely used existing long-term hydro-thermal scheduling model. The results indicate that the
+model is well suited to valuate the flexibility of hydropower in systems with a high share of intermittent renewable generation.
+
+   Nomenclature                                                 Stochastic variables
+
+Index sets                                                      ~        exogenous market price for market m, /MWh
+
+A set of price zones                                            ~mk      demand in zone a, GWh
+Co,t set of Benders cuts for scenario o and week t              D~ ak    inflow to reservoir h, Mm3
+Da set of price-elastic demand steps in zone a                  PI~hakk  wind power in zone a, GWh
+Ga set of thermal generators in zone a
+a set of hydropower modules in zone a                           Parameters
+K set of time steps within the week
+a set of interconnections connected to zone a                   c Benders cut right-hand side for cut c, 103 
+ set of exogenous markets                                       nh efficiency-curve segment n for station h, GWh/Mm3
+Nh set of efficiency-curve segments for module h                p consumption for pump p, GWh/Mm3
+Pa set of pumps in zone a                                       (s) probability of scenario s
+S set of NS scenarios                                           t autocorrelation for week t
+SR reduced set of NR scenarios                                  hc Benders cut coefficient for reservoir h and cut c, 103 /Mm3
+hB set of modules bypassing to module h                          ph pump topology indicator, { - 1, 1}
+hD set of modules discharging to module h                       t standard deviation for week t
+hS set of modules spilling to module h                           transmission loss for line , fraction
+                                                                cdDk marginal value for demand d, /MWh
+Decision variables                                              cgGk marginal cost for thermal generator g, /MWh
+                                                                cR cost of curtailment, /MWh
+o, t + 1  future expected cost from scenario o week t, 103      chWk head sensitivity for reservoir h, 103 /Mm3
+          end of horizon value of stored water, 103             Hh head for reservoir h, m
+          decision variables for scenario o and week t          Hh0 nominal head for reservoir h, m
+uo, t     state variables for scenario o and week t             T number of weeks in scheduling horizon
+          stochastic variables for scenario o and week t
+xo, t     excess power in zone a, GWh                           1 Introduction
+          flow from zone b to a, GWh
+yo, t     bypass from reservoir h, Mm3                          In the future, the Nordic power system will have tighter
+dak       discharge through station h at segment n, Mm3         connections with Europe and an increasing proportion of
+f bak     pumped water from reservoir h, Mm3                    intermittent renewable generation from, for example, wind, solar
+qhBk      spillage from reservoir h, Mm3                        and unregulated hydroelectric systems. Rapid and unpredictable
+qnDhk     curtailment in zone a, GWh                            fluctuations in intermittent generation will offer new possibilities
+qhPk      volume in reservoir h, Mm3                            for controllable generation to be able to respond to these
+qhSk      thermal generation for generator g, GWh               fluctuations. Flexible and fast-responding power plants able to
+rak                                                             produce at demand peaks will therefore see a higher profit
+vhk       price-elastic demand at step d, GWh                   potential. It will become increasingly important for hydropower
+ygGk                                                            producers with access to controllable production to correctly
+ydDk      purchase from market m, GWh                           estimate the value of flexibility so that the water is scheduled
+ymP k                                                           optimally. Under these circumstances, investment decisions in the
+ymS k     sales from market m, GWh                              hydropower system will call for methods that are able to correctly
+                                                                predict the value of flexibility.
+
+IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447                                                      441
+© The Institution of Engineering and Technology 2017
+    Nordic market players and system operators are faced with          simulator. The method allows a detailed representation of the             17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+major investment decisions related to possibilities for increasing     hydropower system and represents uncertainty in weather and
+the number of cable connections to Europe and improving the            exogenous power prices through scenario fans, where weather
+flexibility of the generation system. Accurate and robust decision     scenarios are based on historical records. A scenario fan is a
+support is needed to assess the profitability and consequences of      special case of a scenario tree, where all uncertainties are resolved
+future investments and to ensure co-ordinated development of           in the second stage. We underline that the presented method can
+exchange capacity and flexibility in the generating system.            also represent uncertainty through a scenario tree, but that
+                                                                       possibility will not be further discussed here. The method was first
+    In a hydro-thermal market context, the system operating costs      introduced in [29], but was then applied to an aggregate equivalent
+are typically estimated using long-term hydro-thermal scheduling       description of the hydropower system. We extend the work in [29]
+(LTHTS) tools [1, 2]. The LTHTS problem is dynamic since               by introducing detailed hydropower representation and further
+reservoir storages provide couplings between the stage-wise            elaborating on the description of uncertainty in the scenario fans.
+decisions in the scheduling problem. Operating decisions made in       Some preliminary results obtained using an early version of the
+the current stage will affect the reservoir levels in the next stage.  proposed method on synthetic test data were reported in [30].
+Furthermore, the problem is stochastic since uncertainty about the     Moreover, we add to the work in [25, 26] by introducing
+future will affect the decisions made today. Normally uncertainties    uncertainties in the scheduling, and to [27] by applying the model
+in the LTHTS problem are related to weather (typically inflow,         to a realistic system.
+snow, temperature, wind and solar radiation) and exogenous power
+prices. For the Nordic system, with more than 1000 hydro                   The primary contribution of this work is on the application and
+reservoirs and covering a widespread and climatically diverse          verification of the proposed LTHTS method to a realistic
+geographic region, the LTHTS problem is of high dimensionality         representation of the Nordic power system provided by the
+both in terms of reservoirs and stochastic processes.                  Norwegian transmission system operator. To our knowledge, this is
+                                                                       the first application of a stochastic LTHTS to the full Nordic power
+    Applied methodologies for solving the high-dimensionality          system without aggregation of the physical hydropower
+LTHTS problem traditionally rely on aggregation­disaggregation         representation. We demonstrate that the proposed method has the
+techniques, such as in [3­6]. That is, the physical reservoirs are     ability to capture the economical and operational impact of both
+represented by aggregate equivalents when computing the strategy,      global and local expansion projects in a hydro-thermal system. In
+and then the operation is simulated on the detailed system using the   particular, we evaluate the changes in expected socio-economic
+obtained strategy. A strategy is typically represented by water        surplus when expanding the cable capacity towards Germany and
+values or hyperplanes (often referred to as cuts). In our experience,  upgrading an existing pumped-storage plant in southern Norway.
+it becomes increasingly challenging to correctly valuate the           The model performance is compared with the EFI's Multiarea
+flexibility in complex hydropower systems using coarse                 Power Market Simulator (EMPS) model [5], which is an existing
+equivalents as the short-term variations in e.g. wind power            and widely used LTHTS model.
+production and daily price variations increase. This motivates the
+need for LTHTS methods that can handle detailed hydropower in          2 Solution method
+the strategy computation for large-scale systems.
+                                                                       The objective of the LTHTS problem is to minimise expected cost
+    The stochastic dual dynamic programming (SDDP) presented in        of operating the system over the specified scheduling horizon. For
+[7] is widely used for operational scheduling, see e.g. [2, 8, 9]. It  this purpose, we propose a simulator optimising the operational
+allows detailed representation of the hydropower in large-scale        strategy for each decision stage, given the system state at the
+systems [10, 11]. Although subject to recent improvements, see e.g.    beginning of that stage. The simulator is referred to as a scenario
+[12­15], the SDDP method does not easily facilitate non-               fan simulator (SFS) in the following.
+convexities. Consequently, stochastic models introducing stage-
+wise dependencies, such as for inflows [16, 17] and exogenous          2.1 Scenario fan simulator
+price processes [18­20], need to be carefully designed to avoid
+introducing non-convexities in the SDDP method.                        Consider a set of scenarios S representing historical values for
+                                                                       uncertain variables to be considered in the scheduling. The SFS
+    Using historical records to represent future uncertainty in        optimises sequences of decisions by solving scenario fan problems
+weather is the preferred procedure by most players in the Nordic       (SFPs) along all scenarios o  S in consecutive order. We use the
+market. Thus, the standard use of operative LTHTS models in the        term SFP for a two-stage stochastic linear programming (LP)
+Nordic market involves direct use of historical weather records, at    problem. The SFP is decomposed into a first-stage (operation) and
+least when simulating system operation. The major motivation for       a set of second-stage (scenario) problems, as illustrated in Fig. 1.
+working with historical data is to conserve correlations in both time
+and space which are not easily incorporated in stochastic models.          Consider simulating the system operation along a scenario
+An example is the prolonged dry or wet periods that sometimes          o  S for a time stage t  1 ...T, as illustrated in Fig. 1. A vector
+occur in geographical regions. In our experience it is challenging to  xo,t - 1 describing the physical state of the system is obtained from
+obtain SDDP-based strategies (cuts) for the detailed description of    the previously solved SFP along scenario o. We assume that the
+the Norwegian hydropower system that perform well when                 realisation of stochastic variables yo,t is known and follows
+simulating the system using historical data [11]. A different method   scenario o in week t, but can follow any of the scenarios s  S
+known as sampling stochastic dynamic programming was proposed          from time stage t+1 and towards the end of the scheduling
+in [21], and is compatible with the direct use of historical data.     horizon. Scenarios o and s belong to the same set S of historical
+However, this method cannot easily handle multiple reservoirs in       values, and that the scenarios s can be corrected to account for
+the strategy computation due to the `curse of dimensionality' of       correlations, as described in Section 2.2. We assume that all
+dynamic programming.                                                   uncertainties are resolved in the second stage, i.e. the scenario
+                                                                       problems are deterministic. Moreover, we assume that each
+    In a liberalised market context, practical hydropower              scenario s can be assigned a probability of occurrence (s).
+scheduling is a continuous process where strategies are updated on
+a weekly or even daily basis using the information available at that       The mathematical formulation of the SFP and the
+time [22]. This process can be resembled in rolling horizon            decomposition strategy is elaborated in Section 3.1. The first-stage
+simulator scheme, as demonstrated by the authors in [23, 24],          (operational) decision uo,t is stored and the second-stage (scenario)
+combining short-term decisions and medium-term strategy
+computation in sequence. This type of scheme, which is often           decisions serve to set the end-value coupling for the first stage,
+linked to the framework of model predictive control, was proposed      provided by Benders cuts with coefficients  and right-hand sides
+for the LTHTS problem in [25­27]. A more generic control-              , as shown in Fig. 1. The simulator uses a rolling horizon, where
+theoretic framework for power dispatch and storage dynamics was        the operational decision period has the length of one week and the
+presented in [28].                                                     length of the scenarios is fixed and should be long enough to
+                                                                       account for the storage capability of the largest hydro reservoirs.
+    In this paper, we describe and test an LTHTS method based on
+stage-wise optimal operation embedded in a rolling horizon                       IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447
+
+442                                                                                        © The Institution of Engineering and Technology 2017
+                                                                          o at time t and the original value of scenario s at time t. Corrected                                17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                          values y^s,ts for scenario s for time step ts are then given by
+
+                                                                                                 y^s, ts = ys, ts +   yo, t - ys, t  ts   tts  -  t                   (2)
+                                                                                                                                     t
+
+                                                                          In our approach, we are using the same method to modify scenarios
+                                                                          for all weather related input and exogenous power prices, and
+                                                                          model parameters are estimated individually for each input series.
+
+                                                                              To reduce computational burden, we allow reducing the set of
+                                                                          scenarios S to SR according to the fast forward selection algorithm
+
+                                                                          in [31]. It is not straightforward to find a reasonable valuation of
+                                                                          each scenario in this method since different types of uncertainties
+                                                                          are represented. In this work, we have valuated the scenarios
+                                                                          according to the estimated sum of energy, i.e. the sum of estimated
+                                                                          energy in the corresponding inflow and wind series.
+
+Fig. 1 Illustration of the simulator scheme, decomposing an SFP into one  3 Model description
+operational and several scenario problems                                 3.1 Scenario fan problem
+
+2.2 Representation of uncertainty                                         The SFP is defined as a two-stage stochastic LP problem. The
+                                                                          objective function of an SFP for time stage t and operational
+We allow for representation of uncertainty in weather related inputs      scenario o can be formulated as in (3). The notation corresponds
+such as inflow, wind power, temperature and snow, in addition to          with the illustration in Fig. 1. The system is scheduled T weeks
+exogenous power prices. Uncertainties in weather related inputs are       ahead, and thus T^ = T + t - 1
+based on historical variation. Historical values are used to keep
+correlations in time and space and between different types of input              min Zo, t xo, t - 1, uo, t
+series that are difficult to generate from statistical models. As an
+example, a cold winter has less precipitation than normal and the                uo, us
+precipitation is often low for widespread geographical areas at the
+same time.                                                                                                   T^                                                       (3)
+
+    The uncertain inputs are represented by NS = | S| scenarios in                     + (s)                        Zs, ts xs, ts - 1, us, ts +  xs, T^
+
+the SFS simulator. The basic assumption for the scenario                                  s  SR         ts = t + 1
+generation is that from any point in time the history may repeat
+itself with equal probability. This gives NS scenarios if there are NS    We decompose the SFP into a first-stage operational (4) and a
+                                                                          second-stage scenario (5) problem using Benders decomposition
+historical weather years available. Typically, historical                 [32]. The end of horizon value of stored water  may conceptually
+measurements for around 80 years are available for relevant sites in
+the Nordic system. The observed weather statistics are typically          be set to zero if the planning horizon is sufficiently long
+corrected for climatic changes before they are used.
+                                                                                                 min Zo, t xo, t - 1, uo, t + o, t + 1                                (4)
+    Inflow scenarios may be corrected based on the current snow
+storage information by conditioning the future scenarios and their                               uo, o
+probabilities on the snow storage in the current week. The
+correction is carried out by using `observed' time series for snow                                  T^
+storage. Inflow correction based on snow storage is not utilised in
+the case study, and will not be further discussed here.                                        min           Zs, ts xs, ts - 1, us, ts +  xs, T^                      (5)
+
+    The basic scenarios generated from historical observations are                            us ts = t + 1
+corrected for the current value for the scenario o we are simulating
+along. The purpose of the correction is to reflect weather                                              o, t + 1 + cxt  c                                             (6)
+correlations and the ground delays. As an example, if the inflow is
+very high this week, the probability of a high inflow the next week       First, the operational problem in (4) is solved to provide a trial state
+is also high, and vice versa. The corrections are based on the
+assumption that a given uncertain input can be described by a first-      solution        t.  Subsequently,      the    trial  solution      is      taken    as  an  initial
+order autoregressive model for normalised inflow, e.g. as in [8].
+Assume that the observations initially were generated from such a                    xo,
+model. A given scenario s1 with values ys1,t for t = 1...T would
+                                                                          state  in  the  scenario  problem         in  (5),   so  that   xs, t   =       t.  The  optimal
+then be given by the initial value ys1,0 and a particular sequence t
+for t = 1...T sampled from a normal distribution with zero mean.                                                                                     xo,
+Assume that we generate a new scenario s2 with the same sequence
+t, but with a different initial inflow ys2,0. It is then straightforward  objective from (5) and its sensitivities to changes in the initial state
+
+to derive that the scenario values ys2,t will approach ys1,t as t is      are used to create Benders cuts of type (6), where c and c are
+
+increasing according to                                                   vectors comprising cut coefficients and the cut right-hand sides,
+
+                                                                          respectively. The procedure is iterative, gradually improving the
+
+                                                                          Benders cuts stored in the set Co,t.
+
+                                    t                                     3.2 Operational decision problem
+                                    0
+                                                                          In the following, we describe the basic formulation of the
+                                                                          operational decision problem for a scenario o in time stage t. We
+                                                                          omit the scenario and time indices for simplicity. Stochastic
+                                                                          variables, i.e. the exogenous prices, inflow, demand and wind
+                                                                          power, are marked with the symbol.
+
+                                                                              Minimise
+
+ys2, t = ys1, t +  ys2, 0 - ys1, 0     0t  -  1                 (1)
+
+                                                                                         Zo,t =
+Even if the scenarios s are based on observed values, we use the                                                     cgGkygGk -           cdDkydDk + cRrak
+same method to correct the SFP scenarios to the actual value given
+by the scenario o that we are simulating along. The initial inflow                            k  K a  A g  Ga                    d  Da                                (7)
+deviation is given by the difference between the values of scenario
+                                                                                                -                       ~
+                                                                                                        chWkvhk +                  ymP k  -  ymS k   + o, t + 1
+                                                                                                                         mk
+
+                                                                                              h  a                   m
+
+IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447                                                                                                        443
+
+© The Institution of Engineering and Technology 2017
+Subject to                                                                               thermal market and power flows correspond with the data used in           17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+                                                                                         the case study, and that further constraints on the system operation,
+                      vhk +                                                              such as representation of linearised start-up costs [34] and DC
+                                  qnDhk + qhBk + qhSk +              phqhPk              power flows [35], will not be discussed here.
+
+                          n  Nh                           p  Pa                              All variables are non-negative and may have time-dependent
+                                                                                         lower and upper boundaries. The reservoir, discharge and bypass
+                        -                                                  qSjk          variables are often subject to seasonal constraints to ensure that
+                                          qnDjk -         qBjk -                  (8)    watercourses are operated in a sustainable manner.
+
+                          j  hD n  N j             j  hB            j  hS                3.3 Second-stage decision problem
+
+                    -vh, k - 1 = I~hk, h, k                                              The scenario problems are built according to (5) by summing
+                                                                                         contributions to the objective from (7) and adding constraints (8)­
+                ygGk +                           Hh                                      (10) for consecutive weeks along a scenario s. The iterative
+                                                 Hh0    nhqnDhk  -         pqhPk         evaluations of the scenario problems serve to create a future
+                                                                                         expected cost function for the operational problem through cuts of
+     g  Ga                   h  a      n    Nh                      p  Pa                type (11), as described in Section 3.1. In the following, we describe
+                                                                                         several practical trade-offs between the quality of the cuts and the
+                     -       ydDk +                                     ph = 1    (9)    computational burden of solving the scenario problems.
+
+                                                 1 -  f bak - f abk                          For large-scale systems with fine time resolution, the size of the
+                                                                                         scenario problem becomes an issue. Consider a system with 500
+                    d  Da              : (a, b)                                          hydro modules optimised for a horizon of 52 weeks with 56 time
+                                         a                                               steps within the week. Without simplifications, the number of
+                                                                                         reservoir balances (8) will be 500 × 52 × 56 = 1, 456, 000. In
+                    +rak  -  dak  =    ~    -    P~ak,  a, k                             principle, the scenarios should cover a time horizon long enough so
+                                                                                         that end-valuation of the reservoirs do not impact the operational
+                                       Dak                                               decisions. Strictly following this principle would lead to
+                                                                                         impractical scenario lengths (more than 5 years for the Nordic
+      ymPk - ymSk +                    [ 1 -  f amk - f mak] = 0, m, k            (10)   system). We relax this principle by defining the end of horizon
+                                                                                         values through  in (5). The end-valuation can e.g. come from a
+                             : (m, a)                                                    different type of scheduling model, or through an initial run of the
+                              m                                                          SFS with a longer time horizon and simpler representation of
+                                                                                         uncertainty.
+      o, t + 1 +                  hcvhk  c k = | K | , c  Co, t                   (11)
+                                                                                             In the general case, system operation in the near future is more
+                          h                                                              likely to influence the cuts than operation at the end of the
+                                                                                         scheduling horizon. We exploit this by allowing a gradually coarser
+The objective (7) is to minimise the system costs associated with                        time resolution within the week along the scenarios.
+
+operation of the system in the current decision period and the                               Regarding the head dependencies introduced in (8), the head
+                                                                                         parameter Hh for a given week and scenario is assumed to be equal
+expected cost of operating system in the future. The current cost                        to the head obtained in the middle of the week for the
+                                                                                         corresponding scenario in the previously solved SFP. Similarly, the
+comes from thermal generation (yG), curtailment of price-inelastic                       head sensitivities cW in (7) are computed as described in [8] based
+                                                                                         on the solution from the previously solved SFP. The introduction of
+demand (r) and purchase of power from exogenous markets (yP).                            head dependencies only incur a slight increase in computation time
+                                                                                         since the very first SFP needs to be solved twice. In our
+The coverage of price-elastic demand (yD) and sales of power to                          experience, the representation of head-dependent hydropower
+                                                                                         generation described here is a reasonable compromise between
+exogenous markets (yS) can be seen as revenues. Import and export                        accuracy and computation time for many watercourses in the
+                                                                                         Nordic system.
+across the system boundary is modelled by defining a set  of
+                                                                                             Working with scenarios allows easier treatment of certain kinds
+pexriocgeen~omuk.s  market areas with a          sales and       purchase option at the  of state- and scenario-dependent constraints than what is the case
+                    The future expected          operating       cost is represented by  for dynamic programming type of algorithms. Examples of such
+                                                                                         constraints are the different types of discharge and bypass
+o,t + 1 which is constrained by Benders cuts in (11).                                    requirements that depend on the storage level. These can e.g. be
+                                                                                         pre-processed for a given scenario based on the solution for the
+The hydropower system comprises hydropower modules                                       corresponding scenario in the previously solved SFP.
+
+connected through the three waterways discharge, bypass and                              3.4 Parallel processing
+
+spillage. A module comprises one reservoir and one power station.                        The SFP is well suited for parallel processing due to the problem
+                                                                                         decomposition, where each of the NR = | SR| scenario problems
+Water balances in (8) are defined for each module in each time                           can be solved on a separate processor. In this work, the NS
+                                                                                         scenarios are simulated in sequence, since the case study concerns
+step, accounting for the hydrological topology provided by the                           future system expansions, and consequently the simulated results
+                                                                                         should not significantly depend on the chosen initial state. If used
+waterways and pumps.                                                                     for price forecasting for the current system, the scenarios are
+                                                                                         arranged in parallel using the known initial reservoir levels as a
+A separate power balance (9) is defined for each price zone in                           common starting point. In the latter case, both the simulation
+                                                                                         procedure and the decomposition are arranged in parallel, so that a
+each time step. Thermal, hydro and wind power generation are                             total of NR × NS parallel processes can share the workload.
+
+balanced against the demand while allowing exchange with                                     A computer model was established implementing the proposed
+                                                                                         SFS method. The model was implemented in Fortran, using the
+neighbouring price zones and exogenous markets. The second term
+                                                                                                   IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447
+in (9) describes hydropower generation, which is modelled as a
+                                                                                                             © The Institution of Engineering and Technology 2017
+piecewise linear and concave relationship between power and
+
+discharge, provided that the efficiencies nh decrease with
+
+increasing n. The relationship between reservoir volumes,
+
+discharge and hydropower generation is generally non-convex, and
+
+is therefore challenging to accurately represent in an LP-based
+
+optimisation model, see e.g. [33] for a discussion of alternative
+
+techniques. In the presented model, we follow the heuristic
+
+presented in [8]. A nominal head Hh0 is used as a reference for the
+
+efficiencies nh, and the generation is adjusted according to the
+
+actual head Hh corresponding to initial reservoir volume for the
+
+current week. Since head enters the optimisation problem as a
+
+parameter and not a variable, we do only account for the immediate
+
+impact of head in (9). Pre-computed sensitivities chWk are used in the
+
+objective (7) to consider the expected future value of head,
+
+according to the procedure in [8]. The pump efficiency p is
+
+allowed to depend on the head of the reservoirs it pumps between.
+
+Power balances for exogenous market areas are defined in (10).
+
+The transmission system connecting zones and markets in (9) and
+
+(10) is represented by limiting flows through maximum flow
+
+capacities and let transmission losses depend linearly on the flows.
+
+The model allows dumping of excess power dak to avoid negative
+
+prices, and thus circumvent unlogical loading of the discharge
+
+segments in (9). Note that the details in the modelling of the
+
+444
+Fig. 2 Nordic area, including an excerpt of the Sira-Kvina watercourse.            The system was modelled using 1265 hydro modules (each                                  17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+The stapled circle indicates the location of the watercourse, and the stapled  module has a hydro reservoir and a power station) out of which
+line the cable between Norway and Germany                                      737 have reservoirs with maximum capacity exceeding 2Mm3.
+
+Fig. 3 Change in annual expected socio-economic surplus with increasing            The SFP cost minimisation problem formulated in Section 3 is
+cable capacity between Norway and Germany                                      equivalent to maximising socio-economic surplus. We analyse the
+dual simplex algorithm from the CPLEX 12.6 library [36] and the                sensitivity in socio-economic surplus obtained for two system
+MPI protocol for message passing.                                              expansions: (i) increased capacity on an HVDC cable, and (ii)
+                                                                               increased capacity in an existing pumped-storage plant.
+4 Nordic case study
+4.1 Case description                                                               The SFS results were compared with those obtained from the
+The SFS computer model was tested on data for the Nordic system,               EMPS model on the same data. The EMPS is a fundamental
+provided by the Norwegian transmission system operator, see                    LTHTS model based on aggregation­disaggregation techniques
+illustration in Fig. 2. The system description comprises 26 price              [5], and is in widespread use by players in the Nordic market. For
+zones: 15 in Norway, 4 in Sweden, 2 in Denmark, 2 in Finland, the              all SFS runs, a scenario length of 52 weeks was used, and the end-
+3 Baltic countries, and represent a possible system configuration              valuation was obtained from the EMPS model run on the same
+around year 2020, including new HVDC cables between Norway                     case. The number of scenarios was reduced to 19, and all
+and Great Britain and Norway and Germany.                                      simulations were run on server node with two 10-core Intel Xeon
+                                                                               E5-2640 processors with 2.50GHz and 128GB RAM.
+    In the simulations, we considered the historical inflow years
+1962­2012 represented by 228 geographically unique inflow                      4.2 Increased cable capacity
+records. Wind power and temperature data were specified for the
+same sequence of years using 85 and 15 individual records,                     We evaluated the expected change in socio-economic surplus when
+respectively. A system boundary was drawn along connections to                 increasing the HVDC cable capacity between Norway and
+the exogenous markets in Great Britain, Germany, the Netherlands,              Germany. This cable is indicated by a stapled line in Fig. 2.
+Poland and Russia. The stochastic exogenous prices were obtained
+from a fundamental market model considering a wider system                         For this study both the SFS and EMPS models were run with a
+boundary and a coarse representation of the hydropower system.                 time resolution of five time steps within the week, i.e. this was the
+                                                                               time resolution for the operational problems in the SFS model.
+IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447                 Moreover, we applied one time step within the week in the SFS
+© The Institution of Engineering and Technology 2017                           scenarios. Each scenario problem had 68.917 constraints and
+                                                                               451.655 variables, and the operational problems were
+                                                                               approximately a magnitude of 10 smaller. The two-stage SFP on
+                                                                               average converges in 20 iterations spending slightly more than 1
+                                                                               min of CPU time. The total run time for the SFS was 50h, while
+                                                                               the EMPS model spent 10min.
+
+                                                                                   Fig. 3 shows the change in annual expected socio-economic
+                                                                               surplus when increasing the cable capacity towards Germany with
+                                                                               200MW from its base case using 10MW steps. According to
+                                                                               theory one should expect the socio-economic surplus to be non-
+                                                                               decreasing with increasing cable capacity. Although this was not
+                                                                               strictly the case for any of the models, Fig. 3 shows that the SFS
+                                                                               model results are more consistent, reducing the `noise' seen with
+                                                                               the EMPS model.
+
+                                                                               4.3 Increased pumped-storage plant capacity
+
+                                                                               Next, we look at a specific large-scale expansion project in the
+                                                                               Sira-Kvina watercourse in the southern part of Norway, as
+                                                                               illustrated at the left-hand side in Fig. 2. The Duge pumped-storage
+                                                                               plant is indicated as plant number 6 in the watercourse and has a
+                                                                               capacity of 200MW. We increased the capacity of the Duge
+                                                                               pumped-storage plant incrementally with a maximum increase of
+                                                                               2000MW. A large-scale expansion of the plant capacity will
+                                                                               impact power prices in the corresponding price zone.
+                                                                               Consequently, there is a need for analysing the market impact and
+                                                                               at the same time respect the detailed constraints in the watercourse.
+                                                                               An exchange capacity of 5000MW between Norway and Germany
+                                                                               was assumed to obtain intra-week price differences that triggers
+                                                                               pump operation.
+
+                                                                                   For this study, we ran the models with a time resolution of 56
+                                                                               time steps within the week for the operational problem. The finer
+                                                                               time resolution allows the pumped-storage plant to exploit price
+                                                                               differences between time steps and to more realistically see
+                                                                               constraints in the watercourse. Moreover, we applied five time
+                                                                               steps within the week for the first 10 weeks in the SFS scenarios
+                                                                               and 1 time step for the remaining horizon. Each scenario problem
+                                                                               had 120.957 constraints and 749.455 variables, and the operational
+                                                                               problems were approximately half the size. Each SFP was on
+                                                                               average solved in 3.5min and the total run time was 156h.
+
+                                                                                   Fig. 4 shows how the pump was operated in the SFS model for
+                                                                               a selected week and scenario considering 230MW installed
+                                                                               capacity. The price differences between the time steps motivate the
+                                                                               frequent on/off decisions for the pump. In contrast, the heuristics in
+                                                                               the EMPS model primarily allows for seasonal pumping, and will
+                                                                               therefore not optimally exploit the intra-week price differences.
+
+                                                                                                                                                                      445
+Fig. 4 Pumping at Duge pumped-storage plant (solid-drawn line) and the             Although the method is well suited for parallel processing,                             17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+relative simulated power price (stapled line) for a specific week considering  several simplifications were needed to arrive at reasonable
+an installed capacity of 230MW                                                 computation times for the case study. By reducing the number of
+                                                                               scenarios in the fan and the scenario horizon, as well as the time
+Fig. 5 Change in annual expected socio-economic surplus with increasing        resolution along the scenario horizon and the type of constraints to
+pumped-storage plant capacity                                                  be represented in the scenarios, one can tailor the computational
+                                                                               burden according to the available computational resources.
+    Fig. 5 shows the change in annual expected socio-economic                  However, the compromise between reduced computation time and
+surplus as a function of increased plant capacity for the two                  quality of the strategy should be carefully evaluated, and is
+models. As for the cable expansion case, the marginal benefits seen            recommended as a subject for further work.
+in Fig. 5 are more consistent in the SFS case than for the EMPS
+model. The detailed hydro system operation in the EMPS model is                6 References
+based on heuristics while the SFS model optimises these decisions.
+Although the SFS model utilises the pumped-storage plant in a                  [1] Fosso, O.B., Gjelsvik, A., Haugstad, A., et al.: `Generation scheduling in a
+more economically efficient manner, the marginal value of                                deregulated system. The Norwegian case', IEEE Trans. Power Syst., 1999,
+additional plant capacity is lower due to the detailed constraints                       14, pp. 75­81
+seen by the SFS model.
+5 Conclusions                                                                  [2] Maceira, M.E.P., Duarte, V.S., Penna, D.D.J., et al.: `Ten years of application
+We presented a hydro-thermal scheduling method based on a                                of stochastic dual dynamic programming in official and agent studies in Brazil
+combination of simulation and optimisation. The method considers                         - description of the Newave program'. Proc. 16th Power System Computation
+uncertainties related to weather and exogenous power prices in a                         Conf., Glasgow, 2008
+fan of scenarios. Furthermore, the detailed hydropower system is
+represented without aggregation. The method was tested on                      [3] Valdés, J. B., Filippo, J.M., Strzepek, K.M., et al.: `Aggregation­
+realistic data for the Nordic power system, considering increased                        disaggregation approach to multireservoir operation', J. Water Resour. Plan.
+cable capacity towards Germany and increased capacity in a single                        Manage., 1992, 118, (4), pp. 423­444
+pumped-storage plant. The results indicate that the method is well
+suited to valuate the flexibility in the hydropower system when                [4] Turgeon, A., Charbonneau, R.: `An aggregation-disaggregation approach to
+exposed to more volatile power prices.                                                   long-term reservoir management', Water Resour. Res., 1998, 34, (12), pp.
+446                                                                                      3585­3594
+
+                                                                               [5] Wolfgang, O., Haugstad, A., Mo, B., et al.: `Hydro reservoir handling in
+                                                                                         Norway before and after deregulation', Energy, 2009, 34, (10), pp. 1642­
+                                                                                         1651
+
+                                                                               [6] Maceira, M.E.P., Duarte, V.S., Penna, D.D.J., et al.: `An approach to consider
+                                                                                         hydraulic coupled systems in the construction of equivalent reservoir model in
+                                                                                         hydrothermal operation planning'. Power System Computation Conf. (PSCC),
+                                                                                         Stockholm, Sweden, 2011
+
+                                                                               [7] Pereira, M.V.F., Pinto, L.M.V.G.: `Multi-stage stochastic optimization applied
+                                                                                         to energy planning', Math. Program., 1991, 52, pp. 359­375
+
+                                                                               [8] Gjelsvik, A., Mo, B., Haugstad, A.: `Long- and medium-term operations
+                                                                                         planning and stochastic modelling in hydro-dominated power systems based
+                                                                                         on stochastic dual dynamic programming', in Rebennack, S., Pardalos, P.M.,
+                                                                                         Pereira, M.V.F., Iliadis, N.A. (Eds.): Handbook of power systems I (Springer-
+                                                                                         Verlag, Berlin and Heidelberg, 2010), pp. 33­55
+
+                                                                               [9] Halliburton, T.S.: `An optimal hydrothermal planning model for the New
+                                                                                         Zealand power system', Aust. J. Electr. Electron. Eng., 2004, 1, (3), pp. 193­
+                                                                                         198
+
+                                                                               [10] Granville, S., Oliveira, G.C., Thomé, L.M., et al.: `Stochastic optimization of
+                                                                                         transmission constrained and large scale hydrothermal systems in a
+                                                                                         competitive framework'. Proc. IEEE General Meeting, Toronto, Canada, 2003
+
+                                                                               [11] Gjerden, K.S., Helseth, A., Mo, B., et al.: `Hydrothermal scheduling in
+                                                                                         Norway using stochastic dual dynamic programming: a large-scale case
+                                                                                         study'. Proc. of IEEE PowerTech, Eindhoven, The Netherlands, 2015
+
+                                                                               [12] Flach, B., Barroso, L., Pereira, M.: `Long-term optimal allocation of hydro
+                                                                                         generation for a price-maker company in a competitive market: latest
+                                                                                         developments and a stochastic dual dynamic programming approach', IET.
+                                                                                         Gener. Transm. Distrib., 2010, 4, (2), pp. 299­314
+
+                                                                               [13] Cerisola, S., Latorre, J.M., Ramos, A.: `Stochastic dual dynamic
+                                                                                         programming applied to nonconvex hydrothermal models', Eur. J. Oper. Res.,
+                                                                                         2012, 218, pp. 687­897
+
+                                                                               [14] Abgottspon, H., Njálsson, K.,, Bucher, M.A., et al.: `Risk-averse medium-
+                                                                                         term hydro optimization considering provision of spinning reserves'. Int.
+                                                                                         Conf. on Probabilistic Methods Applied to Power Systems (PMAPS),
+                                                                                         Durham, England, 2014
+
+                                                                               [15] Steeger, G., Rebennack, S.: `Dynamic convexification within nested benders
+                                                                                         decomposition using Lagrangian relaxation: an application to the strategic
+                                                                                         bidding problem', Eur. J. Oper. Res., 2017, 257, (2), pp. 669­686
+
+                                                                               [16] Penna, D.D.J., Dámazio, M.E.P.M.J.M.: `Selective sampling applied to long-
+                                                                                         term hydrothermal generation planning'. Power System Computation Conf.
+                                                                                         (PSCC), Stockholm, Sweden, 2011
+
+                                                                               [17] Poorsepahy-Samian, H., Espanmanesh, V., Zahraie, B.: `Improved inflow
+                                                                                         modeling in stochastic dual dynamic programming', J. Water Resour. Plan.
+                                                                                         Manage., 2016, 142, (12)
+
+                                                                               [18] Philpott, A., de Matos, V.: `Dynamic sampling algorithms for multi-stage
+                                                                                         stochastic programs with risk aversion', Eur. J. Oper. Res., 2012, 218, (2), pp.
+                                                                                         470­483
+
+                                                                               [19] Helseth, A., Gjelsvik, A., Mo, B., et al.: `A model for optimal scheduling of
+                                                                                         hydro thermal systems including pumped-storage and wind power', IET.
+                                                                                         Gener. Transm. Distrib., 2013, 7, (12), pp. 1426­1434
+
+                                                                               [20] Rebennack, S.: `Combining sampling-based and scenario-based nested
+                                                                                         benders decomposition methods: application to stochastic dual dynamic
+                                                                                         programming', Math. Program., 2016, 156, (1), pp. 343­389
+
+                                                                               [21] Kelman, J., Stedinger, J.R., Cooper, L.A., et al.: `Sampling stochastic
+                                                                                         dynamic programming applied to reservoir operation', Water Resour. Res.,
+                                                                                         1990, 26, (3), pp. 447­454
+
+                                                                               [22] Scharff, R., Egerer, J., Söder, L.: `A description of the operative decision-
+                                                                                         making process of a power generating company on the Nordic electricity
+                                                                                         market', Energy Syst., 2014, 5, pp. 349­369
+
+                                                                               [23] Aasgård, E.K., Andersen, G.S., Fleten, S.E., et al.: `Evaluating a stochastic-
+                                                                                         programming-based bidding model for a multireservoir system', IEEE Trans.
+                                                                                         Power Syst., 2014, 29, (4), pp. 1748­1757
+
+                                                                                         IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447
+
+                                                                                                   © The Institution of Engineering and Technology 2017
+[24] Séguin, S., Fleten, S.E., Côté, P., et al.: `Stochastic short-term hydropower        [31] Gröwe-Kuska, N., Heitsch, H., Römisch, W.: `Scenario reduction and                17518695, 2018, 2, Downloaded from https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903 by Ntnu Norwegian University Of S, Wiley Online Library on [04/11/2026]. See the Terms and Conditions (https://onlinelibrary.wiley.com/terms-and-conditions) on Wiley Online Library for rules of use; OA articles are governed by the applicable Creative Commons License
+          planning with inflow scenario trees', Eur. J. Oper. Res., 2016, 259, pp. 1156­            scenario tree construction for power management problems'. IEEE
+          1168                                                                                      PowerTech Conf., Bologna, Italy, 2003
+
+[25] Martinez, L., Soares, S.: `Comparison between closed-loop and partial open-          [32] Van Slyke, R.M., Wets, R.: `L-shaped linear programs with applications to
+          loop feedback control policies in long term hydrothermal scheduling', IEEE                optimal control and stochastic programming', SIAM J. Appl. Math., 1969, 17,
+          Trans. Power Syst., 2002, 17, pp. 330­336                                                 (4), pp. 638­663
+
+[26] Zambelli, M.S., Soares, S.: `A predictive control approach for long term             [33] Diniz, A., Maceira, M.E.P.: `A four-dimensional model of hydro generation
+          hydrothermal scheduling'. IEEE/PES Power Systems Conf. and Exposition,                    for the short-term hydrothermal dispatch problem considering head and
+          2009                                                                                      spillage effects', IEEE Trans. Power Syst., 2008, 23, (3), pp. 1298­1308
+
+[27] Nolde, K., Uhr, M., Morari, M.: `Medium term scheduling of a hydro-thermal           [34] Warland, G., Haugstad, A., Huse, E.S.: `Including thermal unit start-up costs
+          system using stochastic model predictive control', Automatica, 2008, 44, pp.              in a long-term hydro-thermal scheduling model'. Proc. 16th Power System
+          1585­1594                                                                                 Computation Conf., Glasgow, Scotland, 2008
+
+[28] Powell, W.B., George, A., Simão, H., et al.: `SMART: a stochastic multiscale         [35] Helseth, A., Warland, G., Mo, B.: `A hydrothermal market model for
+          model for the analysis of energy resources, technology, and policy',                      simulation of area prices including detailed network analyses', Int. Trans.
+          INFORMS J. Comput., 2011, 24, (4), pp. 665­682                                            Electr. Energy Syst., 2013, 23, (8), pp. 1396­1408
+
+[29] Helseth, A., Mo, B., Warland, G.: `Long-term scheduling of hydro-thermal             [36] `IBM ILOG CPLEX optimizer', http://www-01.ibm.com/software/
+          power systems using scenario fans', Energy Syst., 2010, 1, (4), pp. 377­391
+
+[30] Warland, G., Mo, B.: `Stochastic optimization model for detailed long-term
+          hydro thermal scheduling using scenario-tree simulation', Energy Procedia,
+          2016, 87, pp. 165­172
+
+IET Gener. Transm. Distrib., 2018, Vol. 12 Iss. 2, pp. 441-447                            447
+
+© The Institution of Engineering and Technology 2017
+

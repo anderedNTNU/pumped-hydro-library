@@ -1,0 +1,798 @@
+                                                Electrical Power and Energy Systems 119 (2020) 105864
+                                                       Contents lists available at ScienceDirect
+
+                                       Electrical Power and Energy Systems
+
+                                          journal homepage: www.elsevier.com/locate/ijepes
+
+Accounting for reserve capacity activation when scheduling a hydropower T
+dominated system
+
+Christian Øyn Naversena,, Hossein Farahmanda, Arild Helsethb
+
+a Department of Electric Power Engineering, Norwegian University of Science and Technology, 7491 Trondheim, Norway
+b Department of Energy Systems, SINTEF Energy Research, Sem Sælands vei 11, 7034 Trondheim, Norway
+
+ARTICLE INFO                           ABSTRACT
+
+Keyword:                               As the penetration of variable renewable power generation increases in power systems around the world, system
+Activation of reserved capacity        security is challenged. It is crucial to coordinate the available flexible generating resources, such as hydropower,
+Hydropower scheduling                  to meet the need for system balancing. However, reserved capacity on hydropower plants should only be ac-
+Hybrid stochastic-robust optimization  tivated if there is sufficient energy or storage capacity to either increase or decrease production. The potential
+                                       change in production will also affect all reservoirs and plants connected by the cascaded topology. These issues
+                                       are largely ignored or simplified in hydropower reserve scheduling models. To properly account for the possible
+                                       activation of reserved capacity, several two-stage model formulations based on stochastic and robust optimi-
+                                       zation are presented and compared in this paper. The uncertainty in net load deviations due to forecasting errors
+                                       in renewable power generation is considered the source of reserve capacity activation. The case study based on a
+                                       real Norwegian watercourse clearly shows the benefit of using any of the two-stage model solutions over the
+                                       standard deterministic reserve procurement. A novel hybrid stochastic-robust model formulation is presented
+                                       and shown to efficiently increase the robustness of the solution without notably increasing the reserve pro-
+                                       curement cost compared to the stochastic and robust models.
+
+1. Introduction                                                             cost or water value, which in general depends on the stored water vo-
+                                                                            lumes. This makes the cost of procuring reserve capacity on a specific
+    Hydropower is a valuable asset for any power system, as it is flexible  hydropower plant dependent on the capacity procured on the sur-
+and fast to regulate compared to thermal generation technologies. As        rounding plants. Activating poorly coordinated reserve capacity in
+the share of variable renewable energy sources in power systems across      complex hydropower systems could lead to needless loss of potential
+the world increases, so does the need for balancing capacity and energy.    energy and increased risk of load shedding.
+Although hydropower is well suited to help balance the system, the
+technical constraints and cascaded topology must be considered to               Reserve capacity procurement and system balancing have been in-
+realistically estimate this balancing capability. A watercourse connects    corporated into hydropower scheduling models in several ways. These
+hydropower plants in space and time. Thus, the balancing actions of a       features can be found in both long-term planning models
+single plant will impact the operation of the whole system, which is a      [21,13,14,1,18,20,28] and short-term operational models [24,23,9,15].
+challenge when considering spinning reserve capacity allocation. A          The fundamental models in [21,13,14] sequentially clear the day-ahead
+hydropower plant delivering spinning reserve capacity in both direc-        market, reserve procurement and system balancing steps for Northern
+tions must have sufficient stored water upstream to increase its pro-       Europe. The activation of reserve capacity is based on the marginal cost
+duction, and simultaneously it is beneficial to keep enough upstream        of the hydropower plants in their day-ahead position, but does not in-
+storage capacity available to save unused water, in case the reserved       clude hydrological constraints nor account for available energy in the
+capacity is activated upward or downward. The same is valid for the         reservoirs. The methods presented in [1] and [18] consider a producer
+plants connected downstream of the activated plant since the water          participating in day-ahead energy and spinning reserve capacity mar-
+released has changed from its scheduled value. Another complicating         kets under uncertainty in inflow and market prices within modified
+aspect is the implicitly defined marginal cost of operating a hydropower    stochastic dual dynamic programming (SDDP) frameworks. Both
+plant. The stored water in each reservoir has an associated opportunity     methods ensure that enough water is stored in the reservoir to produce
+                                                                            the allocated reserve capacity, although activation is not directly
+
+   Corresponding author.
+    E-mail address: christian.naversen@ntnu.no (C.Ø. Naversen).
+
+https://doi.org/10.1016/j.ijepes.2020.105864
+Received 5 September 2019; Received in revised form 20 November 2019; Accepted 15 January 2020
+0142-0615/ © 2020 The Authors. Published by Elsevier Ltd. This is an open access article under the CC BY license
+(http://creativecommons.org/licenses/BY/4.0/).
+C.Ø. Naversen, et al.                                                                     Electrical Power and Energy Systems 119 (2020) 105864
+
+Nomenclature                                                                   Vm0        initial reservoir volume [m3]
+                                                                               Vm         maximal reservoir capacity [m3]
+           robust uncertainty set                                              WVm        end value of water [mu/m3]
+
+    d/b/o  modules that discharge/bypass/spill water into module m,
+    m
+
+           index i                                                             Variables
+
+           robust worst-case scenarios, index j
+
+           hydropower modules, index m                                            ±       auxiliary variables used in "big-M" formulation
+
+    m      discharge segments in module m, index n [A]                             t      net load deviation [MW]
+
+           balancing scenarios, index s                                           t       dual value of the power balance constraint in the balan-
+
+           time periods, indext                                                           cing stage [mu/WMh]
+
+           dual feasibility constraints for the balancing stage                           auxiliary variable approximating the value of the second-
+
+           scheduling-stage feasibility constraints                                       stage problem [mu]
+
+           balancing-stage feasibility constraints                                        vector of all dual balancing-stage variables
+
+                                                                               x          vector of all scheduling-stage variables
+
+Parameters                                                                     y          vector of all balancing-stage variables
+
+                                                                               B          normalized system balancing cost [mu]
+
+   max     maximal net load deviation [MW]                                     K          procurement cost of reserves [mu]
+
+           budget of uncertainty                                               pmt        generated hydropower [MW]
+
+    t      maximal hourly net load deviation in [MW]                           qmb t      flow through bypass gate [m3/s]
+
+s          scenario probability                                                qmdnt      flow through discharge segment [m3/s]
+
+C+         penalty for shedding load [mu/MW]                                   qmint      total controlled flow into reservoir [m3/s]
+
+C          penalty for dumping power [mu/MW]                                   qmout t    total controlled flow out of reservoir [m3/s]
+
+Cb         penalty for bypassing water [mu/m3]                                 qmo t      flow through spill gate [m3/s]
+
+Co         penalty for spilling water [mu/m3]                                  rmt        symmetric spinning reserved capacity [MW]
+
+Emn        energy conversion factor [MWs/m3]                                   st+        load shedded [MW]
+
+Ft         length of time period [s]                                           st         power dumped [MW]
+
+Imt        natural inflow [m3/s]                                               U          normalized total system cost [mu]
+
+Lt         forecasted system net load [MW]                                     ut+        load deviation in upward direction
+
+Pm         maximal production capacity [MW]                                    ut         load deviation in downward direction
+
+Qmb        maximal flow through bypass gate [m3/s]                             vmt        volume at the beginning of the time period [m3]
+
+Qmd n      maximal flow through discharge segment [m3/s]                       W bal      dual of second-stage objective function [mu]
+
+Qmo        maximal flow through spill gate [m3/s]                              Zbal       second-stage objective function [mu]
+
+Rt         system reserve requirement [MW]                                     Zda        first-stage objective function [mu]
+
+T          number of time periods in
+
+modelled. In [20], it is investigated how wind power can contribute to         ahead and reserve markets [33,35]. The work in [33] considers energy
+the provision of rotating reserves in a hydropower-dominated system by         delivery in both the day-ahead and the real-time markets, but only
+using the SDDP algorithm, but without considering reserve activation.          satisfies the energy constraints of the storage units on average over a set
+The deterministic model presented in [24] has a high degree of physical        of net load deviation scenarios. The bi-level energy storage investment
+detail and can model the reservation of all the different reserve capacity     model in [35] requires that there is sufficient storage and energy
+products in Norway. The total amount of reserve capacity to be allo-           available to activate the reserved capacity at maximum for a single
+cated in the system is exogenously given to the model and is distributed       hour. The model presented in this paper differs from the general energy
+among the hydropower plants while optimizing the day-ahead market              storage models in the representation of realistic and large-scale cas-
+position. The probability of activation in the balancing markets modi-         caded hydropower systems. To this end, note that short-term hydro-
+fies the expected income in the deterministic model in [23], and the           power and hydrothermal scheduling is an active field of research, see
+work in [9] is based on the assumption that a certain percentage of the        for instance [25] and [12] for recent descriptions of state-of-the-art
+reserve capacity sold to the market is activated by the system operator        formulations.
+in every inflow and price scenario. The models in [28] and [15] do not
+explicitly model the reserve capacity procurement, but consider system             The uncertain nature of variable renewable power generation and
+balancing through bidding into the day-ahead, intraday and real-time           consumption contributes to the need for balancing services. Forecast
+energy markets.                                                                errors in the net load of a power system force the system operator to
+                                                                               activate reserved production capacity to meet the actual net load. There
+    This paper addresses the importance of explicitly representing the         are several ways of modelling the uncertainty in net load deviations
+activation of reserved production capacity in the reserve procurement          that cause the system to be unbalanced, such as stochastic and robust
+phase of a hydropower scheduling model. To the best of the authors'            optimization. Stochastic optimization typically yields models which are
+knowledge, this has not been addressed in detail in the literature be-         risk neutral, while robust optimization hedges the solution against the
+fore, and so emerges as a gap in the existing research. Related work on        worst-case realization of the uncertainty [6]. Robust optimization has
+general energy storage devices exists to some degree. The stochastic           been widely and successfully applied to power system planning and
+unit commitment model with ideal energy storage in [36] balances load          operation problems in recent years [32]. A large portion of the pub-
+deviations by activating reserve capacity on thermal generators and            lished scientific material has been related to the unit commitment
+energy storage devices. The model in [8] considers individual pumped           problem under uncertainty, where the goal typically is to commit a
+storage plants coupled with thermal units, and energy constraints are          sufficient number of thermal units to be able to balance real-time de-
+applied to the reserve capacity procurement for extreme ramping sce-           viations [39]. These types of models are usually formulated as two-
+narios that are decoupled in time. Bi-level complementarity models can         stage models [22,5,41,2,7], though single-stage [37] and multistage
+be used to study the participation of an energy storage unit in day-           models [31,30] also exist. Robust optimization has also been used in the
+
+                                                                            2
+C.Ø. Naversen, et al.                                                                                               Electrical Power and Energy Systems 119 (2020) 105864
+
+context of hydropower scheduling under uncertainty, as in [3], where           generation, is not modelled explicitly, but manifests as uncertainty in
+the energy content of the hydropower system is maximized while ac-             the net load. The forecast errors are seen as the main factors of this
+counting for uncertain net load and inflow. In this paper, a combination       uncertainty, and are therefore the drivers behind the need for balancing
+of both the stochastic and robust modelling approaches are used to             services. The forecast errors in the net load become known after the
+construct two-stage models that account for the effect of activation of        scheduling step, and so the operator must use the procured reserve
+reserve capacity in a hydropower system.                                       capacity to balance the system in the most efficient way possible.
+
+    The combination of robust and stochastic optimization has been             2.1. Deterministic day-ahead scheduling problem
+proposed in different ways. Stochastic and robust optimization may
+handle separate sources of uncertainty, such as generator availability             The deterministic short-term scheduling problem for the system
+and power prices in [11] and variable power generation and power               operator,
+prices in [27]. Moreover, it is possible to create hybrid models by taking
+a stochastic or a robust model and introducing some characteristics            minZda (x)
+from the other approach. The work in [7] partitions the scenarios in a
+stochastic model into bundles where robust optimization is applied               x
+within each bundle, while [2] introduces several robust uncertainty sets
+to a robust model by weighting them in the objective function akin to          x,                                                                        (1)
+scenario probabilities. The medium-term hydrothermal model pre-
+sented in [38] procures reserve capacity to ensure system security in the      aims to minimize the cost of using water to cover the required net load
+face of a N k security criterion, which is done by incorporating robust        and spinning reserve requirements while respecting the physical con-
+optimization into the SDDP framework itself. The unified stochastic-           straints of the system. A standard linear definition of the hydropower
+robust model presented in [41] models the same source of uncertainty           scheduling problem, see for instance [19], is formulated as
+by both stochastic and robust optimization. This is done by introducing
+weight of the average scenario cost and 1 of the robust worst-case              min                  WVm vm,T+1 +                  Ft (Cbqmbt + Coqmot)
+cost in the objective function, which represents a direct integration of
+both the stochastic and the robust optimization methods in a single              v, p, r ,                          m ,t
+problem. A novel hybrid model stochastic-robust model is presented in          qd,qb,qo, m
+this paper, which leverages the popular column-and-constraint gen-
+eration (CCG) solution technique (see [40,42]) as a scenario generator.        qin,qout                                                                  (2)
+The CCG provides robust scenarios for the mixed stochastic-robust
+model, which can be considered as extreme scenarios generated based            s.t.
+on a robust uncertainty set. By tuning the probability given to these
+extreme scenarios, a model that is more robust without being overly            vm0 = Vm0             m                                                   (3)
+conservative compared to its deterministic, robust, and stochastic
+counterparts is achieved. The complexity of the mixed stochastic-robust        qmint =               qidnt +        qibt +         qiot     m, t  ,
+model is manageable, as the calculation of the robust scenarios is done
+before solving the complete model. In short, the contributions of this                    i md ,n i           i bm           i  o                        (4)
+paper are considered twofold:                                                                                                   m
+
+1. A new hybrid mixed stochastic-robust optimization model which is            qmout t =      qmdnt + qmbt + qmo t              m, t     ,
+    less complex in construction compared to other hybrid models is
+    presented. In the numerical case study the new hybrid model im-                       nm                                                             (5)
+    proves the robustness of the solution without drastically increasing
+    the cost compared to the pure robust and pure stochastic models.           vm,t+1     vmt = Imt + qmint         qmout t        m, t     ,            (6)
+                                                                                     Ft
+2. The impact of considering activation of reserve capacity in complex
+    and cascaded hydropower systems has been quantified.                       pmt =          Emn qmdnt          m, t           ,
+
+    The rest of the paper is organized into three parts: Section 2 details                nm                                                             (7)
+the modelling of the optimization problem formulations, a case study is
+presented in Section 3, and concluding remarks are found in Section 4.               pmt = Lt           t
+Section 2 is split into subsections describing the deterministic day-
+ahead scheduling problem (Section 2.1), the system balancing problem           m                                                                          (8)
+(Section 2.2), the stochastic and robust two-stage problems (Section                                                                                      (9)
+2.3), and the new mixed stochastic-robust problem (Section 2.4). The           pmt + rmt Pm                m, t           ,                              (10)
+case study in Section 3 presents results from tuning the mixed sto-
+chastic-robust model (Section 3.2) and how the different model for-            pmt rmt 0                m, t           ,
+mulations compare (Section 3.3).
+                                                                                     rmt Rt             t
+2. Modelling
+                                                                               m                                                                         (11)
+    The perspective taken in this paper is that of a system operator
+aiming at optimally scheduling and balancing a completely renewable            0 vmt Vm                 m, t        , {T + 1}                            (12)
+system dominated by hydropower. The system is scheduled to be in
+balance according to the net load forecast in the day-ahead planning           0 qmdnt Qmdn                m, n, t              , m,                     (13)
+stage, and symmetric spinning reserve capacity is procured to ensure
+the balancing capabilities of the system. The existence of variable            0 qmbt Qmb               m, t           ,                                 (14)
+generation components in the system, such as wind and solar
+                                                                               0 qmo t Qmo              m, t           ,                                 (15)
+
+                                                                               0 pmt Pm                 m, t        ,                                    (16)
+
+                                                                                     All symbols in uppercase are input parameters to the model, while
+
+                                                                               lowercase symbols represent the decision variables x. The model is
+
+                                                                               defined for the hydropower modules m                               over the time periods
+
+                                                                               t , where the terminology "hydropower module" is used to describe
+
+                                                                               the combined unit of a reservoir connected to a power plant. The water
+
+                                                                               may be moved between reservoirs through three different waterways:
+
+                                                                               flow through the turbine, bypass gate, and spillage, see Fig. 1. The
+
+                                                                               objective (2) of the model is to minimize the total cost of using water
+
+                                                                               according to the water value and end volume of all reservoirs, as well as
+
+                                                                               the small penalties for using the alternative bypass and spillage wa-
+
+                                                                               terways. These penalties are applied to encourage the use of the main
+
+                                                                               waterway through the plant. Water values represent the opportunity
+
+                                                                            3
+C.Ø. Naversen, et al.                                                                                         Electrical Power and Energy Systems 119 (2020) 105864
+
+                                                                                Zbal (y)
+
+                                                                                    =          WVm v¯m,T+1 +           Ft (Cbq¯mbt + Coq¯mot) +
+
+                                                                                            m                 m ,t
+
+                                                                                           (C+st+ + C st ),                                      (19)
+
+                                                                                      t
+
+                                                                                and the production limits, Eqs. (9) and (10), are based on the procured
+                                                                                spinning reserve capacity and production schedule in the day-ahead
+                                                                                stage:
+
+                                                                                p¯mt pmt + rmt          m, t        ,                            (20)
+
+                                                                                p¯mt pmt rmt            m, t        ,                            (21)
+
+Fig. 1. Depiction of a hydropower module (reservoir and power plant) with           The constraints defined in the day-ahead scheduling problem, Eqs.
+different waterways for discharging, bypassing and spilling water.              (3)­(7) and (12)­(16), are also included in the balancing problem
+                                                                                constraints y (x, ), but now pertaining to the balancing variables
+                                                                                y. The only connection to the decisions made in the day-ahead sche-
+                                                                                duling stage is through Eqs. (20) and (21).
+
+                                                                                2.3. Two-stage stochastic and robust problems
+
+cost of using water now versus storing it for later use, and are calculated         To account for the potential cost of activating the procured reserves
+by long-term models such as [19]. The end value of the water generally          in the scheduling phase, a two-stage model combining the day-ahead
+depends on the end volume in all reservoirs in the system, typically            scheduling problem described in Section 2.1 with the system balancing
+described by linear cutting planes. Constant water values are used in           problem in Sectin 2.2 is needed. In this section, two-stage problems
+this model formulation for simplicity. Eqs. (3)­(6) preserve the water          based on traditional stochastic and robust optimization are formulated.
+balance and topology between the modules in the system. The relation            The scheduling of production and procurement of reserve capacity is
+between water discharged through the turbine and the power produced             the first-stage problem, while balancing the system based on the first-
+by the generator is modelled as a piece-wise linear constraint in Eq. (7),      stage solution and realized net load deviation t is considered as the
+where the efficiency is decreasing for increasing discharge segment             second stage.
+number to ensure convexity of the problem. The power balance is kept
+by Eq. (8), while Eqs. (9) and (10) bound the available symmetric                   A stochastic problem is formulated by constructing a set of bal-
+spinning reserve capacity of the plants. Note that the model is linear,         ancing scenarios with net load deviations st and probabilities s, and
+which allows production down to 0 MW. To make sure the reserved                 then introducing a copy of the balancing problem (17) for each scenario
+capacity is spinning, the symmetric requirement is imposed. Enough              into the deterministic scheduling problem (1). This leads to the ex-
+reserve capacity must be allocated to satisfy the static reserve re-            tensive form of the classical two-stage stochastic problem formulation
+quirement in Eq. (11). Eqs. (12)­(16) are the bounds of the variables           [32]:
+based on the physical capacities of the hydropower modules.
+                                                                                minZda (x) +      s    s Zbal (ys)
+                                                                                                     s.
+                                                                                 x,ys
+
+                                                                                x
+
+2.2. The balancing problem                                                      ys        (x, s)                                                 (22)
+
+    Balancing the system in real time after a net load deviation has                The expected cost of balancing the system in all scenarios s by
+occurred is necessary to maintain system stability. The decisions x             activating the procured reserve capacity is minimized in this formula-
+made in the day-ahead scheduling stage will affect the system's ability         tion, while also minimizing the cost of scheduling the system to meet
+to perform the balancing actions, and so the balancing problem                  the net load forecast and procuring the reserve capacity. The effect of
+                                                                                activating the reserved capacity is properly captured in this model
+minZbal (y)                                                                     formulation, as constraints describing the cascaded hydropower to-
+                                                                                pology and the energy usage of balancing the system are present in the
+  y                                                                             balancing constraints. Note that the reserve capacity is activated for the
+                                                                                whole time period t, which means the model does not distinguish be-
+y (x, ),                       (17)                                             tween different types of reserves with different activation times.
+
+depends on both x and . The formulation is near identical to the day-               The two-stage robust optimization formulation represents a more
+ahead scheduling problem described by Eqs. (2) and (16) except for              conservative approach than the stochastic formulation in Eq. (22).
+changes to Eqs. (2) and (8)­(10). All of the variable types found in Eqs.       Robustness of the solution is of interest to the system operator, as
+(2) and (16), except for the reserved capacity r, are found in y and have       keeping the system in balance, also in extreme situations, is a priority.
+an analogous meaning. Let these variables be marked by an overline, so          The robust two-stage counterpart to the stochastic formulation is the
+that p¯ represents the power produced by a plant in the balancing stage         tri-level problem
+and so on. The power balance constraint in Eq. (8) is augmented to
+include the net load deviation as well as non-negative penalty vari-            minZda (x) + maxminZbal (y)
+ables for shedding load and dumping power:
+                                                                                   x                 y
+
+                                                                                x
+
+   p¯mt + st+ st = Lt + t.  t
+
+m                              (18)                                             y (x, ),                                                         (23)
+
+    The penalty costs for using these penalty variables are added to the        where the net load deviation is constrained to be part of the un-
+objective function formulation of Eq. (2),                                      certainty set . The robust problem aims to minimize the first-stage
+                                                                                cost and the worst-case balancing cost. In this paper, the simple for-
+                                                                                mulation first proposed in [4] will be used to define:
+
+                                                                             4
+C.Ø. Naversen, et al.                                                                                   Electrical Power and Energy Systems 119 (2020) 105864
+
+   : ={ t| t = t·(ut+ ut );                                                     complete as the optimal solution of Eq. (23) has been found.
+   t (ut+ + ut ) ; ut± {0, 1}},
+                                                                (24)            2.4. Mixed stochastic-robust problem
+
+where the parameters t and are the maximal net load deviation and                   In an effort to combine the advantages of the stochastic and the
+the budget of uncertainty, respectively. The binary variables ut± signify       robust problem formulations presented in Section 2.3, a novel mixed
+if a deviation in positive or negative direction has occurred. Note that it     stochastic-robust formulation that utilizes the solution of the pure ro-
+is possible to include both spatial and temporal correlations in the            bust problem formulated in Eq. (23) is proposed here. Solving the ro-
+uncertainty set [29,30]. Since the distribution used to generate the            bust problem with the CCG algorithm results in a set of worst-case net
+scenarios for the stochastic model does not include any temporal cor-           load deviations , as explained in Section 2.3. These deviations are
+relations in the case study presented in Section 3, correlations are not        realizations of the net load that maximizes the cost of balancing the
+included in the uncertainty set.                                                system in the robust formulation. Therefore, the CCG algorithm can be
+                                                                                seen as a generator of extreme scenarios that are contained within the
+    The min-max-min formulation of the robust optimization problem              uncertainty set . The mixed stochastic-robust model is formed in Eq.
+in Eq. (23) cannot be solved directly. The column-and-constraint gen-           (32) by extending the stochastic problem formulation in Eq. (22) with
+eration (CCG) procedure, first proposed in [40,42], is a popular primal         the set of robust scenarios:
+decomposition scheme to remedy this. Other solution techniques such
+as Benders decomposition (see for instance [5]) and affine policy ap-           min Zda (x) +    s     s Zbal (ys) + j  j Zbal (yj)
+proximation [31,30] are not considered in this work because the model
+presented in Section 2.4 depends on the CCG approach. CCG first re-             x, ys, yj
+quires the inner minimization problem of Eq. (23) to be transformed to
+its dual maximization form, so that the maximization steps may be               x
+combined:
+                                                                                ys  (x, s)          s
+
+                                                                                yj  (x, j)          j.                                        (32)
+
+maxminZbal (y)                max W bal (x, , )                                     Note that the probabilities of the original scenarios s  have been
+                                                                                scaled so that
+          y                           ,                         (25)
+
+y (x, )                    .
+
+    Let the dual variables of the power balance constraints in the bal-             s+         j = 1.
+ancing stage, Eq. (18), be denoted as t. Bi-linear terms
+                                                                                s        j                                                    (33)
+ t t = t·(ut+ t ut t) appear in the objective function W bal when Eq.
+(18) is dualized. The binary definition of t in Eq. (24) allows for an              All original scenarios are scaled down with the same factor
+exact reformulation of the bi-linear problem to a mixed integer linear
+program (MILP) by using a "big-M" approach. This is done in for in-             0        1,
+stance [22], though other options are available for solving the problem.
+An alternating direction method was used in [29], while a cutting plane            s= s        s.                                             (34)
+outer approximation was implemented in [5]. In this paper the exact
+MILP reformulation will be used, as it can be solved directly with a                The robust scenarios are considered to be equiprobable, which re-
+standard MILP solver. With the introduction of the penalty costs C± for         sults in the robust probabilities
+shedding load and dumping power in Eq. (19) through the non-negative
+variables st±, the dual variables t will be constrained by these values:           j = (1 )/| |        j.                                     (35)
+
+   C  t C+                t.                                    (26)                Choosing a scaling of = 1 will put zero weight on the robust
+                                                                                scenario balancing costs, and similarly = 0 removes the cost of bal-
+   Using the bounds on t in the big-M expansion allows the bi-linear            ancing the original scenarios. The constraints (x, ) associated with
+terms ± ut± t to be replaced by the new variables  ±                            the original and robust scenarios will persist regardless of the choice of
+                                                   t  and  the  additional
+                                                                                 . The formulation in Eq. (32) is similar to the unified stochastic-robust
+constraints                                                                     model in [41], as the robust and stochastic components of the problem
+                                                                                is weighted in the objective function in both models. However, there
++     t + C (1 ut+)           t                                 (27)            are two main differences between Eq. (32) and other hybrid models;
+t
+                                                                                    Firstly, the robust scenarios are computed by solving the robust
++     C+ut+            t                                        (28)            model in Eq. (23) before the mixed model is solved. In contrast, the
+t                                                                               unified stochastic-robust model must be solved in an iterative way with
+                                                                                the presence of the scenarios in every iteration, which can be pro-
+t     t + C+ (1 ut )             t                              (29)            blematic regarding the tractability of the problem. The mixed model
+                                                                                presented here may be solved directly in its extensive form, or by any
+t C ut                 t.                                       (30)            other suitable decomposition technique for stochastic optimization
+                                                                                problems. The reusability of the robust scenarios are also higher in
+    The CCG technique is based on repeatedly solving the dual form of           the mixed model formulation since they are completely independent of
+Eq. (25) for iteratively updated first-stage solutions x . The solution         the original scenarios . For instance, if the mixed model is solved for
+yields the realization of the worst-case net load deviation j, which is         successive days, the scenarios can be used as a good initial set of
+iteratively added to the master problem                                         constraints in the solution of the robust model. This sharing of con-
+                                                                                tingency events between time periods has also been proposed for the
+minZda (x) +                                                                    long-term hydrothermal planning model in [38], which incorporates
+                                                                                CCG in a SDDP framework.
+x,yj,
+                                                                                    The second important difference is that the expected value of the
+x                                                                               robust scenarios is added to the objective function in Eq. (32) instead of
+                                                                                the max-min robust formulation. If only the maximal cost of the robust
+      Zbal (yj)        j                                                        scenarios was minimized, the mixed model would be little more than an
+                                                                                approximation of the unified model of [41] with pre-generated robust
+yj (x, j)                 j.                                    (31)            scenarios. As pointed out in Section 2.2, the only direct connections
+                                                                                between the first and second stages are the production limits Eqs. (20)
+    The set represents the worst-case net load deviation scenarios              and (21). For the hydropower scheduling problem, this turns out to be a
+
+that have been identified by the inner maximization problem, and the
+
+auxiliary variable is an outer approximation of Eq. (25). Solving the
+master problem results in an updated first-stage solution x, which is
+
+used to solve Eq. (25) in the next iteration. When the current value of
+and W bal have converged within a specified tolerance, the procedure is
+
+                                                                             5
+C.Ø. Naversen, et al.                                                                             Electrical Power and Energy Systems 119 (2020) 105864
+
+very weak coupling in the sense that including the constraints                  reserve capacity r . This yields the objective function Zibal, which is
+y (x, ) alone do not have a big impact on the first-stage decisions.            normalized by the objective function given perfect foresight, ZiPF , to
+It is important to include the balancing cost Zbal (y) of a scenario to the     produce the balancing cost:
+objective function to actually influence the scheduling decisions. This
+effect is clear in the numerical calculations in Section 3.2 for the edge       Bi = Zibal ZiPF.  (37)
+case = 1. Directly including all robust scenarios in the objective
+function through their expected cost instead of only minimizing the                 The perfect foresight cost is found by relaxing the production limit
+maximal balancing cost leads to a tighter connection between the                constraints of the balancing problem, Eqs. (20) and (21), to let every
+stages, and a more efficient way of propagating the conservative nature         plant produce between zero and maximum capacity. The sum of the
+of the robust scenarios to the reserve capacity procurement decision.           procurement cost and the normalized balancing cost is the total system
+The coupled model proposed in [26] also minimizes the expected value            cost,
+of robust scenarios, but in their case the robust scenarios are iteratively
+added to the set through the CCG procedure. The approach still has              Ui = K + Bi.      (38)
+the potential tractability issues of the unified problem formulation,
+especially since the convergence of the CCG algorithm is unproven in            K is easily found by direct calculation, whereas the balancing costs Bi
+their proposed framework.                                                       must be estimated by simulation. In this case study, 5000 different
+                                                                                sampled net load deviations were used to measure the balancing cost of
+3. Case study                                                                   the given schedule. The robustness of the different model solutions was
+                                                                                tested by generating two different batches of 5000 balancing scenarios.
+    The focus of this case study is on the quality of the solution of the       The first batch, from now on referred to as "the normal scenario batch",
+deterministic, stochastic, robust, and mixed model formulations pre-            was generated based on the same truncated normal distribution used
+sented in Section 2. The solution quality is measured in terms of the cost      when generating scenarios for the stochastic and mixed models. A dif-
+of procuring the reserve capacity and the subsequent cost of activating         ferent seed for the random number generator was used when generating
+the reserves to balance the system. The topic of solution times of the          the normal scenario batch to avoid redrawing the same scenarios gen-
+different models is not discussed directly, as this will be heavily de-         erated for the solution of the stochastic and mixed models. The second
+pendent on the solution parameters and techniques used to solve the             batch of scenarios was generated from a uniform distribution drawing
+models, especially the robust and, by extension, the mixed models. All          values in the range | t| max. This uniform scenario batch gives bal-
+optimization models have been implemented in the Pyomo modelling                ancing scenarios that are more extreme compared to the normal sce-
+package for Python [16,17] using the MILP solver CPLEX 12.8 [10].               nario batch. The system is guaranteed not to experience any net load
+                                                                                deviation larger than max in any of the scenarios in the two batches,
+    The hydropower system used in the study is shown in Fig. 2. It is           and so penalties for load shedding and dumping power can be avoided
+based on a real watercourse in Norway, and consists of 12 modules with          given that enough energy and storage capacity is available when the
+a total production capacity of 537.4 MW. The initial reservoir volume of        reserves are activated.
+every module is set to 65% of its maximal storage capacity, which re-
+presents a normal hydrological situation during the winter in Norway.           3.1. Sensitivity analysis of the budget of uncertainty in the robust model
+Water values are calculated by the long-term hydropower scheduling
+model described in [19], and are measured in monetary units (mu) per                The parameters of the robust uncertainty set are chosen to be
+Mm3 in the range of 1200­9000 mu/Mm3. The penalty for shedding                  comparable to the scenarios generated from the truncated normal dis-
+load and dumping power is chosen to be 3000 mu/MW and 1000 mu/                  tribution. The maximal deviation is set to t = max so that the worst-
+MW, respectively. Note that the results in the case study is not overly         case deviation contained in does not exceed the maximal hourly net
+affected by the choice of these values due to the way the net load de-          load deviation. The budget of uncertainty heavily influences the so-
+viation scenarios are generated. The time horizon is set to 24 h with           lution of the robust model. According to the formulation in Eq. (24),
+hourly resolution, and the forecasted net load profile is shown in Fig. 3.      limits the maximal number of hours with a worst-case deviation. To
+The profile is based on the amount of energy sold in the day-ahead              gauge the robustness of the solution of the robust model in Eq. (23), a
+market in the Norwegian NO3 bidding zone on 1/1-2019 [34], with                 sensitivity analysis of in the range from 1 to 24 was performed. The
+values scaled down to get a peak of 420 MW. The maximal forecast                robust model was solved for the 24 different values of to an absolute
+error possible is considered to be max = 42 MW, 10% of the peak load,
+in either direction in every hour. No temporal correlations between net
+load forecast errors are assumed for simplicity.
+
+    To generate scenarios for the stochastic and mixed models, the
+forecast errors t are chosen to be normally distributed with µt = 0 and
+ t = max/2.5 = 16.8 MW. However, to ensure that the values drawn to
+generate the scenarios are within the postulated maximal forecast error
+band, any values outside this band are truncated to its outer limits. In
+other words, | st| max is enforced for all scenarios.
+
+    There are two measures that are used to quantify the quality of a
+production and reserve capacity procurement schedule; The cost of
+procuring the reserves K and the following cost of balancing the system
+B. The cost of procuring reserves is defined as the increase in the first-
+stage objective function Zda relative to the cost of the deterministic
+model in Eq. (1) solved without any reserve requirement, Z0da:
+
+K = Zda Z0da.          (36)
+
+    This cost represents the opportunity cost of procuring the reserves.        Fig. 2. Sketch of the hydropower topology. Reservoirs (triangles), power plants
+For a given realization of the net load deviation i, the cost Bi of bal-        (rectangles), and water routes for discharge (solid lines) and bypass (dashed
+ancing this deviation is calculated by solving the primal balancing             line) are shown together with maximal values for discharge (m3/s), production
+problem in Eq. (17) for the given production schedules p and allocated          (MW) and reservoir volumes (Mm3).
+
+                                                                             6
+C.Ø. Naversen, et al.                                                                                    Electrical Power and Energy Systems 119 (2020) 105864
+
+Fig. 3. Forecasted system net load with the region of possible deviations and  robust solution when the pure robust model was considered, which was
+the total generation capacity of the system.                                   reached after 12 iterations of the CCG algorithm. The corresponding 12
+                                                                               robust scenarios form the set for the mixed model. An additional 50
+convergence tolerance of 5 mu, with an absolute MIP gap of 5 mu and            equiprobable scenarios were generated to form the set of balancing
+integer tolerance of 10 9 for the second-stage problem. The CCG algo-          scenarios based on the truncated normal distribution described in
+rithm on average converged in 15 iterations, and always within 29              Section 3. The mixed model was solved for a range of different values of
+iterations. The procurement cost K was determined based on Eq. (36)
+and balancing cost Bi was then calculated for all of the scenarios in the        to find the procurement cost K before the balancing cost Bi was si-
+normal and uniform scenario batches according to Eq. (37). The nu-             mulated based on the 5000 scenarios in the normal and the uniform
+merical results are shown in Fig. 4.                                           scenario batches. The numerical results are visualized in Fig. 5. When
+                                                                               determining the range of to consider in the mixed model, it is useful
+    The sensitivity analysis shows that the value of has a big impact on       to calculate the value of that results in equal weights for the scenarios
+both the procurement cost and simulated balancing cost of the robust           in and . Based on Eqs. (34) and (35), this value is
+model. As expected, K increases almost monotonically as a function of
+                                                                               0= |   ||       |  0.806                                     (39)
+ . The balancing cost is generally higher for low values of for both                 |+|
+batches of simulation scenarios, but the trend is not monotone. There is
+a distinct drop in the variability of Bi for > 10, but the variability         given the number of robust and regular scenarios used. A value of
+starts to increase again when close to the maximal value of = 24. This
+shows that simply choosing a high budget of uncertainty does not ne-           < 0 will result in a mixed model where the individual robust sce-
+cessarily result in a more robust solution. Fig. 4 shows that choosing
+                                                                               narios are given a higher weight than the scenarios in , which is likely
+  = 1 results in the lowest average total cost Umean when simulating
+with the normal scenario batch but the highest Umean in the uniform            to give an overly conservative solution. This turned out to be true in this
+scenario batch. In terms of robustness, the best choice is arguably
+                                                                               case study, so only values in the range 0.8  1.0 are presented in
+  = 15. The 95th percentile of the total cost is lowest for this value of
+for both simulation scenario batches, and its average total cost is also       this analysis.
+the lowest in the uniform scenario batch.
+                                                                               The results show that a lower value of gives a lower standard
+3.2. Sensitivity analysis of the robust weight b in the mixed stochastic-
+robust model                                                                   deviation (Ui) at the expense of a higher base procurement cost K .
+
+    The scaling factor of the mixed stochastic-robust model in Eq. (32)        Interestingly, the standard deviation increases noticeably for the edge
+is considered a tuning parameter in this case study, and its optimal
+value is estimated in this section based on a similar type of sensitivity      case = 1. Only adding the constraints related to the balancing pro-
+analysis as in Section 3.1. It was determined that = 15 gave the most
+                                                                               blem without considering the associated balancing cost in the objective
+
+                                                                               causes this effect, and the balancing constraints alone do not impact the
+
+                                                                               model sufficiently to increase its robustness. The value of that
+
+                                                                               achieves the lowest average total cost is 0.99 and 0.91 when using the
+
+                                                                               normal and uniform simulation scenario batches, respectively. The
+
+                                                                               most robust solutions occur at = 0.93 and = 0.84 in the two simu-
+
+                                                                               lation cases when the 95th percentile of the total cost as a measure for
+
+                                                                               robustness. This finding shows that it is possible to gain both robustness
+
+                                                                               and lower average costs at the same time by adding robust scenarios to
+
+                                                                               a stochastic optimization problem. The "best" choice of depends on
+
+                                                                               the preferences of the system operator, and most choices in the region
+
+                                                                               0.84  0.99 can be justified based on a trade-off between robustness
+
+                                                                               and low average cost. However, it is clear that giving zero weight to the
+
+                                                                               robust scenarios ( = 1) is a sub-optimal choice either way.
+
+                                                                               3.3. Model comparison
+
+                                                                                   To compare the mixed model and the robust model with the de-
+                                                                               terministic (Eq. (1)) and stochastic (Eq. (22)) formulations, the same
+                                                                               simulation run of 5000 balancing scenarios drawn from the truncated
+                                                                               normal distribution and the uniform distribution was used to simulate
+
+Fig. 4. Cost simulation for the robust model solution for different values of . The simulation in (a) used balancing scenarios drawn from a normal distribution, while
+(b) used uniformly distributed scenarios. The procurement cost and the average total cost are shown as black and red points, respectively. The 5th and 95th
+percentiles of the total cost are shown as error bars for each value of . (For interpretation of the references to colour in this figure legend, the reader is referred to the
+web version of this article.)
+
+                                                                                                                          7
+C.Ø. Naversen, et al.                                                                               Electrical Power and Energy Systems 119 (2020) 105864
+
+Fig. 5. Cost simulation for the robust model solution for different values of . The simulation in (a) used balancing scenarios drawn from a normal distribution, while
+(b) used uniformly distributed scenarios. The procurement cost and the average total cost are shown as black and red points, respectively. The 5th and 95th
+percentiles of the total cost are shown as error bars for each value of . (For interpretation of the references to colour in this figure legend, the reader is referred to the
+web version of this article.)
+
+the costs. The deterministic model was solved with a static reserve re-     Table 1
+quirement of Rt = max = 42 MW. The stochastic model was solved with         Numeric values of the procurement cost, average total cost, 95th percentile of
+50, 200 and 1000 scenarios drawn from the truncated normal dis-             the total cost and the standard deviation of the total cost for the different model
+tribution, where the 50 first scenarios are identical to the ones used in   formulations. The simulation in (a) used balancing scenarios drawn from a
+the mixed model. The results of the simulation are shown in Fig. 6 with     normal distribution, while (b) used uniformly distributed scenarios.
+accompanying numerical details given in Table 1. There are no in-
+stances of load shedding or power dumping penalties being used in any         (a) Normally distributed simulation scenarios
+of the simulation runs for any of the models.
+                                                                            Model                   K                       Umean   U 95%   (Ui)
+    The first observation to note is the advantage of considering the
+activation of reserves in a cascaded hydropower system. The determi-        Deterministic           0.00                    84.69   144.65  32.99
+nistic model procures the 42 MW of reserve capacity and does not shift      Robust, = 15            28.82                   31.06   35.45   2.11
+the production schedule of any module from the schedule obtained            Stochastic, 50 scen.    3.37                    11.24   31.60   8.24
+when not procuring reserve capacity. This gives a low procurement cost      Stochastic, 200 scen.   3.12                    10.06   23.11   6.58
+of K = 0, but it is evident that the cost of actually balancing the system  Stochastic, 1000 scen.  3.11                    9.72    21.99   5.91
+after the net load has been realized is high compared to all of the two-    Mixed, = 0.84           11.50                   15.19   22.36   3.37
+stage models. The average cost is 7­8 times higher for the deterministic    Mixed, = 0.99
+model solution compared to the stochastic and mixed model solutions.                                3.43                    10.35   23.99   6.23
+The robust model with = 15 is considered overly conservative in this
+comparison due to a high procurement cost. Note that the least con-         (b) Uniformly distributed simulation scenarios
+servative robust model with = 1, see Fig. 4, also performs sig-
+nificantly worse than the other two-stage models. The stochastic model      Model                   K                       Umean   U 95%     (Ui)
+with 50 scenarios performs well in the simulation using the normal
+scenario batch but has high variability in the balancing cost and low       Deterministic           0.00                    208.92  300.38  51.52
+robustness when the simulation is based on the uniform scenario batch.      Robust, = 15            28.82                   35.74   42.44   3.59
+By increasing the number of scenarios in the stochastic model to 200        Stochastic, 50 scen.    3.37                    26.50   47.46   11.38
+and 1000, the average total cost, variability, and robustness improve.      Stochastic, 200 scen.   3.12                    24.38   42.31   9.82
+                                                                            Stochastic, 1000 scen.  3.11                    23.68   40.48   9.28
+                                                                            Mixed, = 0.84           11.50                   22.49   32.29   5.42
+                                                                                                                                    42.25   9.58
+                                                                            Mixed, = 0.99           3.43                    24.58
+
+Fig. 6. Cost simulation comparing the robust, stochastic and mixed model solutions. The simulation in (a) used balancing scenarios drawn from a normal dis-
+tribution, while (b) used uniformly distributed scenarios. The procurement cost and the average total cost are shown as black and red points, respectively. The 5th
+and 95th percentiles of the total cost are shown as error bars for each model. (For interpretation of the references to colour in this figure legend, the reader is referred
+to the web version of this article.)
+
+                                                                                                                          8
+C.Ø. Naversen, et al.                                                                                                     Electrical Power and Energy Systems 119 (2020) 105864
+
+However, this comes at the expense of model size and complexity, and         water values. All of the two-stage models also rely on plant 4 for their
+the marginal improvement per scenario is low when going from 200 to          reserve capacity, but to a lesser extent. The shape of the forecasted net
+1000 scenarios. The mixed model only adds 12 new scenarios, but still        load curve, with a valley in hours 2­6 and a peak in hours 14­20, can be
+manages to provide robust solutions without being overly conservative.       seen in the allocation of the reserve capacity, which reflects the fact
+The mixed model with = 0.84 yields the most resilient solution when          that it is better to use different hydropower modules for balancing at
+simulating with the uniform scenario batch, with a 95th percentile cost      different times of the day. Modules 1, 2 and 3 are located in a string
+that is considerably lower than the other models. The increased pro-         with very limited storage capacity and are used for reserve capacity
+curement cost results in a higher average total cost in the normal sce-      during the peak hours. Reserve capacity is allocated on these plants at
+nario batch simulation, but the 95th percentile cost is still only slightly  the same time so that they can ramp up or down together to avoid issues
+higher than the stochastic model with 1000 scenarios. When the mixed         caused by the low storage capacity in between them. The robust model
+model is solved with = 0.99, the result is a model which behaves si-         allocates significantly more reserve capacity on plants 1, 2 and 3
+milarly to the stochastic model with 200 scenarios. This model com-          compared to the stochastic and mixed models. This forces an increased
+parison shows that using robust scenarios in a stochastic model can          use of the bypass gate from module 4 to module 3 to feed the three
+drastically reduce the number of scenarios needed to improve robust-         modules with additional water so that they can increase their produc-
+ness and average total cost.                                                 tion and deliver more spinning reserve capacity. Using the bypass gate
+                                                                             incurs a small penalty, which increases the procurement cost of the
+    To better understand the effect and importance of considering re-        robust model. It is clear that the robust model values protection in the
+serve capacity activation in the scheduling phase, Fig. 7 shows how          peak hours. The worst-case system costs occur when positive deviations
+some of the different models allocate and distribute the reserve capacity    manifest in the peak hours since this forces the hydropower system to
+among the 12 hydropower plants. The deterministic model relies               produce closer to its maximal capacity. The mixed model with = 0.84
+heavily on plant 4 for reserve capacity throughout the day, and fills the    inherits the protection of the peak hours. It procures between 50 and
+remaining reserve capacity need with reserves arbitrarily allocated on       55 MW of reserve capacity in several hours in the peak period, which is
+other plants that operate between 0 and Pmax. There is no spatial co-        over the necessary 42 MW to avoid load shedding and power dumping.
+ordination between plants that are selected for reserving capacity in the    The additional reserve capacity gives increased flexibility in the bal-
+deterministic model. In this case, module 4 has ample energy stored          ancing stage, as different combinations of modules can be used to
+upstream and additional storage space to ramp up or down production          produce or retain the required balancing energy, even in the case where
+without issue, but this is purely by chance. The module is also located at   a maximal net load deviation is realized. Except for the peak hours, the
+the bottom of the cascaded system, and so any change in water dis-           stochastic and mixed models produce a similar reserve capacity pro-
+charged does not cause problems downstream. As seen in Table 1, the          curement. This is to be expected since most of the weight is still allo-
+deterministic reserve procurement still turns out to be costly when it       cated to the scenarios used in the stochastic model.
+comes to balancing the system. Using plant 4 to balance most of the net
+load deviations results in poor water management according to the
+
+Fig. 7. Reserve allocation on the 12 hydropower modules for the different models. The minimal reserve required to avoid load shedding is shown as a red dashed line.
+(For interpretation of the references to colour in this figure legend, the reader is referred to the web version of this article.)
+
+                                                                                                                          9
+C.Ø. Naversen, et al.                                                                              Electrical Power and Energy Systems 119 (2020) 105864
+
+4. Conclusion                                                                                             problem. IEEE Trans Power Syst 2013;28(1):52­63. https://doi.org/10.1109/
+                                                                                                          TPWRS.2012.2205021.
+    In this paper, the importance of considering the activation of re-                              [6] Birge John R, Louveaux François. Introduction to stochastic programming. ISBN
+served capacity in the scheduling phase for hydropower has been                                           978-1-4614-0236-7 Springer series in operations research and financial
+highlighted. If activation is not considered, having sufficient amounts of                                engineeringNew York, NY: Springer New York; 2011. https://doi.org/10.1007/978-
+both stored energy and energy storage capacity can become issues in                                       1-4614-0237-4.
+real-time operations. Cascaded hydropower systems have the added                                    [7] Blanco Ignacio, Morales Juan M. An efficient robust solution to the two-stage sto-
+problem of being physically connected, and therefore, many plants will                                    chastic unit commitment problem. IEEE Trans Power Syst 2017;32(6):4477­88.
+be affected by a single plant ramping up and down its production. In the                                  https://doi.org/10.1109/TPWRS.2017.2683263.
+presented case study, inefficient water management was the source of                                [8] Bruninx Kenneth, Dvorkin Yury, Delarue Erik, Pandzic Hrvoje, Dhaeseleer William,
+the high balancing cost of the deterministic model. Several two-stage                                     Kirschen Daniel S. Coupling pumped hydro energy storage with unit commitment.
+formulations, which considers activation of reserves in combination                                       IEEE Trans Sustain Energy 2016;7(2):786­96. https://doi.org/10.1109/TSTE.2015.
+with energy and topology constraints in the balancing stage, were                                         2498555.
+proposed to solve this issue. One of these models is a new mixed sto-                               [9] Chazarra Manuel, García-González Javier, Pérez-Díaz Juan I, Arteseros Montserrat.
+chastic-robust optimization model, which was shown to yield high-                                         Stochastic optimization model for the weekly scheduling of a hydropower system in
+quality solutions compared to its pure stochastic and pure robust model                                   day-ahead and secondary regulation reserve markets. Electr Power Syst Res
+ancestors. The mixed model can be viewed as a stochastic model aug-                                       2016;130:67­77. https://doi.org/10.1016/j.epsr.2015.08.014.
+mented with extreme scenarios identified by solving a robust model                                 [10] CPLEX Optimizer. Available online, accessed 16/7-2019. www.cplex.com.
+with the CCG algorithm. The fact that a non-zero robust weight mini-                               [11] Dehghan Shahab, Amjady Nima, Vatani Behdad, Zareipour Hamidreza. A new hy-
+mizes the total costs in the mixed model signifies a benefit of                                           brid stochastic-robust optimization approach for self-scheduling of generation
+strengthening the stochastic model with robust scenarios. This is                                         companies: optimal self-scheduling of generating companies. Int Trans Electr Energ
+especially valid when the probability distribution used to generate the                                   Syst 2016;26(6):1244­59. https://doi.org/10.1002/etep.v26.610.1002/etep.2132.
+scenarios for the stochastic model is different from the actual dis-                               [12] Diniz Andre Luiz, Da Serra Fernanda, Costa Maria Elvira, Maceira Tiago Norbiato,
+tribution of the uncertainty, which can be the case when the underlying                                   Santos Dos, Lilian Chaves B, Santos Dos, Cabral Renato Neves. Short/Mid-term
+data is of poor quality.                                                                                  hydrothermal dispatch and spot pricing for large-scale systems-The case of Brazil.
+                                                                                                          ISBN 9781910963104 20th Power Syst. Comput. Conf. PSCC 2018Institute of
+    The case study presented in this paper is based on a moderate case                                    Electrical and Electronics Engineers Inc.; 2018. https://doi.org/10.23919/PSCC.
+regarding the initial state and energy available in the system. Solving                                   2018.8442897.
+the daily scheduling problem over a longer period that captures the                                [13] Farahmand H, Doorman GL. Balancing market integration in the Northern
+seasonal variations in the hydropower system, for instance by using a                                     European continent. Appl Energy 2012;96:316­26. https://doi.org/10.1016/j.
+rolling horizon simulator, will give a complete picture of the effects of                                 apenergy.2011.11.041.
+spatially coordinating the reserve capacity allocation based on ac-                                [14] Gebrekiros Yonas, Doorman Gerard, Jaehnert Stefan. and Hossein Farahmand.
+counting for activation.                                                                                  Reserve procurement and transmission capacity reservation in the Northern
+                                                                                                          European power market. Int J Electr Power Energy Syst 2015. https://doi.org/10.
+CRediT authorship contribution statement                                                                  1016/j.ijepes.2014.12.042. ISSN 01420615.
+                                                                                                   [15] Gu Yang, Bakke Jordan, Zhou Zheng, Osborn Dale, Guo Tao, Bo Rui. A novel market
+    Christian Øyn Naversen: Writing - original draft, Methodology,                                        simulation methodology on hydro storage. IEEE Trans Smart Grid
+Conceptualization, Software, Formal analysis, Data curation,                                              2014;5(2):1119­28. https://doi.org/10.1109/TSG.2013.2289915.
+Visualization. Hossein Farahmand: Conceptualization, Writing - re-                                 [16] Hart William E, Watson Jean-Paul, Woodruff David L. Pyomo: modeling and solving
+view & editing, Supervision. Arild Helseth: Conceptualization, Writing                                    mathematical programs in Python. Math Prog Comp 2011;3(3):219­60. https://doi.
+- review & editing, Project administration, Funding acquisition,                                          org/10.1007/s12532-011-0026-8.
+Supervision.                                                                                       [17] Hart William E, Laird Carl D, Watson Jean-Paul, Woodruff David L, Hackebeil
+                                                                                                          Gabriel A, Nicholson Bethany L, et al. Pyomo­optimization modeling in python vol.
+Declaration of Competing Interest                                                                         67, 2nd ed.. Springer Science & Business Media; 2017.
+                                                                                                   [18] Helseth Arild, Fodstad Marte, Mo Birger. Optimal medium-term hydropower
+    The authors declare that they have no known competing financial                                       scheduling considering energy and reserve capacity markets. IEEE Trans Sustain
+interests or personal relationships that could have appeared to influ-                                    Energy 2016;7(3):934­42. https://doi.org/10.1109/TSTE.2015.2509447.
+ence the work reported in this paper.                                                              [19] Helseth Arild, Mo Birger, Henden Arild Lote, Warland Geir. Detailed long-term
+                                                                                                          hydro-thermal scheduling for expansion planning in the Nordic power system. IET
+Acknowledgements                                                                                          Gener Transm Distrib 2018;120(2):441­7. https://doi.org/10.1049/iet-gtd.2017.
+                                                                                                          0903.
+    This work was funded by The Research Council of Norway, Project                                [20] Hjelmeland Martin N, Larsen Camilla T, Korpås Magnus, Helseth Arild. Provision of
+No. 268014/E20.                                                                                           rotating reserves from wind power in a hydro-dominated power system. 2016 Int
+                                                                                                          conf probabilistic methods appl. to power syst IEEE; 2016. p. 1­7. https://doi.org/
+References                                                                                                10.1109/PMAPS.2016.7764206. ISBN 978-1-5090-1970-0.
+                                                                                                   [21] Jaehnert Stefan, Doorman Gerard L. Assessing the benefits of regulating power
+ [1] Abgottspon Hubert, Njálsson Karl, Bucher Matthias A, Andersson Göran. Risk-averse                    market integration in Northern Europe. Int J Electr Power Energy Syst
+       medium-term hydro optimization considering provision of spinning reserves. 2014                    2012;430(1):70­9. https://doi.org/10.1016/J.IJEPES.2012.05.01. ISSN 0142-
+       int. conf. probabilistic methods appl. to power syst. IEEE; 2014. p. 1­6. https://doi.             0615.
+       org/10.1109/PMAPS.2014.6960657. ISBN 978-1-4799-3561-1.                                     [22] Jiang Ruiwei, Wang Jianhui, Guan Yongpei. Robust unit commitment with wind
+                                                                                                          power and pumped storage hydro. IEEE Trans Power Syst 2012;270(2):800­10.
+ [2] An Yu, Zeng Bo. Exploring the modeling capacity of two-stage robust optimization:                    https://doi.org/10.1109/TPWRS.2011.2169817. ISSN 0885-8950.
+       variants of robust unit commitment model. IEEE Trans Power Syst                             [23] Kazempour SJ, Moghaddam MP, Yousefi GR. Self-scheduling of a price-taker hydro
+       2015;30(1):109­22. https://doi.org/10.1109/TPWRS.2014.2320880.                                     producer in day-ahead energy and ancillary service markets. 2008 IEEE Canada
+                                                                                                          electr power conf IEEE; 2008. p. 1­6. https://doi.org/10.1109/EPC.2008.4763320.
+ [3] Apostolopoulou Dimitra, De Greve Zacharie, McCulloch Malcolm. Robust optimi-                         ISBN 978-1-4244-2894-6.
+       zation for hydroelectric system operation under uncertainty. IEEE Trans Power Syst          [24] Kong Jiehong, Skjelbred Hans Ivar. Operational hydropower scheduling with post-
+       2018;33(3):3337­48. https://doi.org/10.1109/TPWRS.2018.2807794.                                    spot distribution of reserve obligations. 2017 14th int conf Eur energy mark IEEE;
+                                                                                                          2017. p. 1­6. https://doi.org/10.1109/EEM.2017.7981874. ISBN 978-1-5090-
+ [4] Bertsimas Dimitris, Sim Melvyn. The price of robustness. Oper Res                                    5499-2.
+       2004;52(1):35­53. https://doi.org/10.1287/opre.1030.0065.                                   [25] Kong Jiehong, Skjelbred Hans Ivar, Fosso Olav Bjarte. An overview on formulations
+                                                                                                          and optimization methods for the unit-based short-term hydro scheduling problem.
+ [5] Bertsimas Dimitris, Litvinov Eugene, Sun Xu Andy, Zhao Jinye, Zheng Tongxin.                         Electr Power Syst Res 2020;178. https://doi.org/10.1016/j.epsr.2019.106027.
+       Adaptive robust optimization for the security constrained unit commitment                          ISSN 03787796.
+                                                                                                   [26] Liu Dundun, Cheng Haozhong, Fang Sidun. Coupled stochastic and robust trans-
+                                                                                                          mission expansion planning. 2017 IEEE power energy soc gen meet IEEE; 2017. p.
+                                                                                                          1­5. https://doi.org/10.1109/PESGM.2017.8274170. ISBN 978-1-5386-2212-4.
+                                                                                                   [27] Liu Guodong, Xu Yan, Tomsovic Kevin. Bidding strategy for microgrid in day-ahead
+                                                                                                          market based on hybrid stochastic/robust optimization. IEEE Trans Smart Grid
+                                                                                                          2016;70(1):227­37. https://doi.org/10.1109/TSG.2015.2476669. ISSN 1949-
+                                                                                                          3053.
+                                                                                                   [28] Löhndorf Nils, Wozabal David, Minner Stefan. Optimizing trading decisions for
+                                                                                                          hydro storage systems using approximate dual dynamic programming. Oper Res
+                                                                                                          2013;610(4):810­23. https://doi.org/10.1287/opre.2013.1182. ISSN 0030-364X.
+                                                                                                   [29] Lorca Álvaro, Sun Xu Andy. Adaptive robust optimization with dynamic uncertainty
+                                                                                                          sets for multi-period economic dispatch under significant wind. IEEE Trans Power
+
+                                                                                               10
+C.Ø. Naversen, et al.                                                                            Electrical Power and Energy Systems 119 (2020) 105864
+
+       Syst 2015;300(4):1702­13. https://doi.org/10.1109/TPWRS.2014.2357714. ISSN                       doi.org/10.1109/TPWRS.2014.2313513. ISSN 08858950.
+       0885-8950.                                                                                [37] Street Alexandre, Oliveira Fabrício, Arroyo José M. Contingency-constrained unit
+[30] Lorca Álvaro, Sun Xu Andy. Multistage robust unit commitment with dynamic
+       uncertainty sets and energy storage. IEEE Trans Power Syst 2017;320(3):1678­88.                  commitment with n-K security criterion: a robust optimization approach. IEEE
+       https://doi.org/10.1109/TPWRS.2016.2593422. ISSN 0885-8950.                                      Trans Power Syst 2011;260(3):1581­90. https://doi.org/10.1109/TPWRS.2010.
+[31] Lorca Á, Sun XA, Litvinov E, Zheng T. Multistage adaptive robust optimization for                  2087367. ISSN 0885-8950.
+       the unit commitment problem. Oper Res 2016;640(1):32­51. https://doi.org/10.              [38] Street Alexandre, Brigatto Arthur, Valladão Davi M. Co-optimization of energy and
+       1287/opre.2015.1456. ISSN 0030-364X.                                                             ancillary services for hydrothermal operation planning under a general security
+[32] Morales Juan M, Conejo Antonio J, Madsen Henrik, Pinson Pierre, Zugno Marco.                       criterion. IEEE Trans Power Syst 2017;320(6):4914­23. https://doi.org/10.1109/
+       Integrating renewables in electricity markets. Volume 205 of International series in             TPWRS.2017.2672555. ISSN 0885-8950.
+       operations research & management science Boston (MA): Springer US; 2014.                  [39] van Ackooij W, Danti Lopez I, Frangioni A, Lacalandra F, Tahanan M. Large-scale
+       https://doi.org/10.1007/978-1-4614-9411-9. ISBN 978-1-4614-9410-2.                               unit commitment under uncertainty: an updated literature survey. Ann Oper Res
+[33] Nasrolahpour Ehsan, Kazempour Jalal, Zareipour Hamidreza, Rosehart William D.                      2018;2710(1):11­85. https://doi.org/10.1007/s10479-018-3003-z. ISSN 0254-
+       A bilevel model for participation of a storage system in energy and reserve markets.             5330.
+       IEEE Trans Sustain Energy 2018;90(2):582­98. https://doi.org/10.1109/TSTE.                [40] Zeng Bo, Zhao Long. Solving two-stage robust optimization problems using a
+       2017.2749434.                                                                                    column-and- constraint generation method. Oper Res Lett 2013;410(5):457­61.
+[34] Nord Pool. Available online [accessed 16/7-2019]. www.nordpoolgroup.com/                           https://doi.org/10.1016/j.orl.2013.05.003. ISSN 01676377.
+       Market-data1/Dayahead/Volumes/NO.                                                         [41] Zhao Chaoyue, Guan Yongpei. Unified stochastic and robust unit commitment. IEEE
+[35] Pandzic H, Dvorkin Y, Carrión M. Investments in merchant energy storage: Trading-                  Trans Power Syst 2013;280(3):3353­61. https://doi.org/10.1109/TPWRS.2013.
+       off between energy and reserve markets. Appl Energy 2018;230:277­86. https://                    2251916. ISSN 0885-8950.
+       doi.org/10.1016/j.apenergy.2018.08.088. ISSN 03062619.                                    [42] Zhao Long, Zeng Bo. Robust unit commitment problem with demand response and
+[36] Pozo David, Contreras Javier, Sauma Enzo E. Unit commitment with ideal and                         wind energy. ISBN 9781467327275 IEEE power energy soc gen meetIEEE; 2012. p.
+       generic energy storage units. IEEE Trans Power Syst 2014;290(6):2974­84. https://                1­8. https://doi.org/10.1109/PESGM.2012.6344860.
+
+                                                                                             11
+

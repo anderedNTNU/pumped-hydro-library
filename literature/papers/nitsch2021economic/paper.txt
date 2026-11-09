@@ -1,0 +1,852 @@
+                                                             Applied Energy 298 (2021) 117267
+                                                      Contents lists available at ScienceDirect
+
+                                                      Applied Energy
+
+                                          journal homepage: www.elsevier.com/locate/apenergy
+
+Economic evaluation of battery storage systems bidding on day-ahead and
+automatic frequency restoration reserves markets
+
+Felix Nitsch a,*, Marc Deissenroth-Uhrig b, Christoph Schimeczek a, Valentin Bertsch c
+
+a Department of Energy Systems Analysis, Institute of Networked Energy Systems, German Aerospace Center (DLR), Curiestraße 4, 70563 Stuttgart, Germany
+b School of Engineering, University of Applied Sciences Saarbrücken, Goebenstraße 40, 66117 Saarbrücken, Germany
+c Chair of Energy Systems & Energy Economics, Ruhr-Universita¨t Bochum, Universita¨tsstraße 150, 44801 Bochum, Germany
+
+HIGHLIGHTS
+
+· Implementation of reserves market in an agent-based electricity market model.
+· Evaluation of battery storage bidding on day-ahead market and reserves market.
+· Improved economic potential in German case study 2030 compared to 2019.
+· Main source of revenues shifts from reserves market to day-ahead market.
+· Highest revenues are found for short-term battery storages.
+
+ARTICLE INFO                              ABSTRACT
+
+Keywords:                                 In future electricity systems, not only electricity generation but also frequency stabilization must be provided by
+Energy system modeling                    low-carbon technologies. Battery systems are a promising solution to fill this gap. However, uncertainties
+Agent-based modeling                      regarding their revenue potential may hinder investments. Therefore, we apply the agent-based electricity
+Battery storage system                    market model AMIRIS to simulate a day-ahead market and an automatic frequency restoration reserves market.
+Day-ahead market                          Demonstrating the model setup, we chose a scenario with high shares of renewable energies. First, we back-test
+Automatic Frequency Restoration Reserves  our model with historic market data from Germany in 2019. The simulation results' mean day-ahead prices of
+market                                    39.20 EUR/MWh are close to the historic ones of 38.70 EUR/MWh. Second, we model both markets in a scenario
+                                          for 2030. The simulated day-ahead market prices are higher on average than observed today, although, we find
+                                          around 550 h/yr in which the load is fully covered by renewable energies. The variance in simulated prices is
+                                          slightly higher compared to historic values. Bids on the reserve capacity market are derived from opportunity
+                                          costs of not participating in the day-ahead market. This results in prices of up to 45 EUR/MW for positive reserve
+                                          while the prices for negative reserve are 0 EUR/MW. Finally, we evaluate revenue potentials of battery storages.
+                                          Compared to 2019, we see an improved economic potential and increased importance of the day-ahead market.
+                                          High power battery storages perform best whereas improvements in round-trip efficiency only marginally
+                                          improve revenues. Although demonstrated for Germany, the presented modular approach can be adapted to
+                                          international markets enabling comprehensive battery storage assessments.
+
+1. Introduction                                                            most countries, some kind of frequency restoration reserves markets are
+                                                                           implemented to provide market-based system services. In Germany, for
+    Rising shares of fluctuating renewable energy (RE) ultimately lead to  instance, the automatic Frequency Restoration Reserves (aFRR) ­ in
+growing demand in flexibility options on various temporal scales. One      combination with the Frequency Containment Reserves (FCR) and the
+prominent example is maintaining the frequency of power grids which is     manual Frequency Restoration Reserves (mFRR) ­ ensure frequency
+very sensitive to changes either in electricity demand or generation.      stabilization of the electricity system. At the moment, these markets are
+There are various different mechanisms to ensure a stable frequency. In    mostly supplied by conventional power plants and pumped hydro stor
+                                                                           ages [1]. In future electricity systems, this may become a challenge, as
+
+  * Corresponding author.
+     E-mail address: felix.nitsch@dlr.de (F. Nitsch).
+
+https://doi.org/10.1016/j.apenergy.2021.117267
+Received 11 February 2021; Received in revised form 2 June 2021; Accepted 9 June 2021
+Available online 23 June 2021
+0306-2619/© 2021 The Author(s). Published by Elsevier Ltd. This is an open access article under the CC BY license (http://creativecommons.org/licenses/by/4.0/).
+F. Nitsch et al.                                                                                                                                        Applied Energy 298 (2021) 117267
+
+Nomenclature                                                                   selected market in the USA also finding a more profitable situation in the
+                                                                               latter. Many more studies concerning BSS in DA markets and reserve
+ABM               Agent-based electricity market model                         markets exist, e.g. Tian, Bera, Benidris, & Mitra [12], Vejdan & Grijalva
+AMIRIS            ABM developed at the German Aerospace Center                 [13], Hu, Sarker, Wang, Wen, & Liu [14].
+aFRR              automatic Frequency Restoration Reserves
+BSS               Battery storage system                                           Flexibility cannot only be provided by BSS, but by various technol
+DA                Day-Ahead (market)                                           ogies. The most prominent one is pumped-hydro storage, such as
+Dspat             Spatial differentiation                                      described in Borsche, Ulbig, Koller, & Andersson [15], Doherty, Lalor, &
+Dtech             Technical differentiation                                    O'Malley [16], Ela et al. [17], Kirby & Kueck [18], O'Sullivan, Power,
+Dtemp             Temporal differentiation                                     Flynn, & O'Malley [19] and Wu, Lee, Cheng, & Lan [20]. There are
+E2P               Energy-to-power (ratio)                                      studies on prosumers [21] which could also be active on reserve markets
+FCR               Frequency Containment Reserves                               as presented in the case studies by Iria, Soares, & Matos [22] and Iria,
+mFRR              manual Frequency Restoration Reserves                        Soares, & Matos [23]. Flexibility for the aFRR could also be made
+RE                Renewable energy                                             available by the aggregation of electric vehicles, as demonstrated in
+SOC               State of charge                                              Ricardo J Bessa & Matos [24] and Ricardo Jorge Bessa & Matos [25] and
+                                                                               Vatandoust et al. [26]. Other technologies are also investigated for their
+                                                                               application for flexibility such as solar plants and BSS [27], gravity
+                                                                               storage systems [28], hydropower [29], spinning reserves [30].
+
+there could be too little dispatchable capacity available. There are           1.2. Modeling perspective
+already discussions on the adaptation of the underlying power plant
+park and aFRR market design adjustments [2]. In theory, battery storage            Modeling and evaluation of these applications has a long record in
+systems (BSS) are an attractive technology for maintaining grid fre            research. Important works have been conducted regarding the bidding
+quency and participating in FCR markets and aFRR markets due to their          on energy markets. Swider & Weber [31] present a methodology for
+short ramping times [3]. Hollinger, Diazgranados, & Erge [4] reviewed          actors bidding on multiple electricity markets under price uncertainty,
+trends in the German FCR market concluding that the transition to              explicitly including pay-as-bid reserve markets, by maximizing a sto
+distributed and renewable power plant infrastructure comes with op             chastic non-linear objective function of expected profit. The specifics of
+portunities for BSS under the assumption of higher volatility of day-          sequential bidding in DA markets and reserve markets is addressed in
+ahead (DA) prices due to higher shares of fluctuating generation ca            Swider [32], whereas simultaneous bidding on the same markets is
+pacities. Nevertheless, there are currently hardly any significant BSS         described in Swider [33]. Regarding the price mechanisms and in
+capacities providing balancing energy [1].                                     teractions between DA markets and reserve markets, Chao & Wilson
+                                                                               [34] present an assessment concluding that the separation of power bids
+1.1. Regulatory and technical perspective                                      and energy bids is essential for an efficient market design. Mazzi,
+                                                                               Kazempour, & Pinson [35] look at bidding strategies in electricity
+    Policy-wise, the European Commission [5] provides a guideline for          markets where pay-as-bid remuneration schemes are implemented
+balancing the pan-European electricity supply system. This contains            presenting a two-stage stochastic problem as a mixed-integer and linear
+principles for reservation and accounting of several different frequency       problem. A fundamental analysis of the German balancing power mar
+reserves. In addition, a uniform method for frequency reserve activation       kets is compiled in Müsgens, Ockenfels, & Peek [36] where the authors
+should be established. The regulation affects transmission system op           identify the scoring and settlement rules, which are based on the work of
+erators, distribution system operators, as well as the regulatory au           Chao & Wilson [34], as key elements of the market design. Loesch,
+thorities of the EU member states. Ocker, Ehrhart, & Belica [6] modeled        Rominger, Nainappagari, & Schmeck [37] investigate the impact of
+future auctions on balancing markets while taking into account the             energy prices in the German aFRR market on the probability of reserve
+proposals by the European Union. The results show that those auctions          energy activation and therefore the revenue potential based on historic
+with uniform pricing lead to systematic underbidding of market par             market data from 2012 to 2016. Fleer et al. [38] analyze a BSS active on
+ticipants compared to the present pay-as-bid pricing due to the repeti         the German FCR market finding that the investigated bidding strategies
+tive nature of the bidding by an invariant supplier side. Looking at the       do not have any significant influence on the profitability of BSS owners,
+operator level, several studies have already assessed the implications         whereas the development of FCR prices and BSS costs are crucial for the
+and revenue potential of BSS in different energy systems and case              economic feasibility. The implementation of bidding strategies into
+studies. Thorbergsson, Knap, Swierczynski, Stroe, & Teodorescu [7]             models can be accomplished by several different techniques such as
+investigated the application of Li-Ion BSS providing FCR and compared          stochastic optimization [39], multi-stage stochastic optimization [40],
+several different control strategies varying the state of charge (SOC) set     probabilistic optimization [41], non-linear optimization [42], bi-level
+point of the BSS. A different analysis looking at the impact of multiple       optimization [43], fuzzy optimization [44], evolutionary program
+operation strategies for BSS providing FCR is conducted in Fleer &             ming [45] and dynamic programming [46]. While most of these models
+Stenzel [8] showing measures such as SOC limits have significant impact        apply some kind of optimization model, we use an agent-based modeling
+on the operation characteristics and therefore the expected revenues. A        (ABM) approach. ABM puts the actors, their interactions and their
+multi-use BSS is simulated in Zeh, Mueller, Hesse, Jossen, & Witzmann          environment to the center of the simulation. Thus, ABM allows for
+[9] calculating the economic benefits of additional aFRR market                assessing the challenges of the energy transition taking the behavior of
+participation with only minor effects on the aging of the BSS. Braeuer,        actors into account (Tesfatsion [47], Deissenroth, Klein, Nienhaus, &
+Rominger, McKenna, & Fichtner [10] conducted a comprehensive                   Reeg [48]). Additionally, ABM enables the researcher to look at the
+analysis of a BSS participating in the FCR market, intraday market, and        system's perspective and conduct analyses on energy system trans
+DA market while providing peak shaving for small and medium sized              formation pathways.
+enterprises in Germany. They found, that in all scenarios the net present
+values are negative concluding that it is economically not attractive              There are various studies investigating how future energy systems
+under the scenario assumptions to invest and operate in BSS. Xu,               with a large reduction in green-house gas emissions could be achieved
+Oudalov, Poland, Ulbig, & Andersson [11] looked at control strategies          specifically taking into account the characteristics of BSS, such as
+for BSS providing FCR and compared the situation in Germany with a             Stiphout, De Vos, & Deconinck [49], Alqurashi, Etemadi, & Khodaei
+                                                                               [50], Wierzbowski, Lyzwa, & Musial [51], Belderbos, Virag, D'hae
+                                                                               seleer, & Delarue [52], Limpens, Moret, Jeanmart, & Mar´echal [53].
+
+                                                                            2
+F. Nitsch et al.                                                                                                                    Applied Energy 298 (2021) 117267
+
+However, they are missing the spotlight on the individual actor who is          2.1. Electricity market simulation model
+responsible for investing in new technologies, such as BSS. Investments
+in the energy system are characterized by significant expenditures              The ABM AMIRIS [48] was developed to investigate the integration
+resulting in long depreciation periods. It is therefore important to
+consider the perspective and revenue potential of an individual actor in        of renewable power plants in electricity markets. The behavior of indi
+order to estimate how investments in e.g. BSS could be refinanced on the
+markets. Existing literature mostly covers only a single market [54],           vidual prototyped groups of actors can be considered under different
+small regions in remote areas [55], or peer-to-peer systems [56] when
+assessing the profitability of BSS. Different incentives for regulated          framework conditions such as varying market design or different
+versus market-driven BSS installations and their remuneration is
+described in Huang, Xu, & Courcoubetis [57].                                    remuneration schemes. In contrast to equilibrium and optimization
+
+1.3. Novelty of the present paper                                               models, there is no superordinate, centrally specified objective function
+
+    The aim of this paper is to assess the economic potentials of a pri         that, e.g. minimizes system costs. Instead, the focus of the bottom-up
+vately owned BSS which is active on the DA market and the aFRR market
+using synergies when serving both markets [58]. As described in the             model is on the actors of the electricity system represented as agents
+previous section, existing literature often applies different types of
+optimization models for analyzing wholesale electricity markets. In our         with their objectives and options for action. In AMIRIS, the relevant
+opinion, however, such approaches cannot adequately account for the
+liberalized character of todays' electricity markets. Our fundamental           actors (e.g. direct marketers of RE plants or storage operators) are rep
+electricity market model simulating the two markets and their in
+teractions, therefore follows no overall objective function as used in          resented as prototypical agents [59]. Their microeconomic decisions are
+optimization models. Instead, we can account for the outcome caused by
+the actions of individual actors participating in these markets which is        based both on the assessment of electricity market prices and generation
+much closer to actual market situations. Subsequently, the revenues and
+possible applications of a BSS operator in a future scenario will be            forecasts. These are associated with uncertainties and the consideration
+determined and applied to a case-study simulating a whole market re
+gion rather than only a small test-region. An additional novelty of the         of current support instruments for RE (variable and fixed market pre
+present study is the combined modelling of the DA market and aFRR
+market following a model-within-model approach. This means that we              miums or capacity premiums). The bids of the agents result in simulated
+integrate an optimization model for the revenue maximization of an
+individual BSS operator with a fundamental ABM simulation approach              market prices. For example, AMIRIS can be employed to examine the use
+depicting the German electricity market. The two markets are explicitly
+modelled and the respective bidding and agent's behavior is imple               of storage technologies in the electricity market from a business
+mented according to market theory described in detail in Section 2.1.
+Compared to the existing literature, our integrated assessment enables          perspective. The central market in AMIRIS is the DA market, where an
+us to fundamentally model the market situation of future electricity
+markets. We derive the question of how the market situation is changing         hourly market clearing of the power supply bids and demand bids is
+with increasing shares of RE and how it will affect the economic po
+tential of BSS. Therefore, we set up a back-testing scenario and a future       carried out resulting in simulated electricity prices. Conventional power
+scenario in which agents participate on the DA market and aFRR market
+based on their marginal or opportunity costs, respectively. Hence, we           plant owners place their bids with their marginal costs which are
+simulate the prices on both markets. Subsequently, we evaluate the
+economic potential of BSS operators in order to assess their revenue            determined by fuel prices, CO2 prices, technology-specific efficiencies
+potential. With some adaptations, the developed approach can be used
+to account for different market specifications and is therefore relevant        and other variable costs. The DA electricity price results from the
+for a wide international audience. The remainder of the paper is struc
+tured as follows. In Section 2, we describe our method and the data used.       intersection of sorted supply bids and demand bids. A detailed
+In Section 3, we elaborate the main findings consisting of the prices on
+the DA market and aFRR market as well as the revenue potential of a BSS         description of the methodology of AMIRIS can be found in Deissenroth
+operator on these markets. In Section 4, we compare our results with
+similar assessments in the literature and discuss the limitations of the        et al. [48] and Table A4. As elaborated in Section 1.3, we present a novel
+presented approach. In Section 5, we conclude and give an outlook on
+future expansion and model developments.                                        work of further developing and enhancing AMIRIS by the implementa
+
+2. Methodology and data                                                         tion of the aFRR market, which extends the possibility to generate rev
+
+    In order to investigate the market situation in a future energy system,     enues for the power plant operators. These actors can sell their flexible
+we deploy two different kinds of models. The agent-based electricity
+market model AMIRIS simulating future electricity markets is presented          power generation either on the DA market or the aFRR market and aim
+in Section 2.1, whereas the linear optimization model depicting the BSS
+is described in Section 2.2. The back-testing scenario and the scenario         to maximize their profit. The bidding behavior is fundamentally
+for 2030 are outlined in Section 2.3 and Section 2.4, respectively.
+                                                                                modeled and based on the technology-specific marginal costs of elec
+
+                                                                                tricity generation. It is based on a theoretical comparison of the potential
+
+                                                                                revenues on the DA market and those on the aFRR market [36].
+
+                                                                                Participation in the aFRR market is remunerated for reserving power
+
+                                                                                (positive and negative) and for the actual provision of energy (positive if
+
+                                                                                frequency below 50 Hz and negative if frequency above 50 Hz). The
+
+                                                                                corresponding opportunity costs are calculated for the four products of
+
+                                                                                the aFRR market (positive & negative power prices and positive &
+
+                                                                                negative energy prices) as seen in equations (1) to (4). The calculation of
+
+                                                                                the opportunity costs of the power prices requires an assessment of
+
+                                                                                whether the power plant's offered output can be provided at prices less
+
+                                                                                than or equal to the forecasted DA exchange price pforecast (i.e. infra-
+
+                                                                                marginal state), or whether it must be generated at higher prices
+
+                                                                                (extra-marginal state). The aFRR market bids are calculated as follows:
+
+                                                                                                       pforecast - c, c  pforecast
+
+                                                                                
+
+                                                                                Bidpower,pos =  ( c - pforecast)*PPoowweerrmpoins , c > pforecast                   (1)
+
+                                                                                                                     0, c  pforecast
+
+                                                                                                               )  (  Powermin + Powerneg           )                (2)
+                                                                                Bidpower,neg =  ( c -  pforecast *          Powerneg
+                                                                                                                                                   , c > pforecast
+
+                                                                                Bidenergy,pos = c                                                                   (3)
+
+                                                                                Bidenergy,neg = 0                                                                   (4)
+
+                                                                                    With Bidpower,pos, Bidpower,neg as the power bids for positive and negative
+                                                                                aFRR in EUR/MW, Bidenergy,pos, Bidenergy,neg as the energy bids for positive
+                                                                                and negative aFRR in EUR/MWh, pforecast as the forecasted DA market
+
+                                                                                price in EUR/MWh, c as the marginal cost of generating electricity in
+                                                                                EUR/MWh, Powermin as the minimum power generation of the power
+                                                                                plant in MW and Powerpos, Powerneg as the offered positive and negative
+
+                                                                             3
+F. Nitsch et al.                                                                Applied Energy 298 (2021) 117267
+
+Fig. 1. Schematic bidding procedure of power plants participating in the aFRR market and DA market in the agent-based electricity market model AMIRIS.
+
+power in MW used to determine power prices and energy prices.                   representing the situation in Germany. However, it can also be applied
+    The bidding logic process was implemented as shown in Fig. 1 and            to assess other international markets. This may necessitate minor ad
+                                                                                justments in order to meet different market specifics, such as modifi
+consists of three main phases: preparation, market activities and eval          cations to the market clearing mechanisms. The method of agent-based
+uation. In the beginning, the forecasts for the DA market are received.         modeling and the object-oriented structure of the model enables re
+Based on the expected market participation, any missing capacity to             searchers to accomplish the required changes with little effort.
+achieve the must-run capacity is determined and results in bids at
+minimum prices to ensure that the must-run capacity is met. The aFRR            2.2. Battery storage system optimization model
+bids are then formulated on the basis of equations (1) to (4). In the next
+phase, the market clearing of the aFRR market, both for the required                While the energy system model AMIRIS (Section 2.1) focuses on the
+positive and negative power, takes place. Once the bids are awarded on          electricity system from the system's perspective, we also set up an
+the aFRR market, they are evaluated in the final phase. This includes the       optimization model representing the market situation from the business
+adaptation of DA market bids corresponding to the awarded bids on the           perspective of a BSS operator. In other words, we apply a linear opti
+aFRR market in order to comply with the power plant's capacities. Final         mization model to evaluate the economic performance of a BSS in the
+DA market bids are then forwarded to the DA market where a market               presented scenario. The model is designed to find the optimal operation
+clearing takes place determining the electricity prices. In the simulation,     strategy of the BSS on the DA market and aFRR market under consid
+the described procedure is executed for each simulated hour.                    eration of perfect foresight. The price time series are therefore used as
+                                                                                input data in the optimization model. The BSS is constrained by tech
+    Finally, the results of AMIRIS are price time series of the DA market       nical specifications, such as charging and discharging efficiencies,
+and aFRR market depending on the available capacity of the technolo             ramping restrictions, and its state of charge. The optimization model is
+gies as well as the corresponding dispatch profiles of the power plants.        implemented as a mixed integer programming model in GAMS [60]
+These results are used in the optimization model as described in the
+following section. The presented electricity market model is currently
+
+                                                                             4
+F. Nitsch et al.                                                                                                                          Applied Energy 298 (2021) 117267
+
+           Table 1                                                                             Accordingly, the following condition
+           Installed power plant capacities in Germany at the end of
+           2018 [62]                                                                           SOCmin  SOCi  SoCmax                                                      (9)
+
+                  Technology                                             GWinst                    applies for each hour of the optimization. Participating and trading
+                                                                                               on the DA market or the aFRR market has a direct effect on the SOCi
+                  Nuclear                                                9.5                   which is represented in
+                  Lignite                                                20.9
+                  Hard coal                                              23.8                  SOCi = SOCi- 1 - EnergyDASell,i + EnergyDA Buy,i - EnergyaFRR,positive,i
+                  Natural gas                                            23.8
+                  Other non-renewable                                    10.1                           + EnergyaFRR,negative,i                                          (10)
+                  Pumped hydro storage                                   9.7
+                  Run-of-river                                           3.8                       where the SOCi is updated every time step i. At the beginning of the
+                  Biomass                                                7.7                   optimization, the battery is half charged. Additionally, a ramping con
+                  Wind onshore                                           50.3                  dition depicted by
+                  Wind offshore                                          5.4
+                  PV                                                     42.3                             SOCmax
+                                                                                                           E2P
+                                                                                               Energyi                                                                   (11)
+
+Table 2                                                                                            applies. This means, that all energy flows Energyi, i.e. all purchases
+Installed power plant capacities in the presented scenario for Germany derived                 or sales on both markets, are subject to the maximum output rate. The
+from                                                                                           energy-to-power (E2P) ratio indicates the charge or discharge in relation
+                                                                                               to its maximum capacity SOCmax. A BSS with an E2P ratio of 1 is fully
+Technology                                                           Installed Power in GW     charged in one hour from an empty state or can deliver full power for
+                                                                                               1 hour, provided that it was originally fully charged. At an E2P ratio of
+Nuclear                                                              0                         10, this would mean 10 h of charging or 10 h of continuous power.
+                                                                                               Therefore, the smaller the E2P ratio, the more suitable the storage is for
+Lignite                                                              9                         short-term deployment. Battery degradation has not been considered in
+                                                                                               this model since the effect is expected to be very minor when inter
+Hard coal                                                            11                        preting the results of a single simulation year. Self-discharge has also not
+                                                                                               been considered in this work since the timescale of relevant self-
+Natural gas                                                          53                        discharge is in the order of months and thus much longer than the
+                                                                                               time interval of typical battery storage use in the order of days. A binary
+Other non-renewable                                                  5                         constraint prohibits the BSS from simultaneous charging and discharg
+                                                                                               ing in the same hour.
+Storage                                                              8
+                                                                                                   Finally, the optimization algorithm tries to find the best operating
+Run-of-river and hydro storage                                       6                         decision in each hour to maximize the operating result in the whole year
+
+Biomass                                                              6
+
+Wind onshore                                                         58
+
+Wind offshore                                                        15
+
+PV                                                                   73
+
+using the CPLEX solver [61]. It is assumed that the BSS is prequalified for                    max{RevenueTotal|conditions (9) to (11) }                                 (12)
+trading on the DA market and aFRR market aiming to maximize its total
+revenue under perfect foresight over the observation period of one year.
+The function
+
+                   8760                                                                            while considering the restrictions defined in (9) to (11). We do not
+                                                                                               consider other operational costs, taxes, costs of market participation, nor
+RevenueTotal = RevenueDA,i + RevenueaFRR,i                                       (5)           prequalification costs in the presented assessment. A description of the
+                                                                                               full parameterization of all input variables to the BSS model can be
+                  i=1                                                                          found in the Appendix in Table A7.
+
+    describes the total revenues consisting of the summed revenues in
+hour i in the two markets which the storage operator tries to maximize.
+The revenues from trading on the DA market are defined by
+
+RevenueDA,i = pDA,i*(EnergyDA Sell,i - EnergyDA Buy,i)                           (6)           2.3. Back-testing scenario 2019
+
+    with pDA,i as the price at the DA market, EnergyDA Sell,i as the energy                        Back-testing is an important method for evaluating the outcome of
+sold at the DA market and EnergyDA Buy,i as the energy bought at the DA                        energy systems models. That is why we have set up a reference scenario
+market in hour i.                                                                              for Germany in 2019 in order to compare simulated prices to historic
+                                                                                               ones. The power plant park is listed in Table 1. Despite already high
+    The revenues from the aFRR consist, on the one hand, of the income                         shares of RE plants in Germany, electricity generation is still dominated
+from the provision of power RevenueaFRR,Power,i in positive or negative                        by fossil-based generators [62].
+direction
+                                                                                                   Historic electricity prices at the DA market, load data including im
+RevenueaFRR,Power,i = paFRR,Power,positive,i*PoweraFRR,positive,i                              ports and exports as well as RE generation are derived from the SMARD
+                                                                                               data platform which is hosted by the Bundesnetzagentur [63]. European
+                         + paFRR,Power,negative,i*PoweraFRR,negative,i           (7)           Emission Allowances were taken from the EEX [64] and used for CO2
+                                                                                               price information. Fuel price indices are used from the monthly reports
+    which are awarded with the prices paFRR,Power,positive,i and                               from the Federal Statistical Office of Germany [65]. The full list of model
+paFRR,Power,negative,i assuming that the BSS places its bids at the same price as              parameters is described in the Appendix in Table A5.
+the most expensive power plant which is still in the market; on the other
+hand, the revenue ReveueaFRR,Energy,i from the actual energy flows
+
+ReveueaFRR,Energy,i = paFRR,Energy,positive,i*EnergyaFRR,positive,i                            2.4. Scenario 2030
+
+                  + paFRR,Energy,negative,i*EnergyaFRR,negative,i                (8)               In order demonstrate the feasibility of the developed approach, we
+                                                                                               decided to define a case study for Germany in 2030. However, the model
+    which is awarded with the prices paFRR,Energy,positive,i and paFRR,Energy,negative,i       set-up can also be parameterized to serve similar international elec
+when reserve capacities are actually called.By its specifications, the BSS                     tricity markets. The presented scenario follows the results of the simu
+is equipped with technical parameters that characterize its performance.                       lations in a study on the macroeconomic effects of the energy system
+First of all, the state of charge (SOCi) must at no hour i fall below the                      transformation in Germany in Lutz et al. [66]. This study aims for an
+minimum SOCmin or exceed the maximum SoCmax at any time.
+
+                                                                                            5
+F. Nitsch et al.                                                                                                                                       Applied Energy 298 (2021) 117267
+
+Table 3                                                                       complete nuclear-phase out is already accomplished, whereas 11 GW of
+Capacities of technologies supplying the German aFRR market and total German  hard coal and 9 GW of lignite powered plants are still in service. The
+aFRR demand as defined for the 2030 scenario                                  price for one ton of emitted CO2 is defined at 35 EUR/t. The market
+                                                                              premiums for RE are assumed to be variable under the current legal
+                                Positive aFRR in GW Negative aFRR in GW       framework. Accordingly, the amount of the premium is adjusted
+                                                                              monthly according to the market values of the respective technology.
+Supply Hard coal                0.2  0.2
+                                                                                  An overview of all model-related assumptions and input parameters,
+                  Lignite       0.1  0.1                                      such as fuel prices, specific emissions, power plant availability, eco
+                                                                              nomic factors and storage parameters can be found in the Appendix in
+                  Gas           3.6  3.2                                      Table A6 for the AMIRIS model and in Table A7 for the BSS optimization
+                                                                              model.
+                  Oil           0.4  0.2
+                                                                                  In the presented market model, no electricity transmission grid is
+                  Hydro power   6.6  8.4                                      considered. Therefore, the regulation of generation plants is only based
+                                                                              on economic principles and not caused by the grid restrictions. The net
+                  RE (Wind/PV/  7.6  7.6                                      frequencies and the required power for frequency stabilization are not
+                                                                              simulated, but are exogenously derived from historic data. We estimated
+                  Biomass)                                                    the demand for positive and negative aFRR with 1.7 GW each which is
+                                                                              based on historic averages for the German aFRR market [67]. For the
+Demand Total power requested 1.7     1.7                                      supply side, the total capacity of each technology which participates in
+
+electricity system with almost 85% CO2 reduction in 2050 compared to
+1990 and describes a pathway to this goal. The power plant park was
+derived from the scenario year 2030. The structure of the power plant
+park is listed in Table 2. There are significant capacities of photovoltaics
+(PV) and wind power (onshore and offshore) installed. 60% of the yearly
+total energy demand of 539 TWh is supplied by RE technologies. A
+
+                                       Fig. 2. Comparison of simulated and historic day-ahead price-duration curves.
+
+                                Fig. 3. Monthly positive aFRR capacity prices, showing the median, 1st, and 3rd quartile.
+                                                                                                    6
+F. Nitsch et al.                                                                                                                 Applied Energy 298 (2021) 117267
+
+Fig. 4. Annual revenues per storage capacity of the BSS operator on the DA market and aFRR market based on 2016 historic market data (left), a simulated market
+for 2019 (middle) and the 2030 scenario (right).
+
+Table A4                                                                                Table A5
+Model characteristics of AMIRIS; *Dtemp, Dtech, Dspat - temporal, technological,        Input parameters to the ABM AMIRIS in the back-testing 2019 scenario
+spatial differentiation.
+                                                                                                            Parameter    Value Unit     Note
+
+Model name        AMIRIS - Agent-based market model for the investigation of            Fuel prices         Nuclear      3.03    EUR/   Federal Statistical
+                  renewable and integrated energy systems                                                                        MWh    Office of Germany
+                                                                                        Specific emissions  Gas          27.29   EUR/   [65]
+Author            German Aerospace Center (DLR), Institute of Networked Energy                                                   MWh
+  (Institute)     Systems                                                               Availabilities      Lignite      5.00    EUR/   Open Power
+                  Agent based electricity market model                                  Minimum and                              MWh    System Data [81]
+Model type        Electricity market, use of renewable energies under regulatory                            Hard coal    7.86    EUR/
+Technical         framework conditions at actor level                                     maximum                                MWh
+                  Germany                                                                 efficiencies      Oil          30.70   EUR/
+  focus                                                                                                                          MWh
+Geographic        Single bidding zone                                                   Technical           Nuclear      0       tCO2/
+                                                                                          parameters of                          MWh
+  focus           Hourly                                                                  storage           Gas          0.202   tCO2/
+Spatial                                                                                   technologies                           MWh
+                                                            Dtemp  Dtech      Dspat                         Lignite      0.364   tCO2/
+  resolution                                                x      x                                                             MWh
+Temporal          · Costs (fixed and variable) for                                                          Hard coal    0.341   tCO2/
+                     investment operators and direct        x      x                                                             MWh
+  resolution         marketers                              x      x                                        Oil          0.267   tCO2/
+Input                                                       x      x                                                             MWh
+                  · Power plant efficiencies                x      x                                        Nuclear      85      %
+  parameters      · General market conditions               x      x                                        Gas          97      %
+                  · Fuel prices and CO2 certificate prices         x                                        Lignite      98      %
+Output            · Load profile                            x                                               Hard coal    96      %
+  parameters      · Power plant park (conventional and             x                                        Oil          93      %
+                                                            x      x                                        Nuclear      33.0 ­  %
+                     renewable)                                                                                          33.0
+                  · Profiles of storages under different    x                                               Gas          27.6 ­  %
+                                                            x                                                            61.2
+                     operation strategies                   x                                               Lignite      31.3 ­  %
+                  · Profiles of RE plants under different                                                                43.1
+                                                                                                            Hard coal    28.5 ­  %
+                     regulatory frameworks                                                                               49.0
+                  · Electricity prices                                                                      Oil          30.5 ­  %
+                  · Revenues of direct marketers                                                                         39.7
+                  · Operational costs and emissions                                                         E2P          5       h
+                                                                                                            Charging     87      %
+the aFRR is shown in Table 3. We estimated the share of total installed                                     efficiency
+capacities which can theoretically supply aFRR based on Hasche et al.                                       Discharging  87      %
+[1] and for wind, PV and biomass from Spieker, Kopiske, & Tsatsaronis                                       efficiency
+[68]. In the present market simulation, we have integrated an hourly                                        Forecast     168     h
+bidding procedure. This is a simplification, since in reality on the                                        period
+German aFRR market, bids had to be submitted on a weekly, or ­ after                                        Planning     24      h
+changes in market design in 2018 [69] ­ daily basis. This adaptation had                                    period
+to be made in order to keep the problem solvable in the AMIRIS model.
+We expect, however, additional adjustments in the future which will
+likely introduce an even more short-term tender for the required aFRR.
+
+3. Results                                                                              3.1. Results back-testing scenario 2019
+
+    The following results are divided in Section 3.1 where we describe                      The simulated and historic DA prices are plotted in Fig. 2 for the year
+the outcomes of the back-testing of AMIRIS whereas in Section 3.2 we                    2019 as price-duration curve. When comparing to historic prices, we
+present the result of the scenario for 2030.                                            observe a higher price level for simulated prices. The mean price is
+                                                                                        38.70 EUR/MWh for the historic prices and 39.20 EUR/MWh for the
+
+                                                                                     7
+F. Nitsch et al.                                                                                                                                          Applied Energy 298 (2021) 117267
+
+Table A6                                                                       simulated ones. Especially for lower prices, AMIRIS tends to over
+Input parameters to the ABM AMIRIS in the 2030 simulation scenario             estimate the prices. This effect can be explained by the fact that AMIRIS
+                                                                               does not incorporate ramping and start-up costs of power plants in a
+                      Parameter           Value   Unit   Note                  bottom-up manner. Prices in the mid-range are simulated more accu
+                                                                               rately. In hours of high demand we find a higher level of prices in the
+Fuel prices           Gas                 27.0    EUR/   Lutz et al.           simulation compared to the historic observations. The standard devia
+                                                  MWh    [66]                  tion is 10.60 EUR/MWh in the historic case compared to 11.50 EUR/
+Specific emissions    Lignite             6.0     EUR/                         MWh in the simulated scenario. The remaining deviations may be
+                                                  MWh    Open Power            caused by costs for ramping power plants or due to missing depiction of
+Availabilities        Hard coal           9.0     EUR/   System Data           block-bids in the current AMIRIS model. The correlation of the two price
+Minimum and                                       MWh    [81]                  time series is 0.81.
+                      Oil                 112.5   EUR/
+  maximum                                         MWh                          3.2. Results scenario 2030
+  efficiencies        Gas                 0.202   tCO2/
+                                                  MWh                               Besides the power plant dispatch, the main outputs of the AMIRIS
+Technical parameters  Lignite             0.364   tCO2/                        model are the simulated price time series. Specifically, we derive a price
+  of storage                                      MWh                          time series for the DA market with 8760 h. The mean simulated DA price
+  technologies        Hard coal           0.341   tCO2/                        is 63 EUR/MWh. The price deviation is 12 EUR/MWh and therefore
+                                                  MWh                          slightly higher compared to prices from 2015 to 2019 where prices
+                      Oil                 0.267   tCO2/                        deviated with 11 EUR/MWh around the mean of 35 EUR/MWh.
+                                                  MWh
+                      Gas                 97      %                                 Fig. 3 shows the capacity prices in EUR/MW for positive aFRR as
+                      Lignite             98      %                            boxplots for each month of the modeled scenario year 2030. We have
+                      Hard coal           96      %                            refrained from comparing the simulated aFRR prices with 2019, as the
+                      Oil                 93      %                            recent changes in German aFRR market regulations mean that this is no
+                      Gas                 27.6 ­  %                            longer viable. Instead, as described in Section 2.1, we have applied the
+                                          61.2                                 theory according to Müsgens et al. [36]. A high variability of aFRR
+                      Lignite             31.3 ­  %                            prices can be observed in January, February, and April; whereas espe
+                                          43.1                                 cially the summer months June, July, and August have the lowest mean
+                      Hard coal           28.5 ­  %                            and additionally the smallest deviation of prices. This effect may be
+                                          49.0                                 explained by the interplay with the DA market where lower prices are
+                      Oil                 30.5 ­  %                            usually also found in summer. The maximum prices are around 45 EUR/
+                                          39.7                                 MW.
+                      E2P                 5       h
+                      Charging                    %                                 Regarding the negative aFRR capacity prices and following the the
+                      efficiency          87                                   ory of equation (2) described in Section 2.1, we observe prices of 0 EUR/
+                      Discharging                 %                            MW. This means, that power plants with marginal costs below the
+                      efficiency          87                                   forecasted DA market price can fully supply the negative aFRR capac
+                      Forecast period             h                            ities leading to this result.
+                      Planning            168     h
+                      period              24                                        In additional calculations, we altered the required demand from
+                                                                               currently 1.7 GW to 2 GW in a "High demand" scenario, and to 1.4 GW
+Table A7                                                                       in a "Low demand" scenario. These variations should account for the
+Input parameters to the BSS optimization model                                 uncertainty of future aFRR demand and their effect on prices. However,
+                                                                               these alterations did not change the prices significantly since the ca
+                  Parameter        Value          Unit   Notes                 pacities are sufficient to meet the demand for the aFRR. Therefore, these
+                                                                               results are not described in more detail.
+Time series       DA prices,       Timeseries     EUR/   Bundesnetzagentur
+                  historic 2016                   MWh    [63]                       While AMIRIS focuses on the whole electricity system, we can get
+Technical         DA prices, from  Timeseries     EUR/                         insights in the situation for the BSS operator using our optimization
+  parameters      AMIRIS                          MWh                          model, which is described in Section 2.2. We use the price time series
+  of BSS          Power prices     Timeseries     EUR/                         from the AMIRIS model as input to the optimization model and calculate
+                  aFRR market,                    MW                           the optimal BSS operation strategy. We assume that the BSS, which
+                  historic 2016    Timeseries                                  operates under perfect foresight, calculates its bids at the same price as
+                  Power prices                    EUR/                         the highest power plant which is still in the market. This leads to the
+                  aFRR market,     Timeseries     MW                           identification of an upper limit regarding the revenue potential of the
+                  from AMIRIS                                                  BSS operator. The results in the present scenario, however, disclose a
+                  Energy prices    Timeseries     EUR/                         very competitive situation on the DA market and aFRR market with
+                  aFRR market,                    MWh                          overall low revenue margins for the BSS operator. Fig. 4 shows the
+                  historic 2016    0                                           annual revenues of a BSS on both markets with E2P ratios between 1 and
+                  Energy prices    1              EUR/                         10 and a fixed roundtrip efficiency of 85% in three different situations.
+                  aFRR market,     0.5            MWh                          We compared the results from the presented scenario 2030 to revenue
+                  from AMIRIS      1­10                                        evaluations based on historic market data from 2016, and to the 2019
+                  Minimum SOC      [92.20,        MWh                          market simulations as presented in Section 3.1.
+                  Maximum SOC      93.54,         MWh
+                  Initial SOC      94.87]         MWh                               The analysis for the historic market data 2016 shows the highest
+                  E2P              [92.20,        h                            annual revenues. Although the power plant park has not significantly
+                                   93.54,         %                            changed from 2016 to 2019, we observe reduced economic revenue
+                  Charging         94.87]                                      potentials in the simulated market 2019. This indicates that prices on the
+                  efficiency       8760           %                            aFRR market are probably not fully described by the theory as stated by
+                                   8760                                        Müsgens, Ockenfels, & Peek [36], see Section 2.1, and the simulation is
+                  Discharging                     h
+                  efficiency                      h                         8
+
+                  Forecast
+                  Planning period
+F. Nitsch et al.                                                                                                                                         Applied Energy 298 (2021) 117267
+
+probably lacking to account for strategic bidding. The distribution of          statistical approaches taking the acceptance probability of German aFRR
+revenues between the DA market and aFRR market, however, is very                bids into account. These issues may be addressed in future work to
+similar. When looking at the situation in the scenario 2030 we find that        investigate the impacts on the prices and revenue potentials. Third, since
+total revenues are higher compared to the simulated market 2019, but            the future demand for balancing power is very difficult to estimate,
+still considerably lower than in the historic market data 2016 situation.       several variations of the required reserve power were assumed. How
+Yet, the revenues from the DA market increase strongly until 2030               ever, only the quantity of required power, both positive and negative,
+because of higher fluctuations in DA prices, leading to a major shift for       was changed, but not the energy actually demanded. These quantities
+the primary source of revenues towards the DA market in the scenario            are difficult to project fundamentally, as they are very difficult to model
+2030. In other words, we hardly see any significant revenues from the           and would require at least a basic implementation of the electricity grid,
+aFRR market in the scenario 2030 since the BSS is mainly active on the          forecasting errors regarding load and generation as well as a represen
+DA market. The revenue split between the DA market and aFRR market              tation of outages of power plants and power consumers. For these rea
+is therefore significantly different in the 2030 scenario compared to the       sons, historic data on called energy is used for the analysis in this study.
+historic case (2016 and 2019). In the latter, the revenue share on the          Fourth, the BSS in our test setup has access to the DA market and the
+aFRR market ranges between 77% (for E2P = 1) to 27% (for E2P = 10)              aFRR market, as described in Section 2.2. However, BSS are also suitable
+meaning that more short-term BSS generate more revenues from                    for use in more short-term markets such as the Intraday market or FCR
+providing system services such as aFRR. The picture is different for the        market due to their very fast response time [3]. However, these markets
+scenario 2030 in which we observe hardly any significant revenue from           require a very high temporal resolution which currently cannot be
+the aFRR market. This is contradictory to the study by Ela et al. [70] who      modeled with AMIRIS. At the moment, we can conduct calculations on
+state that system services may become a greater proportion of revenue           an hourly basis as described in Section 2.1. For this assessment, the
+sources.                                                                        aggregation of short-term markets to hourly values is not meaningful
+                                                                                and would not achieve reasonable results. Alternatively, BSS can be
+    Generally, assuming a fixed BSS capacity, the smaller the E2P ratio,        active on mFRR markets competing with other large-scale power plants
+the higher the expected yearly revenues. This is caused by short-term           but also more innovative solutions such as virtual power plants or load
+fluctuations of prices which favor short-term BSS (smaller E2P ratio).          shifting technologies in industry. The lack of these potential additional
+Calculations with different roundtrip efficiency levels showed that an          sources of income (FCR, Intraday, mFRR), however, could improve the
+increase in the roundtrip efficiency of one percentage point generates          economic situation in favor of the BSS operators. Fifth, the optimization
+approximately 2.5% additional revenue for the BSS operator when                 calculation of the BSS is carried out under the assumption of perfect
+operating on the DA and aFRR market.                                            foresight. This means that the algorithm determining the BSS operation
+                                                                                strategy has complete information, which is not available to this extent
+    Our results show a very challenging situation for BSS operators in the      in reality. Therefore, the solver can calculate with market prices that will
+future scenario for 2030. Although the BSS operator acts under perfect          later occur exactly as expected. Additionally, we do not include taxes
+foresight, one cannot expect revenue opportunities as observed in 2016.         and levies on revenues or costs of market participation (e.g. pre-
+This low expected profitability may lead to reduced private investments         qualification costs for the aFRR market) for the BSS. Changes
+in BSS. In case BSS are identified as an essential part of future energy        regarding the efficiency of the BSS showed no significant influence on
+systems [71] investors would need access to additional, more profitable         the economic potentials. Furthermore, because cell degradation is
+markets or require further incentives to build flexibility options, such as     driven primarily by calendar aging rather than cycle aging [75], we do
+BSS.                                                                            not explicitly model this effect. In a long-term analysis of BSS, however,
+                                                                                this has to be considered as a prominent driver in the economic evalu
+4. Discussion                                                                   ation. In general, we interpret the presented results as an upper-limit
+                                                                                regarding BSS revenue potentials on the modeled markets. Finally, the
+4.1. Limitations of the modeling approach                                       lacking consideration of competition among the flexibility options
+                                                                                should be mentioned. Such competition may lead to cannibalization
+    The following points should be considered when applying the pre             effects and a further decrease of revenue potentials. The Europeaniza
+sented modeling approach and drawing conclusions from the results.              tion of the electricity markets could also lead to more competition and
+First, the presented analysis does not consider all possible technologies       greater pressure on individual operators in the markets and subse
+for the provision of flexibility on the aFRR market, but uses only those        quently reduce the revenue opportunities of individual BSS.
+listed in Table 3. For example, demand response or dispatchable loads of
+large consumers (e.g. industry) are not modeled. Similarly, there is            4.2. Interpretation of the scenario 2030
+neither Power-to-X nor a high penetration of electric vehicles imple
+mented. Theoretically, these technologies expand the available capacity             The analysis by Braeuer et al. [10] is in line with our findings, as they
+for frequency stabilization and could thus have an impact on prices at          conclude that investing in and operating BSS is not economically
+the DA market and aFRR market. However, they may require regulatory             reasonable from a current point of view, despite they also considered
+adaptations, which would allow them to participate at ancillary markets         multiple revenue possibilities. Berrada et al. [28] conducted a profit
+such as the aFRR market. Second, due to the downstream setup of the             comparison between different storage technologies on DA markets and
+optimization model, the power supply of the modeled BSS has no in               ancillary markets. Although their findings also show negative profits for
+fluence on the coverage of the required quantity for frequency stabili          innovative market participants ­ e.g. gravity storage ­ a valid compar
+zation in the AMIRIS model. In the presented scenario, however, the             ison to our approach is not possible since they model only a single day
+simulated BSS has no system-relevant size. Therefore, we estimate the           whereas we simulate a full year. The analysis by Merten, Olk, Schoe
+influence of the considered BSS operator as minimal on the change of the        neberger, & Sauer [76] investigates the combined use of BSS on the
+power prices. However, we do see the necessity of additional analyses in        Intraday market and aFRR market concluding a potential economic
+future work addressing the interplay of actors and their feedback on the        feasibility of such systems in 2025. Angenendt, Merten, Zurmühlen, &
+prices. Regarding the implications of strategic bidding, Maaz [72] found        Sauer [77] state solely the provision of frequency restoration reserve by
+that market participants add markups to their bids which can deviate            BSS is less economical than a combined use with e.g. a PV system. The
+from their marginal costs. Ocker, Ehrhart, & Ott [73] made an analysis          declining revenue potential for BSS over the last years is also found by
+of bidding strategies in the German and Austrian balancing markets,             Spodniak, Bertsch, & Devine [78]. Regarding different E2P ratios, the
+finding that the expected profits of the energy bid are taken into              findings by He et al. [42], Engels et al. [75] and Pusceddu et al. [58]
+consideration for the calculation of the optimal power bid. Also Merten,
+Rücker, Schoeneberger, & Sauer [74] describe a comparison of different
+
+                                                                             9
+F. Nitsch et al.                                                                                                                                           Applied Energy 298 (2021) 117267
+
+point in similar direction by showing largest revenue potentials for              the corresponding market design and rules. In addition, the region-
+short-term orientated BSS and declining profits for BSS with higher E2P           specific power plant parks and market prequalification requirements
+ratios. As Xu et al. [11] already proposed in their study, there is a need        to participate in the day-ahead market and frequency restoration re
+for adapting the regulations of existing ancillary markets, such as aFRR,         serves market must be considered accordingly.
+to compensate for the specifics of BSS. Otherwise, a market-driven
+integration of BSS is not likely based on current regulations.                    Credit authorship contribution statement
+Regarding the future demand for balancing power markets in electricity
+systems with high shares of RE, Ocker & Ehrhart [79] addressed the                    Felix Nitsch: Conceptualization, Methodology, Software, Valida
+questions raised by Hirth & Ziegenhagen [80], concluding that the                 tion, Investigation, Visualization, Writing - original draft. Marc Dei
+improvement of grid control cooperation can lead to significant effi              ssenroth-Uhrig: Conceptualization, Methodology, Software, Writing -
+ciency savings. The situation in our 2030 scenario, however, is still very        review & editing. Christoph Schimeczek: Validation, Investigation,
+unclear and we cannot model the demand endogenously. According to                 Writing - review & editing. Valentin Bertsch: Writing - review &
+the prequalified capacities for the aFRR market presented in Hasche               editing, Supervision.
+et al. [1], we assume that a rising demand for aFRR could be met without
+any problems, even in a scenario with reduced conventional capacities.            Declaration of Competing Interest
+However, since the uncertainty regarding the demand remains, we
+investigated the effect of different demand levels for aFRR power in a                The authors declare that they have no known competing financial
+sensitivity analysis. Yet, we did not find any significant changes in prices      interests or personal relationships that could have appeared to influence
+nor in the economic potential of a BSS. This is especially true for the           the work reported in this paper.
+scenario 2030, where the prevailing share is earned at the DA market. As
+described in Section 3.2, the technical specifications of the BSS in form         Acknowledgements
+of the E2P ratio have much greater influence on its total revenues.
+Therefore, we renounced to alter the scenario in this regard in more                  The authors thank Kristina Nienhaus, Benjamin Fuchs, and the col
+detail.                                                                           leagues from the Department of Energy Systems Analysis at the Institute
+                                                                                  of Networked Energy Systems, German Aerospace Center (DLR), for
+5. Conclusions                                                                    their valuable comments and fruitful discussions on early versions of the
+                                                                                  manuscript. We gratefully acknowledge support from the German Fed
+    We present a novel approach for simulating the automatic frequency            eral Ministry for Economic Affairs and Energy (grant number:
+restoration reserves market alongside the day-ahead market in an agent-           03ET4032).
+based electricity market model. For this purpose, we calculate bids
+based on the opportunity costs of market players in order to participate          Appendix
+at the two modeled markets. First, the model was back-tested for Ger
+many for the most recent available year 2019 achieving an overall good            References
+fit. Then, we have set up a scenario for 2030 according to a recently
+published study for a low-emission electricity system in Germany. The              [1] Hasche, B., Haiges, M., & Schulz, S. (2016). Die Integration von Batteriespeichern
+simulated electricity system features a significant share of renewable                   am Regelleistungsmarkt - eine modellgestützte Bewertung. 50Hertz.
+power plants supplying already 60% of the yearly electricity demand.
+From this scenario and model setup, we derive price time series for both           [2] Ehrhart, K.-M., Belica, M., & Ocker, F. (2016). Positionspapier: Umstrukturierung
+investigated markets. We then assess the revenue potentials of battery                   des deutschen Sekunda¨rregelmarktes für Strom.
+storage system operators which are active on these two markets. In an
+optimization model, we calculate the optimal storage dispatch strategy             [3] Denholm, P., Ela, E., Kirby, B., & Milligan, M. (2010). The role of energy storage
+and evaluate its profitability. When we compare the simulated potential                  with renewable electricity generation. National Renewable Energy Laboratory.
+revenues in the given scenario 2030 to those revenues in a simulated                     Retrieved from http://www.nrel.gov/docs/fy10osti/47187.pdf.
+market 2019, we see an improved economic potential in the simulated
+future scenario. Additionally, in the scenario 2030 the distribution of            [4] Hollinger R, Diazgranados LM, Erge T. In: Trends in the German PCR market:
+revenues shifts towards the day-ahead market which is explained by                       Perspectives for battery systems. IEEE; 2015. p. 1­5.
+higher price fluctuations. The technical specifications of the battery
+storage system are crucial for an optimal use-case. We find that the               [5] Commission European. COMMISSION REGULATION (EU) 2017/2195 of 23
+ability to provide power in the short-term leads to the highest revenues                 November 2017 establishing a guideline on electricity balancing. Official Journal of
+concluding that high power battery storage systems perform best in the                   the European Union, L 2017;312(6):1­48.
+given scenarios. Higher round-trip efficiency only contributes to minor
+improvements regarding the annual revenues. Additional calculations                [6] Ocker F, Ehrhart K-M, Belica M. Harmonization of the European balancing power
+could further enhance the presented results by taking the investment                     auction: A game-theoretical and empirical investigation. Energy Econ 2018;73:
+and operational costs of battery storage systems into account. Future                    194­211.
+work may also improve the presented approach by including additional
+markets such as the Frequency Containment Reserves market or                       [7] Thorbergsson, E., Knap, V., Swierczynski, M., Stroe, D., & Teodorescu, R. (2013).
+Intraday market into the model to generate a more comprehensive view                     Primary frequency regulation with Li-ion battery based energy storage system-
+of the revenue potentials. As discussed, the battery storage system                      evaluation and comparison of different control strategies. Intelec 2013; 35th
+operator may increase its revenue when employing a multi-use strategy                    International Telecommunications Energy Conference, SMART POWER AND
+to serve various markets simultaneously. While the presented modeling                    EFFICIENCY (pp. 1­6). VDE.
+approach is demonstrated for the specifications of the German market,
+the developed methodology can be adapted to describe the situation on              [8] Fleer J, Stenzel P. Impact analysis of different operation strategies for battery
+different national electricity markets such as North America or European                 energy storage systems providing primary control reserve. J Storage Mater 2016;8:
+countries. This enables policy makers, companies, and investors to get a                 320­38.
+better understanding of the application of battery storage systems. For
+this purpose, technical specifications may have to be adjusted to reflect          [9] Zeh, A., Mueller, M., Hesse, H. C., Jossen, A., & Witzmann, R. (2015). Operating a
+                                                                                         multitasking stationary battery storage system for providing secondary control
+                                                                                         reserve on low-voltage level. International ETG Congress 2015; Die Energiewende-
+                                                                                         Blueprints for the new energy age (pp. 1­8). VDE.
+
+                                                                                  [10] Braeuer F, Rominger J, McKenna R, Fichtner W. Battery storage systems: An
+                                                                                         economic model-based analysis of parallel revenue streams and general
+                                                                                         implications for industry. Appl Energy 2019;239:1424­40.
+
+                                                                                  [11] Xu B, Oudalov A, Poland J, Ulbig A, Andersson G. BESS control strategies for
+                                                                                         participating in grid frequency regulation. IFAC Proceedings Volumes 2014;47(3):
+                                                                                         4024­9.
+
+                                                                                  [12] Tian Y, Bera A, Benidris M, Mitra J. Stacked revenue and technical benefits of a
+                                                                                         grid-connected energy storage system. IEEE Trans Ind Appl 2018;54(4):3034­43.
+
+                                                                                  [13] Vejdan S, Grijalva S. In: Analysis of multiple revenue streams for privately-owned
+                                                                                         energy storage systems. IEEE; 2018. p. 1­5.
+
+                                                                              10
+F. Nitsch et al.                                                                                                                                                             Applied Energy 298 (2021) 117267
+
+[14] Hu J, Sarker MR, Wang J, Wen F, Liu W. Provision of flexible ramping product by                [46] Cheng B, Powell WB. Co-optimizing battery storage for the frequency regulation
+       battery energy storage in day-ahead energy and reserve markets. IET Gener Transm                    and energy arbitrage using multi-scale dynamic programming. IEEE Trans Smart
+       Distrib 2018;12(10):2256­64.                                                                        Grid 2016;9(3):1997­2005.
+
+[15] Borsche T, Ulbig A, Koller M, Andersson G. In: Power and energy capacity                       [47] Tesfatsion L. Agent-based computational economics: A constructive approach to
+       requirements of storages providing frequency control reserves. IEEE; 2013. p. 1­5.                  economic theory. In: Tesfatsion L, Judd KL, editors. Handbook of computational
+                                                                                                           economics, volume 2. Amsterdam: Elsevier North-Holland; 2006.
+[16] Doherty R, Lalor G, O'Malley M. Frequency control in competitive electricity
+       market dispatch. IEEE Trans Power Syst 2005;20(3):1588­96.                                   [48] Deissenroth M, Klein M, Nienhaus K, Reeg M. Assessing the Plurality of Actors and
+                                                                                                           Policy Interactions: Agent-Based Modelling of Renewable Energy Market
+[17] Ela, E., Kirby, B., Botterud, A., Milostan, C., Krad, I., & Koritarov, V. (2013). Role of             Integration. Complexity 2017;2017. https://doi.org/10.1155/2017/7494313.
+       pumped storage hydro resources in electricity markets and system operation.
+       National Renewable Energy Lab.(NREL), Golden, CO (United States).                            [49] van Stiphout A, De Vos K, Deconinck G. In: Operational flexibility provided by
+                                                                                                           storage in generation expansion planning with high shares of renewables. IEEE;
+[18] Kirby, B. J., & Kueck, J. D. (2005). Spinning reserve from pump load: A technical                     2015. p. 1­5.
+       findings report to the California Department of Water Resources. Department of
+       Energy.                                                                                      [50] Alqurashi A, Etemadi AH, Khodaei A. Treatment of uncertainty for next generation
+                                                                                                           power systems: State-of-the-art in stochastic optimization. Electr Power Syst Res
+[19] O'Sullivan, J., Power, M., Flynn, M., & O'Malley, M. (1999). Modelling of                             2016;141:233­45.
+       frequency control in an island system. IEEE Power Engineering Society. 1999
+       Winter Meeting (Cat. No. 99CH36233) (Vol. 1, pp. 574­579). IEEE.                             [51] Wierzbowski M, Lyzwa W, Musial I. MILP model for long-term energy mix planning
+                                                                                                           with consideration of power system reserves. Appl Energy 2016;169:93­111.
+[20] Wu C-C, Lee W-J, Cheng C-L, Lan H-W. In: Role and value of pumped storage units
+       in an ancillary services market for isolated power systems-simulation in the Taiwan          [52] Belderbos, A., Virag, A., D'haeseleer, W., & Delarue, E. (2017). Considerations on
+       power system. IEEE; 2007. p. 1­6.                                                                   the need for electricity storage requirements: Power versus energy. Energy
+                                                                                                           Conversion and Management, 143, 137­149.
+[21] Parag Y, Sovacool BK. Electricity market design for the prosumer era. Nat Energy
+       2016;1(4):1­6.                                                                               [53] Limpens G, Moret S, Jeanmart H, Mar´echal F. EnergyScope TD: A novel open-
+                                                                                                           source model for regional energy systems. Appl Energy 2019;255:113729.
+[22] Iria J, Soares FJ, Matos MA. Trading small prosumers flexibility in the energy and
+       tertiary reserve markets. IEEE Trans Smart Grid 2018;10(3):2371­82.                          [54] Huang Q, Xu Y, Courcoubetis C. Stackelberg competition between merchant and
+                                                                                                           regulated storage investment in wholesale electricity markets. Appl Energy 2020;
+[23] Iria J, Soares F, Matos M. Optimal bidding strategy for an aggregator of prosumers                    264:114669.
+       in energy and secondary reserve markets. Appl Energy 2019;238:1361­72.
+                                                                                                    [55] Shabani M, Dahlquist E, Wallin F, Yan J. Techno-economic comparison of optimal
+[24] Bessa RJ, Matos MA. Optimization models for EV aggregator participation in a                          design of renewable-battery storage and renewable micro pumped hydro storage
+       manual reserve market. IEEE Trans Power Syst 2013;28(3):3085­95.                                    power supply systems: A case study in Sweden. Appl Energy 2020;279:115830.
+
+[25] Bessa RJ, Matos M. Optimization models for an EV aggregator selling secondary                  [56] Rodrigues DL, Ye X, Xia X, Zhu B. Battery energy storage sizing optimisation for
+       reserve in the electricity market. Electr Power Syst Res 2014;106:36­50.                            different ownership structures in a peer-to-peer energy sharing community. Appl
+                                                                                                           Energy 2020;262:114498.
+[26] Vatandoust B, Ahmadian A, Golkar MA, Elkamel A, Almansoori A, Ghaljehei M.
+       Risk-averse optimal bidding of electric vehicles and energy storage aggregator in            [57] Huang Q, Xu Y, Courcoubetis C. Financial incentives for joint storage planning and
+       day-ahead frequency regulation market. IEEE Trans Power Syst 2018;34(3):                            operation in energy and regulation markets. IEEE Trans Power Syst 2019;34(5):
+       2036­47.                                                                                            3326­39.
+
+[27] Gonza´lez-Garrido A, Saez-de-Ibarra A, Gaztan~aga H, Milo A, Eguia P. Annual                   [58] Pusceddu E, Zakeri B, Gissey GC. Synergies between energy arbitrage and fast
+       Optimized Bidding and Operation Strategy in Energy and Secondary Reserve                            frequency response for battery energy storage systems. Appl Energy 2021;283:
+       Markets for Solar Plants with Storage Systems. IEEE Trans Power Syst 2018;34(6):                    116274.
+       5115­24.
+                                                                                                    [59] Reeg M, Nienhaus K, Roloff N, Pfenning U, Deissenroth M, Wassermann S, et al.
+[28] Berrada A, Loudiyi K, Zorkani I. Valuation of energy storage in energy and                            AMIRIS - Weiterentwicklung eines agentenbasierten Simulationsmodells zur
+       regulation markets. Energy 2016;115:1109­18.                                                        Untersuchung des Akteursverhaltens bei der Marktintegration von Strom aus
+                                                                                                           erneuerbaren Energien unter verschiedenen Fo¨rdermechanismen. DLR - Deutsches
+[29] Chazarra, M., Garca-Gonza´lez, J., Pe´rez-Daz, J. I., & Arteseros, M. (2016).                         Zentrum für Luft und Raumfahrt, IZES. Institut für ZukunftsEnergiesysteme, Kast
+       Stochastic optimization model for the weekly scheduling of a hydropower system                      Simulation Solution; 2013.
+       in day-ahead and secondary regulation reserve markets. Electric Power Systems
+       Research, 130, 67­77.                                                                        [60] Rosenthal RE. GAMS- a user's guide. ALS-NSCORT. 2012.
+                                                                                                    [61] IBM. (2017). IBM ILOG CPLEX Optimization StudioCPLEX User's Manual. IBM
+[30] Khorasani J, Mashhadi HR. Bidding analysis in joint energy and spinning reserve
+       markets based on pay-as-bid pricing. IET Gener Transm Distrib 2012;6(1):79­87.                      Corporation. Retrieved from https://www.ibm.com/support/knowledgecenter/
+                                                                                                           SSSA5P_12.8.0/ilog.odms.studio.help/pdf/usrcplex.pdf?origURL=SSSA5P_12.8.0/
+[31] Swider DJ, Weber C. Bidding under price uncertainty in multi-unit pay-as-bid                          ilog.odms.studio.help/Optimization_Studio/topics/PLUGINS_ROOT/ilog.odms.
+       procurement auctions for power systems reserve. Eur J Oper Res 2007;181(3):                         studio.help/pdf/usrcplex.pdf.
+       1297­308.                                                                                    [62] Bundesnetzagentur. (2019). Kraftwerksliste der Bundesnetzagentur. Retrieved
+                                                                                                           from https://www.bundesnetzagentur.de/DE/Sachgebiete/ElektrizitaetundGas/
+[32] Swider, D. J. (2005). Sequential bidding in day-ahead auctions for spot energy and                    Unternehmen_Institutionen/Versorgungssicherheit/Erzeugungskapazitaeten/
+       power systems reserve. Proceedings of the 7th IAEE European Conference on"                          Kraftwerksliste/kraftwerksliste-node.html.
+       Energy Markets in Transition". Bergen.                                                       [63] Bundesnetzagentur. (2020). SMARD - German electricity market data platform.
+                                                                                                           Retrieved from https://www.smard.de.
+[33] Swider DJ. Simultaneous bidding in day-ahead auctions for spot energy and power                [64] EEX. (2020). Emission Spot Primary Market Auction Report 2019. European
+       systems reserve. Int J Electr Power Energy Syst 2007;29(6):470­9.                                   Energy Exchange AG. Retrieved from https://www.eex.com/dl/en/market-data/
+                                                                                                           environmental-markets/auction-market/european-emission-allowances-auction/
+[34] Chao H-P, Wilson R. Multi-dimensional procurement auctions for power reserves:                        european-emission-allowances-auction-download/92076/file.
+       Robust incentive-compatible scoring and settlement rules. J Regul Econ 2002;22               [65] Federal Statistical Office of Germany. (2020). Data on energy price trends - Long-
+       (2):161­83.                                                                                         time series from January 2005 to March 2020. Federal Statistical Office of
+                                                                                                           Germany. Retrieved from https://www.destatis.de/EN/Themes/Economy/Prices/
+[35] Mazzi N, Kazempour J, Pinson P. Price-taker offering strategy in electricity pay-as-                  Publications/Downloads-Energy-Price-Trends/energy-price-trends-pdf-5619002.
+       bid markets. IEEE Trans Power Syst 2017;33(2):2175­83.                                              pdf?__blob=publicationFile.
+                                                                                                    [66] Lutz, C., Flaute, M., Lehr, U., Kemmler, A., Kirchner, A., Maur, A. auf der,
+[36] Müsgens F, Ockenfels A, Peek M. Economics and design of balancing power                               Ziegenhagen, I., et al. (2018). Gesamtwirtschaftliche Effekte der Energiewende.
+       markets in Germany. Int J Electr Power Energy Syst 2014;55:392­401.                                 GWS, Fraunhofer ISI, DIW, DLR, Prognos.
+                                                                                                    [67] 50Hertz, Amprion, TenneT, & TransnetBW. (2020a). Regelleistung.net -
+[37] Loesch M, Rominger J, Nainappagari S, Schmeck H. In: Optimizing Bidding                               Datencenter. Regelleistung.net - Internetplattform zur Vergabe von Regelleistung.
+       Strategies for the German Secondary Control Reserve Market: The Impact of Energy             [68] Spieker, S., Kopiske, J., & Tsatsaronis, G. (2016). Flexibilit¨at aus Wind- und
+       Prices. IEEE; 2018. p. 1­5.                                                                         Photovoltaikanlagen im Regelenergiemarkt 2035. 14. Symposium
+                                                                                                           Energieinnovation. TU Graz. Retrieved from https://www.energietechnik.tu-
+[38] Fleer J, Zurmühlen S, Meyer J, Badeda J, Stenzel P, Hake J-F, et al. Price                            berlin.de/fileadmin/fg106/Dateien/Mitarbeiter/Spieker_Kopiske_EnInnov2016_
+       development and bidding strategies for battery energy storage systems on the                        Flexibilitaet_aus_Wind-_und_Photovoltaikanlagen_im_Regelenergiemarkt_2035__
+       primary control reserve market. Energy Procedia 2017;135:143­57.                                    Langfassung_.pdf.
+                                                                                                    [69] 50Hertz, Amprion, TenneT, & TransnetBW. (2020b). FAQ Regelleistung.
+[39] Wen F, David A. Coordination of bidding strategies in day-ahead energy and                            Regelleistung.net - Internetplattform zur Vergabe von Regelleistung. Retrieved
+       spinning reserve markets. Int J Electr Power Energy Syst 2002;24(4):251­61.                         from https://www.regelleistung.net/ext/download/key_SRL-Abr-FAQ.
+                                                                                                    [70] Ela E, Billimoria F, Ragsdale K, Moorty S, O'Sullivan J, Gramlich R, et al. Future
+[40] Ottesen SØ, Tomasgard A, Fleten S-E. Multi market bidding strategies for demand                       Electricity Markets: Designing for Massive Amounts of Zero-Variable-Cost
+       side flexibility aggregators in electricity markets. Energy 2018;149:120­34.                        Renewable Resources. IEEE Power Energ Mag 2019;17(6):58­66.
+                                                                                                    [71] Weitemeyer S, Kleinhans D, Vogt T, Agert C. Integration of Renewable Energy
+[41] Goebel C, Hesse H, Schimpe M, Jossen A, Jacobsen H-A. Model-based dispatch                            Sources in future power systems: The role of storage. Renewable Energy 2015;75:
+       strategies for lithium-ion battery energy storage applied to pay-as-bid markets for                 14­20.
+       secondary reserve. IEEE Trans Power Syst 2016;32(4):2724­34.                                 [72] Maaz, A. (2017). Auswirkungen von strategischem Bietverhalten auf die
+                                                                                                           Marktpreise am deutschen Day-Ahead-Spotmarkt und an den
+[42] He G, Chen Q, Kang C, Pinson P, Xia Q. Optimal bidding strategy of battery storage
+       in power markets considering performance-based regulation and battery cycle life.
+       IEEE Trans Smart Grid 2015;7(5):2359­67.
+
+[43] Jia Y, Mi Z, Yu Y, Song Z, Sun C. A bilevel model for optimal bidding and offering
+       of flexible load aggregator in day-ahead energy and reserve markets. IEEE Access
+       2018;6:67799­808.
+
+[44] Aldik A, Al-Awami AT, Alismail F. In: Fuzzy optimization-based sizing of a battery
+       energy storage system for participating in ancillary services markets. IEEE; 2018.
+       p. 1­7.
+
+[45] Attaviriyanupap P, Kita H, Tanaka E, Hasegawa J. New bidding strategy
+       formulation for day-ahead energy and reserve markets based on evolutionary
+       programming. Int J Electr Power Energy Syst 2005;27(3):157­67.
+
+                                                                                                11
+F. Nitsch et al.                                                                                                                                                      Applied Energy 298 (2021) 117267
+
+       Regelleistungsauktionen. RWTH Aachen University. Retrieved from https://                     energy storage systems and power-to-heat coupling. Appl Energy 2020;260:
+       publications.rwth-aachen.de/record/692322.                                                   114186.
+[73] Ocker F, Ehrhart K-M, Ott M. Bidding strategies in Austrian and German balancing        [78] Spodniak P, Bertsch V, Devine M. The Profitability of Energy Storage in European
+       power auctions. Wiley Interdisciplinary Reviews: Energy and Environment 2018;7               Electricity Markets. The Energy Journal 2021;42(5). https://doi.org/10.5547/
+       (6):1­16.                                                                                    01956574.42.5.pspo.
+[74] Merten M, Rücker F, Schoeneberger I, Sauer DU. Automatic frequency restoration          [79] Ocker F, Ehrhart K-M. The "German Paradox" in the balancing power markets.
+       reserve market prediction: Methodology and comparison of various approaches.                 Renew Sustain Energy Rev 2017;67:892­8.
+       Appl Energy 2020;268:114978.                                                          [80] Hirth L, Ziegenhagen I. Balancing power and variable renewables: Three links.
+[75] Engels J, Claessens B, Deconinck G. Techno-economic analysis and optimal control               Renew Sustain Energy Rev 2015;50:1035­51.
+       of battery storage for frequency control services, applied to the German market.      [81] Open Power System Data. (2018). Data Package Conventional power plants.
+       Appl Energy 2019;242:1036­49.                                                                Version 2018-12-20. https://data.open-power-system-data.org/conventional_
+[76] Merten M, Olk C, Schoeneberger I, Sauer DU. Bidding strategy for battery storage               power_plants/2018-12-20 (Primary data from various sources, for a complete list
+       systems in the secondary control reserve market. Appl Energy 2020;268:114951.                see URL). Open Power System Data. Retrieved from https://doi.org/10.25832/
+[77] Angenendt G, Merten M, Zurmühlen S, Sauer DU. Evaluation of the effects of                     conventional_power_plants/2018-12-20.
+       frequency restoration reserves market participation with photovoltaic battery
+
+                                                                                         12
+
