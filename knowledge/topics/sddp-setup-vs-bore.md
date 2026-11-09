@@ -1,6 +1,6 @@
 # Our SDDP setup vs. Bore & Brensholm
 
-Written 2026-11-09 (Claude, with Anders). Sources: `theses/texts/bore-brensholm-2025.txt` (project report), `theses/texts/assessing-the-value-of-hydropower-capacity-upgrades.txt` (Bore 2026 master thesis, same authors), our `Sections/06_mathematical_model.tex`.
+Written 2026-11-09 (Claude, with Anders). The library text of Bore 2026 was checked against the final edition PDF (June 2026): identical. Sources: `theses/texts/bore-brensholm-2025.txt` (project report), `theses/texts/assessing-the-value-of-hydropower-capacity-upgrades.txt` (Bore 2026 master thesis, same authors), our `Sections/06_mathematical_model.tex`.
 
 ## The project report (2025) has no SDDP
 Deterministic hourly LP over one year with perfect foresight (ch. 6), solved once in Pyomo/Gurobi. "Upper bound" there means the perfect-foresight revenue, not an SDDP bound. SDDP only appears in Bore 2026.
@@ -11,6 +11,7 @@ Deterministic hourly LP over one year with perfect foresight (ch. 6), solved onc
 - **Capacity prices:** a level (×0.75/1.00/1.25) is pre-assigned at random per week before training, so they are fixed during training.
 - **End of horizon:** terminal constraint s_end = S0 in the last week; no cuts there.
 - **Bounds and convergence:** no UB/LB computed or reported. Fixed 50 iterations, no convergence test; "a convergence criterion was initially tested" without effect on the policy (no details given). Checked instead against the deterministic 2025 model on 2024 data (ch. 9.1), then out-of-sample simulation on historical years (ch. 5.4).
+- Extra analysis (ch. 10): a binary Cmin/Cmax constraint is added only in the forward simulation, since binaries break the cuts in training.
 - Known weakness they report: marginal water value does not fall near full reservoir, explained by limited exploration of the state space (ch. 9).
 
 ## How ours differs (ch. 6 draft as of 2026-11-09)
