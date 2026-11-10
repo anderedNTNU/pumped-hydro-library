@@ -24,3 +24,6 @@ Not cited: Baslis and Bakirtzis (2011) and McDermott (2020), neither in `referen
 
 ## Three-paragraph version (2026-11-10, after Anders' judgement)
 Claims removed: "system models supply the price forecasts rather than the decisions" (true only of the Norwegian planning chain as described by helseth2023hydropower p. 8, not of helseth2013, which is a production-planning model for the Icelandic system). Added: lohndorf2013 (price-taking pumped-storage owner, day-ahead; p. 2, 6); helseth2013 described as optimising all plants under one objective with prices as a result (p. 1427). Dallinger 2019 no longer cited.
+
+## Four-paragraph version, correction after Anders' check (2026-11-10)
+Removed: "the surplus … does not by itself say what the owner of a plant earns". Wrong as stated: Henden et al. 2016 compute producer surplus (eq. 2) and surplus to PSP owners (eq. 5, Fig. 3b) from the system model's simulated prices (pp. 119–120, 122), and in Helseth et al. 2013 the system's income is Landsvirkjun's, which owns the Icelandic system (p. 1431). Replaced by: the objective is the system's cost or surplus, not a producer's profit (helseth2023hydropower p. 7: "Minimize the expected system operating costs" vs "maximize the profit"); what a producer earns can be read from the resulting prices and dispatch, but that dispatch is the system's optimum, not the owner's.
