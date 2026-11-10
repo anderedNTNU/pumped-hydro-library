@@ -49,3 +49,8 @@ These are precedents for our weekly LP. None found so far combines an LP, pumped
 - Not found on Hafslund's page. Try **NVE's Innsjødatabase** and the revision of terms for Aurlandsvassdraget (NVE case 201400584). Pitorac et al. (2020) above may also list it.
 - The web sources disagree on capacity: 270 MW (Hafslund, Power Technology) vs 290 MW (GEM). Use Hafslund.
 - Vetlebotnvatn is an intake reservoir with little seasonal storage. The main storage is Nyhellervatnet–Øljuvatnet–Kongshellervatnet ([lokalhistoriewiki](https://lokalhistoriewiki.no/wiki/Aurland_III_kraftverk); [NVE document](https://webfileservice.nve.no/API/PublishedFiles/Download/d26a4f04-e9da-4ad3-9652-9e9acd6a450e/201400584/3439802)).
+
+## Cited in the group's drafts but not in the library (2026-11-10)
+| Paper | Why | Status |
+|---|---|---|
+| McDermott (2020), cited in the 5.2 draft for Norwegian producers restricting production when their market position strengthens | Empirical support for price-making behaviour in Norway | Not in the library or in references.bib; the claim is **(unverified)** until the paper is filed |
