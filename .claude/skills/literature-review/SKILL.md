@@ -16,6 +16,7 @@ description: Use whenever you plan, draft, rewrite, review or shorten the litera
 | `topics.md` | what a review in our field covers and the table columns the closest theses use |
 | `themes.md` | for each theme, the points the closest theses make, in order, and how each is argued (finding / claim with evidence / claim with backup / reasoning); the starting list for a section plan |
 | `lessons.md` | what the user tests found wrong and the rule each finding adds; read after `paragraphs.md` |
+| `review-checklist.md` | the Must and Should items an independent reviewer runs on every draft before hand-over |
 | Evidence | `theses/lit-review-skill/` (measures, codebook, codings, reliability tests) |
 
 ## Hard rules
@@ -29,12 +30,12 @@ description: Use whenever you plan, draft, rewrite, review or shorten the litera
 ## Workflow
 1. **Scope.** Who you are working with; which section; project report or thesis; whether the text goes to a draft file or to Overleaf.
 2. **Read** `structure.md`, `paragraphs.md`, `language.md`, `topics.md`; `guidelines/WRITING_RULES.md`; `knowledge/STATUS.md`; the relevant `knowledge/topics/*.md`; and the `note.md` of every paper you will cite. For claims that matter, the passage in `paper.txt`.
-3. **Plan the section** before writing a sentence. Start from the theme's point list in `themes.md`: keep the points that apply, add the ones our papers force, give each its argument mode. Then a table with one row per paragraph: role (from `paragraphs.md`), the point in one line, argument mode (finding / claim-evidence / claim-backup / reasoning), the works that back it (1 / 2 / 3+), whether it carries a limitation, a comparison, a consequence or a link to the thesis, what the last sentence does, and **the "this matters because …" sentence written out** (a row without one is a list, not a paragraph; see `lessons.md`). Claims about the literature as a whole say "many" unless counted. Check the plan against `structure.md`: opener, at most two single studies in a row, at least one comparison and one limitation per theme, a synthesis or gap at the end, the shares roughly met. Show the plan to the user for a new section or a restructure.
+3. **Plan the section** before writing a sentence. Start from the theme's point list in `themes.md`: keep the points that apply, add the ones our papers force, give each its argument mode. For each point, read the matching paragraphs of the closest theses in `theses/lit-review-skill/codebook/THEMES_RESULTS.md` (same theme, same point) and take from them how the point is opened, how far it is hedged, how many findings carry it and how it closes; that is the model for the paragraph, not a sentence of theirs. Then a table with one row per paragraph: role (from `paragraphs.md`), the point in one line, argument mode (finding / claim-evidence / claim-backup / reasoning), the works that back it (1 / 2 / 3+), whether it carries a limitation, a comparison, a consequence or a link to the thesis, what the last sentence does, and **the "this matters because …" sentence written out** (a row without one is a list, not a paragraph; see `lessons.md`). Claims about the literature as a whole say "many" unless counted. Check the plan against `structure.md`: opener, at most two single studies in a row, at least one comparison and one limitation per theme, a synthesis or gap at the end, the shares roughly met. Show the plan to the user for a new section or a restructure.
 4. **Draft** paragraph by paragraph from the plan, each from its blueprint, at about 95 words and four sentences.
-5. **Check.**
-   - `py theses/lit-review-skill/measures/profile_draft.py <file.tex>`: every metric inside the closest-four range, or say why not; fix listed sentences over 35 words.
+5. **Check, before the user sees anything.**
+   - `py theses/lit-review-skill/measures/profile_draft.py <file.tex>`: every metric inside the closest-four range, or say why not; split every sentence over 30 words.
    - `py theses/lit-review-skill/measures/tics.py <file.txt>`: no banned pattern; rare ones at most once.
-   - Read the first sentence of each paragraph in order: they must read as the argument of the section on their own.
+   - **Independent review:** start a separate agent in review mode with `review-checklist.md`, the skill files and the draft (never the plan's "intended" reading, never the earlier drafts). Fix every failed Must item, run the reviewer again, and repeat until it passes. Two rounds are normal; the user is not the first reviewer.
    - For every citation, the checked sentence and page are in CHANGES.
 6. **Hand over.** Say what was written, what was checked against `paper.txt` and what was not, which keys are missing from the bib, and log in `ai-usage.md`.
 
