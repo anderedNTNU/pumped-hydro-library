@@ -9,7 +9,7 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 | M2 | The point is argued, not listed | the paragraph says what studies did and never says what it means (no consequence, limitation or implication sentence) |
 | M3 | No claim beyond the sources | "all", "most", "the literature agrees", "typically" without several agreeing studies or a count; "cannot", "must" where the choice exists |
 | M4 | No generalisation from one study | a sentence of the form "X matters more than Y" or "dependence has little effect" that rests on a single case; must read "in their case" or "varies between cases" |
-| M5 | Every study earns its place | a study appears only as an exception, an aside or a definition, and does not carry the paragraph's point for our problem |
+| M5 | Every study earns its place | a study appears only as an exception, an aside or a definition, and does not carry the paragraph's point for our problem; or a finding is reported that the paragraph's point does not need |
 | M6 | Every cited claim matches the paper | the CHANGES file has no passage for it, or the passage says something narrower |
 | M7 | Length | paragraph over 110 words, or any sentence over 30 words |
 | M8 | Numbers | a number from one study that does not change the argument; any number before the comparability caveat |
