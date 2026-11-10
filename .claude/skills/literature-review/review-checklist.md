@@ -14,6 +14,7 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 | M7 | Length | paragraph over 110 words, or any sentence over 30 words |
 | M8 | Numbers | a number from one study that does not change the argument; any number before the comparability caveat |
 | M9 | Banned words absent; rare words at most once in the section | see `language.md` |
+| M11 | Links to the thesis state relevance only | a sentence says what our model does ("the present study keeps …", "our model uses …") instead of why the finding matters for the thesis; model description belongs in the contribution section |
 | M10 | Closer | the last sentence restates the first, or ends on the last study's finding when the paragraph is a claim or group |
 
 ## Must (the section)
