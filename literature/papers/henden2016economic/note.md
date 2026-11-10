@@ -85,3 +85,11 @@ How profitable is large-scale pumped storage (PSP) in Norway, for the plant owne
 - [5] Graabak & Skjelbred (2010), SINTEF TR A7200, large-scale balancing exchange Norway-Europe.
 - [15] Henden (2014), NTNU master thesis "Storskala pumpekraftverk".
 
+
+## Checked against the figures (2026-11-10, Anders/Claude)
+Read off Figs. 1-3 in the PDF; values are approximate (read from the plots).
+- **Fig. 1b (consumer surplus):** dominated by transmission (0 to about -2,300 MEUR/a from 4,900 to 18,300 MW). The PSP levels differ by only about 100-300 MEUR/a, with more PSP slightly less negative. So consumers gain only a little from PSP. **Inconsistency:** the conclusion (p. 122) says "consumers will lose and the producers will gain a benefit if large-scale PSP should be constructed", the opposite of the results text (p. 120) and of Figs. 1b/2a. Do not cite the paper for the direction of the consumer effect of PSP without this caveat.
+- **Fig. 2a (producer surplus incl. PSP investment):** rises with transmission (0 to about +3,500 MEUR/a); more PSP lowers it (at 4,900 MW: about 0 / -50 / -150 / -250 / -400 for 0 / 950 / 6,650 / 9,500 / 14,250 MW).
+- **Fig. 2b (socio-economic surplus):** 0 MW and 950 MW PSP almost coincide (about +800 MEUR/a at 14,100 MW, 950 marginally higher). At the same transmission, 6,650 / 9,500 / 14,250 MW give clearly less (about +550 / +400 / +250 at 18,300 MW). So the system model does not favour large PSP either.
+- **Fig. 3b (owner surplus per MW, net of investment):** all levels about -15 kEUR/MW/a at 4,900 MW. 950 MW: about 0 at 7,700, +25-30 at 10,500, +40 at 14,100, +48 at 18,300. 6,650 and 9,500 MW: about +10 at 18,300. 14,250 MW: about 0.
+- **What this supports:** at the socio-economic optimum (950 MW, 14,100 MW transmission) the owners also earn a return, so system and owner optima coincide here. The paper's value for the system-vs-owner argument is that it reports consumer, producer and owner surplus separately (the owner's share must be computed from the system's prices and dispatch, eq. 5), that consumer and producer surplus move in opposite directions, and that "a significant share of the benefits occurs in continental Europe" while the investor bears the full cost (p. 122). It does **not** show a case where the system model recommends PSP that gives the owner nothing.
