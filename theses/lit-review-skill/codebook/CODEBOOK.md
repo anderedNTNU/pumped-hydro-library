@@ -79,3 +79,13 @@ One CSV per thesis, `coding/<id>.csv`, columns:
 - How often a paragraph opens with a claim and backs it with 1, 2 or 3+ works; how often a limitation is attached and to what; how often the paragraph ends on a consequence; how often it links to the thesis.
 - Which attributes a study paragraph reports, and how many.
 - These become the paragraph blueprints and the checklist in the skill, each with the share it rests on.
+
+## E. Point, argument and theme (v1.2, 2026-11-10; coded in a separate pass, `coding/<id>.points.csv`)
+| Field | Values | Question |
+|---|---|---|
+| E1 point | one sentence, in the coder's own words (never a quotation) | What is the one thing this paragraph says? Write it as the paragraph's claim, not as a description ("inflow is the most important uncertainty across horizons", not "discusses inflow"). |
+| E2 argument | finding / claim-evidence / claim-backup / reasoning / description | How is the point argued? *finding*: the point *is* what a study found, reported from the study ("X et al. found that …"). *claim-evidence*: the authors state the point, then bring the findings of named studies as evidence for it, told in some detail. *claim-backup*: the authors state the point and attach citations as support without reporting what the sources found (parenthetical backup). *reasoning*: the point is argued from the authors' own logic, no source carries it. *description*: no argument; the paragraph describes what the chapter does, a definition, a market or a procedure. |
+| E3 theme | uncertainty / markets / physical / methods / investment / system-models / contribution / search / background / other | Which theme of a hydropower-scheduling review the paragraph belongs to, by its content (not by its section title). *system-models* = how power-system or capacity-expansion models are built. *background* = facts about a market, technology or policy with no studies reviewed. |
+| E4 source-use | count of works whose *finding* is reported (not just cited) | 0, 1, 2, 3+ |
+
+Rules: E1 one sentence of at most 25 words. If a paragraph makes two points, give the one the last sentence serves and note the other. E2 *claim-evidence* needs at least one finding reported; otherwise *claim-backup*.

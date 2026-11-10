@@ -14,6 +14,7 @@ description: Use whenever you plan, draft, rewrite, review or shorten the litera
 | `paragraphs.md` | what each paragraph type does, sentence by sentence; what to report about a study |
 | `language.md` | size, sentence and citation targets; banned and rare words; the words the reviews do use |
 | `topics.md` | what a review in our field covers and the table columns the closest theses use |
+| `themes.md` | for each theme, the points the closest theses make, in order, and how each is argued (finding / claim with evidence / claim with backup / reasoning); the starting list for a section plan |
 | Evidence | `theses/lit-review-skill/` (measures, codebook, codings, reliability tests) |
 
 ## Hard rules
@@ -27,7 +28,7 @@ description: Use whenever you plan, draft, rewrite, review or shorten the litera
 ## Workflow
 1. **Scope.** Who you are working with; which section; project report or thesis; whether the text goes to a draft file or to Overleaf.
 2. **Read** `structure.md`, `paragraphs.md`, `language.md`, `topics.md`; `guidelines/WRITING_RULES.md`; `knowledge/STATUS.md`; the relevant `knowledge/topics/*.md`; and the `note.md` of every paper you will cite. For claims that matter, the passage in `paper.txt`.
-3. **Plan the section** before writing a sentence: a table with one row per paragraph: role (from `paragraphs.md`), the point in one line, the works that back it (1 / 2 / 3+), whether it carries a limitation, a comparison, a consequence or a link to the thesis, and what the last sentence does. Check the plan against `structure.md`: opener, at most two single studies in a row, at least one comparison and one limitation per theme, a synthesis or gap at the end, the shares roughly met. Show the plan to the user for a new section or a restructure.
+3. **Plan the section** before writing a sentence. Start from the theme's point list in `themes.md`: keep the points that apply, add the ones our papers force, give each its argument mode. Then a table with one row per paragraph: role (from `paragraphs.md`), the point in one line, argument mode (finding / claim-evidence / claim-backup / reasoning), the works that back it (1 / 2 / 3+), whether it carries a limitation, a comparison, a consequence or a link to the thesis, and what the last sentence does. Check the plan against `structure.md`: opener, at most two single studies in a row, at least one comparison and one limitation per theme, a synthesis or gap at the end, the shares roughly met. Show the plan to the user for a new section or a restructure.
 4. **Draft** paragraph by paragraph from the plan, each from its blueprint, at about 95 words and four sentences.
 5. **Check.**
    - `py theses/lit-review-skill/measures/profile_draft.py <file.tex>`: every metric inside the closest-four range, or say why not; fix listed sentences over 35 words.
