@@ -9,7 +9,11 @@ Run:  py profile_draft.py <file.tex|file.txt> [--bib ../../../../pumped-hydro-th
 import csv, re, statistics as st, sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from measure import citations, words, NUMBER_UNIT, HEDGES, CONNECT, SELF, AUTHOR_START, CLOSEST4, BORE2
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except Exception:
+    pass
+from measure import citations, words, NUMBER_UNIT, HEDGES, CONNECT, SELF, AUTHOR_START, CLOSEST4, BORE2, rhythm
 
 HERE = Path(__file__).resolve().parent
 DEFAULT_BIB = HERE.parents[3] / "pumped-hydro-thesis" / "references.bib"
@@ -93,6 +97,7 @@ def main():
     nw = words(full)
     ncit = 0; nworks = set(); narr = 0
     pw, sw, author_start, nocite, three, selfref, numbers = [], [], 0, 0, 0, 0, 0
+    stexts = []
     for p in paras:
         n1, n2, wk = citations(p, "author-year")
         ncit += n1 + n2; narr += n1; nworks |= wk
@@ -101,6 +106,8 @@ def main():
         nocite += (len(wk) == 0); three += (len(wk) >= 3)
         selfref += bool(SELF.search(p)); numbers += len(NUMBER_UNIT.findall(p))
         sw += [words(s) for s in sentences(p)]
+        stexts += sentences(p)
+    rh = rhythm(stexts, full, nw)
     draft = {
         "Review words": nw, "Paragraphs": len(paras), "Distinct works cited": len(nworks),
         "Citations per 100 words": round(100 * ncit / nw, 2), "Narrative citations, %": round(100 * narr / max(1, ncit)),
@@ -112,6 +119,12 @@ def main():
         "Numbers with a unit or % per 1000 words": round(1000 * numbers / nw, 1),
         "Hedges per 1000 words": round(1000 * len(HEDGES.findall(full)) / nw, 1),
         "Connectors per 1000 words": round(1000 * len(CONNECT.findall(full)) / nw, 1),
+        "Sentence length s.d.": rh.get("sent_sd", 0), "Sentence length p10": rh.get("sent_p10", 0), "Sentence length p90": rh.get("sent_p90", 0),
+        "Sentences over 40 words, %": rh.get("share_sent_over_40", 0), "Boosters per 1000 words": rh.get("boosters_per_1000w", 0),
+        "we/our/us per 1000 words": rh.get("we_per_1000w", 0), "Colons per 1000 words": rh.get("colons_per_1000w", 0),
+        "Semicolons per 1000 words": rh.get("semicolons_per_1000w", 0), "Parentheses per 1000 words": rh.get("parens_per_1000w", 0),
+        "Dashes per 1000 words": rh.get("dashes_per_1000w", 0), "Questions per 1000 words": rh.get("questions_per_1000w", 0),
+        "Sentences opening with a connective, %": rh.get("connective_start_pct", 0),
     }
     keymap = {"Review words": "review_words", "Paragraphs": "paragraphs", "Distinct works cited": "works",
               "Citations per 100 words": "cit_per_100_words", "Narrative citations, %": "narrative_share_pct",
@@ -119,7 +132,14 @@ def main():
               "Sentences over 35 words, %": "share_sent_over_35", "Paragraphs starting with an author, %": "pars_starting_with_author_pct",
               "Paragraphs without any citation, %": "pars_without_citation_pct", "Paragraphs referring to the thesis itself, %": "pars_with_self_reference_pct",
               "Numbers with a unit or % per 1000 words": "numbers_with_unit_per_1000w", "Hedges per 1000 words": "hedges_per_1000w",
-              "Connectors per 1000 words": "connectors_per_1000w"}
+              "Connectors per 1000 words": "connectors_per_1000w",
+              "Sentence length s.d.": "sent_sd", "Sentence length p10": "sent_p10", "Sentence length p90": "sent_p90",
+              "Sentences over 40 words, %": "share_sent_over_40", "Boosters per 1000 words": "boosters_per_1000w",
+              "we/our/us per 1000 words": "we_per_1000w", "Colons per 1000 words": "colons_per_1000w",
+              "Semicolons per 1000 words": "semicolons_per_1000w", "Parentheses per 1000 words": "parens_per_1000w",
+              "Dashes per 1000 words": "dashes_per_1000w", "Questions per 1000 words": "questions_per_1000w",
+              "Sentences opening with a connective, %": "connective_start_pct"}
+    nflags = 0
     with open(HERE / "units.csv", encoding="utf-8") as f:
         units = list(csv.DictReader(f))
     def rng(key, ids):
@@ -133,7 +153,10 @@ def main():
         k = keymap[label]
         a = rng(k, allids); c = rng(k, CLOSEST4)
         flag = "" if c[0] <= float(val) <= c[2] else ("LOW" if float(val) < c[0] else "HIGH")
+        if flag and label not in ("Review words", "Paragraphs", "Distinct works cited"):
+            nflags += 1
         print(f"| {label} | {val:g} | {a[0]:g} / {a[1]:g} / {a[2]:g} | {c[0]:g} / {c[1]:g} / {c[2]:g} | {flag} |")
+    print(f"\nFlags against the closest-four range (size metrics excluded): {nflags}. Target: at most 2 (see language.md, calibration).")
     long = [s for p in paras for s in sentences(p) if words(s) > 35]
     if long:
         print(f"\nSentences over 35 words ({len(long)}):")

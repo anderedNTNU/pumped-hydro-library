@@ -50,6 +50,36 @@ NUMBER_UNIT = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:%|percent|MW|GW|kW|TWh|GWh|MWh
 HEDGES = re.compile(r"\b(may|might|could|likely|possibly|suggest(?:s|ed)?|appear(?:s|ed)?|seem(?:s|ed)?|tend(?:s|ed)? to|potentially|arguably|generally|often|typically)\b", re.I)
 LIMIT = re.compile(r"\b(however|although|while|limitation|limited|neglect(?:s|ed)?|ignor(?:es|ed)|does not|do not|did not|cannot|not (?:consider|include|account|capture)|without|only|lack(?:s|ed)?|omit(?:s|ted)?|simplif)", re.I)
 CONNECT = re.compile(r"\b(however|therefore|thus|hence|consequently|furthermore|moreover|in contrast|in addition|similarly|nevertheless|although|whereas|overall|accordingly|building on)\b", re.I)
+BOOSTERS = re.compile(r"\b(clearly|significantly|substantially|strongly|highly|very|considerably|particularly|especially|crucial|essential|critical|key|vital|extremely|greatly|remarkably|notably|undoubtedly|certainly)\b", re.I)
+WE = re.compile(r"\b(we|our|us)\b", re.I)
+CONNECTIVE_START = re.compile(r"^(However|Therefore|Thus|Hence|Consequently|Furthermore|Moreover|Additionally|In addition|In contrast|Similarly|Nevertheless|Nonetheless|Although|Whereas|While|Accordingly|Further|On the other hand|Conversely|Overall|Finally|First|Second|Third|Also|Still|Yet|Instead|Likewise|Specifically|For example|For instance|In particular|As a result|Building on this|Taken together|To recap)\b", re.I)
+
+
+def rhythm(sent_texts, text, nwords):
+    """Sentence-length spread, boosters, we, punctuation and connective openers; shared by measure.py and profile_draft.py."""
+    L = [words(s) for s in sent_texts]
+    if not L:
+        return {}
+    L2 = sorted(L)
+    mean = sum(L) / len(L)
+    sd = (sum((x - mean) ** 2 for x in L) / len(L)) ** 0.5
+    p10 = L2[int(0.1 * (len(L2) - 1))]
+    p90 = L2[int(0.9 * (len(L2) - 1))]
+    k = 1000 / max(1, nwords)
+    return {
+        "sent_sd": round(sd, 1), "sent_p10": p10, "sent_p90": p90,
+        "share_sent_over_40": round(100 * sum(1 for x in L if x > 40) / len(L), 1),
+        "boosters_per_1000w": round(k * len(BOOSTERS.findall(text)), 1),
+        "we_per_1000w": round(k * len(WE.findall(text)), 1),
+        "colons_per_1000w": round(k * text.count(":"), 1),
+        "semicolons_per_1000w": round(k * text.count(";"), 1),
+        "parens_per_1000w": round(k * text.count("("), 1),
+        "dashes_per_1000w": round(k * (text.count("—") + text.count(" – ") + text.count(" - ")), 1),
+        "questions_per_1000w": round(k * text.count("?"), 1),
+        "connective_start_pct": round(100 * sum(1 for s in sent_texts if CONNECTIVE_START.match(s.strip())) / len(sent_texts), 1),
+    }
+
+
 SELF = re.compile(r"\b(this thesis|this study|this work|our (?:model|thesis|study|approach|contribution|work|methodology)|the present (?:thesis|study|work)|in this (?:thesis|study|work))\b", re.I)
 AUTHOR_START = re.compile(rf"^(?:{NAME}(?:,? et al\.?|(?: and | & ){NAME})?)\s*\(")
 
@@ -121,6 +151,7 @@ def main():
     thesis_words = {}
     units_rows, sec_rows, par_rows = [], [], []
     sent_lengths = defaultdict(list)
+    sent_texts = defaultdict(list)
     for tid, units in UNITS.items():
         style = man[tid]["citation_style"]
         recs = [json.loads(l) for l in open(SEG / f"{tid}.jsonl", encoding="utf-8")]
@@ -155,6 +186,7 @@ def main():
                 if isinstance(sents, list):
                     for sn in sents:
                         sent_lengths[tid].append(words(sn))
+                        sent_texts[tid].append(sn)
                 nn = len(NUMBER_UNIT.findall(t))
                 snum += nn
                 par_rows.append({
@@ -205,6 +237,7 @@ def main():
             "pars_starting_with_author_pct": round(100 * sum(p["starts_with_author"] for p in par_rows if p["thesis"] == tid) / up, 0),
             "pars_with_self_reference_pct": round(100 * sum(p["self_reference"] for p in par_rows if p["thesis"] == tid) / up, 0),
             "pars_without_citation_pct": round(100 * sum(1 for p in par_rows if p["thesis"] == tid and p["works"] == 0) / up, 0),
+            **rhythm(sent_texts[tid], " ".join(p["text"] for p in prose), uw),
         })
 
     for name, rows in [("units.csv", units_rows), ("sections.csv", sec_rows), ("paragraphs.csv", par_rows)]:
@@ -232,6 +265,12 @@ def main():
         ("Paragraphs referring to the thesis itself, %", "pars_with_self_reference_pct"),
         ("Numbers with a unit or % per 1000 words", "numbers_with_unit_per_1000w"),
         ("Hedges per 1000 words", "hedges_per_1000w"), ("Connectors per 1000 words", "connectors_per_1000w"),
+        ("Sentence length s.d.", "sent_sd"), ("Sentence length p10", "sent_p10"), ("Sentence length p90", "sent_p90"),
+        ("Sentences over 40 words, %", "share_sent_over_40"), ("Boosters per 1000 words", "boosters_per_1000w"),
+        ("we/our/us per 1000 words", "we_per_1000w"), ("Colons per 1000 words", "colons_per_1000w"),
+        ("Semicolons per 1000 words", "semicolons_per_1000w"), ("Parentheses per 1000 words", "parens_per_1000w"),
+        ("Dashes per 1000 words", "dashes_per_1000w"), ("Questions per 1000 words", "questions_per_1000w"),
+        ("Sentences opening with a connective, %", "connective_start_pct"),
     ]
     out = ["# Literature reviews of the reference theses: measurements", "",
            "Generated by `measure.py` from `theses/corpus/segmented/`. Median [min–max]. "

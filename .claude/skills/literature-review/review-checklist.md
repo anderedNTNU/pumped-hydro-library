@@ -26,6 +26,9 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 | S4 | Ends on a synthesis or on what the theme leaves open, and the synthesis claims only what the section showed | the synthesis introduces a new claim or generalises (M4) |
 | S5 | Points and their order match the theme's list in `themes.md`, or the deviation is explained in PLAN.md | |
 | S6 | Each paragraph's argument mode (finding / claim-evidence / claim-backup / reasoning) matches what the closest theses use for that point (`themes.md`) | a point the theses argue with evidence is given as a bare claim with backup, or a synthesis cites studies |
+| S7 | Word count within ±15 % of the budget in PLAN.md; profiler flags at most 4, none on sentence length, paragraph length, hedges or connective openers | |
+| S8 | Rhythm as in the theses: sentence lengths vary (s.d. 7–9, one or two sentences over 35 words), every third or fourth sentence opens with a connective, about one hedge and one booster per paragraph, at most one colon and two semicolons in the section | sentences chopped to one size; no connective openers; no boosters; colon-led lists |
+| S9 | Every number and finding carries `% src:` on its line, and facts about our own work match `knowledge/chapter5-brief.md` | |
 
 ## Should (report, do not block)
 - Shares roughly as in `structure.md`: about half the paragraphs open with a claim, a fifth cite 3+ works, a third state a limitation, a third draw a consequence, a quarter refer to the thesis.

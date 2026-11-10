@@ -21,3 +21,9 @@ What the profiler could not see: items 1–5. They are argument faults, so the p
 
 ## Test 1, third round (2026-11-10)
 10. **A link to the thesis says why a finding matters for it, never what our model does.** "The present study keeps price and inflow in joint states" was rejected as odd in the middle of a review. The closest theses link with relevance ("important for the modelling assumptions adopted in this thesis", "helpful in the development of the methodology"); what the model does belongs in the contribution section, the table and the method chapter. Also the group's own rule: the own model only briefly at the end.
+
+## From the contrast set (2026-11-10)
+11. **Evenly chopped sentences are as wrong as long ones.** Splitting every sentence to under 30 words gave a sentence-length s.d. of 7.1 against the theses' 7.4–9.3 and no sentence over 40 words against their 1–4 %. Vary length; keep one or two long sentences per section.
+12. **Start every third or fourth sentence with a connective.** The closest theses open 26–30 % of sentences with However, While, Although, Consequently, Furthermore, In contrast, Similarly; Claude's drafts opened 1–7 %. This, more than vocabulary, is what makes the drafts read unlike them.
+13. **Use boosters as the theses do.** About one "important", "significant", "particularly", "crucial" per paragraph; Claude's drafts had none, which reads as flat rather than careful.
+14. **Colons and semicolons are rare in the theses.** Claude's drafts used colons five times and semicolons up to seventeen times the corpus rate. Write the list as a sentence.

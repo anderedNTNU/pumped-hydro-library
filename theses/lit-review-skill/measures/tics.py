@@ -83,6 +83,7 @@ def main():
              "patterns the corpus uses are allowed at about the corpus rate. Case-insensitive, word-bounded regular expressions.", ""]
     hdr = "| Pattern | " + " | ".join(g for g, _ in groups) + " | " + " | ".join(drafts) + " | Verdict |"
     sep = "|---|" + "---|" * (len(groups) + len(drafts)) + "---|"
+    draft_flags = {name: [] for name in drafts}
     for cat, pats in CANDIDATES.items():
         lines += [f"## {cat}", "", hdr, sep]
         for pat in pats:
@@ -94,10 +95,13 @@ def main():
                 cells.append(f"{r:.2f} ({n})")
                 rates.append(r)
             dcells = []
+            allr, c4r = rates[0], rates[1]
             for name, dt in drafts.items():
                 n, r = rate(pat, dt, words(dt))
-                dcells.append(f"{r:.2f} ({n})")
-            allr, c4r = rates[0], rates[1]
+                over = n >= 2 and r > 2 * max(allr, 0.05)
+                dcells.append(f"{r:.2f} ({n})" + (" **over**" if over else ""))
+                if over:
+                    draft_flags[name].append(f"`{pat}` {r:.2f} vs {allr:.2f} per 1000 words ({n}×)")
             if allr < 0.05 and c4r < 0.05:
                 verdict = "**ban**"
             elif allr < 0.2:
@@ -106,8 +110,16 @@ def main():
                 verdict = "allowed at corpus rate"
             lines.append(f"| `{pat}` | " + " | ".join(cells) + " | " + " | ".join(dcells) + f" | {verdict} |")
         lines.append("")
+    if drafts:
+        top = ["## Draft flags (used at least twice and more than twice the corpus rate)", ""]
+        for name, fl in draft_flags.items():
+            top.append(f"**{name}:** " + ("; ".join(fl) if fl else "none"))
+        top.append("")
+        lines[4:4] = top
+        print("\n".join(top))
     (HERE / "BANNED.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print("\n".join(lines))
+    if not drafts:
+        print("\n".join(lines))
 
 
 if __name__ == "__main__":
