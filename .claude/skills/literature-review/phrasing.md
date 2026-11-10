@@ -36,3 +36,11 @@ From `theses/lit-review-skill/measures/PHRASING.md` (first sentences by paragrap
 - "AUTHOR (year) found a gain of … compared to …, while AUTHOR (year) reported …" to put two findings side by side in one sentence.
 - A consequence sentence starts with "Consequently", "Therefore", "Thus", "Accordingly", "Hence", or "This yields / This introduces / This indicates".
 - A pointer to the thesis: "important for the modelling assumptions adopted in this thesis", "which is particularly relevant for …", "these findings have proved to be helpful in …".
+
+## Section openers: the only four shapes the closest theses use (all 29 section-first sentences checked, 2026-11-10)
+1. **Relevance of the topic, with a pointer back to the background chapter.** "Capturing the uncertainty inherent in … , as discussed in Section 3.1, is highly relevant in …"; "Section 3.1.5 showed the non-linear relationship between …"; "Section 3.5 underscored that … are often necessary".
+2. **What the literature does or distinguishes.** "In the context of …, the literature typically distinguishes between A and B"; "Research on … often differs between …"; "In the reviewed literature there are generally two ways of …"; "Most research regarding … focuses on …"; "Building on this, the literature provides a rationale for …".
+3. **A general fact about the domain, sourced or self-evident.** "Stochastic inflow is one of the most important sources of uncertainty in …, as it …"; "Inflow to a given reservoir is largely determined by …"; "All power system models involve uncertainty"; "Norwegian hydropower producers operate across energy and reserve markets …".
+4. **What the section does.** "This section presents a related literature review of …"; "This chapter explores … models with characteristics similar to …"; "The literature reviewed thus far has highlighted …".
+
+Never: a mechanism statement about our own plant ("For a pumped-storage plant, prices decide both …"), a question, "How X matters …", or a study name (one exception in 29).

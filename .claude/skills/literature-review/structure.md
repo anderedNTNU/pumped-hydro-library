@@ -19,7 +19,7 @@ Median 3 paragraphs and 450 words (closest four), 4 distinct works, 5 citations.
 
 | Position | What stands there (closest four) | Rule |
 |---|---|---|
-| First paragraph | OPEN 33 %, CLAIM 29 %, GAP 12 %, STUDY 12 % | Open with a claim about the field or the problem (or a short OPEN that says what the section asks). Never open a section with a single study (4 % in Bore). |
+| First paragraph | OPEN 33 %, CLAIM 29 %, GAP 12 %, STUDY 12 % | Open in one of the four shapes in `phrasing.md`: the topic's relevance with a pointer to the background chapter, what the literature distinguishes, a general domain fact, or what the section does. Never a mechanism about our plant, never a single study (one case in 29). |
 | Middle paragraphs | STUDY 37 %, GROUP 27 %, CRITIQUE 10 %, COMPARE 8 %, CLAIM 8 % | The evidence: studies in depth, groups of studies, comparisons. At most two single-study paragraphs in a row. |
 | Last paragraph | SYNTH 25 %, GAP 25 %, OPEN(next) 17 %, CLAIM 12 % | Close on what the section's literature establishes or leaves open. In the closest four, half of all sections end on a synthesis or a gap; in the other theses, a quarter. |
 

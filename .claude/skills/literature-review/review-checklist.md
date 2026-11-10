@@ -20,7 +20,7 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 ## Must (the section)
 | # | Check | Fails when |
 |---|---|---|
-| S1 | Opens with the plain reason the theme matters, in one or two sentences | opens with a study, a mechanism, or a definition the background already gave |
+| S1 | Opens in one of the four shapes in `phrasing.md` (relevance with a pointer to the background; what the literature distinguishes; a general domain fact; what the section does) | opens with a mechanism about our plant, a study, a question, "How X matters", or a definition the background already gave |
 | S2 | At most two single-study paragraphs in a row; a leaf section has three to four paragraphs, not more | more than four paragraphs in a leaf section without a sub-heading |
 | S3 | At least one comparison of named studies and at least one limitation attached to a named study | |
 | S4 | Ends on a synthesis or on what the theme leaves open, and the synthesis claims only what the section showed | the synthesis introduces a new claim or generalises (M4) |
