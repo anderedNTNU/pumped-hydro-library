@@ -74,3 +74,8 @@ Descriptive system data from EPE, SSB, NVE, UWM (2023) (p. 2).
 - Pérez-Díaz et al. (2022), review of hydro scheduling in liberalised markets.
 - Helseth et al. (2021) reserves in LTS; Aasgård (2018) reserves in STS.
 
+
+## Added 2026-11-10 (Anders/Claude): why the producer's problem is not the system problem (checked in paper.txt)
+- (p. 7, "Decentralized Approach") "In the deregulated Norwegian system, the producer has the responsibility to schedule its own hydropower facilities and does not have an explicit obligation to cover electricity demand. The overall scheduling problem can then be reformulated and distributed to the producer in the following form: Maximize the profit over the planning period while satisfying all relevant constraints." With the price-taking, risk-neutral assumption: "Given a forecast of future market prices: maximize the expected profit over the planning period". "The price decoupling significantly reduces the spatial scope of the medium- and short-term generation scheduling models."
+- (p. 8) "Under the decentralized scheduling approach, the LTS model takes a fundamental market modeling approach, whereas the MTS and STS models take the profit maximization objective under the price taker assumption for a geographically limited part of the generation system, representing the assets operated by the producer."
+- Use in 5.2: the system (welfare-maximising) formulation is the regulator's/TSO's problem and the source of price forecasts; the producer's operational problem is, by construction of the market, its own expected profit against those prices. This is the cleanest justification for the owner perspective in the library; Kong et al. 2020 (p. 3) say the same for competitive markets generally.
