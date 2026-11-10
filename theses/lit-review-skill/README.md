@@ -6,6 +6,7 @@ The skill itself is `.claude/skills/literature-review/`. This folder holds what 
 |---|---|
 | `measures/measure.py` | counts chapter, section, paragraph and sentence metrics of the 12 literature reviews in `theses/corpus/segmented/` → `REPORT.md`, `units.csv`, `sections.csv`, `paragraphs.csv` |
 | `measures/tics.py` | rate per 1,000 words of candidate writing tics in the reviews and in any draft → `BANNED.md` |
+| `measures/phrasing.py` → `PHRASING.md` | first-sentence shapes by paragraph role, shared 3-grams, reporting verbs and sentence openers; basis of the skill's `phrasing.md` |
 | `measures/profile_draft.py` | measures a draft `.tex` or `.txt` the same way and flags metrics outside the closest-four range |
 | `codebook/CODEBOOK.md` | paragraph codebook v1.1 (role; opener; works backing the point; limitation; comparison; consequence; link; closer; number; study attributes) |
 | `codebook/coding/extract.py` | writes the numbered paragraphs of each review |
