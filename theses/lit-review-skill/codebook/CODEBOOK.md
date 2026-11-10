@@ -1,4 +1,6 @@
-# Codebook for literature-review paragraphs (D-002, step 2, draft v1)
+# Codebook for literature-review paragraphs (D-002, step 2, v1.1)
+
+v1.1 (2026-11-10): sharpened after the reliability test on Bore 2026 (see `coding/RELIABILITY.md`): CLAIM vs GROUP, the STUDY threshold, B5, B6, B7 and the note that B4 is independent of the role.
 
 Purpose: describe what each paragraph of the 12 reference literature reviews *does* and how it is built, so the skill can state, with shares, what an A-level review paragraph looks like. Coding is by reading; everything countable is left to `measures/measure.py`.
 
@@ -16,7 +18,10 @@ Unit: one prose paragraph from `corpus/segmented/<id>.jsonl` inside the review u
 | SYNTH | sums up what the theme's literature establishes, without new studies | "overall", "taken together"; few or no citations |
 | GAP | says what is missing or what this thesis does about it | "remains", "has not been", "this thesis", "our contribution" |
 
-Tie-break: the role is what the *first and last* sentences serve. A paragraph that opens with a claim and then explains one study for four sentences is STUDY if the study is the point, CLAIM if the study is only evidence for the opening statement.
+Tie-break: the role is what the *first and last* sentences serve. A paragraph that opens with a claim and then explains one study is STUDY if the study is the point, CLAIM if the study is only evidence for the opening statement.
+- **CLAIM vs GROUP:** GROUP when the point is what the named studies share or do ("several studies have used DE"); CLAIM when the studies are evidence for a statement about the field or the problem ("uncertainty matters, as X and Y show").
+- **STUDY threshold:** at least two sentences on one work *and* the work is the point of the paragraph.
+- **COMPARE** needs the contrast to be the point; a contrast inside a CLAIM or GROUP paragraph is coded in B4 only.
 
 ## B. Structure (one value each)
 | Field | Values | Question |
@@ -24,10 +29,10 @@ Tie-break: the role is what the *first and last* sentences serve. A paragraph th
 | B1 opener | claim / study / transition / question | What does the first sentence do? *claim* = a statement about the field or problem; *study* = names a work and what it did; *transition* = links to the previous paragraph or announces the topic |
 | B2 backing | 0 / 1 / 2 / 3+ | How many distinct works support the paragraph's main point? |
 | B3 limitation | none / named / group | Is a limitation stated, of a named study or of the studies as a group? |
-| B4 compare | yes / no | Are two named studies set against each other? |
-| B5 consequence | yes / no | Does the paragraph say what its point means for modelling, for a decision, or for the thesis ("therefore", "this implies", "which matters because")? |
-| B6 link | none / implicit / explicit | Does it refer to this thesis or its model? *explicit* = "this thesis", "our model"; *implicit* = "important for the modelling assumptions adopted here" |
-| B7 closer | consequence / study / claim / limitation | What does the last sentence do? |
+| B4 compare | yes / no | Are two named studies set against each other? Independent of the role: a CLAIM or GROUP paragraph can have B4 = yes |
+| B5 consequence | yes / no | *yes* only if a sentence states what the point means for modelling, for a decision or for the thesis, with an evaluative or modal verb ("should", "must", "is important for", "implies", "may lead to", "which matters because"). A restated finding, a pointer to a section, or "as this subsection shows" is *no* |
+| B6 link | none / implicit / explicit | *explicit* = names this thesis, this study, our model, the research questions, or the authors' own earlier project; *implicit* = refers to the thesis's own sections or to "the methodology adopted" without naming the thesis; *none* otherwise |
+| B7 closer | consequence / study / claim / limitation / pointer | What does the last sentence do? *pointer* = announces what follows or refers to a section, table or figure |
 | B8 number | yes / no | Does it give a number with a unit or a percentage from a study? |
 
 ## C. Theme position (one value)
