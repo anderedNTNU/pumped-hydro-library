@@ -13,3 +13,8 @@ The draft followed the plan and the measured shares, passed the profiler after o
 6. **Sentence length is the Claude fault the profiler catches first.** The first draft had a 31-word median and 38 % over 35 words. Write the paragraph, then split every sentence over 30 words before running the profiler.
 
 What the profiler could not see: items 1–5. They are argument faults, so the planning step now requires, for each paragraph row, the "this matters because" sentence written out before drafting (see SKILL.md, step 3).
+
+## Test 1, second round (2026-11-10)
+7. **Open a theme with the plain reason, not a mechanism sentence.** "Stochastic modelling can give a better representation of reality" was preferred over a sentence about strategies holding up across outcomes. Say why the theme matters in the simplest terms first; mechanisms belong with the study that shows them.
+8. **Never generalise from one study.** "Dependence matters for operation rather than revenue" rested on Kleiven alone and was rejected as a general claim. A finding from one case is reported as that case's result ("in their case"); a general statement needs several studies that agree, or is written as "varies between cases".
+9. **A comparison paragraph can be shorter and higher-level than the blueprint.** Fewer numbers and examples, one sentence per study, then the point. Numbers from a single study (a correlation of −0.43) rarely earn their place.
