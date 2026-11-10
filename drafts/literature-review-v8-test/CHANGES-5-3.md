@@ -23,3 +23,6 @@
 | lohndorf2023 | coordination benefits pumped storage far more than a reservoir plant | text l. 1330–1345: pumped hydro +10.0–29.1 % over sequential; "gains for the less flexible reservoir are marginal" | paper.txt |
 
 Not cited: bradbury2014economic (volatility raises storage return; note only), abgottspon2016multihorizon (daily vs hourly; note only, deterministic case), perezdiaz2020medium (energy–reserve price correlation; result not verified), faria2011day, aasgard2020value.
+
+## After the precedent review (2026-11-10)
+Added: helseth2016 p. 937 (the combined SDP/SDDP scheme requires the SDP-part processes to be independent of the SDDP-part processes) and kleiven2023 (joint price model in an MC-SDDP lattice, note) as the reason the two studies treat dependence differently; abgottspon2014 pp. 5–6 (method 4: information arrives within the week). The section-level close was removed to match Bore 2026 §4.2, which has none. The sentence "the timing of information should be chosen in line with the products the plant sells, since reserves are committed before the energy prices are known" is the authors' reasoning (the market sequence is in the background chapter), not a cited finding.
