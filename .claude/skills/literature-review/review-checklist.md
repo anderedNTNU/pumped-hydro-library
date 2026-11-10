@@ -29,6 +29,7 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 | S7 | Word count within ±15 % of the budget in PLAN.md; profiler flags at most 4, none on sentence length, paragraph length, hedges or connective openers | |
 | S8 | Rhythm as in the theses: sentence lengths vary (s.d. 7–9, one or two sentences over 35 words), every third or fourth sentence opens with a connective, about one hedge and one booster per paragraph, at most one colon and two semicolons in the section | sentences chopped to one size; no connective openers; no boosters; colon-led lists |
 | S9 | Every number and finding carries `% src:` on its line, and facts about our own work match `knowledge/chapter5-brief.md` | |
+| S10 | Precedent: the section layout copies a named thesis section, and every paragraph names its model paragraph (`<id> Pnn`) and matches its shape (opener kind, length band, argument mode, closer kind); the reviewer reads each model paragraph and compares | a paragraph without a model, or whose shape differs from its model in opener, argument mode or closer |
 
 ## Should (report, do not block)
 - Shares roughly as in `structure.md`: about half the paragraphs open with a claim, a fifth cite 3+ works, a third state a limitation, a third draw a consequence, a quarter refer to the thesis.
