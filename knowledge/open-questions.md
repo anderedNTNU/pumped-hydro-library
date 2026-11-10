@@ -4,5 +4,9 @@ Format: `- **Q-xxx (YYYY-MM-DD, who):** question. _Context / what we've tried / 
 When a question is answered, move it to **Resolved** with the answer, the date and the source.
 
 ## Open
+- **Q-001 (2026-11-10, Anders):** McDermott (2020) on Norwegian producers' market power is cited in the 5.2 draft but is in neither the library nor `references.bib`. _Needs the PDF from whoever added the citation; logged in `literature/WANTED.md`._
+- **Q-002 (2026-11-10, Anders):** Baslis & Bakirtzis (2011) is filed (`baslis2011midterm`) but not in Zotero/`references.bib`; add it before 5.2 compiles. _Zotero was running; Anders did not answer the offer to add it._
+- **Q-003 (2026-11-10, Anders):** Two owner studies in the group's old 5.2 text are unidentified: `S0360319915316530` (Int. J. Hydrogen Energy) and `S2352467725002711`. _Send the PDFs to the inbox._
+- **Q-004 (2026-11-10, Anders):** Which version of 5.2 goes to Overleaf: the five-paragraph text from the 2026-11-10 chat (not in any file) or v7? _Anders said "not yet" to any Overleaf change._
 
 ## Resolved
