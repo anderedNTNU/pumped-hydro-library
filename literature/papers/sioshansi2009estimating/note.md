@@ -68,3 +68,8 @@ Four questions (p. 269): (1) how storage efficiency and energy capacity (hours o
 - Graves, Jenkin & Murphy (1999), *Opportunities for electricity storage in deregulating markets*, Electricity Journal 12, 46-56.
 - Sioshansi, Denholm & Jenkin (2011), *A comparative analysis of the value of pure and hybrid electricity storage*, Energy Economics 33, 56-66.
 
+
+## Added 2026-11-10 (Anders/Claude): the system-vs-owner statements, checked in paper.txt
+- (p. 275) "the external welfare effects for consumers and producers are on the same relative scale as the arbitrage value. Moreover, although there are large wealth transfers from generators to consumers, the fact that the increase in consumer surplus is greater than producer surplus losses shows that there are net social welfare gains stemming from the load-shifting effects of large-scale storage."
+- (p. 277) "Because these external welfare benefits will not necessarily be captured by a private-sector investor who relies on arbitrage, such an investor may have a reduced incentive to invest in energy storage due to the diminished value of arbitrage." A regulated owner "may view load shifting ... as a benefit to society, while this may not be the case for a merchant operator."
+- Use: the one study in the library that shows welfare rising while the storage owner's own value falls (large device, energy arbitrage, PJM). The owner is not strategic; it maximises arbitrage and its size moves prices. Henden et al. 2016 does not show this (system and owner optima coincide there).
