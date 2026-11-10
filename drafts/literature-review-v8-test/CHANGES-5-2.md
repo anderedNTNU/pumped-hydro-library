@@ -21,3 +21,6 @@ All passages were checked in `paper.txt` on 2026-11-10 unless marked "note". Ful
 | dallinger2019socioeconomic | price spreads of pumped storage decline as storage capacity grows | pp. 488–489, Table 1 |
 
 Not cited: Baslis and Bakirtzis (2011) and McDermott (2020), neither in `references.bib` (Q-001, Q-002); Schüller et al. (2024), whose finding rests on the note only and was dropped after review.
+
+## Three-paragraph version (2026-11-10, after Anders' judgement)
+Claims removed: "system models supply the price forecasts rather than the decisions" (true only of the Norwegian planning chain as described by helseth2023hydropower p. 8, not of helseth2013, which is a production-planning model for the Icelandic system). Added: lohndorf2013 (price-taking pumped-storage owner, day-ahead; p. 2, 6); helseth2013 described as optimising all plants under one objective with prices as a result (p. 1427). Dallinger 2019 no longer cited.

@@ -21,7 +21,7 @@ Run by a reviewer who did not write the draft (a separate agent in review mode),
 | # | Check | Fails when |
 |---|---|---|
 | S1 | Opens with the plain reason the theme matters, in one or two sentences | opens with a study, a mechanism, or a definition the background already gave |
-| S2 | At most two single-study paragraphs in a row | |
+| S2 | At most two single-study paragraphs in a row; a leaf section has three to four paragraphs, not more | more than four paragraphs in a leaf section without a sub-heading |
 | S3 | At least one comparison of named studies and at least one limitation attached to a named study | |
 | S4 | Ends on a synthesis or on what the theme leaves open, and the synthesis claims only what the section showed | the synthesis introduces a new claim or generalises (M4) |
 | S5 | Points and their order match the theme's list in `themes.md`, or the deviation is explained in PLAN.md | |
