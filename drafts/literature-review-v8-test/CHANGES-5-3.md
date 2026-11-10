@@ -26,3 +26,15 @@ Not cited: bradbury2014economic (volatility raises storage return; note only), a
 
 ## After the precedent review (2026-11-10)
 Added: helseth2016 p. 937 (the combined SDP/SDDP scheme requires the SDP-part processes to be independent of the SDDP-part processes) and kleiven2023 (joint price model in an MC-SDDP lattice, note) as the reason the two studies treat dependence differently; abgottspon2014 pp. 5–6 (method 4: information arrives within the week). The section-level close was removed to match Bore 2026 §4.2, which has none. The sentence "the timing of information should be chosen in line with the products the plant sells, since reserves are committed before the energy prices are known" is the authors' reasoning (the market sequence is in the background chapter), not a cited finding.
+
+## Verification pass on the note-only claims (2026-11-10, after Anders asked)
+| Claim | Result |
+|---|---|
+| abgottspon2014: within-week model higher expected profit only with reserves | **verified**, Table II: method 3 (deterministic intrastage) 34.80 / 35.85 vs method 4 (stochastic) 33.40 / 39.14 without / with reserves |
+| mo2001: probabilities corrected to preserve the conditional expected price | **verified**, text l. 174 ("to maintain the conditional expected spot price") |
+| kleiven2023: joint price–inflow model | **verified**, l. 22, 130, 167 ("joint dynamics of prices and inflows") |
+| ak2019quantifying: largest gain in the year with the largest daily variation | **verified**, p. 748: "2016 electricity prices resulted in the largest percent net revenue gain … 2016 has the largest daily variation with many outliers" |
+| haldrup2006regime: long memory strongest in the Norwegian areas; reservoir link | **verified**, Table 3 (d = 0.52 for SNO and MNO vs 0.31–0.44 elsewhere); "Price persistence within the year can be partially explained by seasonal variation due to hydropower reservoir levels" |
+| alic2023optimal: fixed daily profile | **verified in substance**, l. 192: "scaling factor for price variability in sub-interval k for stage t"; wording changed to "scaled by fixed sub-interval factors" |
+| helseth2016: transition probabilities adjusted because few scenarios | **not found** in the text; the sentence now says what p. 938 states: (NE × NC)² transition probabilities to identify |
+| bore2026assessing: hourly series per cluster (median) | note only; the paper text has no "median"; left as "an hourly series for each cluster" |
