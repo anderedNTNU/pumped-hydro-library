@@ -1,6 +1,6 @@
 ---
 bibkey: henden2016economic
-bibkey_provisional: true
+bibkey_provisional: false
 title: "Economic analysis of large-scale pumped storage plants in Norway"
 authors: "Arild Lote Henden, Gerard Doorman, Arild Helseth"
 year: 2016
