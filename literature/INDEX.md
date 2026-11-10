@@ -5,7 +5,7 @@ For how to search for papers, see [search-log.md](search-log.md). For papers gro
 
 <!-- GENERATED BELOW -->
 
-_192 sources. Regenerated 2026-11-09 by `literature/_tools/regenerate.sh`._
+_192 sources. Regenerated 2026-11-10 by `literature/_tools/regenerate.sh`._
 
 | Key | Year | Title | Methods | Review sections | Relevance | Peer-reviewed | Read by |
 |---|---|---|---|---|---|---|---|

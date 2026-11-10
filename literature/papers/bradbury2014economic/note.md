@@ -1,6 +1,6 @@
 ---
 bibkey: bradbury2014economic
-bibkey_provisional: true   # not yet in Zotero/references.bib; ask the group to add it
+bibkey_provisional: false
 title: "Economic viability of energy storage systems based on price arbitrage potential in real-time U.S. electricity markets"
 authors: "Kyle Bradbury, Lincoln Pratson, Dalia Patiño-Echeverri"
 year: 2014

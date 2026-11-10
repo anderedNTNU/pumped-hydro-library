@@ -1,6 +1,6 @@
 ---
 bibkey: abgottspon2016multihorizon
-bibkey_provisional: true
+bibkey_provisional: false
 title: "Multi-horizon modeling in hydro power planning"
 authors: "Hubert Abgottspon, Göran Andersson"
 year: 2016

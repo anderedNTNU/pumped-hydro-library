@@ -1,6 +1,6 @@
 # Litteraturkapittel v5: hva er endret fra v4
 
-Laget 2026-11-09 av Claude sammen med Anders. Filer: `literature_review.tex` (kapittelet), `main.tex` (frittstående forhåndsvisning), `supplementary.bib` (tre kilder som ennå ikke er i Zotero).
+Laget 2026-11-09 av Claude sammen med Anders. Filer: `literature_review.tex` (kapittelet), `main.tex` (frittstående forhåndsvisning).
 Alle påstander er sjekket mot `literature/papers/<bibkey>/note.md`, og tallene mot `paper.txt`. Teksten er et utkast som dere skal skrive om (AI-bruk er logget i `ai-usage.md`).
 
 ## Struktur (avtalt med Anders)
@@ -32,7 +32,7 @@ SDP, SDDP, to-stegs programmering og rullerende horisont blir først nevnt i 5.5
 
 ## Det dere må gjøre
 1. **5.1:** søkeloggen (`literature/search-log.md`) er tom, så den røde TODO-boksen står fortsatt. Ikke skriv om søket før det er logget.
-2. **Zotero:** legg inn `bore2026assessing`, `bradbury2014economic` og `abgottspon2016multihorizon` (se `supplementary.bib`), og sjekk at nøklene stemmer.
+2. **Zotero:** `bore2026assessing`, `bradbury2014economic` og `abgottspon2016multihorizon` ble lagt inn 2026-11-10 (thesis-commit 6ded326), så `supplementary.bib` er fjernet.
 3. **Tabell 3, raden «This study»:** reserveproduktene er holdt generiske til Q-002 er avgjort. Raden sier «varied price volatility and persistence», men det finnes ennå ikke noe kapittel om metoden for dette (kap. 7 er bare kommentarer).
 4. **Kryssreferanser:** teorikapittelet refereres nå med `subsec:two_stage_stochastic_optimisation`, `subsec:stochastic_dynamic_programming` og `subsec:stochastic_dual_dynamic_programming`, og bakgrunnen med `sec:ph25-volatility-persistence`. I forhåndsvisningen vises de som ??.
 5. **Kompilering:** LaTeX er ikke installert på denne maskinen, så filen er **ikke kompilert**. Kjør den i Overleaf eller lokalt (pdflatex → biber → pdflatex ×2). Den trenger `siunitx` i tillegg til booktabs, tabularx, longtable, pdflscape og array.
