@@ -2,15 +2,18 @@
 
 The literature-review skill takes style from the reference theses and content from the papers; what it may say about *our own* work comes only from here. Keep it current: update after every session that changes a decision, a number or a research question. Items marked TODO need the group's wording.
 
-## The thesis in five sentences (check against ch. 1 and ch. 6; TODO Anders)
+## The thesis in five sentences (confirmed by Anders 2026-11-10; chapter 1 is not written yet, so this is the working statement)
 1. The project report studies the long-term operating value of a Norwegian pumped-storage hydropower plant with natural inflow, from the owner's perspective, as a price-taker in the day-ahead and reserve-capacity markets.
 2. Operation is optimised with a Markov-chain SDDP: weekly stages, joint price–inflow states from clustering, hourly decisions inside a week whose inputs are known once it starts, reserve activation excluded (confirm in ch. 6).
 3. The question is how pumping power, generating power and reservoir capacity, individually and together, affect that value.
 4. A related question is how the answer changes with the volatility and persistence of electricity prices.
 5. The contribution is a comparative understanding of these capacity interactions under uncertainty, positioned against the reviewed studies in Table 3.
 
-## Research questions
-TODO: paste the exact wording from chapter 1. Until then the review refers to "the research questions" without quoting them.
+## Research questions (working wording, confirmed by Anders 2026-11-10; chapter 1 not yet written)
+1. How do pumping power, generating power and reservoir capacity, individually and in combination, affect the long-term operating value of a pumped-storage plant for its owner across electricity markets?
+2. How does their relative value change with the volatility and persistence of electricity prices?
+
+The review refers to them as "the research questions" and does not quote them until chapter 1 fixes the wording.
 
 ## Decisions that bind the review
 - D-001 (2026-11-09): six-part structure of the chapter; the literature chapter lives in `drafts/` until the group moves it to Overleaf.
