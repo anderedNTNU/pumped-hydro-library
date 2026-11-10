@@ -1,6 +1,6 @@
 ---
 bibkey: dallinger2019socioeconomic
-bibkey_provisional: true
+bibkey_provisional: false
 title: "Socio-economic benefit and profitability analyses of Austrian hydro storage power plants supporting increasing renewable electricity generation in Central Europe"
 authors: "Bettina Dallinger, Daniel Schwabeneder, Georg Lettner, Hans Auer"
 year: 2019
