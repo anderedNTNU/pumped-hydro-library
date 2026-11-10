@@ -49,7 +49,7 @@ def load_bib(path):
 
 
 def render_tex(tex, bib):
-    tex = re.sub(r"(?m)^%.*$", "", tex)
+    tex = re.sub(r"(?m)^[ \t]*%.*\n?", "", tex)   # drop comment lines without leaving a blank line (% src: lines sit inside paragraphs)
     tex = re.sub(r"\\todonote\{.*?\}", "", tex, flags=re.S)
     tex = re.sub(r"\\begin\{longtable\}.*?\\end\{longtable\}", "", tex, flags=re.S)
     tex = re.sub(r"\\begin\{(?:landscape|table|figure)\}.*?\\end\{(?:landscape|table|figure)\}", "", tex, flags=re.S)
@@ -156,7 +156,7 @@ def main():
         if flag and label not in ("Review words", "Paragraphs", "Distinct works cited"):
             nflags += 1
         print(f"| {label} | {val:g} | {a[0]:g} / {a[1]:g} / {a[2]:g} | {c[0]:g} / {c[1]:g} / {c[2]:g} | {flag} |")
-    print(f"\nFlags against the closest-four range (size metrics excluded): {nflags}. Target: at most 2 (see language.md, calibration).")
+    print(f"\nFlags against the closest-four range (size metrics excluded): {nflags}. Target: at most 4; Bore 2026 scores 1 (see language.md, calibration). On a single section of under 1,000 words the share metrics are coarse; judge the direction, not the decimal.")
     long = [s for p in paras for s in sentences(p) if words(s) > 35]
     if long:
         print(f"\nSentences over 35 words ({len(long)}):")
