@@ -1,7 +1,7 @@
 # Litteraturkapittel v5: hva er endret fra v4
 
 Laget 2026-11-09 av Claude sammen med Anders. Filer: `literature_review.tex` (kapittelet), `main.tex` (frittstående forhåndsvisning).
-Alle påstander er sjekket mot `literature/papers/<bibkey>/note.md`, og tallene mot `paper.txt`. Teksten er et utkast som dere skal skrive om (AI-bruk er logget i `ai-usage.md`).
+Påstandene er sjekket mot `literature/papers/<bibkey>/note.md` (notatene oppgir sidetall), ikke mot `paper.txt` direkte. Rettet 2026-11-10: tidligere sto det feilaktig at tallene var sjekket mot `paper.txt`. Teksten er et utkast som dere skal skrive om (AI-bruk er logget i `ai-usage.md`).
 
 ## Struktur (avtalt med Anders)
 5.1 Scope and Search · 5.2 Valuation of Pumped Storage and Its Capacities · 5.3 Uncertainty and Price Dynamics · 5.4 Market Participation · 5.5 Solution Methods (der fysisk detalj er flettet inn) · 5.6 Research Gap and Positioning.
