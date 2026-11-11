@@ -8,6 +8,7 @@
 - **Model / ch. 6:** SDDP bounds and stopping rule follow helseth2016 (thesis commit 2026-11-10); unchanged today.
 - **Sources:** 131 papers, 61 grey sources, 14 theses. Added to Zotero today: bradbury2014economic, abgottspon2016multihorizon, bore2026assessing.
 
+- **Scheduling level (D-004, 2026-11-11):** our model is called a medium-term scheduling model; "long-term" only for the storage and for system models. Every operational source is placed on the hierarchy in `knowledge/topics/scheduling-hierarchy-horizons.md` (the TET4565 lecture's seasonal 3–18 months differs from the papers' medium-term 1–3 years; lecture filed as `farahmand2026hydropower`, cite it or not is Q-005). Ch. 4, 6 and 8 in Overleaf still say "long-term model".
 - **Research questions (D-003, 2026-11-11):** narrowed to adding a pump, the charging capacity of a long-duration storage, and price volatility and persistence. The brief, 5.2 and 5.3 are updated; 5.5 and the gap (5.7) must be written around the pump, and Table 3's capacity column changes.
 
 ## Next steps

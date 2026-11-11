@@ -3,7 +3,7 @@
 The literature-review skill takes style from the reference theses and content from the papers; what it may say about *our own* work comes only from here. Keep it current: update after every session that changes a decision, a number or a research question. Items marked TODO need the group's wording.
 
 ## The thesis in five sentences (confirmed by Anders 2026-11-10; chapter 1 is not written yet, so this is the working statement)
-1. The project report studies the operating value of a Norwegian pumped-storage hydropower plant (TODO 2026-11-11: the earlier wording "long-term operating value" mixed the storage duration with the scheduling level; the model is medium-term scheduling in the papers' terms, see `knowledge/topics/scheduling-hierarchy-horizons.md`) with natural inflow, from the owner's perspective, as a price-taker in the day-ahead and reserve-capacity markets.
+1. The project report studies the operating value of a Norwegian pumped-storage hydropower plant with a medium-term scheduling model (D-004; "long-term" is reserved for the storage and for system models) with natural inflow, from the owner's perspective, as a price-taker in the day-ahead and reserve-capacity markets.
 2. Operation is optimised with a Markov-chain SDDP: weekly stages, joint price–inflow states from clustering, hourly decisions inside a week whose inputs are known once it starts, reserve activation excluded (confirm in ch. 6).
 3. The questions are what a conventional reservoir plant gains from adding a pump, and how the pumping (charging) capacity affects the value of a long-duration storage such as pumped storage.
 4. A related question is how the answer changes with the volatility and persistence of electricity prices.
@@ -55,7 +55,7 @@ Numbers not in this table are not reported in the review until they are added he
 | 5.7 Gap and contribution | the gap in the nearest studies' own terms; what this study does; Table 3 with our row | `knowledge/decisions.md`, STATUS |
 
 ## Levels of the scheduling hierarchy (2026-11-11)
-Our model is a medium-term scheduling model in the papers' terms (weekly stages, one year or more, water values out; `helseth2016` p. 936, `gjelsvik2010` p. 35). "Long-term" is reserved for the storage (LDES) and for system models (EMPS, `helseth2023hydropower` pp. 4–5). The TET4565 lecture slides (`farahmand2026hydropower`) give other horizon numbers (seasonal 3–18 months, long-term 1–5 years) and are not cited unless the group decides (Q-005). Table 3 gives horizon and stage length, not a level word.
+Our model is a medium-term scheduling model in the papers' terms (weekly stages, one year or more, water values out; `helseth2016` p. 936, `gjelsvik2010` p. 35). "Long-term" is reserved for the storage (LDES) and for system models (EMPS, `helseth2023hydropower` pp. 4–5). Decided as D-004 on 2026-11-11. The TET4565 lecture slides (`farahmand2026hydropower`) give other horizon numbers (seasonal 3–18 months, long-term 1–5 years) and are not cited unless the group decides (Q-005). Table 3 gives horizon and stage length, not a level word.
 
 ## Missing from the library or the bib (do not cite until fixed)
 McDermott 2020 (Q-001); Baslis & Bakirtzis 2011 not in references.bib (Q-002); two owner studies from the old text (Q-003); warland2016stochastic not in references.bib.
