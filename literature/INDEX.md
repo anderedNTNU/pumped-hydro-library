@@ -5,7 +5,7 @@ For how to search for papers, see [search-log.md](search-log.md). For papers gro
 
 <!-- GENERATED BELOW -->
 
-_193 sources. Regenerated 2026-11-11 by `literature/_tools/regenerate.sh`._
+_194 sources. Regenerated 2026-11-11 by `literature/_tools/regenerate.sh`._
 
 | Key | Year | Title | Methods | Review sections | Relevance | Peer-reviewed | Read by |
 |---|---|---|---|---|---|---|---|
@@ -80,6 +80,7 @@ _193 sources. Regenerated 2026-11-11 by `literature/_tools/regenerate.sh`._
 | [`helseth2016`](papers/helseth2016/note.md) | 2016 | Optimal Medium-Term Hydropower Scheduling Considering Energy and Reserve Capacity Markets | sddp-markov-chain, sddp-time-series, uncertainty-modelling | market-participation, modelling-phs-plants, electricity-markets, research-gap | high | true |  |
 | [`helseth2017`](papers/helseth2017/note.md) | 2018 | Detailed long-term hydro-thermal scheduling for expansion planning in the Nordic power system | two-stage-stochastic, benders-decomposition, heuristics-simulation, uncertainty-modelling, hydro-production-function | modelling-phs-plants, reservoir-sizing-capacity | medium | true |  |
 | [`helseth2017iet`](papers/helseth2017iet/note.md) | 2017 | Assessing hydropower operational profitability considering energy and reserve markets | sdp, deterministic-lp-milp, uncertainty-modelling, hydro-production-function | market-participation, reservoir-sizing-capacity, research-gap | high | true |  |
+| [`helseth2020scheduling`](grey-literature/helseth2020scheduling/note.md) | 2020 | Scheduling Toolchains in Hydro-Dominated Systems: Evolution, Current Status and Future Challenges for Norway and Brazil | sddp-markov-chain, sdp, uncertainty-modelling, deterministic-lp-milp | modelling-phs-plants, electricity-markets, market-participation | medium | false |  |
 | [`helseth2022hydropower`](papers/helseth2022hydropower/note.md) | 2022 | Hydropower Scheduling with State-Dependent Discharge Constraints: An SDDP Approach | sddp-time-series, hydro-production-function, uncertainty-modelling | modelling-phs-plants | medium | true |  |
 | [`helseth2023hydropower`](papers/helseth2023hydropower/note.md) | 2023 | Hydropower Scheduling Toolchains: Comparing Experiences in Brazil, Norway, and USA and Implications for Synergistic Research | sddp-time-series, sdp, heuristics-simulation | modelling-phs-plants, electricity-markets, research-gap | medium | true |  |
 | [`helseth2024approximating`](papers/helseth2024approximating/note.md) | 2024 | Approximating hydropower systems by feasibility spaces in stochastic dual dynamic programming | sddp-time-series, benders-decomposition, uncertainty-modelling | modelling-phs-plants | background | true |  |
