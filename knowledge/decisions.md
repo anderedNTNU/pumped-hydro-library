@@ -24,3 +24,9 @@ Format:
 **Why:** The v4–v7 drafts and today's rewrites of 5.2 were judged "way off" against Bore & Brensholm; the group wants text that matches the A-level theses in structure and density, with the rules visible and measurable.
 **Alternatives considered:** reuse the thesis-writing skill built in the old workspace on 2026-11-08/09 (rejected by Anders: start fresh, do not consider it); all chapter types at once (rejected: too big to judge).
 **Source:** session with Anders 2026-11-10.
+
+## D-003 — 2026-11-11 — Research questions narrowed to the pump
+**Decided:** The research questions are (1) how a conventional reservoir hydropower plant can gain from adding a pump; (2) how the charging capacity (pumping power) affects the value of a long-duration energy storage such as pumped storage; (3) how these values change with the volatility and persistence of electricity prices. Working wording in `knowledge/chapter5-brief.md`; chapter 1 fixes the final text.
+**Why:** Anders' decision of 2026-11-11. The earlier wording varied pumping power, generating power and reservoir capacity jointly; the group narrows it to the pump, which is the decision a reservoir owner actually faces, and frames the plant as long-duration storage.
+**Alternatives considered:** keep the three-capacity question (rejected: too wide for the project report); drop the price-behaviour question (rejected: it is the group's distinct contribution).
+**Source:** session with Anders 2026-11-11.

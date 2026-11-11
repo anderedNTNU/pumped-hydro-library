@@ -5,15 +5,16 @@ The literature-review skill takes style from the reference theses and content fr
 ## The thesis in five sentences (confirmed by Anders 2026-11-10; chapter 1 is not written yet, so this is the working statement)
 1. The project report studies the long-term operating value of a Norwegian pumped-storage hydropower plant with natural inflow, from the owner's perspective, as a price-taker in the day-ahead and reserve-capacity markets.
 2. Operation is optimised with a Markov-chain SDDP: weekly stages, joint price–inflow states from clustering, hourly decisions inside a week whose inputs are known once it starts, reserve activation excluded (confirm in ch. 6).
-3. The question is how pumping power, generating power and reservoir capacity, individually and together, affect that value.
+3. The questions are what a conventional reservoir plant gains from adding a pump, and how the pumping (charging) capacity affects the value of a long-duration storage such as pumped storage.
 4. A related question is how the answer changes with the volatility and persistence of electricity prices.
 5. The contribution is a comparative understanding of these capacity interactions under uncertainty, positioned against the reviewed studies in Table 3.
 
-## Research questions (working wording, confirmed by Anders 2026-11-10; chapter 1 not yet written)
-1. How do pumping power, generating power and reservoir capacity, individually and in combination, affect the long-term operating value of a pumped-storage plant for its owner across electricity markets?
-2. How does their relative value change with the volatility and persistence of electricity prices?
+## Research questions (Anders' wording of 2026-11-11, replacing the 2026-11-10 wording; chapter 1 not yet written)
+1. How can a conventional reservoir hydropower plant gain from adding a pump?
+2. How does the charging capacity (the pumping power) affect the value of a long-duration energy storage such as pumped storage?
+3. How do these values change when the volatility and persistence of electricity prices change?
 
-The review refers to them as "the research questions" and does not quote them until chapter 1 fixes the wording.
+What changed on 2026-11-11: the capacity question is now the pump (adding one, and its size), not pump, turbine and reservoir jointly; generating power and reservoir size are no longer research questions. The review refers to "the research questions" and does not quote them until chapter 1 fixes the wording.
 
 ## Decisions that bind the review
 - D-001 (2026-11-09): six-part structure of the chapter; the literature chapter lives in `drafts/` until the group moves it to Overleaf.
@@ -49,7 +50,7 @@ Numbers not in this table are not reported in the review until they are added he
 | 5.2 Perspective | system vs owner; what system models optimise and produce; price-maker representations and limits; why price-taking is assumed | `knowledge/topics/valuation-perspective.md`; notes: helseth2013, henden2016economic, helseth2017, dallinger2019socioeconomic, helseth2023hydropower, ak2019quantifying, alic2023optimal, abgottspon2013stochastic, baslis2011midterm, helseth2016, bore2026 |
 | 5.3 Uncertainty | why stochastic; inflow; prices by market; dimensionality; dependence; timing of information; representation by weekly states; volatility and persistence | notes: belsnes2016applying, lohndorf2013, helseth2016, helseth2017iet, kleiven2023, alic2023optimal, bore2026, abgottspon2014, abgottspon2016multihorizon, mo2001, haldrup2006regime, bradbury2014economic, lohndorf2023, schaffer2022stochastic |
 | 5.4 Markets | energy, reserve capacity, activation; what each adds and costs; comparability caveat before numbers | notes: helseth2016, helseth2017iet, chazarra2017, perezdiaz2020medium, bore2026, dallinger2019socioeconomic, abgottspon2014, faria2011day |
-| 5.5 Capacities | adding a pump; upgrading units; large expansions and price effects; reservoir sizing | notes: ak2019quantifying, alic2023optimal, schuller2024practical, helseth2017iet, bore2026, helseth2017, henden2016economic, zisos2023mixing, sioshansi2009estimating, bradbury2014economic |
+| 5.5 Capacities | adding a pump to a reservoir plant (the central question); the size of the pump and the ratio of charging power to storage; large expansions and price effects; reservoir and turbine sizing only as context | notes: ak2019quantifying, alic2023optimal, schuller2024practical, helseth2017iet, bore2026, helseth2017, henden2016economic, zisos2023mixing, sioshansi2009estimating, bradbury2014economic |
 | 5.6 Methods | two-stage, rolling horizon, SDP, SDDP and extensions, applications to owners; physical detail retained | notes: faria2011day, helseth2017, sioshansi2009estimating, alic2023optimal, helseth2017iet, abgottspon2014, pereira1991, helseth2013, helseth2016, hjelmeland2019energies, helseth2024approximating, bore2026, abgottspon2016multihorizon, schuller2024practical |
 | 5.7 Gap and contribution | the gap in the nearest studies' own terms; what this study does; Table 3 with our row | `knowledge/decisions.md`, STATUS |
 
