@@ -9,7 +9,7 @@ The literature-review skill takes style from the reference theses and content fr
 4. A related question is how the answer changes with the volatility and persistence of electricity prices.
 5. The contribution is a comparative understanding of these capacity interactions under uncertainty, positioned against the reviewed studies in Table 3.
 
-## Research questions (Anders' wording of 2026-11-11, replacing the 2026-11-10 wording; chapter 1 not yet written)
+## Research questions (Anders' wording, confirmed 2026-11-11; chapter 1 not yet written)
 1. How can a conventional reservoir hydropower plant gain from adding a pump?
 2. How does the charging capacity (the pumping power) affect the value of a long-duration energy storage such as pumped storage?
 3. How do these values change when the volatility and persistence of electricity prices change?
