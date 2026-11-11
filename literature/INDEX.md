@@ -5,7 +5,7 @@ For how to search for papers, see [search-log.md](search-log.md). For papers gro
 
 <!-- GENERATED BELOW -->
 
-_192 sources. Regenerated 2026-11-10 by `literature/_tools/regenerate.sh`._
+_193 sources. Regenerated 2026-11-11 by `literature/_tools/regenerate.sh`._
 
 | Key | Year | Title | Methods | Review sections | Relevance | Peer-reviewed | Read by |
 |---|---|---|---|---|---|---|---|
@@ -57,6 +57,7 @@ _192 sources. Regenerated 2026-11-10 by `literature/_tools/regenerate.sh`._
 | [`enelpumped`](grey-literature/enelpumped/note.md) |  | Pumped Storage Hydropower Plants |  | phs-technology | background | false |  |
 | [`entsoe2019psh`](grey-literature/entsoe2019psh/note.md) | 2019 | Report from the Expert Group “Requirements for Pump-Storage Hydro modules” (EG PSH) |  | phs-technology, electricity-markets | medium | false |  |
 | [`esett2026`](grey-literature/esett2026/note.md) | 2026 | Nordic Imbalance Settlement Handbook: Instructions and Rules for Market Participants, Version 5.4 |  | electricity-markets | medium | false |  |
+| [`farahmand2026hydropower`](grey-literature/farahmand2026hydropower/note.md) | 2026 | Hydropower Scheduling Hierarchy and Water Values (lecture 6, TET4565 Electricity Markets and Energy System Planning, Specialisation Course) | sdp, dynamic-programming | modelling-phs-plants | medium | false | anders |
 | [`faria2011day`](papers/faria2011day/note.md) | 2011 | Day-ahead market bidding for a Nordic hydropower producer: taking the Elbas market into account | two-stage-stochastic, deterministic-lp-milp, uncertainty-modelling, hydro-production-function | market-participation, electricity-markets | medium | true |  |
 | [`finnah2021`](papers/finnah2021/note.md) | 2021 | Optimizing trading decisions of wind power plants with hybrid energy storage systems using backwards approximate dynamic programming | adp-reinforcement-learning, uncertainty-modelling, heuristics-simulation | ldes-seasonal-storage, market-participation | background | true |  |
 | [`finnah2022integrated`](papers/finnah2022integrated/note.md) | 2022 | Integrated day-ahead and intraday self-schedule bidding for energy storage systems using approximate dynamic programming | adp-reinforcement-learning, uncertainty-modelling, deterministic-lp-milp | market-participation, modelling-phs-plants | medium | true |  |
