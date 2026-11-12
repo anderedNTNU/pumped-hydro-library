@@ -57,3 +57,25 @@ Our data have exactly the form these studies use: prices for a future system sim
 ## 4. Consequences for the research questions
 - RQ1–2 (adding a pump; its capacity): model year 2030 with the recipe above.
 - RQ3 (volatility and persistence): the same recipe on model years 2035, 2040 and 2050 gives chains built from the same weather with more volatile and less persistent prices (table in §1). This is easier to explain than editing the chain by hand, and both can be done. NVE's caveat that simulated price variation is lower than observed belongs in the limitations.
+
+## 5. Evaluation: new forward passes from the same chain, or other data? (added 2026-11-12, Anders' question)
+Read in `paper.txt` on 2026-11-12 unless marked "note".
+
+**New forward passes sampled from the same stochastic model (no other data):**
+- `helseth2016`: "a final forward simulation using 1000 sampled scenarios" (p. 940); the chain comes from 80 EMPS price scenarios, inflow from an AR(1) model.
+- `hjelmeland2019energies`: "the final simulation is carried out with 300 scenarios. We use the same sampled scenarios for all cases. From the final simulation, a confidence interval is computed" (p. 10).
+- `hjelmeland2019tste`: "a final simulation of 300 forward scenarios was performed to evaluate the policy by calculating a 95% confidence interval of the lower bound"; the same scenarios for all methods (p. 7).
+- `hjelmeland2016case`, `hjelmeland2016combined`: 50 sampled scenarios, then a final run of the same scenarios in a more detailed simulator model.
+- `kleiven2023`: both policies simulated on the (dependent) Markov chain (Table 4; note).
+- `dimoski2018hydropower`: results "based on the revenues obtained by 50.000 simulated paths through the lattice" (p. 11); also a backtest, below.
+- `schaffer2022stochastic` (SDP): 1000 scenarios drawn from the 10 000 that built the chain (p. 577).
+
+**Data other than the sampled paths of the chain:**
+- The weather-year scenarios the chain was built from, with their actual series: ProdRisk practice (`gjelsvik2010` pp. 44, 51–52; `helseth2020scheduling` p. 34), Bore & Brensholm 2026 (thesis p. 33), `schuller2024practical`, `gudbjerg2024exploring`.
+- Realised history: `dimoski2018hydropower` backtests the policy on "the realized weekly inflows and average area spot prices over the entire simulation horizon" (Sec. 3.8, p. 11); `helseth2024approximating` simulates the detailed system on "30 historical inflow years (1961–1990)" (p. 6); `lohndorf2019` evaluates on the historical inflow record (pp. 658–659, note).
+- A separately sampled set from the same model (SDDP without a Markov chain): `helseth2022hydropower`, "a fixed set of 4,000 out of sample inflow scenarios" (p. 7); `helseth2024approximating`, "2000 separately sampled inflow scenarios" (p. 6); `larsen2015evaluation`, strategies "simulated on a different sample than was used to solve the problem" (p. 1).
+
+**Reading.** Simulating new paths from the same chain is the common evaluation in the Markov-chain SDDP papers and is what gives the statistical bound with a confidence interval. It answers how good the policy is if the world behaves like the chain; it cannot show what is lost by reducing the data to a few states. The studies that want that use the underlying weather years or realised history. Truly unseen data (years held back from building the model) appears in none of them; the "out-of-sample" sets of Helseth 2022 and Larsen 2015 are new draws from the same fitted model.
+
+**For us:** do both, since both are cheap once the cuts exist: (a) a few hundred new forward passes from the chain, mean and confidence interval, as Hjelmeland 2019 and Helseth 2016, which is also the convergence check; (b) the 30 weather years with their actual hourly series, as Bore 2026 and ProdRisk practice, for the reported results.
+
