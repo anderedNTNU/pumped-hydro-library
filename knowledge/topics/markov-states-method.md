@@ -1,0 +1,59 @@
+# Building the weekly Markov states, and what to test the policy on: precedents we can copy
+
+Written 2026-11-12 (Claude with Anders), after Anders downloaded NVE's LA25 hourly prices and asked for a method from the hydropower literature that the group can reuse and defend. Every statement about a paper below was read in its `paper.txt` on 2026-11-12 unless marked "note". Related: `sddp-setup-vs-bore.md` (Bore's data and clustering), Q-006.
+
+## 1. The data we now have
+NVE, *Timespriser for norske prisområder fra LA25* (published 2025-06-20, from Langsiktig kraftmarkedsanalyse 2025):
+- one CSV per price area (NO1–NO5) and model year (2030, 2035, 2040, 2050); columns `aar, uke, uketime, pris`;
+- **30 weather scenarios, 1991–2020** (`aar` is the weather year), not 29; 52 weeks × 168 hours per year (an ISO model year of 8,736 hours, so every week is complete and there is no week 53);
+- price in øre/kWh, real 2023 NOK; also offered in SINTEF price-series format for parallel and serial simulation;
+- NVE's own caveats: wind, solar, inflow and temperature-dependent demand vary between weather scenarios, but gas, coal and CO2 prices are the same in all of them, and outages are not modelled, so "the price variation in the simulations often becomes lower than what we observe in the actual market".
+
+NO2, computed from the files (2026-11-12):
+| Model year | Mean price | S.d. of weekly mean prices | Mean within-week s.d. of hourly prices | Lag-1 autocorrelation of weekly mean | Hours ≤ 0.5 øre |
+|---|---|---|---|---|---|
+| 2030 | 71.3 | 23.0 | 14.8 | 0.88 | 2.9 % |
+| 2035 | 56.9 | 28.0 | 15.6 | 0.88 | 5.9 % |
+| 2040 | 56.0 | 30.0 | 16.7 | 0.86 | 7.3 % |
+| 2050 | 59.7 | 30.7 | 21.3 | 0.78 | 7.0 % |
+
+The four model years share the same 30 weather years, so they differ only in the power system. Volatility rises and persistence falls from 2030 to 2050. This is a ready-made, explainable way to vary price behaviour for RQ3 (same weather, different system), alongside or instead of perturbing the chain.
+
+The LA25 report itself is not in the library yet (added to `literature/WANTED.md`); it is needed to cite the data.
+
+## 2. What the literature does
+| Study | Data behind the states | How the states and transitions are built | What the finished policy is tested on |
+|---|---|---|---|
+| `mo2001` (the ProdRisk price model) | Price scenarios from the EMPS model, one per historical weather year, equal probability; "these scenarios also give a direct link between spot price and local inflow" (p. 1) | Per week, N price nodes; a minimum number of scenarios per node "ensures that each transition probability is based [on] a minimum number of" scenarios; transitions first by counting scenario moves, then adjusted "to maintain the conditional expected spot price"; "if the total number of scenarios equals 70, five price nodes and minimum 6 scenarios to define a node usually give a 'good' result" (pp. 3–4) | Strategy simulated two years ahead (p. 5, note) |
+| `gjelsvik2010` (and `gjelsvik1999`, note only: its text copy is empty) | S observed weather years of inflow; price scenarios from EMPS | "the price values within each week are grouped in M groups", node value = group mean, transitions from which scenarios go from group to group (p. 40–41, citing Mo et al. 2001); inflow by a normalised vector AR(1), treated as independent of price | "on the forward run we use the 'observed' inflow-price scenarios. This heuristic is intended to take care of any coupling between inflow and price"; "it is most realistic to use observed series of inflow and price, since that helps keep the correct coupling" (pp. 44, 51–52). Warns that this can open gaps between the bounds, because the fitted models are not fully consistent with the observed scenarios |
+| `helseth2020scheduling` (SINTEF report on ProdRisk) | Price forecast from EMPS; historical weather years | Price as a discrete Markov chain built from the price forecast (Mo et al. 2001); VAR(1) inflow | "In the SDP/SDDP forward pass ProdRisk uses the historical price and inflow scenarios directly. This preserves the correlation between inflows and market prices" (p. 34) |
+| `helseth2016` | 80 price scenarios from EMPS run on 80 historical inflow years | Scenarios sorted per stage into clusters, average cluster prices, 9 nodes; transitions by counting; "we slightly adjusted transition probabilities to ensure that the transition probability matrix was ergodic" (pp. 937, 940) | "a final forward simulation using 1000 sampled scenarios" from the same model (p. 940) |
+| `schaffer2022stochastic` (followed by `alic2023optimal`) | Historical or forecast inflow and price | Fit an autoregressive model with serial correlation in inflow and cross-correlation between inflow and price; sample 10 000 scenarios; K-means per week, "each node represents one inflow value and one price value"; transitions = "share of scenarios transitioning between the different nodes from one week to the next" (p. 575) | "1000 scenarios, randomly selected from the originally sampled scenarios" (p. 577) |
+| Bore & Brensholm 2026 (thesis; paper `bore2026assessing`) | 44 weather years: DA prices from a fundamental model for the 2030 system, NO2 inflow for the same years scaled to the plant | Per week, joint K-means of price and inflow into 3 clusters; the median series of each cluster is the input; transitions from observed transition frequencies (thesis pp. 28–29; paper p. 3) | The historical inflow trajectories with their DA price simulations, week by week with the cuts, no Markov chain (thesis p. 33) |
+| `schuller2024practical`, `gudbjerg2024exploring`, `hagenvik2022comprehensive` (ProdRisk + SHOP simulators) | 30 historical weather scenarios with a price prognosis for a future system built on the same weather scenarios (Schüller: 1986–2015, 2035 system, p. 4) | ProdRisk's price model (as Mo 2001) | The same 30 weather scenarios, simulated week by week (Schüller: 52 × 30 = 1,560 runs) |
+| `kleiven2023` | Futures and local inflow | Parametric joint price–inflow model discretised to a lattice | Simulation on the chain itself (in-sample, note) |
+
+**What they share.** One scenario per weather year with equal probability; states per week from grouping or clustering those scenarios; transition probabilities by counting which scenarios move between which states; and the finished policy simulated on scenarios, either the weather-year scenarios themselves (ProdRisk practice, Bore, the simulator studies) or scenarios sampled from the fitted model (Helseth 2016, Schäffer 2022). **None of them holds back weather years for testing.**
+
+## 3. The recipe proposed for us (to copy: Bore & Brensholm 2026, on the foundations of Mo et al. 2001 and Gjelsvik et al. 2010)
+Our data have exactly the form these studies use: prices for a future system simulated over historical weather years, and inflow for the same years.
+
+1. **Scenarios.** Each weather year 1991–2020 is one scenario: the hourly NO2 price of the chosen model year and the plant's inflow in that weather year. Equal probability (Mo 2001, p. 1). Pairing by weather year keeps the price–inflow coupling (Mo 2001; Gjelsvik 2010, pp. 51–52).
+2. **States per week.** For each week, describe each year by its weekly mean price and weekly inflow, and cluster the 30 points into three clusters with K-means (Bore 2026: joint clustering, K = 3; Schäffer 2022: each node one inflow and one price value). Three states keep about ten years per state, in line with Mo's rule that each transition probability must rest on a minimum number of scenarios (6 per node with 70 scenarios and 5 nodes); five states would leave about six years per state and too few per transition.
+3. **What a state contains.** The hourly price series and inflow of the cluster's median year (Bore 2026), so that the within-week price pattern comes from a simulated week and not from an average. Alternative with precedent: cluster mean of the weekly price with a fixed within-week profile (`helseth2015cooptimizing`, `alic2023optimal`).
+4. **Transitions.** Probability of going from state i in week t to state j in week t+1 = the share of the years in state i that are in state j the week after (Mo 2001 eq. 1; Gjelsvik 2010; Helseth 2016; Schäffer 2022; Bore 2026). Report the matrices. If a state becomes absorbing or unreachable, adjust minimally and say so, as Helseth 2016 did for ergodicity.
+5. **Training.** SDDP samples its forward paths from this chain (Bore 2026; `helseth2016` re-samples scenarios in every iteration). Then the bounds refer to one consistent model; Gjelsvik 2010 (p. 44) notes that using observed scenarios in the forward pass instead can open a gap between the bounds.
+6. **Testing.** After convergence, simulate the policy week by week on each of the 30 weather-year scenarios with their own hourly prices and inflow; in each week use the cuts of the state that year belongs to. Report the mean and the spread over the 30 years. This is what ProdRisk does (`helseth2020scheduling` p. 34), what Gjelsvik 2010 argues for, what Bore 2026 does (thesis p. 33), and what the simulator studies do with 30 weather scenarios (`schuller2024practical` p. 4).
+7. **What to say about the test.** The test years are the years the chain was built from; the policy has only seen three representative weeks per week, not the 30 actual ones. So it tests how much is lost by the three-state approximation, not performance on unseen weather. The literature above tests the same way. A separate convergence figure comes from simulating on the chain itself (Helseth 2016, Kleiven 2023).
+
+### Choices the precedents leave open (must be stated in ch. 6 or 8)
+- **Scaling before clustering.** Price and inflow have different units; Bore does not say what was done. Normalising each by its weekly mean and standard deviation follows the inflow normalisation of Gjelsvik 2010 (p. 36–37) and is the natural choice; state it.
+- **Year boundary.** For a horizon longer than a year, the transition from week 52 to week 1 can use consecutive weather years (Mo 2001 uses overlapping sequences 1931–33, 1932–34, …; NVE supplies a serial-simulation format).
+- **Hold-out years.** No study in the library holds years back. A leave-some-years-out run can be added as a robustness check, but it has no precedent to cite.
+
+### The alternative if 30 years prove too few
+`schaffer2022stochastic` (p. 575), followed by `alic2023optimal`: fit an autoregressive model to the weekly series (serial correlation in inflow, cross-correlation with price), sample 10 000 scenarios, K-means into about five nodes, count transitions, and simulate 1000 of the sampled scenarios. It gives smoother transition matrices, but it adds a statistical model to defend, works on weekly averages (so the hourly pattern needs a separate rule), and tests on synthetic years.
+
+## 4. Consequences for the research questions
+- RQ1–2 (adding a pump; its capacity): model year 2030 with the recipe above.
+- RQ3 (volatility and persistence): the same recipe on model years 2035, 2040 and 2050 gives chains built from the same weather with more volatile and less persistent prices (table in §1). This is easier to explain than editing the chain by hand, and both can be done. NVE's caveat that simulated price variation is lower than observed belongs in the limitations.

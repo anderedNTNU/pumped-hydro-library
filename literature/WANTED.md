@@ -54,3 +54,4 @@ These are precedents for our weekly LP. None found so far combines an LP, pumped
 | Paper | Why | Status |
 |---|---|---|
 | McDermott (2020), cited in the 5.2 draft for Norwegian producers restricting production when their market position strengthens | Empirical support for price-making behaviour in Norway | Not in the library or in references.bib; the claim is **(unverified)** until the paper is filed |
+| NVE (2025), *Langsiktig kraftmarkedsanalyse 2025* (LA25), and the data set *Timespriser for norske prisområder fra LA25* (published 2025-06-20) | Source of the simulated hourly prices (30 weather years, model years 2030–2050) proposed for the Markov states; needed in Zotero to cite the data | [NVE](https://www.nve.no/energi/analyser-og-statistikk/langsiktig-kraftmarkedsanalyse/langsiktig-kraftmarkedsanalyse-2025/) |
