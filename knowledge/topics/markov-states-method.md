@@ -147,3 +147,10 @@ Read in `paper.txt` on 2026-11-13 (Sec. 3 pp. 12–13, Sec. 5.3, App. F with Alg
 
 **Not stated anywhere:** number of forward paths per iteration, number of iterations, package settings.
 
+### Kleiven 2023: is "one cut per Markov state per week" said in the paper? (added 2026-11-13, third check)
+- **No sentence says it.** Searched the text for per-node, per-state, per-cluster and conditional wording: nothing.
+- **The model definition implies it.** Eqs. (2)–(3), p. 10–11: the value function is V_t(s_{t−1}, ω_t) and the continuation function is Θ_{t+1}(s_t, ω_t), the expectation of V_{t+1} given ω_t. The function that the cuts approximate therefore has the current price–inflow state as an argument, so it is a different function for each of the five states.
+- **The cut formula drops the index.** Eq. (12) writes θ_t ≤ α_t^k + β_t^k s_t with week and iteration only, and eqs. (13)–(14) write a plain expectation.
+- **The software does it** (see above).
+- **How to cite:** Kleiven for the state-dependent continuation function (eq. 3); `philpott2012` p. 7 for the explicit statement that a set of cuts is recorded for each state of the Markov chain.
+
