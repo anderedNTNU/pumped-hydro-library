@@ -134,3 +134,16 @@ Read in `paper.txt` on 2026-11-13 (Sec. 3 pp. 12–13, Sec. 5.3, App. F with Alg
 - **How many cuts per iteration:** the package's training option `refine_at_similar_nodes` (on by default) adds the cut found at one node to the other nodes with the same children, each with its own transition probabilities. With the default, every state of a week on the sampled path gets a cut in each iteration, which is what our Algorithm 1 does ("one cut for every state m"). The paper does not say which settings were used.
 - **For ch. 6:** cite `philpott2012` and `dowson2020` for cuts per Markov state; `kleiven2023` supports the use of a joint price–inflow chain with this method, not the cut indexing itself.
 
+### Kleiven 2023 vs ours, sorted by how certain it is (added 2026-11-13, re-read for Anders)
+**Stated in the paper in words (certain):**
+1. A fixed number of price–inflow states per week: five nodes, 104 weekly stages (App. F).
+2. Forward pass: start in week 1 from a given reservoir state, sample the uncertainty, solve the week, save the resulting reservoir state, continue to the last week; the pass ends with a list of reservoir states, one per week (p. 13).
+3. Backward pass: from the second-to-last week backwards through that list; with the saved state fixed, the next week is solved for all its outcomes, and the values and gradients are averaged into a cut that is used in the next forward pass (p. 13, eqs. 13–14).
+4. The chain's transition probabilities are counted from scenarios moving between clusters (App. F, Algorithm 1), and the method is run with the SDDP package for Julia (Sec. 5.3).
+
+**Follows from the package, not written in the paper:**
+- The forward pass draws the next state with the chain's transition probabilities (the package's default forward sampling uses the probabilities of the graph as defined; SDDP.jl API reference, `InSampleMonteCarlo`, read 2026-11-13).
+- Cuts are kept per week and state, and by default added to all states of a visited week (see above).
+
+**Not stated anywhere:** number of forward paths per iteration, number of iterations, package settings.
+
