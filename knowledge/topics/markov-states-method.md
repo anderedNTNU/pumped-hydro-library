@@ -154,3 +154,17 @@ Read in `paper.txt` on 2026-11-13 (Sec. 3 pp. 12–13, Sec. 5.3, App. F with Alg
 - **The software does it** (see above).
 - **How to cite:** Kleiven for the state-dependent continuation function (eq. 3); `philpott2012` p. 7 for the explicit statement that a set of cuts is recorded for each state of the Markov chain.
 
+## 9. Cuts per Markov state: who states it, and who adds a cut to every state in each iteration (added 2026-11-13)
+Read in `paper.txt` on 2026-11-13. Dowson pages are the pages printed in the file's running header.
+
+| Source | A separate cut set for each Markov state of a week? | Which states get a new cut in one backward step? |
+|---|---|---|
+| `dowson2020` | **Yes, explicit.** The nodes within a stage are "the Markov states of the stage" (p. 10); every node has its own subproblem and cut approximation (p. 17); Algorithm 4 adds the cut to the subproblem of node i (p. 20) | **Only the visited one.** The backward pass refines "by adding a new cut to each of the subproblems visited in the forward pass" (p. 17); nodes can therefore hold different numbers of cuts, and the algorithm has no cut sharing (p. 19) |
+| `gjelsvik2010` | **Yes.** At each discrete price point there is a set of cuts (p. 42) | **All of them.** For each trajectory point the next week is solved for every price point, and a new hyperplane is added at each price point of the previous week using the transition probabilities (backward recursion, p. 44) |
+| `philpott2012` | **Yes.** A set of cuts is recorded for each state in the Markov chain (p. 7) | not checked |
+| `kleiven2023` | implied by eq. (3) and the software, not stated | not stated |
+| Bore & Brensholm 2026 | **No.** One cut per week for all states | one averaged cut |
+| Ours, ch. 6 Algorithm 1 | Yes | All of them, as Gjelsvik |
+
+**For ch. 6:** our backward pass (solve next week once for all states, then add one cut to every state of the current week) is the scheme of `gjelsvik2010` p. 44. `dowson2020` is the source for treating each Markov state of a week as a node with its own cuts, but its published algorithm adds a cut only at the visited node. The SDDP.jl option that adds the cut to similar nodes is in the software documentation, not in the paper.
+
