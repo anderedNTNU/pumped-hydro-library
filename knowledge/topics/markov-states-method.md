@@ -88,3 +88,23 @@ Not identical; the same mechanism applied to different parts of the uncertainty.
 - **Correction:** on 2026-11-12 Claude first told Anders the two names denote the same structure; that was too strong and is replaced by the above.
 
 - **Correction 2026-11-13 on Bore 2026:** Bore's chain is joint price–inflow as ours, but Algorithm 1 adds a single cut per week, weighted over all pairs of current and next state by P[curr, next]·π_curr, and adds it to the models of every state. The value of stored water is therefore the same in all states of a week; the chain drives the sampling but not the cuts. Bore is thus not MC-SDDP in the sense of Löhndorf and Shapiro or Philpott and de Matos, who keep a cut set per state. See `sddp-setup-vs-bore.md`.
+
+## 7. Who else has price and inflow in the Markov chain? (added 2026-11-13, Anders' question)
+Read in `paper.txt` on 2026-11-13 unless marked "note".
+
+| Study | What is in the chain | States per stage | Solution method | Value function per state? |
+|---|---|---|---|---|
+| `kleiven2023` | price and inflow as pairs: "a Markov chain with five price and inflow pair nodes" (App. F) | 5 | SDDP on the chain | yes |
+| `dimoski2018hydropower` | "all nodes of the price and inflow lattice", state S = {P, Y} | 100 | ADDP of Löhndorf et al. (2013), in QUASAR | yes |
+| `grini2023` | each state "a combination of price and inflow" (p. 18, note) | 125 | SDDP | yes |
+| `lohndorf2013` | weather, inflow and gas price in the chain; hourly prices follow from the state by regression | 30 × gas-price lattice | ADDP | yes |
+| `schaffer2022stochastic` | "each node represents one inflow value and one price value" (p. 575) | not fixed in the method; K-means | SDP (reservoir on a grid) | yes, a table per node |
+| `alic2023optimal` | joint inflow and price, following Schäffer | 5 | SDP | yes |
+| `helseth2017iet` | "uncertainties in inflow and both energy and reserve capacity prices are considered through a discrete Markov chain" (abstract) | 5 inflow × 15 price | SDP | yes |
+| `perezdiaz2020medium` | three separate chains: inflow, energy price, reserve curve | 5 inflow states | SDP | yes |
+| Bore & Brensholm 2026 | joint DA price and inflow | 3 | SDDP | no, one cut per week (see `sddp-setup-vs-bore.md`) |
+
+Not in this group: `helseth2016`, `gjelsvik2010`, `mo2001` and ProdRisk (price only in the chain, inflow as a time series); `hjelmeland2019energies` (both as a VAR(1) time series); `lohndorf2019` and `philpott2012` (inflow only).
+
+**Closest to our algorithm** (joint price–inflow chain, SDDP, value function per node): `kleiven2023`, then `dimoski2018hydropower`, `grini2023` and `lohndorf2013`. All four come from the same NTNU and Löhndorf line of work and build the chain by fitting a continuous model and discretising it, not by clustering weather years.
+
