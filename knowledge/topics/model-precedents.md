@@ -95,3 +95,30 @@ Where ours is simpler than the two closest studies: one constant conversion fact
 8. **Weekly cyclic benchmark.** Forces each week to end where it started, so the difference to the SDDP policy is the value of moving water between weeks. It isolates what the long-duration storage adds, which is why it is useful, but no paper has it; it needs one explaining sentence, not a citation.
 9. **Interaction contrast between two parameters.** Written for the earlier research questions (pump, turbine and reservoir jointly). After D-003 only the pump is varied, so it is needed only if pump size is crossed with the price model year; otherwise it can go.
 
+## 7. Linear constraints other models use that ours lacks (added 2026-11-13, Anders' question)
+"Unproblematic" here means: linear, no new state variable between weeks, and the weekly problem stays feasible for every incoming volume (or a penalised slack makes it so). Sources read in `paper.txt` on 2026-11-13 unless marked "note".
+
+### A. Can be added without changing the method
+| Constraint | Source | What it fixes | What it needs |
+|---|---|---|---|
+| Running rule for reserves: reserve from a unit ≤ its output divided by β, β = max(P^min/R^max, 1) | `helseth2016` eqs. (6), (13), p. 938–939 | reserves sold from idle units (own item 3 in §6) | a minimum power per unit; applying it to the pump is our extension |
+| Piecewise-linear discharge curve with falling efficiency per segment for the turbine; concave piecewise-linear curve for the pump | `helseth2016` eq. (4); Bore eq. (8); `alic2023optimal` eqs. (4)–(6), (15) (note) | the single constant conversion factor | efficiency data per segment; the water margin (`eq:energy_up`) must then use the lowest efficiency, as Helseth (8) does |
+| Small penalty on spillage | `alic2023optimal` (penalty cost for spillage in the objective) | arbitrary pumping and spilling when the price is zero. The NVE NO2 series have no negative prices but 173–421 hours at exactly zero in model years 2035–2050 (none in 2030) | one parameter |
+| Linearised start-up cost with a continuous operating state between 0 and 1, for generator and pump | `helseth2013` Sec. 2.4 ("a linearised representation of start-up costs for generating units and pumps") | free switching between pumping, generating and standstill from hour to hour | a start-up cost per unit; the relaxation understates the cost |
+| Week-dependent reservoir limits, and a minimum release, each with a penalised slack | `helseth2022hydropower` (time-dependent auxiliary lower volume bound); `ak2019quantifying` (minimum release as environmental flow); `alic2023optimal` (minimum flow with a slack variable) | seasonal filling rules and environmental flow | only relevant if the case plant has such rules; the slack keeps the problem feasible, as artificial water does in Helseth (2)–(3) and Bore (1), (5) |
+| Grid connection limit on net delivery | `naval2025optimization` (grid connection capacity) | export above the connection | only if relevant for the plant |
+| Expected activation of reserves in the water balance, as a fixed share of the capacity sold | `chazarra2018` (percentage of real-time use of the reserves) | "activation is not simulated" | activation shares and activation prices; moves the model beyond capacity-only |
+
+### B. Linear, but with a cost
+| Constraint | Source | Why not unproblematic |
+|---|---|---|
+| Hard minimum output C^min ≤ p | Bore eq. (7) | the unit can never stop; wrong for a plant that pumps |
+| Balance and limits for the lower reservoir | Alic, Schindler, Löhndorf 2013, Gudbjerg | a second state variable, so every cut gets two slopes and training takes longer |
+| Ramp limits on power between hours | `zhang2026unlocking` eqs. (15)–(17); `finnah2022integrated` | hydro units ramp in minutes, so an hourly limit rarely binds |
+| Pumped volume falling linearly with the pumping head | `hagenvik2022comprehensive` p. 5 (the medium-term model) | linear in the volume, but the model must then be written in water flow, not power |
+
+### C. Not linear, leave out
+State-dependent environmental rules (`alic2023optimal`, `helseth2022hydropower`), on/off binaries, minimum up and down times, head-dependent efficiency.
+
+**Suggested order:** the running rule and the spill penalty first (both one line each and they remove known artefacts); the discharge curve and start-up cost if plant data exist; the rest only if the case plant calls for them.
+
