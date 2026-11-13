@@ -34,3 +34,21 @@ Source: the master thesis text, ch. 5.1–5.2 (pp. 28–29), 5.4 (p. 33), 8.1–
 - **Simulation (p. 33):** the 44 historical trajectories are run week by week with the cuts, no Markov chain, a new random seed for the capacity-price assignment, and s_end = S0; so training and evaluation use different draws of the capacity prices but the same 44 weather years.
 - **What this means for us:** they have 44 observations per week for 3 states; our data set and number of states should be stated the same way (years of data, states per week, representative series = median or centroid, how capacity prices enter). The price data are proprietary (THEMA), which matters for what we can reuse.
 
+## The two algorithms side by side (added 2026-11-13, Anders' question; within-week model left out)
+Bore: thesis Algorithm 1 and text pp. 30–32, cut eq. (12); paper Algorithm 1 p. 3. Ours: ch. 6 Algorithm 1 (thesis commit b767ad1).
+
+| | Bore & Brensholm 2026 | Ours (ch. 6) |
+|---|---|---|
+| Continuous state carried between weeks | reservoir storage | reservoir volume |
+| Discrete state | DA price–inflow regime, 3 per week; it is sampled and it selects the week's data, but it is **not** an index of the cuts | Markov state m, observed at the start of the week; cuts are indexed by week **and** state. Number of states not fixed in ch. 6 (three proposed under Q-006) |
+| Capacity prices | one of three levels per week, drawn uniformly **before** training and then fixed | deterministic, the same in all states |
+| Forward pass | one path per iteration (L = 1); first regime sampled; each week solved with the cuts so far; next regime drawn from the transition row; last week forced to end at the start volume | K paths per iteration; first state given; next state drawn from the transition row; no end-volume constraint |
+| Backward pass, at each visited volume | next week's model solved for the three regimes; value and dual weighted by P[curr, next]·π_curr over **all pairs** of current and next regime; **one cut** per week, "added to all state models" (thesis p. 32; paper: "aggregating … into a single cut added to the stage") | next week's model solved for every state m'; then, for **each** current state m, value and dual weighted by that state's own transition row; **one cut per current state** |
+| Cuts added per week and iteration | 1 (2,550 = 51 weeks × 50 iterations) | K × number of states |
+| What the future value depends on | end-of-week volume only | end-of-week volume and the current state |
+| End of horizon | end volume = start volume in the last week; no value on remaining water | extra weeks with zero terminal value after them |
+| Convergence | thesis: fixed 50 iterations, no bounds; paper: stop when the mean lower bound stabilises | upper bound from the first week, lower bound from the forward paths with a confidence interval, stop when the upper bound is inside it (Helseth 2016) |
+| Discounting | none | weekly factor β |
+
+**Consequence.** Summed over the current regimes, P[curr, next]·π_curr is the unconditional probability of next week's regime. Bore's cut is therefore the expectation under next week's marginal distribution, whatever regime the current week is in. The persistence of the chain affects which volumes are visited, but not the water value used in a given week. In ours the water value differs between a dry, expensive week and a wet, cheap one, because each has its own cuts. This is what the third research question (persistence of prices) needs, and it is the part of our algorithm that follows `philpott2012` and `gjelsvik2010` rather than Bore.
+
