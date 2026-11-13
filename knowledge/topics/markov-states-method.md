@@ -108,3 +108,23 @@ Not in this group: `helseth2016`, `gjelsvik2010`, `mo2001` and ProdRisk (price o
 
 **Closest to our algorithm** (joint price–inflow chain, SDDP, value function per node): `kleiven2023`, then `dimoski2018hydropower`, `grini2023` and `lohndorf2013`. All four come from the same NTNU and Löhndorf line of work and build the chain by fitting a continuous model and discretising it, not by clustering weather years.
 
+## 8. Kleiven et al. (2023): the same algorithm as ours? (added 2026-11-13, Anders' question)
+Read in `paper.txt` on 2026-11-13 (Sec. 3 pp. 12–13, Sec. 5.3, App. F with Algorithm 1).
+
+**The algorithm is the same scheme as in our ch. 6.**
+- States: the water in the reservoir (endogenous) and a price–inflow pair (exogenous). "We use a Markov chain with five price and inflow pair nodes"; 104 weekly stages (App. F).
+- They name the method: "We implement the Markov chain SDDP in Julia using the SDDP package [Dowson and Kapelevich] and the Gurobi solver" (Sec. 5.3), and choose MC-SDDP over TS-SDDP because price times a decision in the objective would break concavity (p. 12–13, citing Löhndorf and Shapiro).
+- Forward pass: starts from a given initial state, samples the uncertainty stage by stage, solves each stage problem and stores the reservoir state (p. 13).
+- Backward pass: from T−1 backwards; at each stored state the next stage is solved "for all ω_{t+1}", and the values and subgradients are averaged into one cut, eqs. (13)–(14); "we use average cuts".
+- Stopping: when new cuts no longer reduce the upper bound, at an iteration limit, or by a statistical bounds criterion (p. 13). The numbers of iterations and forward paths are not stated.
+- Results from simulating 1000 scenarios on the chain; 2 % annual discount rate; two years solved and the end of the horizon read with caution (Sec. 5.3).
+- The paper does not write out that each Markov node has its own cuts. That follows from MC-SDDP as defined by Löhndorf and Shapiro and from the Markovian policy graph of the SDDP package (`dowson2020`), where every node has its own value function.
+
+**The chain is built differently from the recipe proposed for us (§3).**
+- Input: 50,000 weekly Monte Carlo paths from a fitted continuous price–inflow model, not weather years.
+- "A joint clustering on price and inflow pairs created a Markov chain that did not capture the variance, mean, and covariance of the underlying stochastic model. Instead, we only cluster on prices and map the corresponding inflows to each price cluster" (App. F). K-means on standardised prices; transitions by counting.
+- The inflow of a price cluster is the mean of its inflows plus a scaled sample around the mean, so that mean, variance and covariance with price are kept (Algorithm 1, lines 15–21).
+- "Simulations verify that it is representative of the continuous price and inflow processes."
+
+**For us.** The warning about joint clustering applies to our proposed recipe (joint K-means on price and inflow, as Bore): check that the three states per week reproduce the mean and variance of price and inflow and their covariance, which is the TODO already at the end of ch. 6. If they do not, Kleiven's alternative has a source: cluster on price only and attach the inflows of the years in each price cluster.
+
