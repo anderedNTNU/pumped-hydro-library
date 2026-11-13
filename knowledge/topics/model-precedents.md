@@ -122,3 +122,15 @@ State-dependent environmental rules (`alic2023optimal`, `helseth2022hydropower`)
 
 **Suggested order:** the running rule and the spill penalty first (both one line each and they remove known artefacts); the discharge curve and start-up cost if plant data exist; the rest only if the case plant calls for them.
 
+### Sources on ramping and start-up times (added 2026-11-13, Anders' question)
+Read in `paper.txt` / `source.txt` on 2026-11-13.
+| Source | What it says | Where |
+|---|---|---|
+| `blakers2021` (review, peer-reviewed) | pumped hydro goes from idle to full output in 20 s to a few minutes; hydro generators ramp to full power in minutes | Sec. 5.2, pp. 7–8 |
+| `eera_2016` (fact sheet, grey) | 50 % to full production in about 15 s; standstill to full production in under 2 min; standstill to full pumping in under 5 min, depending on the plant | p. 1 |
+| `pitorac2020technical` (peer-reviewed, Norwegian plants) | pump start-up in the Norwegian pumped-storage plants takes from 6.5 min to a few hours in the old ones and 2.3 min in recently upgraded ones; five of the seven with known times are below 10 min; most were not designed for frequent start and stop of the pump | Table 4, p. 13; p. 16 |
+| `solvang2014norwegian` (SINTEF/CEDREN report, grey) | modern pumped-storage systems can start pump or turbine operation in 30 s from standstill; ternary sets with a torque converter switch within seconds | ch. 5 |
+| `finnah2022integrated` (model assumption) | ramping time 2 min for the pump and turbine | p. 735 |
+
+Reading: generation ramps within seconds to a couple of minutes, so a ramp limit between hours does not bind at hourly resolution. Pump start-up in existing Norwegian plants is slower (minutes to a quarter of an hour, hours in old plants), still within an hour, but it supports a start-up cost for the pump and the running rule for fast reserves rather than an hourly ramp limit.
+
