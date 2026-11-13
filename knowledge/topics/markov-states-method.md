@@ -128,3 +128,9 @@ Read in `paper.txt` on 2026-11-13 (Sec. 3 pp. 12–13, Sec. 5.3, App. F with Alg
 
 **For us.** The warning about joint clustering applies to our proposed recipe (joint K-means on price and inflow, as Bore): check that the three states per week reproduce the mean and variance of price and inflow and their covariance, which is the TODO already at the end of ch. 6. If they do not, Kleiven's alternative has a source: cluster on price only and attach the inflows of the years in each price cluster.
 
+### Does Kleiven get a cut for each Markov state each week? (added 2026-11-13)
+- **In the paper:** not shown. The cut is written θ_t ≤ α_t^k + β_t^k s_t (eq. 12), with a stage index and an iteration index only, although assumption A1 treats the value function "for a fixed ω_t" (pp. 12–13).
+- **In the implementation they name:** yes. They use the SDDP package for Julia with a Markov chain (Sec. 5.3). In that package a Markovian graph has one node per pair of stage and Markov state (SDDP.jl API reference, `MarkovianGraph`, read at sddp.dev on 2026-11-13), and `dowson2020` associates a subproblem and a cost-to-go function with each node. So each of the five states of a week has its own cuts.
+- **How many cuts per iteration:** the package's training option `refine_at_similar_nodes` (on by default) adds the cut found at one node to the other nodes with the same children, each with its own transition probabilities. With the default, every state of a week on the sampled path gets a cut in each iteration, which is what our Algorithm 1 does ("one cut for every state m"). The paper does not say which settings were used.
+- **For ch. 6:** cite `philpott2012` and `dowson2020` for cuts per Markov state; `kleiven2023` supports the use of a joint price–inflow chain with this method, not the cut indexing itself.
+
