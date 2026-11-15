@@ -140,4 +140,6 @@ The full tables are in `sddp-model-comparison.md` (56 SDDP sources, eleven of th
 - **The 10 % reserve limit** of `helseth2016` is repeated in `helseth2018optimal` (p. 7), with the same reserve constraints (eqs. 10d–10f, 10l).
 - **Reserve from both directions of a storage, with an energy margin**, exists in one SDDP source, for a battery: `seifert2025` (p. 12, eq. 10b; reservation capped at half the rated power). It is the nearest SDDP precedent for our pump reserve variables, the pump term in the water margin and R^{P,max}.
 
+Which sources let the pump provide reserves, and under which machine type, is listed in `sddp-model-comparison.md` Section 9 (2026-11-15).
+
 New candidates for Section 7 (linear, used by others): a charge on electricity bought for pumping (`gjelsvik2010`, transmission charge on purchases and sales); pump capacity as a state variable chosen inside SDDP (`hole2025capacity` pp. 6–7) instead of re-solving for each capacity.

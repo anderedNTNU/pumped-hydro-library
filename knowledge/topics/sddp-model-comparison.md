@@ -229,3 +229,28 @@ Less common: a start-up cost on the pump (`chazarra2017`, `chazarra2018`, `naval
 
 - **Correction.** The single reservoir was listed as ours alone on 2026-11-13 and 2026-11-15. It is not: `abgottspon2014`, `liu2025analytical` and `papavasiliou2018application` make the same assumption for pumped storage. The rows in Sections 1, 4 and 5 and in `model-precedents.md` are corrected.
 - **For the Duge case.** The lower-reservoir limit is the one of the three that Duge actually has: pumping is not allowed when the lower reservoir is below about 650 masl (`pitorac2020technical` p. 16; `hagenvik2022comprehensive` p. 5; `schuller2024practical` p. 5). Hågenvik et al. note that the medium-term model cannot represent this rule while the short-term model can. The lower reservoir itself is large (926 Mm3, `pitorac2020technical` Table 2).
+
+## 9. Who lets the pump provide reserves (Anders' question, 2026-11-15)
+**Yes, several do, but no SDDP model of a hydropower plant does.** Read in `paper.txt` on 2026-11-15 unless marked "note".
+
+| Source | Model | How the pump (or the charging side) provides reserve | Where |
+|---|---|---|---|
+| `chazarra2018` | MILP, price-taking variable-speed pumped storage, day-ahead and secondary reserve | in pumping mode the upward reserve is the current minus the minimum consumption and the downward reserve the maximum minus the current consumption; fixed-speed units pump at a single point and give no reserve while pumping | p. 106; eqs. (30)–(37), p. 108 |
+| `chazarra2017` | MILP, pumped storage with hydraulic short-circuit | fixed-speed units "are not able to provide load-frequency control" when pumping; with pump and turbine running together (short-circuit) the plant regulates while it consumes. Ternary units raise income by 165.5 % and 141.3 % over the conventional plant in the two weeks studied (note) | pp. 345–346; p. 350 |
+| `schindler2024` | planner–trader decomposition, cascade with pumps, spot and reserve | plant level: down-reserve bids are limited by spot bids plus pumping capacity | Prop. 4, PDF p. 17 (note) |
+| `dallinger2019socioeconomic` | Austrian storage plants, spot and balancing | with pump-turbines added the operating range is about −70 % to 100 % of turbine capacity, so the plant need not generate to offer negative balancing | p. 491 |
+| `deane2013derivation` | system unit commitment with a pumped-storage plant | each unit gives up to 100 MW spinning reserve when generating and "a full 250 MW in pumping mode" | p. 2148 |
+| `drury2011value` | MILP, compressed-air storage, energy and reserves | while charging, spinning reserve up to the amount it is charging | p. 4961, Fig. 1 |
+| `byrne2016estimating`, `elgersma2026` | generic storage, linear and mixed-integer | regulation or reserve capacity limited together with charging and discharging power | notes |
+| `seifert2025` | **SDDP**, battery, FCR with day-ahead and intraday | the reserved power is held in both directions; reservation capped at half the rated power | p. 12, eq. (10b) |
+
+**Who does not.** `chazarra2016stochastic` excludes the pumped-storage units from reserve provision (p. 72, note). `abgottspon2014` and `abgottspon2015hydro` sell secondary reserve from the qualified turbines only (note). Every SDDP hydropower source with reserves has no pump (Section 2).
+
+**What decides it is the machine.**
+- Fixed-speed pump: one operating point. It can give upward reserve only by being switched off (`deane2013derivation`, `drury2011value`), and no continuous regulation (`chazarra2017` p. 345; `mercier2017` p. 2; `entsoe2019psh` slide 5).
+- Variable-speed pump: regulation between its minimum and maximum consumption (`chazarra2018` p. 106; `perezdiaz2015trends` p. 781, Fig. 5); about 70–100 % of power (`entsoe2019psh`, `eera_2016`).
+- Hydraulic short-circuit (pump and turbine together): the turbine regulates while the pump runs (`chazarra2017`; `perezdiaz2015trends` p. 776; `kong2020overview`, note).
+
+**Market rules.** `eera_2016` (citing an ENTSO-E survey of 2015; dated): only a few European systems (France, Belgium, Great Britain, Switzerland, Germany, Austria) allowed pumped storage to provide both containment and restoration reserves in pumping mode. Statnett: consumption or storage that meets the requirements can deliver aFRR, and production and consumption can bid in the mFRR capacity market (`ph24_statnett_afrr`, `ph24_statnett_mfrr`, notes).
+
+**Against our model.** Ours lets the pump give reserve in both directions from any power level, limited by R^{P,max}. That is wider than `chazarra2018`, where the range lies between a minimum and a maximum consumption and the unit must be pumping. With R^{P,max} = 0.3·P^{P,max} and the reserve taken only while pumping, ours would match the variable-speed case; for a fixed-speed pump only upward reserve by stopping is defensible, which does not serve a symmetric product such as FCR-N.
