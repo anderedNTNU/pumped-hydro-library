@@ -55,3 +55,18 @@ These are precedents for our weekly LP. None found so far combines an LP, pumped
 |---|---|---|
 | McDermott (2020), cited in the 5.2 draft for Norwegian producers restricting production when their market position strengthens | Empirical support for price-making behaviour in Norway | Not in the library or in references.bib; the claim is **(unverified)** until the paper is filed |
 | NVE (2025), *Langsiktig kraftmarkedsanalyse 2025* (LA25), and the data set *Timespriser for norske prisområder fra LA25* (published 2025-06-20) | Source of the simulated hourly prices (30 weather years, model years 2030–2050) proposed for the Markov states; needed in Zotero to cite the data | [NVE](https://www.nve.no/energi/analyser-og-statistikk/langsiktig-kraftmarkedsanalyse/langsiktig-kraftmarkedsanalyse-2025/) |
+
+## Found 2026-11-15 in the SDDP search, not filed
+| Paper | Why | Status |
+|---|---|---|
+| Espanmanesh & Tilmant (2022). *Optimizing the management of multireservoir systems under shifting flow regimes*. Water Resources Research 58(6). DOI 10.1029/2021WR030582 | SDDP with a hidden Markov model of inflow regimes; relevant to Markov states | open access, but the publisher blocked the automatic download; fetch by hand |
+| Cruz, Badaoui & Mota-Palomino (2023). *Medium-term hydrothermal scheduling of the Infiernillo reservoir using SDDP*. Energies 16(17), 6288 | one forward scenario per iteration and stabilisation as stopping rule, with a one-sided optimality gap (from the abstract) | open access (MDPI), download blocked; fetch by hand |
+| Larroyd et al. (2022). *Dealing with negative inflows in the long-term hydrothermal scheduling problem*. Energies 15(3), 1115 | penalised slack variables in SDDP | open access (MDPI), download blocked |
+| Rosemberg et al. (2022). *Assessing the cost of network simplifications in long-term hydrothermal dispatch planning models*. IEEE TSTE 13(1). arXiv 2107.09755 | a policy trained on a simplified model and evaluated on a detailed one | arXiv copy available; not filed (system model) |
+| Maceira et al. (2023). *Combining monthly wind and inflow uncertainties in the SDDP*. Energy Systems. DOI 10.1007/s12667-023-00580-5 | the official Brazilian model with wind | open access; not filed (system model) |
+| Ávila, Papavasiliou & Löhndorf (2024). *Batch learning SDDP for long-term hydrothermal planning*. IEEE TPWRS 39(1) | convergence gaps of SDDP on a large system | open copy at ORBilu; not filed |
+| Jin et al. (2025). *Using SDDP to design long-term operation policy of hydro-wind-solar energy systems considering ... end-of-year carryover storage*. Applied Energy 393, 126072 | end-of-year carryover storage in SDDP | not open access; NTNU access |
+| Steeger, Lohmann & Rebennack (2018). *Strategic bidding for a price-maker hydroelectric producer: SDDP and Lagrangian relaxation*. IISE Transactions 50(11) | price-maker owner with SDDP | not open access |
+| Li et al. (2023). *Hydropower preventive maintenance scheduling in a deregulated market*. EPSR 221, 109379 | follow-up to `helseth2018optimal` and `li2022solving` | not open access |
+| Wahid (2017). *River optimisation: short-term hydro-bidding under uncertainty*. PhD thesis (open on HAL) | the hydro-bidding example used by `downward2020stochastic`; interpolation between Markov states | open; not filed |
+| Schäffer, Korpås & Bakken (2023). *Implications of environmental constraints in hydropower scheduling for a power system with limited grid and reserve capacity*. Energy Systems. DOI 10.1007/s12667-023-00594-z | environmental constraints together with reserve requirements | open access; downloaded and dropped because it does not use SDDP |

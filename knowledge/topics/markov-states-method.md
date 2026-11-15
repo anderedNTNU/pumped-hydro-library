@@ -168,3 +168,15 @@ Read in `paper.txt` on 2026-11-13. Dowson pages are the pages printed in the fil
 
 **For ch. 6:** our backward pass (solve next week once for all states, then add one cut to every state of the current week) is the scheme of `gjelsvik2010` p. 44. `dowson2020` is the source for treating each Markov state of a week as a node with its own cuts, but its published algorithm adds a cut only at the visited node. The SDDP.jl option that adds the cut to similar nodes is in the software documentation, not in the paper.
 
+## 10. More sources on cuts per Markov state and on building the chain (added 2026-11-15)
+Read in `paper.txt` on 2026-11-15; the three papers were filed the same day.
+| Source | What it says | Where |
+|---|---|---|
+| `helseth2018optimal` | cuts are "built and stored for each price cluster"; in the backward iteration one loops through each price cluster and each state trajectory from the forward iteration; cuts are shared among system states within a week and price cluster | pp. 6–7 |
+| `garcia2025longterm` | for uncertainty in objective coefficients, SDDP is reformulated with a Markov chain: "one FCF for each possible future Markov state", each with its own variable and cuts, weighted by the transition probabilities (eqs. 6–8). The paper traces the method to Gjelsvik et al. (1999) and says it has since been "termed Markovian SDDP" (Löhndorf and Shapiro) | p. 5 |
+| `downward2020stochastic` | with a Markov chain "cuts must be added for all of the discretized Markov states"; a multi-dimensional process needs prohibitively many states | p. 2 |
+
+- **On the question whether hybrid SDP/SDDP and Markov-chain SDDP are the same (Section 6).** `garcia2025longterm` treats them as one approach under a newer name. `fullnerRebennack2025` keeps them apart. Both readings can be cited; the mechanism (a cut set per Markov state, expectation with transition probabilities) is the same in both.
+- **Form of the cuts.** Garcia et al. write the multi-cut form: one future-cost variable per future state. Our Algorithm 1 uses one expected cut per current state, as `gjelsvik1999` eq. (23) and `kleiven2023`.
+- **Building the chain from joint scenarios.** Garcia et al. estimate the chain from jointly distributed scenarios of inflow, renewable generation, bids and spot prices with an expectation-maximisation algorithm, which also assigns each scenario of each stage to a state (pp. 7–8). One more precedent for a joint chain built from scenarios (Q-006), with a different estimator than counting.
+- **A stated weakness of the approach.** `vanackooij2020conditional` p. 181: a chain must be "created" when the data are a set of scenarios, and a tree or chain built from samples is an artificial representation that may introduce modelling error; in their tree comparison the simulation is sampled on the tree, so the discretisation error stays in the reported value (p. 188). This supports testing on the weather-year scenarios as well as on the chain (Section 5).

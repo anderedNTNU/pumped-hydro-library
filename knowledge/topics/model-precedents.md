@@ -134,3 +134,10 @@ Read in `paper.txt` / `source.txt` on 2026-11-13.
 
 Reading: generation ramps within seconds to a couple of minutes, so a ramp limit between hours does not bind at hourly resolution. Pump start-up in existing Norwegian plants is slower (minutes to a quarter of an hour, hours in old plants), still within an hour, but it supports a start-up cost for the pump and the running rule for fast reserves rather than an hourly ramp limit.
 
+## 8. Update 2026-11-15: the same check restricted to SDDP sources
+The full tables are in `sddp-model-comparison.md` (56 SDDP sources, eleven of them new). Three additions to the tables above:
+- **Pumping inside SDDP has more precedents than Section 1 lists.** `helseth2013` models pumps with a minimum and maximum pumping capacity and a linearised start-up cost (Sec. 2.4, eqs. 14–19); `philpott2023using` models a seasonal pumped storage as a release arc and a pumping arc with a constant 77 % round trip (pp. 4–5); `papavasiliou2018application` has an aggregate pumped storage with both efficiencies.
+- **The 10 % reserve limit** of `helseth2016` is repeated in `helseth2018optimal` (p. 7), with the same reserve constraints (eqs. 10d–10f, 10l).
+- **Reserve from both directions of a storage, with an energy margin**, exists in one SDDP source, for a battery: `seifert2025` (p. 12, eq. 10b; reservation capped at half the rated power). It is the nearest SDDP precedent for our pump reserve variables, the pump term in the water margin and R^{P,max}.
+
+New candidates for Section 7 (linear, used by others): a charge on electricity bought for pumping (`gjelsvik2010`, transmission charge on purchases and sales); pump capacity as a state variable chosen inside SDDP (`hole2025capacity` pp. 6–7) instead of re-solving for each capacity.
