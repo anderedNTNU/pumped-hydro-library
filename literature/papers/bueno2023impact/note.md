@@ -1,6 +1,6 @@
 ---
 bibkey: bueno2023impact
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Impact of environmental constraints in hydrothermal energy planning"
 authors: "Luís Felipe Bueno, André Luiz Diniz, Rafael Durbano Lobato, Claudia Sagastizábal, Kenny Vinente"
 year: 2023

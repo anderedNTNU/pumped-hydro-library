@@ -1,6 +1,6 @@
 ---
 bibkey: garcia2025longterm
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Long-Term Hydrothermal Bid-Based Market Simulator"
 authors: "Joaquim Dias Garcia, Alexandre Street, Mario Veiga Pereira"
 year: 2025

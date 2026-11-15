@@ -1,6 +1,6 @@
 ---
 bibkey: downward2020stochastic
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Stochastic dual dynamic programming with stagewise-dependent objective uncertainty"
 authors: "Anthony Downward, Oscar Dowson, Regan Baucke"
 year: 2020

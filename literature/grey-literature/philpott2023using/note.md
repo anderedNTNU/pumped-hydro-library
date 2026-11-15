@@ -1,6 +1,6 @@
 ---
 bibkey: philpott2023using
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Using JADE to analyse pumped storage in New Zealand"
 authors: "Andy B. Philpott, Anthony Downward"
 year: 2023

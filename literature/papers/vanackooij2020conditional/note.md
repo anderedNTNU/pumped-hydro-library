@@ -1,6 +1,6 @@
 ---
 bibkey: vanackooij2020conditional
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "On conditional cuts for stochastic dual dynamic programming"
 authors: "Wim van Ackooij, Xavier Warin"
 year: 2020

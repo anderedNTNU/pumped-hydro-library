@@ -1,6 +1,6 @@
 ---
 bibkey: helseth2020nonconvex
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Nonconvex Environmental Constraints in Hydropower Scheduling"
 authors: "Arild Helseth, Birger Mo, Hans Olaf Hågenvik"
 year: 2020

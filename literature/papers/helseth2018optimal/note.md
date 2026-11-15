@@ -1,6 +1,6 @@
 ---
 bibkey: helseth2018optimal
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Optimal Hydropower Maintenance Scheduling in Liberalized Markets"
 authors: "Arild Helseth, Marte Fodstad, Birger Mo"
 year: 2018

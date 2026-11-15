@@ -1,6 +1,6 @@
 ---
 bibkey: hjelmeland2018impact
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Impact of Modelling Details on the Generation Function for a Norwegian Hydropower Producer"
 authors: "Martin N. Hjelmeland, Arild Helseth, Magnus Korpås"
 year: 2018

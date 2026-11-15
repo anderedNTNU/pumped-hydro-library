@@ -212,4 +212,4 @@ Asked for: ten more SDDP papers on hydropower or pumped hydro from after 2016. S
 - Hydropower, not peer reviewed: `philpott2023using` (technical report, the only SDDP study of a seasonal pumped storage found), `bueno2023impact` (study-group report).
 - Storage, peer reviewed: `vanackooij2020conditional` (motivated by hydro reservoirs, tested on gas storage).
 - An OpenAlex title-and-abstract search for "dual dynamic programming" together with pumped, pumping or pump, from 2017, gave 7 hits, none of them an owner's pumped-storage study.
-- All eleven keys are provisional: Zotero was not running, so they are not in `references.bib` yet.
+- All eleven are in `references.bib` since 2026-11-15 (added through Zotero with the keys pinned; thesis commit 26db8fb).

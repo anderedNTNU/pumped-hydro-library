@@ -1,6 +1,6 @@
 ---
 bibkey: li2022solving
-bibkey_provisional: true    # not in references.bib yet (Zotero was not running 2026-11-15); key follows the Better BibTeX pattern
+bibkey_provisional: false   # in references.bib since 2026-11-15 (added through Zotero, key pinned)
 title: "Solving stochastic hydro unit commitment using Benders decomposition and modified stochastic dual dynamic programming"
 authors: "Zhuangzhuang Li, Ping Yang, Yi Yang, Guanpeng Lu, Yufeng Tang"
 year: 2022
