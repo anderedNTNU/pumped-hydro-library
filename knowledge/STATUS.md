@@ -1,23 +1,25 @@
 # Project status
 
-**Last updated:** 2026-11-11 by Claude (with Anders). `/wrap-up` rewrites this file every session.
+**Last updated:** 2026-11-15 by Claude (with Anders). `/wrap-up` rewrites this file every session.
 
 ## Where we are
-- **Literature chapter (ch. 5):** three Claude drafts (v5–v7 in `drafts/`) were judged off target against Bore & Brensholm. The group's own structure (perspective, uncertainty, markets, capacities, methods, gap) stands. **5.2 Perspective** has a checked five-paragraph text in the 2026-11-10 session chat (not yet in a file or Overleaf; see `knowledge/topics/valuation-perspective.md` for every claim and page). 5.3 has a shortened draft in the same chat. Overleaf still holds ch. 4 v10 from 2026-11-09; nothing changed there today.
-- **Review-writing skill (D-002):** built, `.claude/skills/literature-review/` (SKILL.md, structure.md, paragraphs.md, language.md, topics.md, themes.md, phrasing.md, lessons.md, review-checklist.md; an independent reviewer runs before hand-over; rhythm and punctuation metrics, a calibrated flag budget and a contrast-set gap table added on 2026-11-10 after comparing with a finance-thesis skill; facts for the chapter in `knowledge/chapter5-brief.md`). Evidence in `theses/lit-review-skill/`: all 12 reviews measured and all 316 paragraphs coded (reliability: role 86–87 %, every field ≥ 81 %), held-out size test 83 %, profiler prefers Bore 2026 over our v7. Not done: the user test (rewrite one subsection of ch. 5 with the skill, Anders judges it against Bore).
-- **Model / ch. 6:** SDDP bounds and stopping rule follow helseth2016 (thesis commit 2026-11-10); unchanged today.
-- **Sources:** 131 papers, 61 grey sources, 14 theses. Added to Zotero today: bradbury2014economic, abgottspon2016multihorizon, bore2026assessing.
-
-- **Scheduling level (D-004, 2026-11-11):** our model is called a medium-term scheduling model; "long-term" only for the storage and for system models. Every operational source is placed on the hierarchy in `knowledge/topics/scheduling-hierarchy-horizons.md` (the TET4565 lecture's seasonal 3–18 months differs from the papers' medium-term 1–3 years; lecture filed as `farahmand2026hydropower`, cite it or not is Q-005). Ch. 4, 6 and 8 in Overleaf still say "long-term model".
-- **Research questions (D-003, 2026-11-11):** narrowed to adding a pump, the charging capacity of a long-duration storage, and price volatility and persistence. The brief, 5.2 and 5.3 are updated; 5.5 and the gap (5.7) must be written around the pump, and Table 3's capacity column changes.
+- **Research questions and level (D-003, D-004):** adding a pump, the charging capacity of a long-duration storage, and price volatility and persistence. The model is a medium-term scheduling model; "long-term" only for the storage and for system models.
+- **Literature chapter (ch. 5):** the group's own structure stands (perspective, uncertainty, markets, capacities, methods, gap). 5.2 has Anders' five-paragraph text with a rewritten fourth paragraph, and 5.3 has a compact draft, both in `drafts/literature-review-v8-test/`. Not written with the skill yet: 5.1, 5.4, 5.5, 5.6, 5.7. Overleaf still holds ch. 4 v10 from 2026-11-09. Evidence for the gap is in `knowledge/topics/sddp-model-comparison.md`: of 56 SDDP sources, eleven model pumping, none sells reserve capacity from the pump, and none combines pumping with joint price–inflow Markov states.
+- **Model (ch. 6):** unchanged in Overleaf since 2026-11-10. Every element is traced to sources in `knowledge/topics/model-precedents.md` and `sddp-model-comparison.md`. Ours alone: reserve from the pump with its limit, reserves from units that are not running, one reservoir, the price standard deviation as a clustering feature, held-out test paths. Four passages no longer match later decisions (Q-010).
+- **Markov states and data:** a sourced recipe exists (NVE LA25 weather years, joint K-means per week, counting, test on the chain and on the weather years; `knowledge/topics/markov-states-method.md`). Not decided (Q-006); the matching inflow series is missing.
+- **Implementation:** the configuration for the simplified Duge case is checked value by value in `knowledge/topics/implementation-parameters.md`. Three settings conflict with ch. 6: the end-volume target, the stopping rule and the pump's reserve limit (Q-007).
+- **Review-writing skill (D-002):** built and tested on 5.2 and 5.3; unchanged since 2026-11-10 (`.claude/skills/literature-review/`).
+- **Sources:** 141 papers, 64 grey sources, 14 theses. Eleven SDDP sources were added on 2026-11-15 and are in Zotero and `references.bib`.
 
 ## Next steps
-1. User test of the skill: rewrite one subsection of ch. 5 (suggest 5.3.1 or 5.2) with `/literature-review`, with no earlier draft open; Anders judges it against Bore.
-2. Fix what the test shows in the skill files, then draft ch. 5 section by section with it.
-3. Put the 5.2 text into a file (v8 of the draft) once the group decides; add Baslis 2011 and McDermott 2020 to Zotero first (Q-001, Q-002).
-4. Search strategy for 5.1 (the log in `literature/search-log.md` is empty).
-5. Full citation check of the chapter against `paper.txt` (Anders said "not yet").
+1. Group decisions that block the model text: Q-006 (data and recipe for the states), Q-007 (implementation values and the three conflicts), Q-009 (reserves from units that are not running).
+2. Get the inflow series for 1991–2020 that match the LA25 weather years.
+3. Update ch. 6 in Overleaf once 1 is settled (Q-010).
+4. Draft the remaining ch. 5 sections with the skill, starting with 5.5 (capacities) and 5.7 (gap).
+5. Zotero housekeeping: Baslis 2011, McDermott 2020, the NVE LA25 report, and the spelling of Hågenvik.
 
 ## Blockers
+- The inflow series for the LA25 weather years is not in hand (Q-006).
+- The sources of two values in the configuration are unknown: head 236.6 m and the NVE inflow figure (Q-007).
 - McDermott 2020 and two owner studies from the old text are not in the library (Q-001, Q-003).
-- Grades of the 14 reference theses still unconfirmed with the supervisor.
+- Grades of the 14 reference theses are still unconfirmed with the supervisor.

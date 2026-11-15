@@ -11,6 +11,8 @@ Conventions (IØT): indices and variables in lowercase, parameters in uppercase,
 | adding a pump | retrofitting pumping to an existing conventional reservoir plant (RQ1) | pumped-storage conversion |
 | medium-term scheduling | the level of our model: weekly stages over one year or more, water values out, hourly decisions inside the week (D-004; `helseth2016` p. 936, `gjelsvik2010` p. 35) | long-term scheduling (that is EMPS-type system models, 3–5 years), seasonal scheduling |
 | long-term | only for the storage duration (LDES, the title) and for system models; never for our model's level (D-004) | — |
+| water value | the expected marginal value of water stored at the end of a week, read as the slope of the binding cut for that week and Markov state (EUR/Mm³; per MWh by `eq:water_value_energy`); it depends on the end-of-week volume (`helseth2016` p. 941; `knowledge/topics/water-values-and-nested-benders.md`) | marginal cost of water; a single threshold price |
+| Markov-chain SDDP | our solution method: SDDP with one set of cuts per week and Markov state, where the state holds both price and inflow (`philpott2012`, `lohndorf2019`) | hybrid SDP/SDDP (the ProdRisk method, with only the price in the chain; `knowledge/topics/markov-states-method.md` §6) |
 
 ## Symbols
 | Symbol | Type | Meaning | Unit |
