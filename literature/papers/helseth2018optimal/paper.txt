@@ -1,0 +1,843 @@
+              This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+               The final version of record is available at               http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                                                                                         1
+
+   Optimal Hydropower Maintenance Scheduling in
+                     Liberalized Markets
+
+                              Arild Helseth, Member, IEEE, Marte Fodstad and Birger Mo
+
+   Abstract--Maintenance scheduling is an important and com-           kC          Capacity price scaling factor for time step k;
+plex task in hydropower systems. In a liberalized market,              hs,s
+the generation company will schedule maintenance periods to                        Energy equivalent for (station h and) discharge
+maximize the expected profit. This paper describes a method                        segment s, in MWh/Mm3;
+for hydropower maintenance scheduling suitable for a profit
+maximizing, price-taking and risk neutral hydropower producer          a(n)        Coefficient for reservoir level for node a(n), in
+selling energy and reserve capacity to separate markets. The                       e/Mm3;
+method uses Benders decomposition principle to coordinate
+the timing of power plant maintenance with the medium-term             nh,n Coefficient for reservoir level for node n,
+scheduling of the hydropower system, treating inflow to reservoirs                    (reservoir h) and iteration , in e/Mm3;
+and prices for energy and reserve capacity as stochastic variables.
+                                                                       n           Right-hand side for HPS Benders cut at node
+   The proposed method is applied in a case study for a
+Norwegian watercourse, and results, in terms of maintenance                        n and iteration , in e;
+schedules and computational performance, are presented and
+discussed.                                                                         Right-hand side for MS Benders cut for itera-
+
+   Index Terms--Hydroelectric power generation, Power gener-                       tion , in e;
+ation economics, Integer programming, Linear programming,
+Stochastic processes.                                                  nh,n,n Coefficient for maintenance for HPS Benders
+
+                                                                                   cuts at node n (reservoir h and iteration ), in
+
+                                                                                   e;
+
+                                                                       ht,t Coefficient for maintenance for MS Benders
+
+                                                                                   cuts (for reservoir h), stage t and iteration ,
+
+                                                                       QQ¯¯ DskBh  in e;
+
+               NOMENCLATURE                                                        Max. discharge for segment s, in Mm3;
+                                                                                   Max. bypass for plant h in time step k, in Mm3;
+A. Index Sets
+                                                                       K
+H              Set of hydropower reservoirs/stations;                              Last time step in week;
+
+Sh             Set of discharge segments for station h;                D           Maintenance duration, weeks;
+
+K              Set of time steps within the week;                                  Convergence tolerance, in e;
+
+T              Set of decision stages;                                 M           Optimal solution of MS problem, in e;
+
+TR             Set of stages in maintenance interval;                  Hn          Optimal solution of HPS subproblem at node
+
+N              Set of nodes in scenario tree;                                      n, in e;
+
+LM             Set of MS Benders cuts;                                 Pn          Probability of scenario tree node n;
+                                                                       Pn |n       Probability of node n conditioned on node n.
+LHn            Set of HPS Benders cuts for node n;
+
+LHp            Set of HPS Benders cuts for price cluster p;            C. Stochastic Variables
+
+Dn             Set of descendant nodes from n, including n;
+
+DnS            Set of descendant nodes from n sampled in               In          Inflow at node n, in Mm3;
+
+               backward iteration ;                                    Inh         Sum weekly inflow to reservoir h at node n,
+
+D0S            Set of nodes sampled in backward iteration ;                        in Mm3;
+
+h              Set of reservoirs upstream reservoir h.                 n           Energy price at node n, in e/MWh;
+
+                                                                       pE          Weekly average energy price for cluster p, in
+
+B. Parameters                                                                      e/MWh;
+
+T (n)          Lookup table giving time stage for node n;              pC          Weekly average reserve capacity for cluster p,
+               Lookup table giving price cluster for node n;
+P (n)          Max. capacity in station h, in MW;                                  in e/MW.
+               Max./Min. limit for reservoir h, in Mm3;
+G¯h            Max. capacity sales from station h, in MW;              D. Decision Variables
+V¯kh           Duration of time step k, in hours;
+C¯h   ,  Vkh   Relative duration of time step k, fraction;
+               Energy price scaling factor for time step k;
+                                                                                   Future expected profit for the MS problem, in
+
+k                                                                                  e;
+
+~k                                                                     n           Future expected profit for the HPS problem
+kE
+                                                                                   seen from node n, in e;
+
+                                                                       xt          Decision on maintenance in week t, binary;
+
+   The authors are affiliated with SINTEF Energy Research, Trondheim,  ekh         Generated electricity in time step k for station
+Norway (e-mail: arild.helseth@sintef.no)
+                                                                                   h, in MWh;
+   This work was funded by The Research Council of Norway Project No.
+228731/E20                                                             en          Generated electricity for node n, in MWh;
+
+         Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+         This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+         The final version of record is available at               http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                                       2
+
+ckh      Allocated capacity in time step k for station h,          computationally intractable when considering systems with
+                                                                   many reservoirs. The stochastic dual dynamic programming
+vkh      in MW;                                                    (SDDP) introduced in [5] allows solving the scheduling prob-
+vn       Volume in time step k for reservoir h, in Mm3;            lem without discretizing the state variables, and is therefore
+qkDhs    Volume in node n, in Mm3;                                 computationally tractable for systems with multiple reservoirs.
+                                                                   The SDDP algorithm can be classified as a sampling-based
+qsDn     Discharge in time step k through station h at             variant of multi-stage Benders decomposition method [6],
+qkSh     segment s, in Mm3;                                        requiring a convex problem formulation. Extensions of the
+         Discharge at segment s in node n, in Mm3;                 SDDP algorithm have been frequently reported in recent
+qnS                                                                literature, see e.g. [7]­[12].
+qkBh     Spillage in time step k from reservoir h, in
+         Mm3;                                                         Several methodological approaches have been presented
+zht,zt   Spillage in node n, in Mm3;                               to approach the general power plant preventive maintenance
+(. . .)                                                            scheduling problem, see e.g. [3], [13] for an overview. The
+         Bypass in time step k from reservoir h, in                work in [14] seems like a starting point for the use of mixed
+         Mm3;                                                      integer linear programming (MILP) for optimal maintenance
+                                                                   scheduling. In [15] the total operating costs were minimized
+         Auxiliary variable, continuous;                           over an operational planning period of several years while
+                                                                   meeting thermal unit maintenance and system constraints. The
+         End value function, in e.                                 authors used Benders decomposition, fixing the maintenance
+                                                                   schedule in an MILP master problem and obtained cuts by
+                          I. INTRODUCTION                          evaluating continuous nonlinear subproblems.
+
+A. Background and Motivation                                          Maintenance coordination schemes between the system op-
+                                                                   erator and the generation companies were proposed in [16],
+   The flexibility and controllability of hydropower play an       [17] for the purpose of maximizing producer's profits while
+important role for balancing the unpredictable generation from     achieving a sufficient level of reliability. These coordination
+intermittent generation technologies, such as wind and solar       schemes resemble maintenance scheduling in a competitive
+power, in many power systems throughout the world. Con-            market context.
+sequently, the reliability of hydropower facilities is of great
+importance for secure system operation, and these facilities          Relatively few works have addressed maintenance schedul-
+should be maintained to provide an adequate level of reliabil-     ing in hydropower-dominated systems. In [18] an integrated
+ity. Maintenance can be categorized as corrective or preventive.   approach for maintenance and refurbishment planning in hy-
+Corrective maintenance is performed after a failure, whereas       dropower systems based on SDP and heuristics was presented.
+preventive maintenance is performed at predetermined periods       In [13] a multi-stage Benders decomposition approach was
+and is intended to reduce the probability of failure, prolong the  presented to solve the power plant maintenance scheduling
+expected useful lifetime of the system components and ensure       problem considering multiple generation technologies and
+continuous operation at acceptable efficiency levels.              uncertainty in demand. However, hydropower details such as
+                                                                   hydro storages and inflow uncertainties, were not considered.
+   This work concerns the scheduling of preventive power           Optimal maintenance scheduling for thermal and hydropower
+plant maintenance in hydropower systems in a liberalized           plants under uncertainty was also discussed in [19], but the
+market context. The scheduling consists of finding the optimal     details of the mathematical model were not presented. In [20]
+timing of maintenance for a predefined set of plants. We study     the maintenance scheduling was embedded in a determinis-
+the problem from an economic perspective, assuming a prede-        tic, continuous and nonlinear hydrothermal scheduling model
+fined requirement for maintenance within the planning period.      solved by an evolutionary algorithm.
+In order to minimize the economic impact, it is important to
+carefully plan when the plants are maintained. The lost revenue       The maintenance scheduling problem has similarities to
+from taking a hydropower plant out for maintenance depends         the expansion planning problem, in the sense that discrete
+on the future market prices and inflow which are uncertain         expansion decisions are coordinated with the system opera-
+at the time of planning the maintenance. During maintenance        tion. Some approaches integrating expansion and operational
+the plants will be unavailable, possibly leading to loss of water  planning in a fundamental market modeling context using the
+or profit losses because sales of energy and reserve capacity      SDDP algorithm are presented in [21]­[23].
+has to be moved to periods with lower prices. Thus, there is
+clearly a need to integrate the maintenance scheduling with the    C. Proposed Method and Contributions
+process of finding an optimal hydropower dispatch strategy.
+                                                                      In this paper we present a method for hydropower plant
+B. Literature Review                                               maintenance scheduling (HPMS) by coordinating maintenance
+                                                                   scheduling (MS) and detailed hydropower scheduling (HPS)
+   Both hydropower scheduling [1], [2] and maintenance             by the use of Benders decomposition [24]. First, the MS
+scheduling [3] are thoroughly addressed in the literature. The     problem is solved as an MILP problem to provide a trial
+early works on scheduling of hydropower reservoirs used            maintenance schedule to be considered in the HPS. Sub-
+the principles of stochastic dynamic programming (SDP), see        sequently, the HPS problem is evaluated using multi-stage
+e.g. [4]. SDP decomposes the multi-stage planning problem
+into a sequence of single-stage subproblems that can be solved
+by backward induction. The major drawback of the SDP
+method is that the state variables (typically reservoir volumes)
+need to be discretized, so the overall problem size becomes
+
+         Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+The final version of record is available at                      http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                              3
+
+Benders decomposition, where an outer approximation of a         Fig. 1. Illustration of coordination between maintenance scheduling (MS)
+convex future expected profit function is constructed for each   and hydropower scheduling (HPS). In each iteration  trial schedules xt are
+time stage by adding Benders cuts. Two different sets of         sent from the MS to the HPS, and Benders cut coefficients t and  from
+Benders cuts are built iteratively, one to decompose the multi-  the HPS to the MS.
+stage linear HPS problem and one to coordinate the MS and
+HPS problems.                                                       Assume that the relevant uncertainties are energy prices
+                                                                 and inflow to the reservoir, and that these uncertainties are
+   The presented HPMS method constitutes a novel extension       described in a scenario tree, as illustrated Fig. 1. The scenario
+to previous works in two directions. Firstly, we extend the      tree shown in Fig. 1 comprises 4 decision stages t1-t4 and
+multi-stage Benders decomposition approach presented in [13]     15 nodes (circles) n  N . There is one root node at stage
+by allowing a detailed representation of the hydropower sys-     t1 which we index 0, and eight leaf nodes at stage t4. Except
+tem and the relevant uncertainties in the HPMS problem.          from the root node, each node n has one unique ancestor node
+Furthermore, we elaborate on how the Benders cuts used in        a(n) and a set of all descendant nodes Dn. We let the set
+the HPS should be augmented to incorporate information about     Dn also include node n itself. The decision stage of node n
+the maintenance schedule, and thus being valid cuts within the   is denoted T (n). Maintenance is allowed in TR = {t2, t3},
+decomposition algorithm. Secondly, the HPS part of the prob-     and the maintenance decision is made in the root node. All
+lem is extended using a combined SDP and SDDP algorithm          nodes involve decisions on how to operate the hydropower
+and treating inflow to reservoirs and prices for energy and      plant, as described in Section II-A. Note that we do not pose
+reserve capacity as stochastic variables. The resulting model    strict requirements to the construction of the scenario tree here.
+is suitable for HPMS in large and complex watercourses.          The decomposition principle outlined in this Section will be
+                                                                 embedded in a hybrid SDP/SDDP approach in Section III, and
+D. Paper Structure                                               the use of sampling within this approach is briefly discussed
+                                                                 in Sections III and IV.
+   The paper is outlined as follows. In Section II the basic
+principles of the HPMS scheduling method are described,          A. Problem Formulation
+using multi-stage Benders decomposition to solve the HPS
+problem. Subsequently, a more detailed mathematical descrip-        The HPMS problem can be formulated as a multi-stage
+tion of the HPS problem and the combined SDP and SDDP            stochastic MILP problem on extensive form as in (1). The
+solution strategy is provided in Section III. The proposed       objective in (1a) is to maximize the expected revenue from
+method in Section III is applied in a case study in Section IV   energy sales. For each node, the water balance for the hydro
+where the optimal power plant maintenance schedule for           reservoir is formulated in (1b) and the hydropower generation
+a Norwegian watercourse is found. Finally, conclusions are       in (1c). In the case of the root node va(n) equals the initial
+drawn in Section V.                                              reservoir volume. Water discharge through the plant is mod-
+                                                                 eled using one variable qsDn per discharge segment s  S.
+                 II. DECOMPOSITION PRINCIPLE                     These segments will be used in decreasing order according to
+                                                                 their energy equivalent s, provided that s decreases with s.
+   The basics of the HPMS method are explained in the follow-
+ing, emphasizing on the decomposition principle. Consider a         The maintenance schedule is represented by binary variables
+producer operating a single hydropower plant with an upstream    xt, indicating whether the plant is being maintained (xt=1) or
+reservoir, aiming to schedule maintenance for the plant within   not (xt=0) in decision stage t. We require that maintenance
+the period t  TR. The maintenance scheduling is coordinated      should be carried out once over a period of D decision stages
+with the scheduling of hydropower within the operational         in (1d), and that these stages should be consecutive in (1e).
+planning period t  T , where TR  T . The objective of
+the HPMS is to find the economically optimal maintenance
+schedule while maximizing the expected profit from sales
+to the energy market. Note that we keep the HPS model
+formulation simplified in this section to emphasize on the
+decomposition principle. A more realistic HPS model, suitable
+for multiple reservoirs and sales of both energy and reserve
+capacity, will be introduced in Section III. It is assumed that
+the hydropower producer is a risk neutral price-taker. This is
+normally considered a valid assumption in mature liberalized
+markets such as the Nordic, where risk management utilizing
+financial instruments is typically done separately from the
+hydropower scheduling. The need for maintenance is treated as
+a predefined requirement. Moreover, we assume that the cost
+of maintenance is independent of the time of year, and can
+thus be disregarded in the scheduling since the contribution is
+constant.
+
+Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+    This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+                              The final version of record is available at  http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                                                                                             4
+
+The boundary conditions xt = 0; t  0, t > |TR| must
+be specified to ensure consecutive maintenance periods. The
+formulation in (1e) is identical to that in [16] (Eq. 5) and
+[17] (Eq. 6), but could be formulated differently to serve
+the same purpose, see e.g. [13]. One could further constrain
+the maintenance schedule to reflect technical and legislative
+constraints that represents the problem at hand, as discussed
+e.g. in [13], [16].
+
+   Moreover, one could also allow maintenance on the reser-
+voir, e.g. by forcing the reservoir level below a certain limit
+for a given period of time. However, such extensions are
+considered out of scope for this presentation. Note that the
+maintenance schedule xt take one common value for all nodes
+in decision stage t, implying that the decision is taken at the
+root node in stage t1. If maintenance is chosen, discharge
+through the plant is prohibited in (1f).
+
+    max Pnnen                 (1a)
+
+nN
+
+vn + qsDn + qnS - va(n) = In  n  N (1b)
+
+         sS
+
+en - sqsDn = 0                n  N (1c)
+
+         sS
+
+      xt = D                                          (1d)
+
+tTR                                     t  TR (1e)
+                              s  S, n  N (1f)
+xt - xt-1  xt+D-1
+0  qsDn  (1 - xT (n))Q¯Ds               n  N (1g)
+0  vn  V¯                               n  N (1h)
+en, qnS  R+                             t  TR (1i) Fig. 2. Flow chart of the decomposition approach to solve the HPMS problem.
+xt  {0, 1}
+
+B. Problem Decomposition                                                   that are added iteratively. We refer to the cuts in (2d) as MS
+                                                                           Benders cuts. The cut coefficients t and  are obtained by
+   Although the problem in (1) can be solved directly, practical           evaluating the HPS problem, as indicated in Fig. 1, and further
+HPS methods often rely on decomposition approaches to effi-                described in Section II-B2.
+ciently deal with large scenario trees [25]. We now decompose
+the HPMS problem in (1) in an MS problem representing the                  M = max                                                                                (2a)
+root node binary decisions and an HPS problem representing                                                                                                        (2b)
+the continuous variables at all nodes. We apply Benders                          xt = D
+decomposition principle to coordinate the solution of the MS                                                             t  TR                                    (2c)
+and HPS problems, as illustrated in Fig. 1. Being an LP                    tTR
+problem, the HPS problem itself can be decomposed by node,
+and efficiently solved by Benders decomposition, as described              xt - xt-1  xt+D-1
+in [25]­[27].
+                                                                           -  txt                                          LM                                     (2d)
+   The MS and HPS problems are coordinated iteratively
+through forward and backward iterations to arrive at an optimal                    tTR                                   t  TR                                    (2e)
+solution for the HPMS problem, as described in the following,
+and illustrated in Fig. 2. Note that we have included the                    R+, xt  {0, 1}
+iteration counter  in Fig. 2, but we generally omit this counter
+in the text for notational convenience.                                       From the solution of the MS problem we obtain a trial
+                                                                           maintenance schedule xt and the upper bound . The
+   1) Forward Iteration: In a forward iteration, the relaxed
+MILP MS problem in (2) is solved first, indicated by box                   forward iteration is continued by a forward pass visiting
+1 in Fig. 2. The future expected profit from operating the
+hydropower system in the period of analyses T is represented               all nodes n  N in the HPS problem, indicated by box 2
+by  in (2a).  is constrained by a set of Benders cuts in (2d)              in Fig. 2. The trial schedule xT (n) enters the nodal HPS
+                                                                           subproblems as a parameter. An HPS subproblem at a node
+                                                                           n receiving a schedule xT (n) is formulated as:
+
+    Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+                         The final version of record is available at  http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                              5
+
+                                                                                -        Pn |nn xT (n ) - xT (n )  Hn , (4)
+
+                                                                                   n Dn
+
+Hn = max nen + n                                (3a)                  where va(n) and xT (n ), n  Dn are state variables and
+                                                                      the corresponding starred variables are the values set in the
+
+vn + qsDn + qnS = va(n) + In  a(n)              (3b)                  forward iteration. After reordering the contribution can be
+
+         sS                                                           formulated as:
+
+en - sqsDn = 0                                  (3c)
+
+sS                                                                    a(n) - a(n)va(n) -           Pn |nn xT (n )  a(n) (5)
+
+zT (n) = xT (n)  n                              (3d)                                      n Dn
+
+0  qsDn  (1 - zT (n))Q¯sD, s  S                 (3e)                  where a(n) = Hn , - a(n)va(n) - n Dn Pn |nn xT (n ).
+                                                                      The proposed maintenance schedule in the current iteration
+n - nvn
+
+ n +                     Pn |nn xT (n ),   LnH  (3f)                  enters the right-hand side a(n). The HPS Benders cut in
+                                                                      (3f) are constructed by averaging the contributions of type (5)
+           n Dn\n
+                                                                      for all immediate descendant (or children) nodes. When used
+n, en, qnS , zT (n)  R+                         (3g)                  later, the values xT (n ), n  Dn are known and the term
+
+0  vn  V¯                                       (3h)                     n Dn Pn |nn xT (n ) in (5) can be moved to the right-
+                                                                      hand side as in (3f).
+
+   Dual values extracted from (3) are indicated with an arrow            The cut coefficients t and  used in the MS Benders cut
+(). At each node the immediate profit comes from selling              (2d) are accumulated throughout the backward iteration as in
+energy en at a price n. The immediate profit is balanced              (6) and (7), where H0 , is the HPS root-node solution.
+against the future expected profit n in (3a), constrained by
+Benders cuts in (3f). We refer to the cuts in (3f) as HPS Ben-                  t =                Pnn t  TR                                                  (6)
+ders cuts, and their construction is described in Section II-B2.
+The sensitivity of the objective to a change in xt is denoted n.                      nN :T (n)=t
+In (3d) a continuous variable zt copies the proposed schedule,
+and the dual value n can be directly obtained. The variable                      = 0H, -           txt                                                        (7)
+zt is then used to define whether discharge through the plant
+should be allowed in (3e).                                                                tTR
+
+   Once the forward iteration has completed, convergence can             Note that the value n takes in (3d), strongly depends on
+be checked. The solution strategy decomposes the stochastic           the reservoir storage capacity and the expected inflow. In case
+optimization problem in (1) into a first-stage MILP problem
+and a multi-stage HPS problem formulated as LP. Assuming              there is no storage, n will reflect the energy price n, taking
+that the problem has relatively complete recourse, the de-            the marginal efficiency s into account. In the presence of
+composition converges within a finite number of iterations at         storage capacity, the value of n is reduced compared to the
+an arbitrary convergence tolerance , according to [24], [28].         no-storage case according to the expected marginal value of
+Convergence is obtained when  - nN Pnnen  . As
+long as convergence has not been reached, a new backward              water. That is, the economic loss of maintenance depends on
+iteration is initiated.
+                                                                      the system's ability to save water across decision stages.
+   2) Backward Iteration: A backward iteration involves
+traversing the tree from the leaf nodes to the root node and          The methodology presented in this section will become
+solving the nodal HPS problems, see boxes 3 and 4 in Fig. 2.
+HPS Benders cuts in (3f) are created for all non-leaf nodes and       computationally intractable for systems with many decision
+added to the set LnH used in (3f). Both the initial reservoir level
+va(n) and the maintenance decisions xT (n ), n  Dn are                stages and fine-grained representation of uncertainty. In Sec-
+state variables and should be represented in the HPS Benders
+cuts. The incorporation of the root node maintenance decisions        tion III we elaborate on how the decomposition principle
+in the state space allows HPS Benders cuts that are constructed
+for different suggested maintenance schedules to be shared at         can be embedded in a hybrid SDP/SDDP approach, and thus
+each node. This state space augmentation has similarities to the
+multi-lag Benders decomposition approach presented in [29].           become computationally tractable for large-scale hydropower
+
+   An HPS Benders cut contribution obtained from the sub-             systems.
+problem solved at node n in (3) and passed backward to node
+a(n) will take the form:                                                         III. HYDROPOWER SCHEDULING MODEL
+
+a(n)-a(n) va(n) - va(n)                                                  In this section we extend the HPS part of the HPMS
+                                                                      formulation presented in Section II to realistically deal with
+                                                                      the scheduling of larger watercourses. Moreover, we extend the
+                                                                      scope by allowing sales of both energy and reserve capacity,
+                                                                      assuming that the producer is a price-taker in both markets.
+                                                                      We consider inflow, energy price and reserve capacity price
+                                                                      as stochastic variables. We assume that the system is confined
+                                                                      in a geographical area that can be covered by a single power
+                                                                      balance equation (without internal transmission bottlenecks).
+                                                                      Thus, the hydropower producer can optimize the operation
+                                                                      of a single watercourse indvidually without including other
+                                                                      generation or demand obligations that are part of its portfolio.
+                                                                      The length of a decision period is one week.
+
+Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+The final version of record is available at                         http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                              6
+
+   A hybrid SDP/SDDP approach is applied to decompose the              The MS Benders cut coefficients ht and  used in (2d) are
+overall HPS problem, see e.g. [30], [31] for further details.
+The price processes are represented in a Markov chain using         obtained after one backward iteration as probability weighted
+discrete states (price clusters), and embedded in the SDDP          averages over all sampled scenarios n  D0S.
+algorithm as in ordinary dynamic programming. The weekly
+price processes are assumed independent of the inflow. Note         ht =                   Pnnh                   t  TR, h  H (8)
+that the combined SDP/SDDP algorithm generally requires                                                                                   (9)
+the stochastic processes being modelled in the SDP part to                nD0S:T (n)=t
+be independent of those modelled in the SDDP part. In our
+experience, for a regional system (e.g. a single watercourse         = 0H -              htxht
+within a price zone) it is difficult to find a significant cor-
+relation between local inflow changes and the corresponding                      tTR
+average spot price change. The HPS Benders cuts can be
+shared among different system states within a given week            B. HPS Subproblem
+and price cluster, according to [32], to efficiently reduce the
+computational effort.                                                  The weekly HPS subproblem is formulated as an LP prob-
+                                                                    lem described in (10), which is an extension of (3). The
+   Since only a sample of the "true" scenario tree is visited in    formulation is similar to that used in [33].
+the forward and backward iterations, the construction of HPS
+and MS Benders cuts differs slightly from what was presented           For a given node n, price cluster p = P (n) and week t =
+in Section II.                                                      T (n) the realization of weekly inflows Inh, the weekly average
+                                                                    energy price Ep , and the weekly average reserve capacity price
+                                                                    pC are known. The amount of energy sold to the spot market
+                                                                    and capacity to the reserve market is optimized for the whole
+                                                                    water course.
+
+A. HPS Solution Strategy                                            Hn = max               kE Ep ekh + kC Cp ckh                                              + n
+
+   The HPS solution strategy is briefly described below, em-                  kK hH                                                                                  (10a)
+phasizing on the novel parts.                                                                                                                                       (10b)
+                                                                    vkh +             qkDhs + qkSh + qkBh-
+   1) Forward Iteration: In the HPMS forward iteration the
+root node MS problem described in (2) is solved first to obtain                  sSh
+a trial maintenance schedule. An upper bound is obtained
+from the solution of the MS problem. Subsequently, a set                          qkDjs + qkSj + qkBj = vk-1,h + ~kInh k, h
+of scenarios is sampled for the stochastic variables. Weekly
+inflows are sampled from a lag-1 autoregressive model, and          jh sSj
+weekly average energy and reserve capacity prices are sampled
+based on the conditional transition probabilities in a discrete     ekh -             hsqkDhs = 0                                                             k, h (10c)
+Markov chain, as described in [10]. For a given node n, the
+HPS subproblem described in Section III-B is solved. The                         sSh                                                                                   (10d)
+simulated state at the end of the week is passed forward as                                                                                                            (10e)
+an initial state for the next week. The forward simulation          ckh       -  1  ekh    0k,  h                                                                      (10f)
+gives an updated set of state trajectories and an expected profit                k
+for the sampled scenarios, which serves as the lower bound.
+Convergence can formally be declared when the upper bound           ckh       +  1  ekh    G¯hk,   h
+is within a predefined confidence interval of the lower bound.                   k
+                                                                                 k
+   2) Backward Iteration: HPS Benders cuts at the end of the        vkh       -  hS  ckh    Vkhk, h
+planning horizon t = |T | can be obtained from a predefined
+final value function . For t = |T | - 1 · · · 1 in the backward     n -               nhvkh                                                                   (10g)
+iteration one loops through each discrete price cluster and each
+state trajectory obtained from the forward iteration. Starting                   hH
+from the state at the end of week t - 1, for each realization
+of stochastic variables one computes the optimal operation for       n +                   Pn |nn hxT (n ), k = K,   LpH
+week t by solving (10). From the sensitivities of the objective
+function to the initial state values, new HPS Benders cuts at                    n DnS\n
+the end of week t - 1 are obtained.
+                                                                    zht = xht  nh                                                                             (10h)
+   We denote all scenario tree nodes visited in a backward
+iteration  as n  D0S, i.e., sampled descendant nodes seen           0 qkDhs  (1 - zht)Q¯kDhs k, h s  Sh (10i)
+from the root node. For ease of formulation we include the
+Markov chain representation of market prices in the scenario        Vkh  vkh  V¯kh              k, h                                                          (10j)
+tree notation, so that the set D0S comprises all price clusters in
+the discrete Markov chain in addition to the sampled inflows.       0 qkBh  Q¯Bkh            k, h                                                             (10k)
+
+                                                                          0  ckh  C¯h k, h                                                                    (10l)
+
+                                                                              n, ekh, qkSh, zht  R+                                                           (10m)
+
+                                                                       The objective (10a) is to maximize the profit from both
+                                                                    markets, subject to constraints (10b-10m). Energy and reserve
+                                                                    capacity prices corresponding to a specific time step k within
+                                                                    the week are found by scaling the weekly average values by
+                                                                    predefined expected profiles.
+
+                                                                       The water balance equation for a specific reservoir h and
+                                                                    time step k is formulated in (10b).
+
+Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+The final version of record is available at                         http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                              7
+
+   Electricity generation ekh in (10c) and capacity allocation      Fig. 3. Watercourse topology and technical data.
+ckh in (10d)-(10e) are determined per plant. The generation
+in (10c) can be seen as a simplified representation of the             Conceptually, one could run each case with a scheduling
+generally nonconvex hydropower production function. See             horizon long enough to make the impact of end-valuation of
+e.g. [34], [35] for more detailed representations.                  reservoirs negligible. In order to obtain acceptable computa-
+                                                                    tion times, we adopted an approximate and practical approach.
+   Allocated capacity should be spinning and symmetric. The         A set of cuts of type (10g) was used to ensure that state
+spinning requirement is taken care of in (10d), ensuring that a     variables at the end of the scheduling horizon were valuated.
+plant cannot offer more reserve capacity than what is already       These cuts were obtained as a result of a few initial model
+spinning. Eqn. (10e) ensures that the generation capacity sold      runs for case A with a time horizon of four years, and the
+in the two markets does not exceed the plant's installed            same set of cuts was used for all simulated cases.
+capacity. Eqn. (10f) ensures that there is enough water in
+the reservoir to deliver up-regulation reserves at the lowest          Energy and reserve capacity price scenarios were obtained
+efficiency hS for the entire time period in question.               from the EMPS model, which is a fundamental hydrothermal
+                                                                    market model [36]. The EMPS model was run on a system
+   The profit obtained for the current week is balanced against     description of the Nordic power system, using 80 historical
+the future expected profit n. This variable is constrained by       inflow years, and with reserve capacity constraints per price
+HPS Benders cuts in (10g). The HPS Benders cuts should              zone. We extracted 80 energy and reserve capacity price sce-
+relate to all state variables, i.e., decision and stochastic vari-  narios from the simulation, and from these scenarios a discrete
+ables that define the system state passed on to the subsequent      price model comprising 6 price nodes per stage (3 energy
+week. Although not explicitly represented here, it should be        and 2 capacity price clusters) was identified by following the
+noted that inflow is also a state variable due to the time          approach described in [10]. The lag-1 autoregressive inflow
+coupling in the autoregressive inflow model. As inflow is           model was fitted using a single inflow series comprising 80
+not a decision variable, its contribution to the cut will enter     historical years, and the model error was sampled from a
+the right-hand side in (10g), as described in [31]. The HPS         normal distribution.
+Benders cuts are built and stored for each price cluster in a set
+LHp in each backward iteration of the algorithm. In (10g) the          A total of 200 scenarios of inflow and prices were re-
+cut coefficients nh obtained from (10h) are averaged over           sampled in each forward iteration, and 12 discrete inflow error
+all descendant nodes, e.g. combinations of descendant price         terms were sampled at each stage in the backward iterations in
+clusters and sampled inflow nodes. The set DnS contains all         the SDDP-part of the algorithm. A total of 200×104 = 20800
+descendant nodes seen from n that are visited in a particular       HPS subproblems are solved in the forward iteration and
+backward iteration .                                                200 × 12 × 3 × 104 = 748800 in the backward iteration
+                                                                    when considering 3 price clusters. In general, increasing the
+   It is important that the HPS subproblem has a feasible           number of scenarios in the forward iteration will improve the
+solution for all possible states, and thereby ensure that the       convergence properties at the cost of higher computational
+HPMS problem has relatively complete recourse. During a             effort in each iteration.
+maintenance period for a given station, upstream reservoirs
+may experience a constrained release capacity. In the HPS              The model was implemented in C++, using the Gurobi
+subpoblem described above, the spillage variable qkSh has           7.5 library [37] for solution of both the MILP and the LP
+no defined upper bound and will therefore serve as a slack          problems. All tests were carried out on an Intel Core i7-
+variable in case both the discharge qkDhs and bypass qkBh reach     4940MX processor with 3.30 GHz and 32 GB RAM.
+their upper bounds in (10i) and (10k), respectively.
+                                                                       We ran 4 cases A-D, see Table I separating between whether
+                           IV. CASE STUDY                           maintenance scheduling was considered and whether sales of
+                                                                    reserve capacity was allowed. A maintenance period of 3 con-
+A. Case Description
+
+   A computer model was established implementing the
+HPMS algorithm described in Section II using the combined
+SDP/SDDP algorithm described in Section III to solve the HPS
+problem. The model was tested on a Norwegian watercourse
+comprising 7 hydropower reservoirs with corresponding power
+plants, with a total capacity of 986 MW. An illustration of the
+topology and specification of some technical characteristics is
+provided in Fig. 3. For each reservoir shown in the figure the
+average annual inflow and storage capacity are stated, both in
+Mm3. Each power plant is identified with a number and its
+installed capacity in MW.
+
+   A scheduling horizon of 2 years was applied with weekly
+decision stages. Each week was divided into 21 time steps
+allowing for energy and reserve capacity sales. Each plant is
+allowed to commit a maximum of 10 % of its installed capacity
+to the reserve market.
+
+Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+   This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+                      The final version of record is available at                                  http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+secutive weeks was required, letting TR comprise weeks 15-                                         760000                                                                       8
+45. In all cases the simultaneous scheduling of maintenance in
+two plants are considered, which to our knowledge represents                                                                                                     Case A
+a realistic two-year case study. The MS problem comprises                                                                                                        Case B
+1 continuous and 62 binary variables, and is constrained by                                                                                                      Case C
+64 linear constraints without counting the MS Benders cuts.                                                                                                      Case D
+The HPS subproblem comprises 1247 continuous variables and
+1078 linear constraints without counting the HPS Benders cuts.     Future Expected Profit [MEuro]  750000
+The total computation times are indicated in Table I. Although
+not exploited in this work, the algorithm is well suited for
+parallel processing, see e.g. [38].
+
+            TABLE I                                                                                740000
+      SIMULATED CASES.
+
+            Maint.    Markets             Time                                                     730000
+Case Included Plants           Iter. [hours]
+
+A     4,7 Energy + Capacity 340 168
+
+B     4,7             Energy   323          81
+
+C  -  -               Energy + Capacity 40  20
+
+D     6,7 Energy + Capacity 520 263
+
+B. Results                                                                                         720000
+
+   Both cases A and B concludes on co-scheduling the main-                                                 20  40  60                            80              100
+tenance of plants 4 and 7. In case A the optimal maintenance
+period for both plants are in weeks 42-44, whereas the optimal                                                 Iteration no.
+schedule is weeks 29-31 for both plants in case B. The
+higher reserve capacity prices in the summer period makes          Fig. 4. Convergence characteristics. Upper bounds for all cases and lower
+it profitable to postpone maintenance to the autumn in case        bound for case B, considering the 100 first iterations.
+A. The serial connection between plants 4 and 7 explains
+why it is profitable to co-schedule maintenance for these two      maintenance is considered. A stable maintenance schedule
+plants. A three-week maintenance period at plant 4 leads to        over several iterations is needed to ensure that the HPS
+loss of water due to the large inflow and upstream discharge       Benders cuts are built around that schedule.
+capacity compared to the reservoir size. Thus, it is wise to
+avoid discharging from plant 7 during the maintenance period          In cases A, B and D we have allowed the model to
+of plant 4. When testing other plant combinations, e.g. in case    explore 29 maintenance starting weeks (weeks 15-43) for
+D for plants 6 and 7 which are arranged parallel, co-scheduling    each of the two plants considered, giving a total of 841
+of maintenance is no longer optimal.                               possible combinations. Fig. 5 shows the models suggestions
+                                                                   for the first maintenance week for case B in all iterations,
+   The convergence characteristic of the algorithm is shown        before stabilizing at the optimal solution (starting week 29
+in Fig. 4, comparing the upper bounds for all cases for            for both plants). The figure shows that a modest subset of all
+the first 100 iterations. The lower bound for case B is also       combinations are tested before arriving at the optimal solution,
+included to indicate that the cost gap gradually closes as         and many of these are only visited once. Moreover, Fig. 5
+the iteration number increases. From a theoretical point of        shows that the diagonal elements are visited more frequently,
+view, the algorithm should converge within a pre-defined           i.e. the different timings for co-scheduling of maintenance are
+confidence interval, as discussed in [39]. However, through        explored. In case D maintenance is required for two reservoirs
+initial testing on a small-scale system, we found that this        connected in parallel, and we observed that a wider search
+convergence criterion was sensitive to the specific case and       was carried out for that case, avoiding co-scheduling. Thus,
+the number of scenarios, inflow error terms and price clusters     convergence was slower in case D than in cases A and B, as
+used. Thus, we used the stabilization of the upper bound as the    indicated in Table I.
+convergence criterion. As discussed in [40], the stabilization
+of the lower (minimization problem) bound indicates that           C. Discussion
+further runs of the algorithm do not significantly improve the
+constructed policy, and may serve as a practical convergence          It is possible to improve the computational performance
+criterion. The number of iterations required for convergence       of the model by some straightforward adjustments. Typically,
+are shown in fifth column in Table I. As expected, case C          the MS problem defined in (2) can be further constrained by
+(with no maintenance requirement) converges in significantly       incorporating the expert knowledge and specific requirements
+less iterations than the other cases. The storage dynamics and     from the producer. Moreover, to avoid starting from scratch,
+system complexity slow down the convergence process when           one can run the case to convergence (with no or fixed
+
+   Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+             This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+                              The final version of record is available at  http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                                           9
+
+         40                                                                dropower scheduling problem, the results indicate that the
+
+                                  count                                    proposed method is capable of efficiently exploring the search
+
+         30                       6                                        space of possible maintenance periods for multiple plants.
+
+Plant 7                                                                                                 REFERENCES
+
+                                  0                                         [1] J. W. Labadie, "Optimal operation of multireservoir systems: State-of-
+                                                                                 the-art review," Journal of Water Resources Planning and Management,
+         20                                                                      vol. 130, no. 2, pp. 93­111, 2004.
+
+             20           30  40                                            [2] G. Steeger, L. A. Barosso, and S. Rebennack, "Optimal bidding strate-
+                                                                                 gies for hydro-electric producers: A literature survey," IEEE Transac-
+                 Plant 4                                                         tions on Power Systems, vol. 29, no. 4, pp. 1758­1766, 2014.
+
+Fig. 5. Suggested first week of maintenance for plants 4 and 7 in case B    [3] A. Froger, M. Gendreau, J. E. Mendoza, and E. Pinson, "Maintenance
+counted over all iterations.                                                     scheduling in the electricity industry: A literature review," European
+                                                                                 Journal of Operational Research, vol. 251, no. 3, pp. 695­706, 2016.
+maintenance plans) and use the resulting HPS Benders cuts
+as a starting point for the algorithm. We also believe that                 [4] S. Stage and Y. Larsson, "Incremental cost of water power," Transactions
+computational improvements can be seen by allowing multiple                      of the American Institute of Electrical Engineers, vol. 80, no. 3, pp. 361­
+iterations within the HPS problem for the same maintenance                       364, 1961.
+schedule before creating a MPS Benders cut, similar to the
+reasoning in [21]. Finally, it should be noted that we did                  [5] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+not conduct sensitivity analysis on the number of scenarios                      optimization applied to energy planning," Mathematical Programming,
+sampled in the forward iteration in the presented case study,                    vol. 52, pp. 359­375, 1991.
+and that adjusting this number may improve computational
+performance.                                                                [6] J. R. Birge and F. Louveaux, Introduction to Stochastic Programming,
+                                                                                 2nd ed. Springer, 2011.
+                          V. CONCLUSIONS
+                                                                            [7] A. Philpott and V. de Matos, "Dynamic sampling algorithms for multi-
+   A new method suitable for solving the hydropower mainte-                      stage stochastic programs with risk aversion," European Journal of
+nance scheduling problem for a profit maximizing and price-                      Operational Research, vol. 218, no. 2, pp. 470­483, 2012.
+taking producer considering both the markets for energy and
+reserve capacity was presented. The method uses Benders                     [8] S. Rebennack, "Combining sampling-based and scenario-based nested
+decomposition principle to coordinate the timing of power                        Benders decomposition methods: application to stochastic dual dynamic
+plant maintenance with the medium-term scheduling of the                         programming," Mathematical Programming, vol. 156, no. 1, pp. 343­
+hydropower system.                                                               389, 2016.
+
+   Traditionally, maintenance and hydropower scheduling are                 [9] H. Poorsepahy-Samian, V. Espanmanesh, and B. Zahraie, "Improved
+treated as separate or at least loosely coupled tasks, primarily                 inflow modeling in stochastic dual dynamic programming," Journal of
+due to the computational complexity. The proposed method                         Water Resources Planning and Management, vol. 142, no. 12, 2016.
+was applied in a case study of a Norwegian watercourse,
+demonstrating that an optimal solution to the hydropower                   [10] A. Helseth, M. Fodstad, and B. Mo, "Optimal medium-term hydropower
+maintenance scheduling problem can be found by coordinating                      scheduling considering energy and reserve capacity markets," IEEE
+the maintenance and hydropower scheduling tasks. Although                        Transactions on Sustainable Energy, vol. 7, no. 3, pp. 934­942, 2016.
+the convergence rate is significantly lower than for the hy-
+                                                                           [11] A. Street, A. Brigatto, and D. M. Vallada~o, "Co-optimization of energy
+                                                                                 and ancillary services for hydrothermal operation planning under a gen-
+                                                                                 eral security criterion," IEEE Transactions on Power Systems, vol. 32,
+                                                                                 no. 6, pp. 4914­4923, 2017.
+
+                                                                           [12] J. Zou, S. Ahmed, and X. A. Sun, "Stochastic dual dynamic integer
+                                                                                 programming," Mathematical Programming, 2018.
+
+                                                                           [13] S. P. Canto, "Application of Benders decomposition to power plant
+                                                                                 preventive maintenance scheduling," European Journal of Operational
+                                                                                 Research, vol. 184, no. 2, pp. 759­777, 2008.
+
+                                                                           [14] J. F. Dopazo and H. M. Merrill, "Optimal generator maintenance
+                                                                                 scheduling using integer programming," IEEE Transactions on Power
+                                                                                 Systems, vol. 94, no. 5, pp. 1537 ­ 1545, 1975.
+
+                                                                           [15] J. Yellen, T. Al-Khamis, S. Vemuri, and L. Lemonidis, "A decomposition
+                                                                                 approach to unit maintenance scheduling," IEEE Transactions on Power
+                                                                                 Systems, vol. 7, no. 2, pp. 726­733, 1992.
+
+                                                                           [16] A. J. Conejo, R. Garc´ia-Bertrand, and M. D´iaz-Salazar, "Generation
+                                                                                 maintenance scheduling in restructured power systems," IEEE Transac-
+                                                                                 tions on Power Systems, vol. 20, no. 2, pp. 984­992, 2005.
+
+                                                                           [17] Y. Wang, D. S. Kirschen, H. Zhong, Q. Xia, and C. Kang, "Coordination
+                                                                                 of generation maintenance scheduling in electricity markets," IEEE
+                                                                                 Transactions on Power Systems, vol. 31, no. 6, pp. 4565­4574, 2016.
+
+                                                                           [18] B. Mo, E. Solvang, J. Heggset, D. E. Nordga°rd, and A. Haugstad, "Inte-
+                                                                                 grated tool for maintenance and refurbishment planning of hydropower
+                                                                                 plants," in Hydropower in the new millenium: Proc. 4th Int. Conference
+                                                                                 on Hydropower Development, Bergen, Norway, 2001.
+
+                                                                           [19] R. M. Chabar, S. Granville, M. V. F. Pereira, and N. A. Iliadis, Op-
+                                                                                 timization of Fuel Contract Management and Maintenance Scheduling
+                                                                                 for Thermal Plants in Hydro-based Power Systems, ser. Energy, Natural
+                                                                                 Resources and Environmental Economics. Springer, Berlin, Heidelberg,
+                                                                                 2010, ch. 13, pp. 201­219.
+
+                                                                           [20] L. S. M. Guedes, D. A. G. Vieira, A. C. Lisboa, and R. R. Saldanha,
+                                                                                 "A continuous compact model for cascaded hydro-power generation and
+                                                                                 preventive maintenance scheduling," International Journal of Electrical
+                                                                                 Power & Energy Systems, vol. 73, pp. 702­710, 2015.
+
+                                                                           [21] N. Campodo´nico, S. Binato, R. Kelman, M. Pereira, M. Tinoco, F. Mon-
+                                                                                 toya, M. Zhang, and F. Mayaki, "Expansion planning of generation and
+                                                                                 interconnections under uncertainty," in 3rd Balkans Power Conf., 2003.
+
+                                                                           [22] N. Newham, "Power system investment planning using stochastic dual
+                                                                                 dynamic programming," Ph.D. dissertation, University of Canterbury,
+                                                                                 Christchurch, New Zealand, 2008.
+
+             Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+This is the author's version of an article that has been published in this journal. Changes were made to this version by the publisher prior to publication.
+
+The final version of record is available at                                      http://dx.doi.org/10.1109/TPWRS.2018.2840043
+
+                                                                                                                                                                           10
+
+[23] F. Thome´ and C. Metello, "Integrated stochastic investment & operations    Birger Mo received the M.Sc. degree in 1986 and the Ph.D. degree in 1991 in
+      strategy," PSR, PSR Technical Report, 2016.                                engineering cybernetics from the Norwegian Institute of Technology. He has
+                                                                                 since 1986 been employed at SINTEF Energy Research. His main interests
+[24] J. F. Benders, "Partitioning procedures for solving mixed variables         are short-term forecasting, production planning and risk management.
+      programming problems," Numerische Mathematik, vol. 4, pp. 238­252,
+      1962.
+
+[25] P. L. Carpentier, M. Gendreau, and F. Bastin, "Managing hydroelectric
+      reservoirs over an extended horizon using benders decomposition with a
+      memory loss assumption," IEEE Transactions on Power Systems, vol. 30,
+      no. 2, pp. 563­572, 2015.
+
+[26] M. V. F. Pereira and L. M. V. G. Pinto, "Stochastic optimization of a
+      multireservoir hydroelectric system: A decomposition approach," Water
+      Resources Research, vol. 21, no. 6, pp. 779­792, 1985.
+
+[27] J. Jacobs, G. Freeman, J. G. Grygier, D. Morton, G. Schultz, K. Staschus,
+      and J. Stedinger, "SOCRATES: A system for scheduling hydroelectric
+      generation under uncertainty," Annals of Operations Research, vol. 59,
+      no. 1, pp. 99­133, 1995.
+
+[28] A. M. Geoffrion, "Generalized Benders decomposition," Journal of
+      Optimization Theory and Applications, vol. 10, no. 4, pp. 237­260, 1972.
+
+[29] A. Diniz and M. E. P. Maceira, Applications in Finance, Energy,
+      Planning and Logistics. World Scientific Publishing, 2012, ch.
+      Multi-Lag Benders Decomposition for Power Generation Planning with
+      Nonanticipativity Constraints on the Dispatch of LNG Thermal Plants,
+      pp. 443­464.
+
+[30] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+      tic medium-term hydrothermal scheduling under spot price uncertainty,"
+      in Proc. 13th Power System Computation Conference, Trondheim, Nor-
+      way, 1999.
+
+[31] M.Pereira, N.Campodo´nico, and R.Kelman, "Application of stochastic
+      dual DP and extensions to hydrothermal scheduling," PSR, Tech. Rep.
+      PSR TR 012/99, 1999.
+
+[32] G. Infanger and D. P. Morton, "Cut sharing for multistage stochastic lin-
+      ear programs with interstage dependency," Mathematical Programming,
+      vol. 75, no. 2, pp. 241­256, 1996.
+
+[33] A. Helseth, B. Mo, M. Fodstad, and M. Hjelmeland, "Co-optimizing
+      sales of energy and capacity in a hydropower scheduling model," in
+      Proc. of IEEE PowerTech, Eindhoven, The Netherlands, 2015.
+
+[34] A. Diniz and M. E. P. Maceira, "A four-dimensional model of hydro
+      generation for the short-term hydrothermal dispatch problem considering
+      head and spillage effects," IEEE Transactions on Power Systems, vol. 23,
+      no. 3, pp. 1298 ­ 1308, 2008.
+
+[35] A. Borghetti, C. D'Ambrosio, A. Lodi, and S. Martello, "An MILP ap-
+      proach for short-term hydro scheduling and unit commitment with head-
+      dependent reservoir," IEEE Transactions on Power Systems, vol. 23,
+      no. 3, pp. 1115­1124, 2008.
+
+[36] O. Wolfgang, A. Haugstad, B. Mo, A. Gjelsvik, I. Wangensteen, and
+      G. Doorman, "Hydro reservoir handling in Norway before and after
+      deregulation," Energy, vol. 34, no. 10, pp. 1642­1651, 2009.
+
+[37] Gurobi Optimization, "Gurobi optimizer reference manual," 2017.
+      [Online]. Available: http://www.gurobi.com
+
+[38] R. J. Pinto, C. L. T. Borges, and M. E. P. Maceira, "An efficient parallel
+      algorithm for large scale hydrothermal system operation planning," IEEE
+      Transactions on Power Systems, vol. 28, no. 4, pp. 4888­4896, 2013.
+
+[39] A. Philpott and Z. Guan, "On the convergence of stochastic dual dy-
+      namic programming and related methods," Operations Research Letters,
+      vol. 36, no. 4, pp. 450­455, 2008.
+
+[40] A. Shapiro, "Analysis of stochastic dual dynamic programming method,"
+      European Journal of Operational Research, vol. 209, no. 1, pp. 63­72,
+      2011.
+
+Arild Helseth (M'10) was born on Stord, Norway in 1977. He received the
+M.Sc. and Ph.D. degrees in electrical power engineering from the Norwegian
+University of Science and Technology. Currently he works at SINTEF
+Energy Research with hydro-thermal and hydropower scheduling models and
+methods.
+
+Marte Fodstad holds a Ph.D. in Industrial Economics from the Norwegian
+University of Science and Technology. She has for more than 10 years been a
+research scientist at the research institute SINTEF. Her main area of research
+has been operations research applied within the natural gas and hydro power
+industries.
+
+             Copyright (c) 2018 IEEE. Personal use is permitted. For any other purposes, permission must be obtained from the IEEE by emailing pubs-permissions@ieee.org.
+

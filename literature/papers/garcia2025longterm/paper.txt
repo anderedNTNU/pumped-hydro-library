@@ -1,0 +1,975 @@
+                                                                                                                                                                                                                                                        1
+
+                                             Long-term Hydrothermal Bid-based Market
+                                                                  Simulator
+
+                                                               Joaquim Dias Garcia , Alexandre Street , Mario Veiga Pereira
+
+arXiv:2403.07270v2 [math.OC] 15 Nov 2024     Abstract--Simulating long-term hydrothermal bid-based mar-                  Cj Operating cost of thermal j.
+                                          kets considering strategic agents is a challenging task. The                   EjQ Energy quantity for an element j of a convex hull.
+                                          representation of strategic agents considering intertemporal                   EjR Revenue for an element j of a convex hull.
+                                          constraints within a stochastic framework brings additional
+                                          complexity to the already difficult single-period bilevel, thus, non-          Gj Maximum generation of thermal j.
+                                          convex, optimal bidding problem. Thus, we propose a simulation
+                                          methodology that effectively addresses these challenges for large-             Pi Price offer of agent i.
+                                          scale hydrothermal power systems. We demonstrate the effec-
+                                          tiveness of the framework through a case study with real data                  P    Vector price offer of all agents for all stages and
+                                          from the large-scale Brazilian power system. In the case studies,
+                                          we show the effects of market concentration in power systems                        sampled scenarios.
+                                          and how contracts can be used to mitigate them. In particular,
+                                          we show how market power might affect the current setting in                   P F Forward contract price.
+                                          Brazil. The developed method can strongly benefit policymakers,
+                                          market monitors, and market designers as simulations can be                    Qi Quantity offer of agent i.
+                                          used to understand existing power systems and experiment with
+                                          alternative designs.                                                           Q Vector of quantity offer of all agents for all stages
+
+                                             Index Terms--Power System Simulation, Strategic Bidding,                         and sampled scenarios.
+                                          SDDP, Hydrothermal dispatch, Brazil, Contracts, Market Power.
+                                                                                                                         QF Forward contract quantity.
+                                                                                                                         R~j() Maximum generation of renewable k at scenario .
+
+                                                                                                                         R Vector of maximum generation of all renewables
+
+                                                                                                                              for all stages and sampled scenarios.
+
+                                                                                                                         Uj Maximum flow through turbine of hydro j.
+
+                                          Sets and Indices  NOMENCLATURE                                                 Vj Maximum storage of hydro j.
+                                                                                                                         ~ti() Inflow noise coefficient of hydro j, stage t and
+
+                                                                                                                                   scenario .
+
+                                          I  Set of agents indexed by i.                                                 j,l Inflow autoregressive coefficient of hydro j, lag l.
+
+                                          I-i Set of agents excluding agent i.                                                Spot price.
+                                          IM Set of price-maker agents, indexed by i.
+                                                                                                                          Vector of spot prices for all stages and sampled
+
+                                          IT Set of price-taker agents, indexed by i.                                         scenarios.
+
+                                          JG Set of thermal plants indexed by j.                                         M Vector of transition probabilities matrices, for all
+
+                                          JH Set of hydro plants indexed by j.                                                stages.
+
+                                          JL Set of lags of autoregressive model, indexed by l.                             Indexing vectors in calligraphic (P, Q) by i stands for the
+                                                                                                                         vector where elements belong to agent i and by -i stands for
+                                          JR Set of renewable plants indexed by j.                                       the vector where elements belong to all agents except i.
+
+                                          JU (j) Set of hydro plants upstream plant j, indexed by y.
+
+                                          JV Set of vertices (points) representing a convex hull.
+
+                                          S  Set of sampled scenario indices, indexed by s.                              Optimization Variables
+
+                                          T  Set of time indices, indexed by t.
+
+                                          Ji Subset of a set J with the indices of elements that                         ajt  Inflow at hydro j, stage t. a[t] stands for the vector
+
+                                             belong to agent i.                                                               of all inflows before stage t.
+
+                                             Subscripts related to stage, t, and scenario, s, will be omitted            a[t] Vector of inflows at all hydros, for all stages before
+                                          for simplicity when they are not essential for the reader's
+                                          understanding of sampling and chronological relations.                              stage t.
+
+                                                                                                                         e    Energy offer.
+
+                                                                                                                         gj   Generation of thermal j.
+
+                                          Constants                                                                      q    Bid quantity accepted in a dispatch.
+
+                                             A Vector of inflows of all hydros for all stages and                        rj   Generation of renewable j.
+                                                       sampled scenarios.
+                                                                                                                         uj Turbine flow at hydro j.
+
+                                                                                                                         vjt  Storage at hydro j, at the beginning of stage t, and
+
+                                             Joaquim Dias Garcia (joaquim@psr-inc.com) is with PSR and LAMPS at               at the end of stage t - 1.
+                                          PUC-Rio. Alexandre Street (street@ele.puc-rio.br) is with LAMPS at PUC-
+                                          Rio. Mario Veiga Pereira (mario@psr-inc.com) is with PSR. The authors          vt   Vector of storage at all hydros, at the beginning of
+                                          thank PSR's team for contributing with ideas, software, data, and infrastruc-
+                                          ture. Joaquim Dias Garcia was partially supported by the Coordenac¸a~o de           stage t, and the end of stage t - 1.
+                                          Aperfeic¸oamento de Pessoal de N´ivel Superior - Brasil (CAPES) - Finance
+                                          Code 001. Alexandre Street was also partially supported by FAPERJ and          zj   Spill flow at hydro j.
+                                          CNPq. The work was partially funded by the project P&D ANEEL PD-00403-
+                                          0050/2020, sponsored by ENGIE BRASIL ENERGIA S.A.                              j Convex hull value for vertex j.
+
+                                                                                                                            Indexing vectors in bold (a, v) by i stands for the sub-vector
+                                                                                                                         where elements belong to agent i.
+                                                                   2
+
+Functions and Functionals                                          water can be used for cheap generation or saved for future
+                                                                   use. Saving too much water might lead to spillages, while
+   E[·] Expected value over the random variable .                  excessive usage might lead to energy deficits. The second
+   B~(·, ·) Future cost as a function of states and uncertainty.   challenge is due to the uncertainty of inflows and renewable
+   ~(·, ·) Revenue as a function of energy, e and scenario .       generation (such as solar and wind). These two aspects give
+   (·) Hydro generation as a function of turbine flow. It          rise to an opportunity cost of using the water today, known as
+                                                                   the water value. Multi-stage stochastic Optimization (MSO) is
+             can also be a function of volume.                     the most used framework to handle this type of problem, and
+   | · | Cardinality of a set.                                     the key algorithm is Stochastic Dual Dynamic Programming,
+                                                                   SDDP [9], initially motivated by the optimal operation of the
+                          I. INTRODUCTION                          centralized hydrothermal systems.
+
+H YDRO power is one of the most widely used energy                    On the other hand, the interaction between agents in a
+       sources around the globe, the most used renewable           market requires simulation tools from Game Theory [10].
+energy source responsible for over four thousand TWh per           Modeling a single agent capable of market power involves
+year according to the International Energy Agency [1]. Many        the usage of Stackelberg Games modeled through a Bilevel
+countries rely on hydro plants for a meaningful share of their     Optimization [11] that is a powerful framework but leads to
+generation, but some countries have hydropower as their main       non-convex optimization problems. The interaction of multiple
+energy source, for instance, Brazil, New Zealand, Colombia,        agents leads to even more complex models that usually rely on
+and Norway.                                                        Nash Equilibrium on top of the previous Stackelberg Games
+                                                                   [12], [13].
+   Many countries were initially centrally operated in a cost-
+based market design. In this market design, the water values          Due to all this complexity, previous research has focused on
+and the dispatch of all units are centrally calculated based on    simplifying parts of the problem to simulate systems. Multi-
+audited costs by the system operator. This cost-based market is    agent hydrothermal markets were simulated through equilib-
+still the case in the Brazilian, Chilean, Mexican, Vietnamese,     rium modeling in the work [14] that applied Equilibrium
+and South Korean power markets, to mention a few.                  Problems with Equilibrium Constraints (EPEC) but only con-
+                                                                   sidered 7 stages. EPECs were also used in [15] that modeled
+   The changes in the regulation of power systems in the           one year of operation by was limited to 4 scenarios, while
+last decades have led to liberalized bid-based power markets,      [16] considers two stages and ten scenarios, [17] considers
+including the hydrothermal ones [2]. Norway, Colombia, New         four stages and 20 scenarios, [18] considers 24 stages and
+Zealand, and many other countries have implemented this            one scenario. The early works [19] and [20] apply variations
+market design change. In the Brazilian case, since the 2000        of Dynamic Programming (DP) to consider more stages and
+crisis, many waves of proposals for changing from an audited       scenarios but require simple models of each stage that have
+cost to a bid-based market design have been made starting with     analytical solutions. [21] and [22] also employ DP, but in a
+the power sector revitalization committee [3]. More recently,      deterministic equilibrium case study with few stages, while
+in 2017, a public call for contributions named CP33 was made       [23] used a modified DP in a case study with 15 scenarios.
+in this country with the leadership of the system planner (EPE)    SDDP was first used in this setting to model a single strategic
+[4], and guidelines for market reforms were established. The       agent where the remainder of the market is purely thermal was
+study of a bid-based market design in Brazil constitutes one of    developed in the seminal work [24] and subsequently by [25],
+the key aspects of the new guidelines. This led to a working       [26].
+group in 2019 [5] conducted by the market operator (CCEE),
+with the participation of the power system operator (ONS),            As per the previously reported works, simulating multiple
+the system planner (EPE) and the energy ministry (MME).            agents in a realistic hydrothermal bid-based market is excep-
+Finally, there is an ongoing discussion around a law project       tionally challenging. To that end, one must handle multiple
+from 2021 [6] that includes a market liberalization pathway.       decision-making stages under uncertainty and the interplay of
+                                                                   various agents, leading to non-convexities. Consequently, most
+   The complexity in assessing the potential of market power       works strongly limit the number of stages, agents, or scenarios.
+abuse within the large-scale setting of the Brazilian system       Although some of the above methods can handle all these
+with realistic data has always constituted a barrier to further    features, in theory, the simulations are done in small problems,
+discussion (see [7] for more details). The main difficulty is the  preventing us from deriving relevant practical studies of real
+simulation of hydrothermal bid-based markets that combines         large hydrothermal power systems, such as the Brazilian one.
+the challenge of assessing the opportunity costs of water
+and the interactions among players in a uniform-price-based           Therefore, the main contributions of this work are:
+system. The bidding problem for hydrothermal power systems
+was reviewed in [8], which contrasts techniques required in           · Developing a methodology that can handle, at the same
+two main dimensions: 1) the need to represent hydro plants as            time, multiple stages, agents, and uncertainty scenarios
+opposed to the purely thermal case; 2) the representation (or            to enable realistic studies on large hydrothermal power
+not) of strategic agents that can manipulate markets.                    systems. Such methodology will be based on solving
+                                                                         multi-stage stochastic strategic bidding problems for each
+   The operation of systems with large penetration of hy-                strategic agent, while the coupling between agents is
+dropower is very challenging due to the need to model long               achieved by an iterative procedure based on diagonaliza-
+time horizons and random variables. The first challenge is due           tion. Although SDDP and Game Theory were previously
+to hydro reservoirs, which are long-duration energy storage de-
+vices that create a strong time coupling in the problem because
+                                                                                                                             3
+
+      applied in this area, the uncertainty modeling of unknown    Agent        Agent  Agent               Agent   Agent
+      bids from competing agents and an effective simulator           1           2      3                   4        5
+      based on the diagonalization method are novel.
+   · Simulating and analyzing the competition of multiple         !       $            #                   %      " Audited
+      price-maker agents in the large-scale Brazilian power       !                                               "
+      system with real data. In this sense, we provide new                $            #                   %
+      numerical studies and insights that may help in cur-
+      rent discussions on possible changes toward a bid-based                    ISO Economic Dispatch
+      market in Brazil. Within this context, we also derive
+      quantitative results on how agents' market share and                                           (, )
+      forward involvement can mitigate market power abuse.        Fig. 1. Centralized cost-based markets.
+
+   The remainder of this work is organized as follows: Section    Price   Price        Price               Price  Price
+II presents important fundamentals that will be necessary         Taker   Taker        Taker               Maker  Maker
+for the following sections. Section III introduces basic nota-
+tion describing a centralized model for hydrothermal power          1       2            3                    1      2
+systems. Section IV describes the optimization of a single
+price-maker agent and highlights how to incorporate contracts.    !$ '   %$ '    &$ ' !" #!, #! %" #%, #%
+Section V details an algorithm to combine the above models        !$(')  %$(')   &$(') !"(#!, #!) %"(#%, #%)
+to simulate long-term hydrothermal bid-based markets in the
+presence of multiple strategic agents. Section VI presents case                  ISO Economic Dispatch
+studies to test the proposed algorithm. Section VII presents
+the simulation of a real case of the Brazilian power system.                                         (, )
+Finally, Section VIII exposes the main conclusions.               Fig. 2. Bid-based market.
+
+             II. METHODOLOGICAL BACKGROUND                        B. Agent behavior in liberalized bid-based markets
+
+A. Electricity markets                                               The two types of agents introduced in Section II-A2, price
+                                                                  takers and price makers (see Figure 2), aim to optimize their
+   Electricity markets are usually divided into two main          bids and maximize profits, but using different approaches and
+groups: centralized markets (also known as cost-based) and        methods.
+liberalized markets (also known as bid-based). In the follow-
+ing, we present two figures to help contrast these two designs.      1) Price-taker agents: These are non-strategic agents that
+Other market designs are possible [7], and some systems might     are either too small to affect market prices by changing
+mix the two (to some extent), like Brazil, which is cost-based    their operation or, despite being large, they make their offer
+but allows for flexible demand bids (small compared to the        assuming the price as given. In this context, we assume the
+total load).                                                      latter for generality. Thus, this type of agent develops his
+                                                                  bidding strategy, (p, q), to maximize profits assuming the
+   1) Centralized cost-based markets: Their structure and         prices, ^, as exogenous scenarios. Under mild conditions,
+information scheme are depicted in Figure 1. In this design,      markets with only price-taker thermal agents are solved in the
+agents have their costs, c, available capacity, G, and other      literature with offers based on generators' variable costs and
+relevant data audited by the system operator and/or regulator.    their total capacity [27], [28]. Meanwhile, hydro agents should
+With this information, the Independent System Operator (ISO)      bid based on their water values, which can be calculated from
+will optimize the system economic dispatch, which will lead       the operator's perspective [9] or from the agent's perspective
+to prices, , that are, consequently, functions of c and G.        [29].
+The main drawbacks are the burden of the auditing process
+and the lack of incentives for agents to improve and maintain        2) Price-maker agents: Are also named strategic agents
+their equipment and even to disclose information to the system    and can be defined as the generators that can potentially
+operator. Centralization also creates the issue of single models  change prices by changing their offers and, consequently,
+and views, which, if mistaken or imprecise, can be questioned     their operation. These agents are those that can potentially
+by agents and lead to a massive judicialization in the market.    exercise market power abuse (the main drawback of a bid-
+Thus, the decentralization of responsibility also supports the    based market). In this case, if a strategic agent considers the
+decentralization process towards a bid-based market design.       price response, (p, q), when developing its offers to maximize
+                                                                  profits, and the offer actually changes the price, we say that the
+   2) Liberalized bid-based markets: Their structure and in-      agent has exercised market power abuse. Hence, the feedback
+formation scheme is depicted in Figure 2. In this case, there     loop in Figure 2 highlights this possible relation between
+might be two main types of agents: price takers and price         price marker bids that depend on their belief of the bid of
+makers. Both send price, p, and quantity, q, bids to the ISO,     other agents, (p-i, q-i), and the final prices. In the purely
+which uses the bids to optimize the economic dispatch and         thermal case, [12], [30] model the Nash equilibrium using
+define the spot price. Thus, in this market design, dispatch      Karush-Kuhn-Tucker optimality conditions (KKT) conditions
+decisions and spot prices are functions of the offered pairs      of the market operation leading to a large-scale mixed-integer
+p, q. Differences between these agent types will be described     problem (MIP).
+next.
+                                                                                                             4
+
+C. Equilibrium simulation                                       min           c(t)yt + Et+1 B~t+1 xt+1, t+1  (1)
+                                                                ytY (t),xt+1
+   We present two equilibrium models and associated solution
+methods that will be instrumental for our developments.         s.t. xt+1 + Ax(t)xt + Ay(t)yt = b(t)         (2)
+
+   1) Stackelberg equilibrium: It is applicable when there is   SDDP is a fundamental algorithm for effectively solving MSO
+a single price-maker agent. In this case, the price maker is    and is applicable as long as they follow two main assumptions:
+known as the leader agent, and the rest of the agents are       1) convexity of stage problems (which is trivial in the above
+the followers. The leader will attempt to optimize its revenue  linear case); 2) stagewise independence, that is, for all t, t
+by strategically choosing a bid that will affect prices. This   is independent of  if  < t.
+equilibrium is modeled with Bilevel Optimization [11]. It was
+extended to the hydro case by [24] that embeds a bilevel pro-      To apply the SDDP to the above problem, we need to
+gram in the SDDP algorithm but convexifies each sub-problem     reformulate it. The reformulation consists of replacing the
+to follow the convexity assumption of SDDP (see next Section    future cost function (FCF) ­ the second term in the objective
+II-D). A variant of [24] was proposed in [25] that handles      function (3) ­ by its piece-wise linear formulation, which
+the non-convexity with Lagrangian relaxation combined with      is represented by the epigraph variable, , and cuts (5) as
+SDDP. [26] uses a purely Lagrangian decomposition scheme        follows:
+to solve a multi-stage MIP for a price-maker demand side
+agent.                                                          B~t xt, t  = min c(t)yt +                    (3)
+                                                                           ytY (t),xt+1,
+   2) Nash Equilibrium: It applies to a more general setting
+with multiple price-maker agents. This state of equilibrium is             s.t. xt+1 + Ax(t)xt + Ay(t)yt = b(t) (4)
+defined as a set of offers for all agents such that no agent
+can improve the revenue by unilaterally deviating from this                  k + kxt+1, k  K                 (5)
+point [10], [12]. Mathematically, it can be modeled as an
+Equilibrium Problem with Equilibrium Constraints (EPEC)         The above model considers a theoretical representation of the
+derived from the KKT conditions of each agent revenue maxi-     true model, as all the cuts representing the FCF in (5) are
+mization problem. Analytical formulas can be found in special   not known in advance. Therefore, the SDDP relaxes the set of
+cases, as in [19] and [20], facilitating hydro players' multi-  all cuts, K, to a subset [K] that is iteratively updated. In this
+stage analysis through DP decomposition schemes. Another        case, B~t is also replaced by B~Kt as it will only be a lower
+possibility is to apply MIP-based reformulations to single-     approximation of B~t (at iteration K).
+stage equilibrium problems in the lines of [12]: [22] and [23]
+model the hydro case by solving MIP within DP. For small           In a very high-level description, the SDDP algorithm starts
+hydro problems with few scenarios and stages, [14], [15],       sampling a scenario, t, for each t  T , then solves the
+EPECs (and multi-stage EPECS) can be solved by specialized      stage subproblems in chronological order, generating a feasible
+solvers such as PATH [31].                                      solution, this phase is called the forward step. After that,
+                                                                in the so-called backward step, problems are solved in the
+   3) The diagonalization method: Is sometimes referred to      reverse order of time, generating Benders cuts to improve the
+as nonlinear Gauss-Seidel or agent-based simulation, and it is  representation of the FCF and, thus, propagating information
+especially well documented in [13] (see also [32] and [33]).    from the future to the present. By averaging multiple feasible
+In general terms, the method aims to solve an equilibrium       solutions for forward passes, we compute a statistical upper
+problem by optimizing one agent at a time. Hence, the first     bound, while the solution of the first stage problem gives a
+agent optimizes its strategy with the strategy of the other     deterministic lower bound. These steps are repeated until a
+agents fixed. Then, the second agent is optimized in the        specified stopping criterion is reached. This process is also
+same way, but now, considering the strategy of the first agent  known as policy optimization (or training). For algorithm
+fixed to the previously obtained value. If the first agent's    details, the reader is directed to [9], [34]. After convergence
+strategy has changed, the second's current strategy may also    is achieved, it is usual to proceed with a final forward pass
+change. An iteration of the algorithm is completed once all     in which we sample scenarios s  S, and for each of them,
+agents have been optimized. The iterations continue until       we solve all stage subproblems in chronological order. This
+the strategies from all agents do not change anymore. This      last procedure, known as simulation, results in a solution for
+method has been applied to very limited-sized hydrothermal      each primal and dual variable. In other words, we finish with
+equilibrium problems in [15], [16], [18], [21], as mentioned    values for each stage in T and sample scenario in S for all
+in the introduction.                                            optimization variables.
+
+D. Multi-stage stochastic programming and SDDP                     In this section, we focused our presentation on the expected
+                                                                value case of MSO for simplicity. However, it is relevant to
+   MSO is a framework to handle problems that are coupled       mention that the methodological developments considered in
+in time and depend on random variables. We can formulate        this paper hold for other risk measures, such as the conditional
+the linear programming version through its Bellman recursion,   value at risk, that can be consistently represented in the SDDP
+which depicts the problem being solved in each stage and how    scheme (see [35]­[37]).
+they are coupled through state variables xt:
+                                                                   1) Uncertainty representation in SDDP with auto-regressive
+    B~t xt, t =                                                 processes: It is a technique to handle stagewise-dependent
+                                                                uncertainty. This technique requires that the uncertainty only
+                                                                affects the right-hand side (RHS) of (4), d(), and it can
+                                                                be represented by an auto-regressive stochastic process with
+                                                                                                                           5
+
+stagewise independent noise. In this case, we expand the state        and observed past inflows in each reservoir) and the random
+variables to include lagged observations of the uncertainty           event t, is defined as the minimization of the problem (9)­
+and add a constraint representing the evolution of the process        (15). In this model, the objective function can be split into
+in the model. Therefore, the final model will have the same           two pieces. The first piece is the immediate cost in the form
+form as (3)­(5) but with more variables and constraints. The          of a thermal cost (load shedding accounted for as an additional
+uncertainty will be restricted to the RHS of (4) and stagewise        artificial expensive generator), while the second piece is the
+independent. This is the case of inflows modeled this way             expected value of the future cost B~t+1, where B~|T |+1(·) = 0.
+since the first appearance of SDDP [9].                               The equation (10) represents the load balance of the system.
+                                                                      We have generation and energy flows on the left-hand side
+   2) Uncertainty representation in SDDP with Markov pro-             and demand on the right-hand side. Demand is considered
+cesses: It is a second technique to handle stagewise-dependent        deterministic to simplify the developments, but everything that
+uncertainty. While the previous method effectively handles            follows can be trivially extended to the stochastic demand
+RHS uncertainty, it does not apply to the cases where stage-          case. (11) describes the water mass balance: storage at the
+wise dependent uncertainty affects objective or left-hand side        end of stage t equals the storage at the beginning plus the
+coefficients (coefficients that multiply variables). To handle        net sum of incoming water and outflows. (12) constrains
+these cases, an alternative version of SDDP that combined             hydro storage, turbine flow, and spillage, while (13) limits the
+ideas from SDDP and Stochastic Dynamic Programming                    thermal generation and (14) limits the renewable generation
+(SDP) was developed (in the context of price-taker optimal            that has a stochastic upper bound depending on events like
+hydro bidding) by [29]. More recently, this approach has been         sun and wind. Finally, (15) describes the inflow autoregressive
+termed Markovian SDDP [38] as the time dependency of the              stochastic process as in Section II-D1 and [9], [39].
+uncertainty is handled by a Markov Chain model. For a given
+stage, t, and Markov state, µ, the uncertainty is now con-            B~t vt, a[t-1], t =
+sidered independent of the past, but the dependency structure
+is preserved in the transition probabilities. The reformulated        min          Cj gj + Et+1 B~t+1 vt+1, a[t], t+1      (9)
+model contains multiple FCFs, one FCF for each possible
+future Markov state, m, represented by the epigraph variable                 jJ G
+m, and the respective cuts in (8):
+                                                                      s.t.
+
+B~µt ,K xt, µt =                                                             gj +        j(uj) +        rj = D             (10)
+
+                  c(t)yt +                                            jJ G         jJ H           jJ R
+
+min                               Mµ|mm  (6)                          vjt+1 = vjt - uj - zj +           (un + zn) + atj ,  j  J H
+ytY (t),xt+1,m                                                                                                                    (11)
+                            mJ M
+
+s.t. xt+1 + Ax(t)xt + Ay(t)yt = b(t)     (7)                                                   nJU (j)
+
+m  mk + m k xt+1, m  J M , k  K          (8)                          0  vj  Vj, 0  uj  Uj, 0  zj, j  J H                  (12)
+
+Where Mµ|m is the transition probability from Markov state            0  gj  Gj, j  J G                                    (13)
+m to µ and JM is the set of Markov states.
+                                                                      0  rj  R~j(t), j  J R                                (14)
+   The uncertainty representation methods described above
+are not mutually exclusive. A model might represent some              ajt =        j,lajt-l + ~j (t), j  J H               (15)
+uncertainties with the auto-regressive reformulation and some
+with the Markovian.                                                          lJ L
+
+      III. CENTRALIZED LONG-TERM HYDROTHERMAL                            In the above model, the main sources of uncertainty are
+                        DISPATCH AND SDDP                             variable renewable energy (VRE) generation and inflows.
+                                                                      The first has a very weak time dependency structure and is
+   The hydrothermal power system dispatch is a very complex           considered stagewise independent. The latter, inflows, have
+problem because it is a multi-stage stochastic optimization           a stage-wise dependency that can be modeled using the
+problem that includes many physical and policy-driven con-            autoregressive formulation above. The stochastic model of
+straints. From now on, we will also refer to the market               inflows follows the standard Periodic Auto-Regressive (PAR)
+design where generation dispatch orders and spot prices are           used by the Brazilian ISO, but here for individualized hydros
+derived based on centralized long-term dispatch calculations          (in opposition to the aggregated ones used by the ISO) [40].
+as a centralized audited-cost-based market.                           More details of the generation of the joint VRE and inflow
+                                                                      scenarios can be obtained in [41].
+   We present a simple yet general optimization model with
+all the main core features required in the market simulator              The model fits the general form (1)­(2) and can be solved
+proposed in this work. We describe the problem as a Bellman           by SDDP. We describe the result of an SDDP simulation
+recursion as in Section II-D. Therefore, (9)­(15) presents the        as follows. Once optimized, we can perform a simulaton
+objective function and constraints of a given stage, t, and           (see Section II-D) and store results as sets vector. For ex-
+random event t. Index t is omitted from most variables when           ample, V = {vt,s}tT,sS ,  = {t,s}tT,sS represent,
+easily understood from context aiming at a lighter notation.          respectively, volumes and spot prices, (dual variables of the
+                                                                      load balance, (10)), meaning that we have solutions for each
+   The first formula, (9), states that the future cost of stage t-1,  sampled scenario s  S and stage t  T .
+namely B~t, given the states {vt, a[t-1]} (vector of water stored
+                                                                                                                   6
+
+   The main simplification in this section is to consider the     agent. This hypothesis is also assumed in previous works like
+hydro generation function, , in (11), as a purely linear          [25]. Handling different owners in the same river system can
+function of the turbine flow [38], [42], [43], nonlinear models   be done by considering a water wholesale market besides the
+that also consider the dependency of the net-head can also        electricity market as done in [45]. Alternatively, other market
+be used, but would require approximations to satisfy the          designs can be used. Two possible alternative designs are: 1)
+requirements of SDDP [44].                                        hydro slicing, in which agents own fractions of the cascade
+                                                                  and, consequently, can optimize their strategies as if they
+                      IV. STRATEGIC AGENTS                        did not share the cascade, and 2) virtual hydro reservoirs, in
+                                                                  which all hydro plants of a system are aggregated in a single
+   The optimization of an independent agent, or owner, can        reservoir which is then split proportionally among all agents.
+also be modeled as a multi-stage stochastic optimization          The interested reader is referred to [28] for more details.
+problem. In this section, we describe the dynamic model that
+will considered, introducing features such as the Markovian       B. Endogenous spot prices and convexification of the revenue
+approach, convexification, and contracts step-by-step.            function
+
+A. The dynamic model                                                 In the case of price-taker agents, their operation can be
+                                                                  optimized by considering the revenue function, as in [29]:
+   The first version of the single price-maker hydro owner
+agent was modeled and solved with SDDP in [24], but it                              ~(e, ) = ()e                   (23)
+did not consider uncertain bids from other agents. Hence, we
+present an extension of the technique that handles the uncer-     where () is a scenario of spot prices that might be obtained
+tainty from other agents' bids with a Markov model. Model         from any model. In particular, we could consider spot price
+(16)­(22), representing the optimization of an individual agent,  scenarios  produced by the simulation from Section III.
+i, is very similar to (9)­(15), the centralized operation model.
+(16) represents a Bellman recursion analogous to the one of          On the other hand, price-maker agents have the ability to
+the centralized dispatch. The main difference in the objective    affect spot prices with their energy offers, as in the Stackelberg
+function is that there is a new term to describe the agent's      Equilibrium of Section II-C1. In other words,  is no longer
+revenue in the given stage t for a random event t as a function   an exogenous input data, it is a function of the energy offer
+of the electricity e produced by the agent. (17) states that e    of agent i, i.e., e. In this case, price and quantity bids from
+equals the total generation among all resources of a given        other agents are considered random variables depending on
+agent i. Finally, (18)­(22) are almost the same as (11)­(15)      the uncertainty , and are given {(Pj(), Qj()), j  I-i}.
+but only accounting for generators owned by agent i.              With those bids, we follow the same rationale of [24], [25].
+                                                                  Therefore, we write the following model that expresses a
+B~t vit, a[it-1], t  = min -~(e, t) +            Cj gj +          simple bid-based dispatch problem:
+
+                                           jJiG                   (e, )  arg min Pj()qj                            (24)
+
+                        Et+1 B~t+1 vit+1, ai[t], t+1      (16)                      q,    jI-i
+
+s.t.                                                                                s.t. qj = D :                  (25)
+
+e=          gj +        j(uj) +        rj                 (17)                            jI
+
+      jJiG        jJiH           jJiR                                                     0  qi  e                 (26)
+
+vjt+1 = vjt - uj - zj +           (uy + zy) + ajt , j  JiH (18)                           0  qj  Qj(), j  I-i (27)
+
+                         yJU (j)                                  This is analogous to a market clearing problem, in which a
+                                                                  system operator selects the optimal amounts of energy to attain
+0  vj  Vj, 0  uj  Uj, 0  zj, j  JiH                       (19)    the demand in (25), under the limits (26)­(27) given by the
+                                                                  offers of the current agent and the other players. The main
+0  gj  Gj, j  JiH                                         (20)    result is the spot prices (the dual variable of (25)). Now we
+                                                                  define:
+0  rj  R~j(t), j  JiR                                     (21)
+
+atj =        j,latj-l + ~jt (t), j  JiH                   (22)
+
+       lJ L                                                                         ~(e, ) = (e, )e                (28)
+
+Although renewable energy generation is still considered             However, this strategic agent revenue function is a non-
+stagewise independent and the inflow dependency is still
+handled by the auto-regressive process of Section II-D1, the      convex piece-wise linear discontinuous function as detailed in
+revenue function uncertainty is not restricted to the RHS.
+Hence, as highlighted in Section II-D2, the solution of the       [24], [25]. Thus, to satisfy the SDDP convexity requirements,
+above model will require the Markovian SDDP, in fact, a
+mixed auto-regressive (for inflows) and a Markovian (for the      we follow the method proposed in [24] and represent the
+revenue) SDDP. The uncertainty representation will be detailed    convex hull of ~(e, ) with respect to e for a fixed :
+in the next paragraphs.
+                                                                  chull(~(e, ))  =  max         j EjR()            (29)
+   A second fundamental challenge in this procedure is requir-
+ing all hydro plants in the same cascade to belong to a single                      j 0 jJ V
+
+                                                                                    s.t.        jEjQ() = e,        j = 1 (30)
+
+                                                                                          jJ V               jJ V
+                                                                  7
+
+where each pair (EjQ(), EjR()) represents a vertex (in the        the blue curve, which considers no contract, is the highest. In
+set of vertices JV ) of the convex hull of the hypo-graph of      more realistic cases, these curves can cross each other.
+~(e, ). We keep the vertices indexed by  to make it clear
+
+that they depend on the random variables of the problem.
+
+Theoretically, it would be possible to exactly represent the
+
+non-convex revenue function with methods like SDDiP [46].
+
+However, this would come with the cost of a considerably
+
+larger computational burden. Because we are accounting for
+
+many computationally intensive features in this work, we
+
+adopted the convex hull representation.
+
+C. Accounting for forward contracts in the dynamic model          Fig. 3. Revenue curves, ~ (e, ), for various values of QF , and P F = 0.
+
+   As one of the key mechanisms to mitigate market power,         D. Markovian uncertainty representation
+we must also be able to represent forward contracts [20]. This
+was not described in the previous MSO models solved by               We remark that in both [24] and [25], the revenue function
+SDDP. However, it is simple to modify the revenue function        is not stochastic since it only considers thermal bids in the
+to consider two additional terms as follows:                      form of thermal installed capacities and operating costs and
+                                                                  does not require the Markovian SDDP from Section II-D2.
+           ~(e, ) = P F QF - (e, )QF + (e, )e (31)
+                                                                     In contrast, we allow stochastic and time-dependent un-
+the first term is the fixed revenue of the forward contract, the  certainty in the two cases: 1) spot prices in the price-taker
+second represents the energy that must be delivered due to the    case and 2) energy bids from other agents in the price-maker
+contract, and the third is the previously represented earnings    case. In both cases, we assume we have scenarios of either
+from the spot market. The constants P F and QF are input data.    spot prices,  , or price and quantity bids, (P, Q). Such sets
+Consequently, the first term is constant and does not affect      of scenarios are jointly distributed with the inflow, A, and
+the optimization of a risk-neutral (strategic or not) agent. On   renewable energy, R scenarios if they were generated by
+the other hand, agents are discouraged from generating below      SDDP simulations.
+contracted quantities (where e - QF < 0) as they will have to
+buy energy to match their obligations, thereby losing money.         Given all these jointly distributed scenarios, we apply the
+This has an effect that opposes the willingness of price-maker    same Expectation Maximization (EM) algorithm as [47] to
+agents to withhold energy (reducing e) to increase spot prices.   obtain the transition probabilities of the Markov model for all
+                                                                  stages, M, and the classification of each sample, s, of each
+   Figure 3 shows revenue curves for a simple case where          stage, t in a Markov state.
+P F = 0$/MWh, D = 40MWh, and we consider 3 price-
+quantity offers from the other agents: (3$/MWh,10MWh),                  V. MULTIPLE AGENTS EQUILIBRIUM SIMULATION
+(2$/MWh,15MWh), (1$/MWh,20MWh). Note that the total
+quantity from the sum of the other agents' offers is 45MWh,          In this section, we combine the methodologies presented
+which is higher than the demand, and, hence, no deficit occurs    in Section II with the ones developed in Sections III and
+even if e = 0MWh. This function is also non-convex, but we        IV to describe a novel algorithm to simulate the interaction
+can represent its convex hull in the optimization problem in      among multiple price-maker and price-taker agents in a power
+the exact same way as the previously described case with no       system with high storage capacity. The interactions among
+contracts. For instance, we consider QF = 0MWh for which          agents will be in terms of price and quantity bid offers as in
+we only have the last term of (31). In this case, the revenue     a realistic competitive electricity market. In terms of a game
+is a linear function of e, with a slope equal to the spot price,  theoretical model, we have two types of agents, price takers
+. The most expensive accepted bid sets the spot price, then a     and price makers, whose actions are price and quantity bids,
+bid e < 5MWh for the strategic hydro leads to  = 3$/MWh.          as in Section II-C2. The complete algorithm is based on the
+When the strategic hydro offers more than 5MWh, it displaces      diagonalization procedure of Section II-C3 and is depicted in
+the bid previously defining the spot price, and the price drops   the flowchart of Figure 4. All details of the algorithm are
+to the variable cost immediately below, i.e., 2$/MWh. So,         presented next.
+from this point on, the curve has a smaller slope, and the
+first break appears. The other curves and breaks follow the       A. Initialization via Centralized Operation
+same rationale but for different values of QF and e. For more
+details, we refer the reader to [24], which only considers the       To start the diagonalization-based algorithm, we need an
+last term in (31). We emphasize that for different values of      initial set of actions for all agents. Such actions will be
+QF , the first term in (31) does not affect this example; as      obtained from a simulation of the centralized audited-cost-
+for simplicity, we considered P F = 0$/MWh. However, the          based market design of the power system through the typical
+second term subtracts a piece-wise constant function from the     cost-minimization model, (9)­(15), from Section III solved
+revenue function as QF is constant for each curve and (e, )       with SDDP from Sections II-D and II-D1. Besides the physical
+is a piece-wise constant function. Because P F = 0$/MWh,          description of the system, the main input data for this model
+                                                                                                                                 8
+
+are the inflows and renewable generation scenarios, (A, R).                                                           
+The main results from the simulation procedure are, at a             , ,    , 
+given stage t and scenario s: 1) the generation decisions of
+all units of a generation agent i, which lead quantity part of                                                             
+the bid, Qi,t,s, and 2) the spot prices of the system (s,t)           , , , , 
+that will be to the price parcel of the bids. We denote the
+set of price and quantity bids of an agent i as (Pi, Qi) =                                                   
+{Pi,t,s, Qi,t,s}tT,sS and the spot prices as  . We will refer                            $
+to this procedure as CentralizedOperation(A, R).
+                                                                       !, !   , , , 
+
+B. The main loop                                                       $?
+                                                                                                            
+   In this step, the actions of each agent will be updated, while
+the actions of the other ones will be fixed until the convergence              
+criterion is satisfied. The main goal is to simulate the power
+market in an agent-based fashion. If convergence is strictly                               
+attained, we might have reached a Nash equilibrium. However,            #
+such an equilibrium might not even exist in this setting. The
+convergence criterion considered in this work is assuring that     !, !   , , "!, "!, 
+the maximum absolute variation of the price and quantity bids                         # ?
+of all agents between two subsequent iterations vary less than                                                              
+1% of their values in the centralized operation.                                               
+
+   1) Markov Chain Estimation: This is the very first part                      , 
+of the main loop because the optimization algorithms pre-
+sented in the following steps will need a Markov Chain             ?     
+representation of uncertainty of the joint process that includes
+inflows, renewable generation, bids, and spot prices. The          
+methodology for estimating such Markov Chains, M, was
+presented in Section IV-D. We will refer to this procedure         , , 
+as EstimateM arkovChain(A, R,  , P, Q).
+                                                                   Fig. 4. Algorithm for multiple agents equilibrium flowchart.
+   2) Price-Taker Loop: This loop consists of the self-
+optimization of all price-taker agents, i  IT . The model of              VI. COMPUTATIONAL EXPERIMENTS WITH THE
+price takers, from Section IV, is given by (16)­(22) with the                    BRAZILIAN SOUTHEASTERN SYSTEM
+revenue function (23) and it is optimized with a Markovian
+SDDP from Section II-D2. The uncertainty scenarios are given          In this section, we provide quantitative simulated results
+by the inflows, A, renewable generation, R, and the exogenous      for the Brazilian power system. We begin with a sensitivity
+spot prices,  . For the agent i, the simulation that succeeds      analysis based on the Brazilian Southeast subsystem, which
+the policy optimization will return offered energy, et,s, that     accounts for about 55% of the Brazilian hydro resources and
+together with the input spot prices will define the bid (Pi, Qi).  about 50% of the system's total installed capacity. We analyze
+We name this procedure P riceT akerBid(A, R,  , M)                 different market concentrations and contracting schemes based
+                                                                   on the procedure developed in Section V.
+   3) Price-Maker Loop: This loop is analogous to the pre-
+vious one. The model of each agent i  IM is still given            A. Dataset, infrastructure, and system configuration
+by (16)­(22), but the revenue function will be the convex
+reformulation of the prime-maker revenue function (29)­(30).          This system was constructed from real data from the Brazil-
+The model is optimized with a Markovian SDDP from Sec-             ian system expansion scenario for 2025 (based on the Brazilian
+tion II-D2. However, the uncertainty contains the bid from         market operator data [48]) and contains 46 thermal plants and
+other agents (P-i, Q-i). For the agent i, the simulation that      21 hydro plants with a simplified system topology. Note that
+succeeds the policy optimization will return offered energy,       this is already more than the current 13 aggregated reservoirs
+et,s, that together with the endogenous spot price, computed       considered in the official model. The overall hydro installed
+from (24)­(27), will define the bid (Pi, Qi). We name this         capacity represents 70% of the system's installed capacity. To
+procedure StrategicBid(A, R, Pi, Qi, M)                            illustrate the algorithm's functioning, first, we consider three
+                                                                   main hydro generation companies, one considered as a price-
+   4) Market Clearing: This is the last step of the main loop      taker agent, and the other two as price makers. The 21 hydro
+and is responsible for computing update spot prices  by            plants are split into the 3 aforementioned hydro generation
+clearing the market for each stage and scenario given bids         companies, 7 plants for each one. The three different agents
+from all agents, (P, Q). The model used here is given by           do not share cascades as mentioned in Section IV. All ther-
+(24), (25) and (27), but with I-i replaced by I. We label this     mal plants are considered individual price-taker agents. We
+procedure as ClearM arket(P, Q).                                   considered a single load block for the sake of simplicity, that
+                                                                   is, a constant demand for the entire month. The following
+                                                                   simulations were carried out in a 5-year monthly horizon,
+                                                                   that is, 60 stages. We considered 1000 sampled scenarios. The
+                                                                                                                                                                                                                          9
+
+Average Spot Price     100                                ~ ~ ~ 547671                      724                                 Average Normalized  100                                ~ ~ ~ 498653     712
+   ($/MWh)                                                                                                                         Revenue ($/MWh)   80
+                       80
+
+                       60                                                                                                                           60
+
+                       40                                                                                                                           40
+
+                       20                                                                                                                           20
+
+                          0                                                                                                                             0
+                              Centralized (5%,10%) (10%,20%) (15%,30%) (20%,40%) (25%,50%)                                                                  Centralized (5%,10%) (10%,20%) (15%,30%) (20%,40%) (25%,50%)
+
+                            No contracts  75% contracted       100% contracted                                                                           No contracts  75% contracted  100% contracted
+
+                                               (a)                                                                                                                          (b)
+
+                                                                                                                                                                                       179              150
+Average Storage Level                                                                                                                               50                                 ~ ~ ~ 214
+   (%)                 60                                                                                                       Average Spillage
+                       50                                                                                                          (%)              40
+                       40
+                       30                                                                                                                           30
+                       20
+                       10                                                                                                                           20
+
+                        0                                                                                                                           10
+                             Centralized (5%,10%) (10%,20%) (15%,30%) (20%,40%) (25%,50%)
+                                                                                                                                                    0
+                                   No contracts 75% contracted 100% contracted                                                                          Centralized (5%,10%) (10%,20%) (15%,30%) (20%,40%) (25%,50%)
+
+                                                   (c)                                                                                                   No contracts 75% contracted 100% contracted
+
+                                                                                                                                                                       (d)
+
+Fig. 5. Results for simulations of Brazil's Southeast under different market concentrations. All plots have the same template and contain average values of:
+(a) Spot Prices, (b) Normalized Revenue, (c) Spillage, and (d) Storage Level. Averages are with respect to all stages and scenarios. Spillage and Storage %
+are with respect to the maximum amount of water that can be stored in the system. All plots include a first bar (in green) with the result for the centralized
+case. In parentheses in the horizontal axis, we have the percent share of each price-maker agent, defining the database used. For each database, we have 3
+bars, one for a case with no contracts (in red) and another two for cases with 75% of contracting level (in purple) and 100% of contracting level (in blue).
+Note that some red bars in (a), (b), and (d) are too high and do not fit the plot area, so they contain the values beside the top of the bar.
+
+large-scale simulations were performed in a PSRCloud cluster                                                                       Figure 6 presents a typical convergence profile of the
+of 8 servers, each one with 64 cores and 128GB of RAM. Each                                                                     proposed iterative method. These profiles were taken from
+simulation took approximately 3 hours. All algorithms were                                                                      the case study with price-maker shares of (25%, 50%) and no
+coded in the Julia language [49], and the optimization models                                                                   contracts. Figure 6 shows both average absolute and relative
+were coded with JuMP [50] and solved with the Xpress solver                                                                     differences between two consecutive iterations. First, absolute
+[51].                                                                                                                           (or relative) differences are computed for each stage and
+                                                                                                                                scenario, and then, they are averaged.
+B. Impact of Market Concentration on Market Power
+                                                                                                                                   Figure 5 contains results from this first study and from the
+   In this section, we present five controlled simulation ex-                                                                   next study for better understanding. For now, we shall focus on
+periments to understand the effect of different market con-                                                                     the centralized cases (in green) and the multiple cases with no
+centrations on market power abuse. We adjust the hydro                                                                          contracts (all in red). In Figure 5a, we show the average spot
+plants so that we have different databases defined by tuples                                                                    prices as a function of the market distributions in a bar plot. We
+(share1%, share2%). In each case, share1 and share2 repre-                                                                      add the first bar with the spot price of the centralized dispatch.
+sent the shares (in percentage) of the hydro system belonging                                                                   As expected, the spot prices rapidly grow as the concentration
+to each of the two price-maker companies (agents). The                                                                          increases. Figure 5b depicts the captured price, i.e., the average
+number of plants of each hydro agent is fixed as mentioned                                                                      value of energy sold, which is the total revenue of each agent
+in Section VI-A. We multiplied and installed capacities and                                                                     divided by its total generated energy. We present results in
+reservoir sizes by scalars to adjust the hydro system size                                                                      such normalized forms to compare the results of different-sized
+of each agent in each database. The remainder of the hydro                                                                      agents. Figures 5c and 5d show additional results with average
+system is assumed to be of price-taker agents.                                                                                  reservoir levels of the price-maker agents throughout the study
+                                                                                                                                period and the average spillage. Interestingly, market power
+300                                                                             35                                              abuse is mostly characterized by excess spillage, whereas, on
+Average Spot Price Absolute                                                                                                     average, the total reservoir levels do not vary much compared
+   Difference ($/MWh)250                                                        30                                              to the benchmark (centralized dispatch with audited costs).
+                                                                                                    Average Spot Price          C. Impact of Contracts on Market Power
+200                                                                             25
+                                                                                                       Relative Difference (%)     In this section, we repeat the above analyses but with
+                                                                                        20                                      contracts. To come up with monthly contract quantities, we
+150                                                                                                                             take average generation values from the centralized dispatch
+                                                                                                                                and prices from the average spot prices in the centralized
+                                                                                        15                                      dispatch. This will stimulate the agents to produce energy and
+                                                                                                                                reduce the spot prices since being short in the contract together
+100                                                                             10                                              with high spot prices will lead the agent to have expenses due
+                                                                                                                                to the second term in (31).
+50                                                                              5
+
+                       0                                                        0
+
+                            2-1 3-2 4-3 5-4 6-5 7-6 8-7 9-8 10-9 11-1012-11
+
+                                          Iterations compared
+
+Fig. 6. Convergence profile from Brazil's southeast with (25%, 50%) and no
+contracts. See Figure 5. Average spot price absolute and relative differences
+between two consecutive iterations: (i + 1)­(i).
+                                                                                                                                                   10
+
+   Now we look again to Figures 5a, 5b, 5c and 5d described        with multiple contracting levels in the bid-based market. In
+in the previous section but we also will focus on the cases        particular, we analysed the cases of: 25%, 50%, 75% and
+of agents that are 75% (purple) and 100% (blue) contracted,        100% of contracting level. The key results from each of the 6
+respectively. In the case studies, we can clearly see that the     simulations are depicted in Figures 7 and 8.
+contracts almost completely eradicated the market power, and
+the resulting spot prices are very close to the ones obtained         Figure 7 shows the spot price under the above 6 conditions.
+in the centralized dispatch. At the same time, the captured        We can see the progression from the case with the highest
+revenues and spillage levels were shrunk to values close to        spot prices, where no contracts are considered, until the fully
+the ones observed on the centralized dispatch with audited         contracted case, where the average spot price is much closer to
+costs. By analyzing Figure 5d, we can see that spillage is a       the one obtained from the centralized operation with audited
+relevant marker for market power abuse.                            costs. Given the number of resources allocated to the price-
+                                                                   maker agents, 45%, we note that a 75% contracting level
+    VII. CASE STUDY: THE BRAZILIAN POWER SYSTEM                    effectively reduces the gap to the centralized operation. This
+                                                                   closely follows what we have seen in the previous section with
+   In this section, we provide results for a case study consider-  the southeastern system. In such case, 75% was also effective
+ing the complete Brazilian power system. We contrast results       in containing market power in the case where the first price-
+from simulations with and without contracts and provide a first    maker agent had 15% and the second price maker had 30%
+quantitative measurement of the market power abuse potential       of the resources, resulting in a 45% share of the system in the
+in this system.                                                    hands of price-maker agents. Finally, we note that even low
+                                                                   contracting levels, such as 25%, significantly reduce the final
+A. Dataset, infrastructure, and system configuration               average spot prices. So, we highlight the empirical evidence in
+                                                                   our case study that the typical contracting levels observed in
+   This dataset was created from the original data of the          practice, ranging from 75% to 100%, can be seen as a relevant
+Brazilian system obtained from the Brazilian market operator       instrument to prevent market power abuse in the Brazilian
+webpage [48]. The dataset contains 137 thermal plants repre-       power system.
+senting 18% of the installed capacity, 364 renewable energy
+plants (wind and solar) representing 19% of the installed             Figure 8 presents the overall revenue, including operation
+capacity and 32 hydropower plants representing the remaining       and contract costs and spot and contract revenue throughout
+63% of the installed capacity. Here, we improve the load           the 5-year horizon for each of the three price-maker agents.
+duration curve accuracy and consider 5 load blocks [52],           Overall, the figure reproduces information already verified in
+[53] instead of just one (from the previous section) to better     Figure 7 with excessive revenues for all agents for the bid-
+represent peak demand hours, 5 is more than the 3 currently        based cases with no contracts. Notably, the 100% contracting
+used in the Brazilian official planning tools [48]. Like in        case leads to revenues that are very similar to the ones from
+previous studies, we consider 5 years (60 monthly stages),         the centralized dispatch. Interestingly, 75% seems to be a
+1000 scenarios, and the same PSRCloud cluster configuration.       relevant threshold value as it induces behaviors resulting in
+                                                                   revenues and spot prices relatively close to the ones obtained
+   In this study, we consider an approximation of the real mar-    in the centralized case. This observation is also relevant
+ket concentration in the system. We represent three companies      because when generators are risk-averse, it is expected that
+as price-maker agents, with respectively 32%, 9%, and 7% of        their optimal forward involvement should be slightly below
+the resources in terms of firm energy representing the three       the 100% case (see [56] and references therein).
+largest generation owners. The firm energy metric is used as
+hydro and renewable capacity is not fully available all the           Figure 9 presents the seasonal average spot price profile.
+time, so this is a proxy of their average available generation,    Spot price changes are driven by both withheld and spilled
+see [54]. Meanwhile, the remaining 55% of the generators are       hydro water. Noticeable, the spot-price peaks caused by the
+distributed among one price-taker hydro company, and each          market power abuse are concentrated at the end of the dry
+thermoelectric generator is considered another small price-        season, when reservoirs are at their lowest levels (September-
+taker agent. For completeness, we computed the Herfindahl-         December), and in the month with the highest inflow (March),
+Hirschman Index (HHI) of the system, which led to the value        in which strategic agents can easily spill.
+of 0.125, which is below 0.15, a number that typically repre-
+sents a small concentration. However, as will be empirically       Average Spot Price  200
+demonstrated in the next study, there is clear room for market        ($/MWh)
+power in the system in question. We believe that it is yet                             150
+another indication of the limitations of HHI that were already
+highlighted by [20], [55].                                                             100
+
+   Each simulation from this study took approximately 11                               50
+hours using the same code and computational infrastructure
+of the previous study.                                                                 0
+
+B. Market Power in the Brazilian Power System as a Function                                 No  25%  50%  75%  100% Centralized
+of the Contracting Level
+                                                                                            contracts contracted contracted contracted contracted
+   First, we simulated the centralized operation and the bid-
+based market without contracts. Then, we considered agents         Fig. 7. Average Spot Price ($/MWh) for the Brazilian system under different
+                                                                   contracting levels. Averages with respect to stages and scenarios.
+                                                                                11
+
+Average Normalized  120                                                                capable of enabling market power abuse.
+   Revenue (B$)     100                                                            2) The spillage level is a relevant market for market power
+
+                     80                       Agent 2           Agent 3                abuse.
+                     60                                                            3) Contracts are relevant instruments to prevent market
+                     40
+                     20                                                                power abuse in this country. Our results indicate a
+                                                                                       significant increase in long-term average spot prices due
+                       0                                                               to market power abuse in cases of lower contracting
+                                     Agent 1                                           levels.
+
+                    No contracts              25% contracted 50% contracted        We highlight that the developed market analysis tool can
+                                                                                help regulators and market/system operators in market mon-
+                    75% contracted 100% contracted Centralized                  itoring activities, expansion studies, and understanding the
+                                                                                impact of new market rules and instruments. For instance,
+Fig. 8. Average normalized revenue ($/MWh) for each of the 3 price-maker        based on the above remarks, low contracting levels combined
+agents under different contracting levels. Averages with respect to stages and  with high spillages can be relevant markers of potential
+scenarios.                                                                      market power abuse. On the algorithmic side, the method is
+                                                                                suitable for parallel computing and can be extended to consider
+Average Spot Price  800                                                         other physical and regulatory details. Finally, we showcase
+   ($/MWh)          700                                                         that a real-world problem formulated as a multi-stage bilevel
+                    600                                                         stochastic problem can be solved under reasonable assump-
+                    500                                                         tions and provide relevant insights to decision-makers and
+                    400                                                         regulators. We highlight the following as relevant research
+                    300                                                         avenues: 1) studying the effects and incentives of agents' risk
+                    200                                                         aversion on the equilibrium, 2) studying generators' incentives
+                    100                                                         to contract through a joint spot and long-term forward market
+                                                                                equilibrium, and 3) analyzing the impact of different forecast
+                       0                                                        model accuracies on the equilibrium, representing the diversity
+                                                                                of views among agents.
+                            Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec
+                                                                                                             REFERENCES
+                    No contracts              25% contracted 50% contracted
+                    75% contracted            100% contracted Centralized        [1] IEA, "Hydropower," https://www.iea.org/reports/hydropower, June
+                                                                                      2022.
+Fig. 9. Spot price annual profile (MWh).
+                                                                                 [2] "Conversations on Designs ­ Wholesale Electricity Markets," IEEE
+                         VIII. CONCLUSION                                             Power and Energy Magazine, vol. 17, pp. 1­108, January 2019.
+
+   Based on previous works on long-term hydrothermal power                       [3] MME - Brazilian Ministry of Mines and Energy, "Power
+markets, we combined three key methodologies to develop                               sector revitalization committee, progress report 2 (in
+a new and effective market simulator, namely: 1) SDDP                                 Portuguese)," antigo.mme.gov.br/ c/ document library/ get file?uuid=
+applied to the centralized hydrothermal dispatch to initialize                        b0d5c219-ec17-11f0-9e39-48e73fd19641&groupId=36131 (visited on
+and benchmark the process, 2) a multi-stage bilevel stochastic                        Sep. 12, 2024)., pp. 1­148, 2 2002.
+model to model the strategic bidding strategy for eachprice-
+maker agent, and 3) an iterative diagonalization-based method                    [4] EPE - Empresa de Pesquisa Energe´tica - Brazilian Energy Planner,
+to simulate the interactions among agents in a market equi-                           "Public Request for Comments 33, CP33/2017 (in Portuguese),"
+librium. In contrast to the existing literature on the subject,                       www.epe.gov.br/ sites-pt/ publicacoes-dados-abertos/ publicacoes/
+with our new algorithm, we could jointly consider multiple                            PublicacoesArquivos/ publicacao-232/ topico-353/ Nota%20T%C3%
+reservoirs (32), multiple stages (60) and scenarios (1,000), and                      A9cnica%20EPE-PR-003-2017.pdf (visited on Sep. 12, 2024).
+multiple price-maker agents (3). Therefore, a realistic large-
+scale case study based on the Brazilian power system (one                        [5] CCEE - Ca^mara de Comercializac¸a~o de Energia Ele´trica - Brazilian
+of the largest in the world) could be addressed, and relevant                         Power Market Operator, "Price Formation Mechanisms (in Portuguese),"
+insights could be obtained.                                                           www.gov.br/ mme/ pt-br/ assuntos/ secretarias/ secretaria-executiva/
+                                                                                      modernizacao-do-setor-eletrico/ arquivos/ pasta-geral-publicada/
+   On the other hand, some simplifications were necessary.                            formacao-de-precos.pdf (visited on Sep. 12, 2024)., pp. 1­48, 7 2019.
+In particular, the hydro generation function was considered
+as a purely linear function of the turbine flow (a standard                      [6] Ca^mara dos Deputados - Brazilian Parliament, "Law Project
+assumption commented in Section III); agents did not share                            n.414/2021 (in Portuguese)," www.camara.leg.br/ proposicoesWeb/
+cascades, as mentioned in Section IV-A; revenue curves were                           prop mostrarintegra?codteor=1962928&filename=PL%20414/ 2021%
+convexified in the SDDP policy optimization, as described in                          20(N%C2%BA%20Anterior:%20PLS%20232/ 2016) (visited on Sep.
+Section IV-B. We believe that these simplifications can be                            12, 2024)., 2021.
+explored in future works and lead to relevant new insights.
+So, we believe our simulator and methodology pave the way                        [7] L. Ribeiro, A. Street, D. Vallada~o, A. C. Freire, and L. Barroso,
+for relevant new studies.                                                             "Technical and economical aspects of wholesale electricity markets: An
+                                                                                      international comparison and main contributions for improvements in
+   Within the limitations of the presented computational exper-                       brazil," Electric Power Systems Research, vol. 220, p. 109364, 2023.
+iments and case study, which include all assumptions of the
+proposed model and the specific data, the results and analyses                   [8] G. Steeger, L. A. Barroso, and S. Rebennack, "Optimal bidding strategies
+carried out in this work allow us to convey the following                             for hydro-electric producers: A literature survey," Power Systems, IEEE
+concluding remarks for the Brazilian power system:                                    Transactions on, vol. 29, no. 4, pp. 1758­1766, 2014.
+
+   1) We found evidence that the market concentrations ob-                       [9] M. V. Pereira and L. M. Pinto, "Multi-stage stochastic optimization
+       served in the current Brazilian electricity market are                         applied to energy planning," Mathematical Programming, vol. 52, no. 1-
+                                                                                      3, pp. 359­375, 1991.
+
+                                                                                [10] D. Fudenberg and J. Tirole, "Game theory, 1991," Cambridge, Mas-
+                                                                                      sachusetts, vol. 393, 1991.
+
+                                                                                [11] D. Pozo, E. Sauma, and J. Contreras, "Basic theoretical foundations
+                                                                                      and insights on bilevel models and their applications to power systems,"
+                                                                                      Annals of Operations Research, vol. 254, no. 1-2, pp. 303­334, 2017.
+                                                                                                                                                   12
+
+[12] L. A. Barroso, R. D. Carneiro, S. Granville, M. V. Pereira, and           [35] A. Shapiro, W. Tekaya, J. P. da Costa, and M. P. Soares, "Risk
+      M. Fampa, "Nash equilibrium in strategic bidding: a binary expansion
+      approach," Power Systems, IEEE Transactions on, vol. 21, no. 2, p. 629,  neutral and risk averse stochastic dual dynamic programming method,"
+      2006.
+                                                                               European Journal of Operational Research, vol. 224, no. 2, pp. 375­391,
+[13] S. A. Gabriel, A. J. Conejo, J. D. Fuller, B. F. Hobbs, and C. Ruiz,
+      Complementarity modeling in energy markets, vol. 180. Springer           2013.
+      Science & Business Media, 2012.
+                                                                               [36] B. Rudloff, A. Street, and D. M. Vallada~o, "Time consistency and risk
+[14] J. Bushnell, "A Mixed Complementarity Model of Hydrothermal Elec-
+      tricity Competition in the Western United States," Operations Research,  averse dynamic decision models: Definition, interpretation and practical
+      vol. 51, no. 1, pp. 80­93, 2003.
+                                                                               consequences," European Journal of Operational Research, vol. 234,
+[15] K. C. Almeida and A. J. Conejo, "Medium-Term Power Dispatch
+      in Predominantly Hydro Systems: An Equilibrium Approach," IEEE           no. 3, pp. 743­750, 2014.
+      Transactions on Power Systems, vol. 28, no. 3, pp. 2384­2394, 2013.
+                                                                               [37] O. Dowson, D. P. Morton, and B. K. Pagnoncelli, "Incorporating con-
+[16] Y. Liang, Q. Lin, S. He, Q. Liu, Z. Chen, and X. Liu, "Power Market
+      Equilibrium Analysis with Large-scale Hydropower System Under Un-        vex risk measures into multistage stochastic programming algorithms,"
+      certainty," 2020 IEEE PES Innovative Smart Grid Technologies Europe
+      (ISGT-Europe), vol. 00, pp. 329­333, 2020.                               Annals of Operations Research, pp. 1­25, 2022.
+
+[17] E. Moiseeva and M. R. Hesamzadeh, "Bayesian and Robust Nash               [38] N. Lo¨hndorf and A. Shapiro, "Modeling time-dependent randomness
+      Equilibria in Hydrodominated Systems Under Uncertainty," IEEE Trans-
+      actions on Sustainable Energy, vol. 9, no. 2, pp. 818­830, 2018.         in stochastic dual dynamic programming," European Journal of Opera-
+
+[18] M. Cruz, E. Finardi, V. d. Matos, and J. Luna, "Strategic bidding for     tional Research, vol. 273, no. 2, pp. 650­661, 2019.
+      price-maker producers in predominantly hydroelectric systems," Electric
+      Power Systems Research, vol. 140, pp. 435­444, 2016.                     [39] G. Infanger and D. P. Morton, "Cut sharing for multistage stochastic lin-
+
+[19] T. J. Scott and E. G. Read, "Modelling hydro reservoir operation in       ear programs with interstage dependency," Mathematical Programming,
+      a deregulated electricity market," International Transactions in Opera-
+      tional Research, vol. 3, no. 3-4, pp. 243­253, 1996.                     vol. 75, no. 2, pp. 241­256, 1996.
+
+[20] R. Kelman, L. A. N. Barroso, and M. V. F. Pereira, "Market power          [40] D. Jardim, M. Maceira, and D. Falcao, "Stochastic streamflow model for
+      assessment and mitigation in hydrothermal systems," Power Systems,
+      IEEE Transactions on, vol. 16, no. 3, pp. 354­359, 2001.                 hydroelectric systems using clustering techniques," in 2001 IEEE Porto
+
+[21] J. Villar and H. Rudnick, "Hydrothermal market simulator using game       Power Tech Proceedings, vol. 3, pp. 6­pp, IEEE, 2001.
+      theory: assessment of market power," Power Systems, IEEE Transactions
+      on, vol. 18, no. 1, pp. 91­98, 2003.                                     [41] J. A. Dias, G. Machado, A. Soares, and J. D. Garcia, "Modeling
+
+[22] G. Steeger and S. Rebennack, "Strategic bidding for multiple price-       multiscale variable renewable energy and inflow scenarios in very
+      maker hydroelectric producers," IIE Transactions, vol. 47, no. 9,
+      pp. 1013­1031, 2015.                                                     large regions with nonparametric bayesian networks," arXiv preprint
+
+[23] M. Lo¨schenbrand, W. Wei, and F. Liu, "Hydro-thermal power market         arXiv:2003.04855, 2020.
+      equilibrium with price-making hydropower producers," Energy, vol. 164,
+      pp. 377­389, 2018.                                                       [42] A. W. Rosemberg, A. Street, J. D. Garcia, D. M. Vallada~o, T. Silva, and
+
+[24] B. Flach, L. Barroso, and M. Pereira, "Long-term optimal allocation       O. Dowson, "Assessing the Cost of Network Simplifications in Long-
+      of hydro generation for a price-maker company in a competitive mar-
+      ket: latest developments and a stochastic dual dynamic programming       Term Hydrothermal Dispatch Planning Models," IEEE Transactions on
+      approach," IET generation, transmission & distribution, vol. 4, no. 2,
+      pp. 299­314, 2010.                                                       Sustainable Energy, vol. 13, no. 1, pp. 196­206, 2021.
+
+[25] G. Steeger and S. Rebennack, "Dynamic convexification within nested       [43] S. Debia, P.-O. Pineau, and A. S. Siddiqui, "Strategic storage use
+      Benders decomposition using Lagrangian relaxation: An application
+      to the strategic bidding problem," European Journal of Operational       in a hydro-thermal power system with carbon constraints," Energy
+      Research, vol. 257, no. 2, pp. 669­686, 2017.
+                                                                               Economics, vol. 98, p. 105261, 2021.
+[26] M. Habibian, A. Downward, and G. Zakeri, "Multistage stochastic
+      demand-side management for price-making major consumers of elec-         [44] G. L. M. Fredo, E. C. Finardi, and V. L. de Matos, "Assessing solution
+      tricity in a co-optimized energy and reserve market," European Journal
+      of Operational Research, vol. 280, no. 2, pp. 671­688, 2020.             quality and computational performance in the long-term generation
+
+[27] G. Gross and D. Finlay, "Generation supply bidding in perfectly compet-   scheduling problem considering different hydro production function
+      itive electricity markets," Computational & Mathematical Organization
+      Theory, vol. 6, no. 1, pp. 83­98, 2000.                                  approaches," Renewable energy, vol. 131, pp. 45­54, 2019.
+
+[28] L. Barroso, S. Granville, P. Jackson, M. Pereira, and E. Read, "Overview  [45] P. Lino, L. A. N. Barroso, M. V. Pereira, R. Kelman, and M. H. Fampa,
+      of Virtual Models for Reservoir Management in Competitive Mar-
+      kets," in Proceedings 4th IEEE/Cigre´ International Workshop on Hydro    "Bid-based dispatch of hydrothermal systems in competitive markets,"
+      Scheduling in Competitive Markets, Bergen, Norway, 2012.
+                                                                               Annals of Operations Research, vol. 120, no. 1-4, pp. 81­97, 2003.
+[29] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+      tic medium-term hydrothermal scheduling under spot price uncertainty,"   [46] J. Zou, S. Ahmed, and X. A. Sun, "Stochastic dual dynamic integer
+      in Proceedings of 13th Power Systems Computation Conference, 1999.
+                                                                               programming," Mathematical Programming, vol. 175, no. 1-2, pp. 461­
+[30] B. Fanzeres, A. Street, and D. Pozo, "A Column-and-Constraint Gen-
+      eration Algorithm to Find Nash Equilibrium in Pool-Based Electricity     502, 2019.
+      Markets," Electric Power Systems Research, vol. 189, p. 106806, 2020.
+                                                                               [47] T. Silva, D. Vallada~o, and T. Homem-de Mello, "A data-driven approach
+[31] S. P. Dirkse and M. C. Ferris, "The path solver: a nommonotone sta-
+      bilization scheme for mixed complementarity problems," Optimization      for a class of stochastic dynamic optimization problems," Computational
+      methods and software, vol. 5, no. 2, pp. 123­156, 1995.
+                                                                               Optimization and Applications, vol. 80, pp. 687­729, 2021.
+[32] M. T. Devine and S. Siddiqui, "Strategic investment decisions in an
+      oligopoly with a competitive fringe: An equilibrium problem with         [48] CCEE - Ca^mara de Comercializac¸a~o de Energia Ele´trica,
+      equilibrium constraints approach," European Journal of Operational
+      Research, vol. 306, no. 3, pp. 1473­1494, 2023.                          "Brazilian price formation data set for the Newave model,
+
+[33] A. Hori and M. Fukushima, "Gauss­seidel method for multi-leader­          January 2024," www.ccee.org.br/ documents/ 80415/ 26534941/
+      follower games," Journal of Optimization Theory and Applications,
+      vol. 180, no. 2, pp. 651­670, 2019.                                      DES 202401.zip/ f1eea7e8-2f70-fbc5-830a-8cd1790e6d4b        from
+
+[34] A. Shapiro, "Analysis of stochastic dual dynamic programming method,"     www.ccee.org.br/ acervo-ccee?especie=44884 (visited on Jan 2024).
+      European Journal of Operational Research, vol. 209, no. 1, pp. 63­72,
+      2011.                                                                    [49] J. Bezanson, A. Edelman, S. Karpinski, and V. B. Shah, "Julia: A fresh
+
+                                                                               approach to numerical computing," SIAM review, vol. 59, no. 1, pp. 65­
+
+                                                                               98, 2017.
+
+                                                                               [50] M. Lubin, O. Dowson, J. Dias Garcia, J. Huchette, B. Legat, and J. P.
+
+                                                                               Vielma, "JuMP 1.0: Recent improvements to a modeling language for
+
+                                                                               mathematical optimization," Mathematical Programming Computation,
+
+                                                                               vol. 15, p. 581­589, 2023.
+
+                                                                               [51] FICO, "FICO Xpress Optimizer Reference Manual," 2023.
+
+                                                                               [52] J. H. Roh, M. Shahidehpour, and L. Wu, "Market-based generation and
+
+                                                                               transmission planning with uncertainties," IEEE Transactions on Power
+
+                                                                               Systems, vol. 24, no. 3, pp. 1587­1598, 2009.
+
+                                                                               [53] S. Wogrin, P. Duenas, A. Delgadillo, and J. Reneses, "A new approach
+
+                                                                               to model load levels in electric power systems with high renewable
+
+                                                                               penetration," IEEE Transactions on Power Systems, vol. 29, no. 5,
+
+                                                                               pp. 2210­2218, 2014.
+
+                                                                               [54] E. Faria, L. A. Barroso, R. Kelman, S. Granville, and M. V. Pereira,
+
+                                                                               "Allocation of firm-energy rights among hydro plants: An Aumann­
+
+                                                                               Shapley approach," IEEE Transactions on Power Systems, vol. 24, no. 2,
+
+                                                                               pp. 541­551, 2009.
+
+                                                                               [55] S. Borenstein, J. Bushnell, and C. R. Knittel, "Market power in elec-
+
+                                                                               tricity markets: Beyond concentration measures," The Energy Journal,
+
+                                                                               vol. 20, no. 4, pp. 65­88, 1999.
+
+                                                                               [56] S. Maier, A. Street, and K. McKinnon, "Risk-averse portfolio selection
+
+                                                                               of renewable electricity generator investments in brazil: An optimised
+
+                                                                               multi-market commercialisation strategy," Energy, vol. 115, pp. 1331­
+
+                                                                               1343, 2016.
+

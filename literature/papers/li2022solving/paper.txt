@@ -1,0 +1,844 @@
+                                              TYPE Original Research
+                                              PUBLISHED 11 August 2022
+                                              DOI 10.3389/fenrg.2022.955875
+
+OPEN ACCESS                               Solving stochastic hydro unit
+                                          commitment using benders
+EDITED BY                                 decomposition and modified
+                                          stochastic dual dynamic
+Chun Wei,                                 programming
+Zhejiang University of Technology,
+China                                     Zhuangzhuang Li1, Ping Yang1,2*, Yi Yang1, Guanpeng Lu1 and
+                                          Yufeng Tang1
+REVIEWED BY
+                                          1School of Electric Power Engineering, South China University of Technology, Guangzhou, China,
+Bo Liu,                                   2Guangdong Key Laboratory of Clean Energy Technology, South China University of Technology,
+Kansas State University, United States    Guangzhou, China
+Arild Helseth,
+SINTEF Energy Research, Norway            This paper proposes a stochastic hydro unit commitment (SHUC) model for a price-
+Marko Delimar,                            taker hydropower producer in a liberalized market. The objective is to maximize the
+University of Zagreb, Croatia             total revenue of the hydropower producer, including the immediate revenue, future
+                                          revenue (i.e., opportunity cost), and startup and shutdown cost. The market price
+*CORRESPONDENCE                           uncertainty is taken into account through the scenario tree. The solution of the
+                                          model is a challenging task due to its non-convex and high-dimensional
+Ping Yang,                                characteristics. A solution method based on the Benders Decomposition (BD)
+eppyang@scut.edu.cn                       and Modified Stochastic Dual Dynamic Programming (MSDDP) is proposed to
+                                          solve the problem efficiently. Firstly, the BD is applied to decompose the original
+SPECIALTY SECTION                         problem into a Benders master problem representing the hydro unit commitment
+                                          and a Benders subproblem representing the optimal operation of the hydropower
+This article was submitted to Smart       plants. The Benders subproblem, which contains a large number of integer variables,
+Grids,                                    is further decomposed by the period and solved by the MSDDP proposed in this
+a section of the journal                  paper. Finally, we verify the effectiveness of the SHUC model and the performance
+Frontiers in Energy Research              of the proposed solution method in case studies.
+
+RECEIVED 29 May 2022                      KEYWORDS
+ACCEPTED 04 July 2022
+PUBLISHED 11 August 2022                  hydro unit commitment, hydropower, mixed-integer linear programming, stochastic
+                                          programming, benders decomposition (BD), stochastic dual dynamic programming
+CITATION                                  (SDDP)
+
+Li Z, Yang P, Yang Y, Lu G and Tang Y     1 Introduction
+(2022), Solving stochastic hydro unit
+commitment using benders                      The hydro unit commitment (HUC) problem is a significant operational problem in the
+decomposition and modified stochastic     hydropower system (Li et al., 2014). It is used to determine an optimal commitment schedule of
+dual dynamic programming.                 each unit in the hydropower plant for the next day or week while considering various physical
+Front. Energy Res. 10:955875.             constraints, such as water balance and minimum up and down time (Nazari-Heris et al., 2017;
+doi: 10.3389/fenrg.2022.955875            Ackooij et al., 2021; Amani and Alizadeh, 2021). Due to its non-convex and high-dimensional
+                                          characteristics, the HUC problem has always been a challenging task (Cheng et al., 2016;
+COPYRIGHT                                 Ackooij et al., 2018).
+
+© 2022 Li, Yang, Yang, Lu and Tang. This
+is an open-access article distributed
+under the terms of the Creative
+Commons Attribution License (CC BY).
+The use, distribution or reproduction in
+other forums is permitted, provided the
+original author(s) and the copyright
+owner(s) are credited and that the
+original publication in this journal is
+cited, in accordance with accepted
+academic practice. No use, distribution
+or reproduction is permitted which does
+not comply with these terms.
+
+Frontiers in Energy Research              01  frontiersin.org
+Li et al.                                                                  10.3389/fenrg.2022.955875
+
+     FIGURE 1                                                                   FIGURE 2
+     The complete scenario tree.                                                The flow chart of the LAPCP algorithm for solving the
+                                                                                problem (39).
+    Due to the potential benefits of the HUC problem, a variety of
+research has been proposed on the HUC problem over the last                generation (Kelman et al., 1998). The future revenue represents
+few decades, mainly focused on the modeling and solution                   the economic value of the water stored in the reservoir. To
+methods (Parvez et al., 2019; Kong et al., 2020). Much                     maximize the total revenue, the HUC schedule needs to make a
+literature takes water consumption minimization as the                     trade-off between the immediate revenue and future revenue
+optimization objective (Li et al., 2014; Cheng et al., 2016;               (i.e., opportunity cost). A coordinated scheduling method of the
+Nazari-Heris et al., 2017; Ackooij et al., 2018; Ackooij et al.,           wind-hydro system was proposed in (Abreu et al., 2012). The
+2021; Amani and Alizadeh, 2021), and most of the existing                  scheduling method was formulated as a stochastic price-based
+models are deterministic (Li et al., 2014; Cheng et al., 2016;             unit commitment model, which maximizes the immediate
+Nazari-Heris et al., 2017; Ackooij et al., 2018; Parvez et al., 2019;      revenue of the generation company. Literature (Pérez-Díaz
+Kong et al., 2020; Thaeer Hammid et al., 2020; Ackooij et al.,             et al., 2010) proposed a dynamic programming model to solve
+2021; Amani and Alizadeh, 2021). In a liberalized market, a                the short-term scheduling problem of a hydropower plant that
+hydropower producer is usually an entity owning hydropower                 participates in a liberalized market with the objective of
+units and participating in the electricity market with the objective       maximizing the immediate revenue. The calculation method
+of maximizing its total revenue. The hydropower producer                   of the future revenue was firstly proposed in (Kelman et al.,
+obtains the power generation right and gains profit by                     1998). In the paper, the Stochastic dynamic programming (SDP)
+submitting bidding to the independent system operator (ISO).               was applied to calculate the future revenue of a hydrothermal
+The ISO is responsible for market clearing and calculating the             system in the liberalized market. However, the curse of
+electricity price at each time. Therefore, the uncertainty of the          dimensionality of the SDP limited the further application.
+market price has a significant impact on the HUC schedule (Wei             Then Stochastic dual dynamic programming (SDDP)
+et al., 2021; Xiao et al., 2021). On the other hand, due to the            proposed in (Pereira and Pinto, 1991) was applied in (Kelman
+existence of the reservoir, the hydropower producer can release            et al., 1998; Pereira et al., 1999; Barroso et al., 2002; Helseth et al.,
+water at the current stage (which gains immediate revenue) or at           2016) to calculate the future revenue in a large hydropower
+a certain stage in the future (which gains future revenue). That is,       system. To the best of our knowledge, none of the existing
+the immediate revenue represents the revenue that the                      literature on HUC has taken the future revenue into account.
+hydropower producer obtains in the current stage by power
+                                                                               Due to the nature of non-convexity, the solution of the HUC
+                                                                           problem has always been a difficulty. Researchers have developed
+                                                                           various solution methods to solve it efficiently (Parvez et al.,
+                                                                           2019; Kong et al., 2020; Thaeer Hammid et al., 2020).
+
+Frontiers in Energy Research                                           02  frontiersin.org
+Li et al.                                                          10.3389/fenrg.2022.955875
+
+TABLE 1 The flow chart of the MSDDP algorithm.                     typical non-convex optimization problem. To tackle this
+                                                                   difficulty, the McCormick envelope was used by (Cerisola
+Conventional methods based on mathematical programming             et al., 2012) to approximate the bilinear relationship between
+primarily include mixed-integer linear programming (MILP)          variables. Literature (Steeger and Rebennack, 2017) proposed a
+(Diniz and Maceira, 2008; Tong et al., 2013; Guisández and         Lagrangian relaxation of the non-convex SDDP subproblem,
+Pérez-Díaz, 2021), non-linear programming (NLP) (Lima et al.,      and then Lagrange multipliers instead of dual multipliers were
+2013), mixed-integer quadratic programming (MIQP) (Finardi         used to construct valid FCF. Recently, literature (Zou et al.,
+and da Silva, 2006), and dynamic programming (DP) (Seguin          2019) proposed a Stochastic Dual Dynamic integer
+et al., 2016). Heuristic algorithms such as artificial neural      Programming (SDDiP) algorithm for solving multi-stage
+networks (ANN) (Naresh and Sharma, 2000), genetic                  stochastic integer programming problems with binary state
+algorithm (GA) (Ahmed and Sarma, 2005), and differential           variables. However, SDDiP has to solve a Lagrangian dual
+evolutionary (DE) (Zha ng et al., 2013) were also reported.        problem at each stage. It is well known that the convergence
+We refer to (Parvez et al., 2019; Kong et al., 2020; Thaeer        of the Lagrangian dual problem can be very slow. A novel type
+Hammid et al., 2020) for more solution methods on the HUC          of cut called locally valid cut was proposed by (Abgottspon
+problem. Recently, decomposition methods, including dual           et al., 2014) and introduced to the SDDP framework to enhance
+decomposition (Finardi and da Silva, 2006), Benders                a convexified approximation of the FCF. The above references
+Decomposition (BD) (Benders, 2005; Moiseeva and Hesam              propose different approaches to deal with non-convexity in the
+zadeh, 2017; Colonetti and Finardi, 2021), and SDDP                SDDP subproblem. The ultimate purpose of these approaches is
+(Helseth et al., 2016; Hjelmeland et al., 2019) have gained        to construct a valid and tight FCF.
+more and more attention in the hydropower generation
+scheduling problems due to their good computational                    The contributions of this paper are listed as follows.
+performance. SDDP is a state-of-the-art algorithm for long-
+and medium-term hydropower scheduling problems                     1) A stochastic hydro unit commitment (SHUC) model is
+(Hjelmeland et al., 2019). However, SDDP uses the dual                 proposed, which aims to maximize the hydropower
+solution to construct the future cost function (FCF), so it            producer's total revenue. The opportunity cost and the
+cannot be used to solve MILP problems (Hjelmeland et al.,              market price uncertainty are taken into account.
+2019). The optimal operation of the hydropower plant is a
+                                                                   2) A solution method, which decomposes the SHUC problem
+                                                                       into two layers, is proposed based on the framework of
+                                                                       Benders Decomposition. The outer layer is the Benders
+                                                                       master problem, which is used to determine each unit's
+                                                                       startup and shutdown status. The inner layer Benders
+                                                                       subproblem is used to determine the optimal operation of
+                                                                       the hydropower plants.
+
+                                                                   3) To efficiently solve the large-scale mixed-integer Benders
+                                                                       subproblem, a modified stochastic dual dynamic
+                                                                       programming (MSDDP) is proposed based on the Lift-
+                                                                       and-Project cutting plane (LAPCP) algorithm.
+
+                                                                       The rest of the paper is organized as follows. Section 2
+                                                                   proposes the SHUC model. Section 3 proposes the solution
+                                                                   method of the SHUC model. In Section 4, we verify the
+                                                                   effectiveness of the SHUC model and the computational
+                                                                   performance of the solution method in case studies. Finally,
+                                                                   Section 5 concludes this paper.
+
+                                                                   2 Stochastic unit commitment model
+
+                                                                   2.1 Objective function
+
+                                                                       In a liberalized market, the objective of the SHUC model is
+                                                                   to maximize the total revenue, which can be shown in
+                                                                   (Eqs 1­4):
+
+Frontiers in Energy Research                                   03  frontiersin.org
+Li et al.                                                                                                10.3389/fenrg.2022.955875
+
+FIGURE 3
+The flow chart of the proposed solution method to solve the problem (1)­(25).
+
+              max F Rim + Rfut - C                         (1)      water stored in the reservoirs. It is expressed as a function of
+                                                                    the reservoir volumes. SUk,j and SDk,j represent the startup
+                              T K Jk                                and shutdown cost of unit j in plant k, respectively. zut,k,j is a
+                                                                    binary variable that is equal to 1 if unit j is started up and
+              Rim                         t Pt,k,j         (2)      zdt,k,j is a binary variable that is equal to 1 if unit j is
+                                                                    shut down.
+                              t 1k 1 j 1
+
+                              K
+
+              Rfut               k vT,k                    (3)
+
+                              k1
+
+              T K Jk
+
+           C                  SUk,jzut,k,j + SDk,jzdt,k,j  (4)
+
+              t 1k 1 j 1                                            2.2 Constraints
+
+Where Rim, Rfut, and C represent the immediate revenue,             1) Water balance constraint
+future revenue, and the sum of the startup and shutdown
+cost, respectively. T, K, and Jk represent the number of            vt,k vt-1,k + 3600t - qt,k + It,k +       qt-,k, t, k (5)
+periods, hydropower plants, and units in plant k,
+respectively. We use t to denote the random variable of                                                  k k
+market price at period t. Pt,k,j represents the power output
+of unit j in plant k. k represents the piecewise linear                 Constraint (Eq. 5) represents the water balance equation
+approximation of the future revenue (Moiseeva and Hesam             between two consecutive periods. Where vt,k, qt,k and It,k
+zadeh, 2017), which represents the opportunity cost of the          represent the reservoir volume, water release, and inflow,
+                                                                    respectively. t represents the number of hours in one period.
+
+Frontiers in Energy Research                                    04                                            frontiersin.org
+Li et al.                                                                                                              10.3389/fenrg.2022.955875
+
+TABLE 2 Technical parameters of the hydropower plants.                          TABLE 3 The parameters of the future revenue constraints.
+
+Parameters                    Plant Xi                     Plant Xiang          w  w.k                                                     w × 109
+
+Vmax (m3 × 108)               115.0                        49.5                    Plant Xi                    Plant Xiang
+Vmin (m3 × 108)               51.1                         40.7
+Pmax (MW)                     12,600                       6,000                1  0.0273                      0.0148                      -2.4195
+Pmin (MW)                     0                            0                                                   0.0118                      -1.6123
+Umax (m³/s)                   7,450                        6,704                2  0.0197                      0.0081                      -1.0322
+Umin (m³/s)                   0                            0
+Units                         18                           8                    3  0.0137
+
+k is the set of hydropower plants which are located upstream of                    FIGURE 4
+the plant k.  represents the water delay time between two                          The procedure of the scenario tree generation.
+adjacent plants.
+
+2) Water release, water discharge and spillage
+
+                       qt,k ut,k + spt,k, t, k                    (6)
+
+                              Jk
+
+                       ut,k       rt,k,j, t, k                    (7)           ht,k,j represent the penstock loss and net head of the unit j in plant
+                                                                                k, respectively.
+                              j1
+
+                 0  rt,k,j  zt,k,jRkm,jax, t, k, j                (8)
+
+    Constraint (Eq. 6) defines the relationship between water                   4) Future revenue constraints
+
+release, water discharge, and spillage. Constraint (Eq. 7) gives the                         K
+expression of the water discharge. Constraint (Eq. 8) defines the
+                                                                                   k  w,kvT,k + w, w  , k                                  (14)
+upper and lower bounds on unit discharge. Where ut,k and spt,k
+represent the water discharge and spillage, respectively. rt,k,j                           k1
+represents the water discharge of unit j in plant k. zt,k,j is a
+binary variable that is equal to 1 if unit j is online. Umk,jax represents          Constraint (Eq. 14) defines the future revenue of the
+the maximum of the water discharge of unit j.                                   hydropower producer. Where w,k and w denote the slope
+                                                                                and intercept of the future revenue, respectively. vT,k
+3) Fore-bay level, tail-race level, penstock loss, and net head                 represents the reservoir volume at period T.  represents the
+                                                                                set of the slope index. The future revenue is expressed as a
+                       hut,k fuk vt,k , t, k                      (9)           piecewise linear function of the reservoir volume. It can be
+                                                                                obtained by the medium-term scheduling using SDDP. We
+                       vt-1,k + vt,k, t{2, . . . , 24}, k                       refer to (Kelman et al., 1998) for more details.
+                            2
+                 vt,k                                             (10)
+
+                       hdt,k fdk qt,k , t, k                      (11)          5) Hydropower generation function
+
+                 hlt,k,j flk,j rt,k,j , t, k, j                   (12)             Pt,k,j fpk.j rt,k,j, ht,k,j, k,j , t, k, j              (15)
+
+            ht,k,j hut,k - hdt,k - hlt,k,j, t, k, j               (13)             k,j fek,j rt,k,j, ht,k,j , t, k, j                      (16)
+
+                                                                                        0  Pt,k,j  zt,k,jPkm,jax, t, k, j                  (17)
+
+    The fore-bay level is formulated as a non-linear function of                    The hydropower generation function is a non-linear
+the reservoir volume (Li et al., 2014), as shown in (Eq. 9).                    function of the unit discharge, generation efficiency, and net
+Constraint (Eq. 10) defines the medium volume as the average                    head (Cheng et al., 2016), as shown in (Eq. 15). The generation
+reservoir volume in two consecutive periods (Pereira et al., 2017).             efficiency of the hydro unit is a non-linear function of the unit
+The tail-race level is formulated as a nonlinear function of the                discharge and net head (Cheng et al., 2016), as defined in (Eq.
+water release (Li et al., 2014), as given in (Eq. 11). Constraint (Eq.          16). Where k,j represents the generation efficiency of the unit j.
+12) gives the relationship between the penstock loss and unit                   The non-linear relationships in (Eqs 9, 11, 12, 15, 16) can be
+discharge (Cheng et al., 2016). Constraint (Eq. 13) defines the                 linearized using the method proposed in (Guisández and Pérez-
+expression of the net head. Where hut,k and hdt,k represent the                 Díaz, 2021).
+fore-bay and tail-race levels of plant k, respectively. hlt,k,j and
+
+Frontiers in Energy Research                                                05                                                     frontiersin.org
+Li et al.                                                                                     10.3389/fenrg.2022.955875
+
+TABLE 4 The problem scale of the BMP, BSP, and SHUC model.             # Of binary variables  # Of binary constraints
+
+                                 # Of variables                        1,872                  4,368
+                                                                       8.47 × 1011            1.72 × 1012
+BMP                           2,496                                    8.47 × 1011            1.72 × 1012
+BSP                           2.34 × 1012
+SHUC                          2.34 × 1012
+
+TABLE 5 The comparison of the solution results between CPLEX and           and DT represent the minimum online and offline time of
+the proposed method.                                                       the unit, respectively. ZU and ZD represent the number of
+                                                                           the startup and shutdown of the unit, respectively.
+Term                                       CPLEX         Proposed
+                                                                           3 Solution method
+Immediate revenue ($ × 106)                7.4522        7.4515
+Future revenue ($ × 108)                   2.8176        2.8184                The SHUC model proposed in Section 2 contains a large
+ST and SD cost ($ × 104)                   1.8223        1.8223            number of integer variables. The solution time increases
+Total revenue ($ × 108)                    2.8842        2.8849            exponentially when the number of scenarios increases.
+Total release of plant Xi (m3 × 107)       3.7291        3.7293            SDDP is an efficient decomposition algorithm for solving
+Total release of plant Xiang (m3 × 107)    4.2728        4.2726            multi-stage stochastic programming problems. However, the
+Solution time (s)                          541           61                multiperiod coupling constraints (Eqs 22­25) and integer
+                                                                           variables make the SDDP algorithm unable to be applied
+7) Forbidden operation zones                                               directly.
+
+           Pt,k,j - Fk,j - Pk,j 1 - zot,k,j  0, t, k, j          (18)          This section proposes a two-layer decomposition solution
+                                                                           method based on the BD and MSDDP. We first use the BD to
+           Pt,k,j - Fk,j 1 - zot,k,j  0, t, k, j                 (19)      deal with multiperiod coupling constraints. The original
+                                                                           problem (Eqs 1­25) is decomposed into a Benders master
+    Constraints (Eq. 18) and (Eq. 19) define the constraints of            problem (BMP) [as shown in (Eqs 26­28)] and a Benders
+                                                                           subproblem (BSP) [as shown in (Eqs 29­34)]. Then, the BSP
+the forbidden operation zones on the hydro unit. Where                     is further decomposed according to the period and solved by
+[Fk,j, Fk,j] is the forbidden power output of unit j. zot,k,j is           the MSDDP algorithm proposed in Section 3.2. In each
+a binary variable that is equal to 1 if 0  Pt,k,j  Fk,j and                iteration, the BMP provides the startup and shutdown
+0 if Fk,j  Pt,k,j  Pk,j.                                                   statuses for the BSP, while the BSP decides the optimal
+                                                                           operation schedule of each unit and feeds back the
+6) Logical constraints                                                     parameters used to construct the Benders cut.
+
+           zt,k,j - zt-1,k,j zut,k,j - zdt,k,j, t, k, j          (20)          The solution method proposed in this section is conceptually
+                                                                           similar to the work proposed in (Helseth et al., 2018), the
+           zut,k,j + zdt,k,j  1, t, k, j                         (21)      differences between the two methods are listed as follows. 1)
+                                                                           The binary variables related to the water level constraints are
+                        t+UT-1                                             included in the BSP to provide information for the optimization
+                                                                           of the BSP. Therefore, the BSP is formulated as a MILP problem,
+           zut,k,j +            zdt,k,j  1, t, k, j              (22)      which cannot be solved by the SDDP. That is, the solution
+                                                                           method proposed in (Helseth et al., 2018) will no longer work
+                         t+1                                               here. 2) The proposed method solves the BSP to optimal in each
+                                                                           iteration of the BD algorithm. Therefore, the cut generated by the
+                        t+DT-1                                             BSP is tighter than the method in (Helseth et al., 2018), which
+                                                                           leads to a shorter solution time.
+           zdt,k,j +            zut,k,j  1, t, k, j              (23)
+                                                                               To avoid confusion, the cut provided for the BMP is called
+                         t+1                                               Benders cut, as shown in (Eq. 27). The cut generated in the
+                                                                           backward iteration of the MSDDP is called MSDDP cut, as
+           T                                                               shown in.
+
+               zut,k,j  ZU, t, k, j                              (24)
+
+           t1
+
+           T
+
+               zdt,k,j  ZD, t, k, j                              (25)
+
+           t1
+
+    Constraints (Eq. 20) and (Eq. 21) define the startup and
+shutdown statuses of the unit j. Constraints (Eq. 22) and
+(Eq. 23) guarantee the minimum online/offline time of the
+unit j. Constraints (Eq. 24) and (Eq. 25) limit the maximum
+numbers of startup and shutdown, respectively. Where UT
+
+Frontiers in Energy Research                                           06                     frontiersin.org
+Li et al.                                                                                                                      10.3389/fenrg.2022.955875
+
+FIGURE 5
+The startup and shutdown status of units in the two plants.
+
+3.1 The outer layer BD algorithm                                                             0  Pt,k,j  mt,k,jPkm,jax, t, k, j                               (33)
+
+    The BMP is shown in (Eqs 26­28):                                                                  mt,k,j  [0, 1], t, k, j                                (34)
+
+                             T  K  Jk  SUk,jzut,k,j + SDk,jzdt,k,j             Where z~t,k,j represents the unit startup/shutdown status
+                                                                               determined in the BMP. t,k,j represents the dual variable of
+           max -                                                     (26)      the corresponding constraint.
+                                                                     (27)
+           t 1k 1 j 1                                                (28)
+
+                                   T K Jk
+
+                  -                            t,k,jzt,k,j  l                  3.2 The inner layer MSDDP algorithm
+
+                                   t 1k 1 j 1
+
+                                   (20) - (25)                                 We denote the stochastic process of market price by
+
+Where  is a continuous variable representing the objective value               (1, . . . , T), with 1 being deterministic. We assume the
+of the inner layer BSP. t,k,j and l represent the slope and                    stochastic process (1, . . . , T) is stagewise independent. This
+intercept of the Benders cut, respectively. The calculation of
+t,k,j and l are discussed in Section 3.2.                                      allows cut sharing between different MSDDP subproblems
+
+    The BSP is shown in (Eqs 29­34):                                           (Hjelmeland et al., 2019). The stochastic process can be discretized
+
+                                                                               to a scenario tree, in which the realizations in each period are finite, as
+
+                                T K Jk             K                           shown in Figure 1. The number of scenarios in the complete scenario
+
+           max R                            tPt,k,j + k vT,k         (29)      tree is N  T  2 Nt  .  Nt  is  the  number  of  realizations  at  period  t.  This
+                                                                                          t
+
+                                t 1k 1 j 1         k1                          results in replacing the BSP (Eqs 29­34) with the sample average
+
+                                       (5) - (19)                    (30)      approximation (SAA) problem (Birge and Louveaux, 2011), which
+
+           mt,k,j z~t,k,j: t,k,j , t, k, j                           (31)      can be solved by the MSDDP algorithm proposed in this section.
+
+           0  rt,k,j  mt,k,jUkm,jax, t, k, j                                   The main idea of the MSDDP contains four parts:
+
+                                                                     (32)      convergence criterion, sampling, forward iteration, and
+
+Frontiers in Energy Research                                               07                                                                    frontiersin.org
+Li et al.                                                                                                                               10.3389/fenrg.2022.955875
+
+                                                                              t xt,s              max cTt+1,sxt+1,s + dTt+1,syt+1,s + t+1 xt+1,s
+                                                                                                  s.t. Bt+1,sxt,s + At+1,sxt+1,s
+                                                                                                  +Ct+1,syt+1,s  bt+1,s xt,s, xt+1,s              {0, 1}n  (36)
+
+                                                                          Where s is the scenario index. xt,s and yt,s represent the integer
+                                                                          variable and continuous variable, respectively. t(xt,s) is the future
+                                                                          revenue of the tth stage problem. The feasible set of the problem
+
+                                                                          (Eq. 35) is represented as Mt. The linear relaxation of Mt is Yt.
+                                                                              The convex hull of the feasible set of (Eq. 35) can be stated as
+
+                                                                          Dt  conv   xt-1,s, xt,s, yt,s : Bt,sxt-1,s + At,sxt,s + Ct,syt,s  bt,s,
+                                                                                    xt-1,s, xt,s  {0, 1}n
+
+FIGURE 6                                                                                                                                                   (37)
+The power output of the two plants.
+
+                                                                              According to (Balas, 2011), the optimal solution of (Eq. 38)
+                                                                          solves (Eq. 35).
+
+                                                                                                  max cTt,sxt,s + dTt,syt,s + t xt,s                       (38)
+                                                                                                  s.t. xt-1,s, xt,s, yt,s  Dt
+
+FIGURE 7                                                                      However, the exact expression of Dt is extremely difficult to
+The evolution of the reservoir volume of two plants.                      obtain due to the exponential dimensions of the problem (Balas,
+                                                                          2011). The LAPCP algorithm is an exact algorithm for solving the
+                                                                          MILP problem (Balas et al., 1993). The main idea of LAPCP is to solve
+                                                                          the LP relaxation of the original mixed-integer problem (Eq. 35). In
+                                                                          each iteration, a Lift-and-Project cut (LPA cut), which cuts off part of
+                                                                          Yt, but no point of Mt, is generated and added to the LP relaxation
+                                                                          problem to approximate Dt. The virtue of the LAPCP algorithm
+                                                                          allows us to solve (Eq. 35) through the corresponding LP relaxation
+                                                                          problem (Eq. 39) in a sequential manner. The flow chart of the
+                                                                          LAPCP algorithm for solving the problem (Eq. 39) is shown in
+                                                                          Figure 2.
+
+backward iteration. The first three parts is similar to the                   max  ctT,s xt,s  +  dTt,s yt,s  +    i   xt,s
+well-known SDDP. For more details, we refer to (Shapiro,                                                           t
+2011).                                                                        s.t. At,sxt,s + Ct,syt,s  bt,s - Bt,sx^t-1,s
+                                                                                                                                                         t,s,1
+    In the backward iteration of the classical SDDP algorithm,                     it,sxt,s + ti,syt,s  ti,s - ti,sx^t-1,s, i              1, . . . , I  it,s,2
+the SDDP cuts are generated using the dual variables of the
+state transition equation (Pereira and Pinto, 1991; Shapiro,                       xt,s  [0, 1]                                                               (39)
+2011). However, the information of dual variables is
+unavailable due to the existence of integer variables in (Eq.             Where x^t-1,s is the trial value provided by the forward iteration of
+30). Inspired by (Balas et al., 1993; Balas et al., 1996), the Lift-      the MSDDP. ti,s, ti,s, ti,s and it,s are parameters of the LAP cut.
+and-Project cutting plane algorithm (LAPCP) is developed                  t,s,1 and t,s,2 are dual variables of the corresponding constraints.
+here to solve the mixed-integer BSP problem through its LP                I represents the number of the LAP cuts.
+relaxation at each stage. Lift-and-Project cuts are sequentially
+added to the LP relaxation problem to ensure its optimal                      The parameters of the LAP cut can be obtained by solving
+solution is the same as the original mixed-integer problem.
+Finally, the MSDDP cut is generated using the dual solution               (Eq. 40) (Balas et al., 1993).
+of the linear relaxation problem.
+                                                                                               min it,sx^it-1,s + it,sx^it,s + ti,sy^ti,s - ti,s
+    For ease of presentation, the general mathematical form of                                 s.t. it,s - u1t,sBt,s  0
+the BSP at tth stage can be stated as                                                               i         u0t,s e     ut1,s Wt,s
+                                                                                                    t,s  -             -                0
+
+                                                                                                  it,s - v1t,sBt,s  0                                      (40)
+                                                                                                    i         v0t,s e     v1t,s Wt,s
+                                                                                                    t,s  -             -                0
+
+                                                                                                  -ti,s + v1t,sbt,s + v0t,s  0
+                                                                                                  ut1,se + ut0,s + v1t,se + v0t,s 1
+                                                                                                  ut0,s, u1t,s, vt0,s, v1t,s  0
+
+           max cTt,sxt,s + dTt,syt,s + t xt,s           (35)              Where Wt,s [At,s, Ct,s]. ut1,s and v1t,s are vectors. ut0,s and v0t,s are
+           s.t. Bt,sxt-1,s + At,sxt,s + Ct,syt,s  bt,s                    scalars. e is a compatible vector of ones.
+
+               xt-1,s, xt,s  {0, 1}n
+
+Frontiers in Energy Research                                          08                                                                          frontiersin.org
+Li et al.                                                                                  10.3389/fenrg.2022.955875
+
+FIGURE 8
+The convergence process of the BD algorithm (A) and the MSDDP algorithm in the fourth iteration of the BD algorithm (B).
+
+TABLE 6 The comparison of the solution results between CBD and the                         Xiluodu and Xiangjiaba hydropower system (in Sections
+proposed method.                                                                           4.2.1­4.2.3) and a bigger hydropower system (in Section
+                                                                                           4.2.4) reported in (Conejo et al., 2002).
+Term                             CBD                                Proposed
+                                                                                               The Xiluodu and Xiangjiaba hydropower system, which
+Total revenue ($ × 108)          2.8036                             2.9204                 includes two hydropower plants (hereinafter referred to as
+Solution time (s)                3,600                              2,123                  plant Xi and plant Xiang), is located on the Yangtze River,
+Number of iterations             25                                 9                      Sichuan Province, in southwestern China. The Xiluodu plant is
+Final gap (%)                    3.16                               0.0093                 the third-largest hydropower plant in the world. It is an annual
+                                                                                           regulation plant that contains 18 large-size units with a total
+    The proposed MSDDP algorithm is shown in Table 1. Given                                capacity of 12,600 MW. The Xiangjiaba plant, which is located
+x^t-1,s, (Eq. 39) is a LP problem, which indicates that the MSDDP cut                      downstream of the Xiluodu plant, includes 8 units with a total
+can be obtained by solving the corresponding LP dual problem.                              capacity of 6,000 MW (Peng et al., 2015). The main technical
+Therefore, the MSDDP cut of the t-1 stage problem can be generated                         parameters of the two plants are shown in Table 2. For
+according to (Eq. 41).                                                                     simplicity, the number of startup and shutdown of the unit
+                                                                                           is two, and the minimum startup and shutdown time is assumed
+t-1          1   Nt       bt,s - Bt,sxt-1,s          I           it,s - ti,sxt-1,s         to be 4 h. The forbidden operation zones of the units are
+             Nt                                                                  (41)      assumed to be [0, 0.2Pmax]. The start-up and shutdown costs
+                   t,s,1                        + ti,s,2                                   are 300 $/time and 100 $/time, respectively. The convergence
+                                                                                           tolerance of the outer layer BD algorithm is set as 0.01%. The
+                 s1                                 i1                                     parameters of the future revenue constraints (Eq. 14) are shown
+                                                                                           in Table 3. The initial reservoir volumes are 69.0e8 m³ and
+When the BSM (i.e., the MSDDP algorithm) converges, the                                    45.0e8 m³, respectively. It should be noted that the termination
+                                                                                           volumes of the two reservoirs are not set. In Section 4.2.2, we
+Benders cut can be calculated, as shown in (Eq. 27). The                                   show that due to the existence of the future revenue constraints
+                                                                                           (Eq. 14), the plants terminated discharging at optimal volumes,
+calculation of t,k,j and l are shown as follows:                                           at which the total revenue of the hydropower producer is
+                                                                                           maximized.
+                  t,k,j   1      Nt             t,  k,           j          (42)
+                          Nt                                                                   The generation of the scenario tree includes three steps
+                                     t,k,j,s ,                                             (Heitsch and Römisch, 2003), as shown in Figure 4. 1) Price
+                                                                                           forecast. The market price is forecasted using the autoregressive
+                                 s1                                                        moving average (ARMA) model. 2) Probability distribution
+                                                                                           estimation. The Pearson 3 distribution is used for probability
+                                 T K Jk                                                    distribution estimation of the forecast error. The parameter of the
+                                                                                           probability density function (pdf) of the Pearson 3 distribution is
+                         l R1 -                  t,k,j z~tB,k,j             (43)           estimated using the historical day-ahead market price of Sichuan
+                                                                                           Province. 3) Scenario generation. The Monte Carlo sampling
+                                 t 1k 1 j 1                                                method is used to generate discretized scenarios from the forecast
+                                                                                           price and pdf.
+Where R1 represents the optimal value of the inner layer problem
+at the first stage. To sum up, the flow chart of the proposed solution
+method to solve the problem (Eqs 1­25) is shown in Figure 3.
+
+4 Case study
+
+4.1 Basic data
+
+    To verify the effectiveness of the proposed SHUC model
+and solution method. Two realistic case studies are used: the
+
+Frontiers in Energy Research                                                           09                                 frontiersin.org
+Li et al.                                                                                                 10.3389/fenrg.2022.955875
+
+FIGURE 9
+The total revenue ratios in different termination volumes to the value in Table 4: (A) the termination volume of plant Xiang is 44.95e8 m³, and (B)
+the termination volume of plant Xi is 68.847e8 m³.
+
+TABLE 7 Comparison of solution results under different confidence levels.
+
+Confidence level              Gap (%)  Iter                             Time/iter (s)  Solution time (s)  Total revenue
+                                                                                                          ($ × 108)
+97.5%                         0.099    14                               180            2,502
+95%                           0.097                                                    2,123              2.9198
+90%                           0.096    9                                236            2,710              2.9204
+67%                           0.091                                                    3,237              2.9206
+                                       7                                387                               2.9206
+
+                                       4                                809
+
+    A time horizon of 1 day is considered with hourly time steps.            Where UBDDP and LBDDP are the upper and lower bound of the
+Three price nodes are considered at each period, with a total of             DDP algorithm, respectively.
+323 scenarios in the complete scenario tree. The problem scale of
+the proposed SHUC model in the complete scenario tree is                         We apply the CPLEX to solve the deterministic model
+shown in Table 4.                                                            directly (no decomposition method is used) and compare it
+                                                                             with the proposed solution method. The comparison results
+    The simulation program was run on a personal computer                    are shown in Table 5. It can be seen that the relative error
+with an Intel i7-7900K processor, 3.30 GHz, and 16GB RAM.                    between the two methods is less than 0.001%. The solution time
+The commercial solver, CPLEX 12.9 under Python environment,                  of the CPLEX is 8.8 times that of the proposed method, which
+was called to solve the model.                                               shows the advantage of the proposed solution method.
+
+4.2 Results                                                                      Figure 5 lists the startup and shutdown status of all units
+                                                                             in the two plants. Due to the constraints (Eqs 22­25), the
+4.2.1 Deterministic case                                                     number of startup and shutdown and the online/offline time
+                                                                             of all units satisfy the pre-set data.
+    We first apply our solution method in a deterministic unit
+commitment model to verify our code. In the deterministic case,                  Figure 6 shows the 24-hour power generation schedule of two
+the uncertainty of the market price is not considered, i.e., only one        plants. Figure 7 shows the evolution of the reservoir volumes. The
+price scenario (the forecast price) is input to the unit commitment          termination volumes of the two reservoirs are 68.847e8 m³ and
+model. Therefore, the inner layer algorithm is actually a dual dynamic       44.95e8 m³, respectively. During the low price period, the
+integer programming (DDP) algorithm (Pereira and Pinto, 1991).               reservoir volume of plant Xi increased by 3.07e6 m³, which
+Therefore, the convergence criterion needs to be modified. Here, the         indicates that the discharge is less than the inflow. Using the
+gap between the upper and lower bound () is set as the convergence           water storage during these periods can lift the water head and
+criterion, as shown in (Eq. 44). The convergence tolerance of the            improve the power generation efficiency.
+DDP algorithm is set as 0.01%.
+                                                                             4.2.2 Stochastic case
+                   UBDDP - LBDDP             (44)
+                              LBDDP                                              In the stochastic case, the scenario tree generated in Section
+                                                                             4.1 is input to the SHUC model. A set of 500 scenarios is sampled
+                                                                             from the complete scenario tree in the forward iteration of the
+                                                                             MSDDP algorithm. As in (Pereira and Pinto, 1991), the
+
+Frontiers in Energy Research                                            10                                frontiersin.org
+Li et al.                                                            10.3389/fenrg.2022.955875
+
+                                                                     the fourth iteration of the BD algorithm. The MSDDP algorithm
+                                                                     converges to the 95% confidence interval after 31 iterations.
+
+                                                                         We then apply the classical Benders Decomposition
+                                                                     (CBD) algorithm (Benders, 2005) to solve the SHUC model
+                                                                     and compare it with the proposed solution method. The
+                                                                     running time is limited to 3 h. The comparison of the
+                                                                     solution results is shown in Table 6. The total revenue of
+                                                                     the two methods is 2.8036 × 108$ and 2.9204 × 108$,
+                                                                     respectively. The revenue of the proposed method is 4%
+                                                                     higher than the CBD algorithm. In terms of computational
+                                                                     performance, the CBD goes through 25 iterations and finally
+                                                                     does not converge to the pre-set tolerance (0.01%). The final
+                                                                     gap of the CBD is 3.16%. When using the CBD algorithm to
+                                                                     solve the SHUC model, the integer variables must be stored in
+                                                                     the master problem, resulting in the loss of effective
+                                                                     information related to the optimization direction of the
+                                                                     discrete variables. It can only rely on the dual information
+                                                                     provided by the subproblem to assist in the optimization of the
+                                                                     mater problem. Therefore, more solution time is needed.
+
+                                                                         The value of the stochastic solution (VSS) (Heitsch and
+                                                                     Römisch, 2003) is an index used to test the quality of the
+                                                                     solution of the stochastic programming problem, as shown in
+                                                                     (Eq. 45).
+
+                                                                     VSS RP - EEV  (45)
+
+     FIGURE 10                                                       Where RP represents the optimal value of the stochastic case,
+     The topology of the hydropower system in (Conejo et al.,        which is equal to the weighted average of the objective value of all
+     2002).                                                          scenarios. EEV represents the optimal value of the
+                                                                     deterministic case.
+algorithm stops when the upper bound is within the 95%
+confidence interval of the lower bound.                                  Compared with the deterministic case, the total revenue
+                                                                     of the stochastic case increases by 6.5902 × 106$, accounting
+    The program runs for 2,123 s. Figure 8A shows the upper and      for 2.3% of the total revenue. That is, the value of VSS is
+lower bounds of the outer layer BD algorithm. The final gap          6.5902 × 106$. This value represents the cost of ignoring the
+between the upper and lower bounds is 0.0093%. Figure 8B shows       market price uncertainty in the unit commitment model.
+the convergence process of the inner layer MSDDP algorithm in
+                                                                         As mentioned in Section 4.1, the termination volumes of
+                                                                     the two reservoirs are not set. We end this section by
+                                                                     discussing the impact of future revenue constraints (Eq.
+                                                                     14). We set the parameters of the future revenue
+                                                                     constraints w,k and w to be zero, which enforced the Rfut
+                                                                     in the objective function equal to zero. Then the boundary
+                                                                     condition (i.e., the termination volumes) should be set in the
+                                                                     model to terminate the calculation. The total revenue ratios in
+                                                                     different termination volumes to the value in Table 4
+                                                                     ("Proposed") are shown in Figure 9. It can be seen that the
+                                                                     maximum value of the total revenue is equal to the value in
+                                                                     Table 6. This indicated that constraints (Eq. 14) could
+                                                                     terminate discharging at optimal termination volumes, at
+                                                                     which the total revenue of the hydropower producer is
+                                                                     maximized. The incorporation of constraints (Eq. 14) in
+                                                                     the SHUC model can make a balance between the
+                                                                     immediate revenue and the future revenue of the
+                                                                     hydropower producer to maximize the total revenue.
+
+Frontiers in Energy Research                                     11                frontiersin.org
+Li et al.                                                                                          10.3389/fenrg.2022.955875
+
+TABLE 8 Technical parameters of the hydropower plants in (Conejo et al., 2002).
+
+Plant      Vmax /Hm³          Vmin/Hm³                                       Pmax/MW  Umax/(m³/s)  I/(Hm³/h)
+
+1          225                6                                              28.6     62           0.05
+                                                                             69.5     163          0.06
+2          162                6                                              139.1    469          0.60
+                                                                             116.4    662          0.05
+3          1,200              6                                              186.7    628          0.05
+                                                                             28.6     62           0.03
+4          66                 6                                              247.7    716          0.04
+                                                                             550.9    1,028        0.05
+5          26                 6
+
+6          225                6
+
+7          115                6
+
+8          181                6
+
+TABLE 9 The initial volume of the reservoirs in (Conejo et al., 2002).       4.2.4 Computational performance of the MSDDP
+
+Plant      1 2 3 45 6 7 8                                                        In this section, we test the computational performance of the
+                                                                             proposed MSDDP algorithm using the data of the hydropower
+Vmax/Hm³ 215 147 1,100 55 20 210 105 150                                     system reported in (Conejo et al., 2002). The hydropower system
+                                                                             contains eight plants, with a total capacity of 3,084 MW. The
+4.2.3 The impact of the confidence level                                     topology and detailed parameters of the hydropower plants are
+                                                                             shown in Figure 10 and Table 8, respectively. For the sake of
+    Table 7 compares the results of the proposed solution                    simplicity, the parameters of the future revenue constraints w,k
+method under different confidence levels. Column                             and w are set as zero. The initial volume of the reservoirs is
+1 represents the final gap of the BD algorithm. The second                   shown in Table 9. The termination volumes are equal to the
+column represents the iteration number of the BD algorithm. The              initial volumes. Two alternative methods [Lagrangian relaxation
+third column represents the average time used per iteration.                 (Steeger and Rebennack, 2017) and locally valid cut (Abgottspon
+Column 4 represents the solution time of the BD algorithm.                   et al., 2014)] are used in the backward iteration of the BSP and
+Finally, column 5 represents the total revenue.                              compared with the MSDDP algorithm. The confidence level of
+                                                                             the three algorithms is set as 90%. Five sets of market price
+    It can be seen that the proposed solution method finally                 scenarios are sampled in the forward iteration, including 50, 100,
+converged under different confidence levels. With the increase of            200, 300, and 500 scenarios, respectively. The running time of the
+the confidence level, the number of iterations of the BD algorithm           programs is limited to 3 h.
+decreases while the time used per iteration increases. In fact, the
+solution obtained in the MSDDP algorithm is getting closer to the                Table 10 shows the comparison of the computational
+optimal solution with the increase in the confidence level. Therefore,       performance of the three algorithms. The first column
+the Benders cut provided to the BMP is tighter. While the solution           represents the number of scenarios sampled in the forward
+time needed in the MSDDP algorithm also increases. It should be              iteration. It can be seen that the computation time and the
+noted that the solution time of the model is shortest when the               time used per iteration increase with the increase of the
+confidence level is 90%. Therefore, it is necessary to make a trade-off      forward sample scenarios. This is because more
+between the solution accuracy of the MSDDP and the number of                 subproblems need to be solved as we increase the number
+iterations to minimize the overall solution time. Finally, we can            of sample scenarios in the forward iteration. The MSDDP
+observe that the difference in total revenue under different                 converged to the pre-set tolerance with different choices of the
+confidence levels is extremely small. This is because the confidence         number of the forward sample scenarios. The solution time of
+level is only used to control the convergence of the inner layer             the MSDDP algorithm is the shortest among the three
+MSDDP algorithm. The convergence of the whole algorithm is                   algorithms. The LVC and LR method cannot converge to
+determined by the gap between the upper and lower bounds of                  the pre-set tolerance within 3 h when the number of sampled
+the outer layer BD algorithm. Therefore, the outer layer BMP will            scenarios is 500. It should be noted that the iteration number
+adjust the startup and shutdown status of the unit to achieve global         of the MSDDP algorithm is less than the other two algorithms,
+optimization.                                                                which illustrates that the cuts generated by the MSDDP
+                                                                             algorithm are the tightest.
+
+Frontiers in Energy Research                                             12                        frontiersin.org
+Li et al.                                                                                                          10.3389/fenrg.2022.955875
+
+TABLE 10 Computational performance of the locally valid cut (LVC), Lagrangian relaxation (LR) and MSDDP.
+
+# of FS    Time (s)                          Number of iterations                                         Gap (%)
+
+           LVC                LR      MSDDP  LVC                                     LR  MSDDP            LVC      LR     MSDDP
+
+50         9,853              8,689   3,624  44                                      37  27               0.097    0.096  0.097
+                                                                                                          0.099    0.099  0.095
+100        10,376             8,729   3,505  40                                      35  21               0.105    0.098  0.098
+                                                                                                          0.142    0.095  0.092
+200        10,800             9,021   3,774  33                                      32  17               0.351    0.114  0.094
+
+300        10,800             9,347   4,209  31                                      25  15
+
+500        10,800             10,800  4,672  28                                      23  13
+
+5 Conclusion                                                                         Data availability statement
+
+    This paper proposes a stochastic unit commitment model for a                         The original contributions presented in the study are included
+price-taker hydropower producer in a liberalized market. The                         in the article/Supplementary Material, further inquiries can be
+objective is to maximize the total revenue. The opportunity cost                     directed to the corresponding author.
+and the market price uncertainty are taken into account. To solve the
+stochastic unit commitment problem efficiently, a solution method                    Author contributions
+based on the Benders decomposition and modified stochastic dual
+dynamic programming algorithm is proposed. Finally, we verified the                      ZL carried out the formulation of the model, presentation of
+effectiveness of the proposed model and solution method in case                      solution method, case analysis, and wrote the first draft. PY
+studies. The simulation results show that: 1) Compared with the                      assisted in the formulation of the model and improvement of the
+deterministic model, the proposed stochastic unit commitment model                   solution method. YY and GL assisted in the case analysis. YT
+can increase the total revenue of the hydropower producer by 2.3%, so                helped the revision of the manuscript.
+it is necessary to consider the uncertainty of the market price. 2) The
+incorporation of future revenue constraints can make a balance                       Conflict of interest
+between the immediate revenue and the future revenue to
+maximize the total revenue of the hydropower producer. 3) The                            The authors declare that the research was conducted in the
+proposed solution method can efficiently solve the large-scale                       absence of any commercial or financial relationships that could
+stochastic unit commitment problem. Compared with the existing                       be construed as a potential conflict of interest.
+methods, the proposed solution method can significantly reduce the
+solution time and achieve global optimization.                                       Publisher's note
+
+    The following aspects can be further expanded in future                              All claims expressed in this article are solely those of the
+research.                                                                            authors and do not necessarily represent those of their
+                                                                                     affiliated organizations, or those of the publisher, the
+1) The proposed SHUC model is actually a two-stage unit                              editors and the reviewers. Any product that may be
+    commitment model, in which the commitment schedule for                           evaluated in this article, or claim that may be made by
+    the entire scheduling horizon is decided before the uncertainty                  its manufacturer, is not guaranteed or endorsed by the
+    is realized. The extension of the unit commitment model on the                   publisher.
+    multi-stage model will be promising research.
+
+2) The extension of the modified stochastic dual dynamic
+    programming on the stage-dependent case may be
+    interesting research.
+
+References                                                                             Abreu, L. V. L., Khodayar, M. E., Shahidehpour, M., and Wu, L. (2012). Risk-
+                                                                                     constrained coordination of cascaded hydro units with variable wind power
+  Abgottspon, H., Njálsson, K., Bucher, M. A., and Andersson, G. (2014). "Risk-      generation. IEEE Trans. Sustain. Energy 3 (3), 359­368. doi:10.1109/tste.2012.
+averse medium-term hydro optimization considering provision of spinning              2186322
+reserves," in 2014 International Conference on Probabilistic Methods Applied to
+Power Systems (PMAPS), Durham, UK, 07-10 July 2014 (IEEE).
+
+Frontiers in Energy Research                                                     13                                       frontiersin.org
+Li et al.                                                                                    10.3389/fenrg.2022.955875
+
+  Ackooij, W. V., Ambrosio, C. D., Liberti, L., Taktak, R., Thomopulos, D., and                Kong, J., Skjelbred, H. I., and Fosso, O. B. (2020). An overview of formulations
+Toubaline, S. (2018). Shortest path problem variants for the hydro unit                      and optimization methods for the unit-based short-term hydro scheduling
+commitment problem. Electron. Notes Discrete Math. 69, 309­316. doi:10.1016/j.               problem. Electr. Power Syst. Res. 178, 106027. doi:10.1016/j.epsr.2019.106027
+endm.2018.07.040
+                                                                                               Li, X., Li, T., Wei, J., Wang, G., and Yeh, W. W. (2014). Hydro unit commitment
+  Ackooij, W. V., D'Ambrosio, C., Thomopulos, D., and Trindade, R. S. (2021).                via mixed integer linear programming: A case study of the three gorges project,
+Decomposition and shortest path problem formulation for solving the hydro unit               China. IEEE Trans. Power Syst. 29 (3), 1232­1241. doi:10.1109/tpwrs.2013.2288933
+commitment and scheduling in a hydro valley. Eur. J. Operational Res. 291 (3),
+935­943. doi:10.1016/j.ejor.2020.12.029                                                        Lima, R. M., Marcovecchio, M. G., Novais, A. Q., and Grossmann, I. E. (2013). On
+                                                                                             the computational studies of deterministic global optimization of head dependent
+  Ahmed, J. A., and Sarma, A. K. (2005). Genetic algorithm for optimal operating             short-term hydro scheduling. IEEE Trans. Power Syst. 28 (4), 4336­4347. doi:10.
+policy of a multipurpose reservoir. Water Resour. Manage. 19 (2), 145­161. doi:10.           1109/tpwrs.2013.2274559
+1007/s11269-005-2704-7
+                                                                                               Moiseeva, E., and Hesamzadeh, M. R. (2017). Strategic bidding of a hydropower
+  Amani, A., and Alizadeh, H. (2021). Solving hydropower unit commitment                     producer under uncertainty: modified benders approach. IEEE Trans. Power Syst.
+problem using a novel sequential mixed integer linear programming approach.                  33, 861­873. doi:10.1109/TPWRS.2017.2696058
+Water Resour. Manag. 35 (3), 1711­1729. doi:10.1007/s11269-021-02806-6
+                                                                                               Naresh, R., and Sharma, J. (2000). Hydro system scheduling using ANN
+  Balas, E., Ceria, S., and CornuéJols, G. (1993). A lift-and-project cutting plane          approach. IEEE Trans. Power Syst. 15 (1), 388­395. doi:10.1109/59.852149
+algorithm for mixed 0-1 programs. Math. Program. Ser. A B 58, 295­324. doi:10.
+1007/BF01581273                                                                                Nazari-Heris, M., Mohammadi-Ivatlooa, B., and Gharehpetian, G. B. (2017).
+                                                                                             Short-term scheduling of hydro-based power plants considering application of
+  Balas, E., Ceria, S., and Cornuéjols, G. (1996). Mixed 0-1 programming by lift-            heuristic algorithms: A comprehensive review. Renew. Sustain. Energy Rev. 74,
+and-project in a branch-and-cut framework. Manag. Sci. 42 (9), 1229­1246. doi:10.            116­129. doi:10.1016/j.rser.2017.02.043
+1287/mnsc.42.9.1229
+                                                                                               Parvez, I., Shen, J., Khan, M., and Cheng, C. (2019). Modeling and solution
+  Balas, E. (2011). Disjunctive programming. Pittsburgh, PA: John Wiley & Sons.              techniques used for hydro generation scheduling. Water 11 (7), 1392. doi:10.3390/
+                                                                                             w11071392
+  Barroso, L. A. N., Fampa, M. H. C., Kelman, R., Pereira, M. V., and Lino, P.
+(2002). Market power issues in bid-based hydrothermal dispatch. Ann. Operations                Peng, L., Zhou, J., Chao, W., Qiao, Q., and Mo, L. (2015). Short-term hydro
+Res. 117 (1), 247­270. doi:10.1023/a:1021537910823                                           generation scheduling of Xiluodu and Xiangjiaba cascade hydropower stations
+                                                                                             using improved binary-real coded bee colony optimization algorithm. Energy
+  Benders, J. F. (2005). Partitioning procedures for solving mixed-variables                 Convers. Manag. 91, 19­31. doi:10.1016/j.enconman.2014.11.036
+programming problems. Comput. Manag. Sci. 2 (1), 3­19. doi:10.1007/s10287-
+004-0020-y                                                                                     Pereira, A. C., de Oliveira, A. Q., Baptista, E. C., Balbo, A. R., Soler, E. M.,
+                                                                                             Nepomuceno, L., et al. (2017). Network-constrained multiperiod auction for pool-
+  Birge, J. R., and Louveaux, F. (2011). Introduction to stochastic programming.             based electricity markets of hydrothermal systems. IEEE Trans. Power Syst. 32 (6),
+Chicago, IL: Springer Science & Business Media.                                              4501­4514. doi:10.1109/tpwrs.2017.2685245
+
+  Cerisola, S., Latorre, J. M., and Ramos, A. (2012). Stochastic dual dynamic                  Pereira, M., Campodonico, N., and Kelman, R. (1999). Application of stochastic
+programming applied to nonconvex hydrothermal models. Eur. J. Operational Res.               dual DP and extensions to hydrothermal scheduling. PSRI Technical Report 012/99.
+218 (3), 687­697. doi:10.1016/j.ejor.2011.11.040
+                                                                                               Pereira, M V. F., and Pinto, L M. V. G. (1991). Multi-stage stochastic optimization
+  Cheng, C., Wang, J., and Wu, X. (2016). Hydro unit commitment with a head-                 applied to energy planning. Math. Program. 52 (1), 359­375. doi:10.1007/
+sensitive reservoir and multiple vibration zones using MILP. IEEE Trans. Power               bf01582895
+Syst. 31 (6), 4842­4852. doi:10.1109/tpwrs.2016.2522469
+                                                                                               Pérez-Díaz, J. I., Wilhelmi, J. R., and Arévalo, L. A. (2010). Optimal short-term
+  Colonetti, B., and Finardi, E. C. (2021). Stochastic hydrothermal unit                     operation schedule of a hydropower plant in a competitive electricity market.
+commitment models via stabilized benders decomposition. Electr. Eng. 103 (4),                Energy Convers. Manag. 51 (12), 2955­2966. doi:10.1016/j.enconman.2010.06.038
+2197­2211. doi:10.1007/s00202-020-01206-0
+                                                                                               Seguin, S., Cote, P., and Audet, C. (2016). Self-scheduling short-term unit
+  Conejo, A. J., Arroyo, J. M., Contreras, J., and Villamor, F. (2002). Self-scheduling      commitment and loading problem. IEEE Trans. Power Syst. 31 (1), 133­142.
+of a hydro producer in a pool-based electricity market. IEEE Trans. Power Syst. 17           doi:10.1109/tpwrs.2014.2383911
+(4), 1265­1272. doi:10.1109/tpwrs.2002.804951
+                                                                                               Shapiro, A. (2011). Analysis of stochastic dual dynamic programming method.
+  Diniz, A. L., and Maceira, M. E. P. (2008). A four-dimensional model of hydro              Eur. J. Operational Res. 209 (1), 63­72. doi:10.1016/j.ejor.2010.08.007
+generation for the short-term hydrothermal dispatch problem considering head and
+spillage effects. IEEE Trans. Power Syst. 23 (3), 1298­1308. doi:10.1109/tpwrs.2008.           Steeger, G., and Rebennack, S. (2017). Dynamic convexification within nested
+922253                                                                                       Benders decomposition using Lagrangian relaxation: an application to the
+                                                                                             strategic bidding problem. Eur. J. Operational Res. 257 (2), 669­686. doi:10.
+  Finardi, E. C., and da Silva, E. L. (2006). Solving the hydro unit commitment              1016/j.ejor.2016.08.006
+problem via dual decomposition and sequential quadratic programming. IEEE
+Trans. Power Syst. 21 (2), 835­844. doi:10.1109/tpwrs.2006.873121                              Thaeer Hammid, A., Awad, O. I., Sulaiman, M. H., Gunasekaran, S. S., Mostafa, S. A.,
+                                                                                             Manoj Kumar, N., et al. (2020). A review of optimization algorithms in solving hydro
+  Guisández, I., and Pérez-Díaz, J. I. (2021). Mixed integer linear programming              generation scheduling problems. Energies 13 (11), 2787. doi:10.3390/en13112787
+formulations for the hydro production function in a unit-based short-term
+scheduling problem. Int. J. Electr. Power Energy Syst. 128 (1), 106747. doi:10.                Tong, B., Zhai, Q., and Guan, X. (2013). An MILP based formulation for short-
+1016/j.ijepes.2020.106747                                                                    term hydro generation scheduling with analysis of the linearization effects on
+                                                                                             solution feasibility. IEEE Trans. Power Syst. 28 (4), 3588­3599. doi:10.1109/tpwrs.
+  Heitsch, H., and Römisch, W. (2003). Scenario reduction algorithms in stochastic           2013.2274286
+programming. Comput. Optim. Appl. 24 (2), 187­206. doi:10.1023/a:
+1021805924152                                                                                  Wei, C., Zhao, Y., Zheng, Y., Xie, L., and Smedley, K. M. (2021). Analysis and
+                                                                                             design of a nonisolated high step-down converter with coupled inductor and ZVS
+  Helseth, A., Fodstad, M., and Mo, B. (2018). Optimal hydropower maintenance                operation. IEEE Trans. Ind. Electron. 69 (9), 9007­9018. doi:10.1109/tie.2021.
+scheduling in liberalized markets. IEEE Trans. Power Syst. 33 (6), 6989­6998.                3114721
+doi:10.1109/tpwrs.2018.2840043
+                                                                                               Xiao, D., do Prado, J. C., and Qiao, W. (2021). Optimal joint demand and virtual
+  Helseth, A., Fodstad, M., and Mo, B. (2016). Optimal medium-term hydropower                bidding for a strategic retailer in the short-term electricity market. Electr. Power
+scheduling considering energy and reserve capacity markets. IEEE Trans. Sustain.             Syst. Res. 190, 106855. doi:10.1016/j.epsr.2020.106855
+Energy 7 (3), 934­942. doi:10.1109/tste.2015.2509447
+                                                                                               Zhang, H., Zhou, J., Na, F., Zhang, R., and Zhang, Y. (2013). An efficient multi-
+  Hjelmeland, M. N., Zou, J., Helseth, A., and Ahmed, S. (2019). Nonconvex                   objective adaptive differential evolution with chaotic neuron network and its
+medium-term hydropower scheduling by stochastic dual dynamic integer                         application on long-term hydropower operation with considering ecological
+programming. IEEE Trans. Sustain. Energy 10, 481­490. doi:10.1109/TSTE.2018.                 environment problem. Int. J. Electr. Power Energy Syst. 45 (1), 60­70. doi:10.
+2805164                                                                                      1016/j.ijepes.2012.08.069
+
+  Kelman, M., Pereira, M., and Campodónico, N. (1998). Long-term hydro                         Zou, J., Ahmed, S., and Sun, X. A. (2019). Stochastic dual dynamic integer
+scheduling based on stochastic models. EPSOM 98, 23­25.                                      programming. Math. Program. 175 (1), 461­502. doi:10.1007/s10107-018-1249-5
+
+Frontiers in Energy Research                                                             14  frontiersin.org
+

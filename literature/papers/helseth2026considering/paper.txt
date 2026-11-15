@@ -1,0 +1,1153 @@
+Energy Systems
+https://doi.org/10.1007/s12667-026-00825-z
+
+ ORIGINAL PAPER
+
+Considering short-term variability in long-term
+hydropower scheduling by multi-stage Benders
+decomposition and residual demand functions
+
+Arild Helseth1 · Birger Mo2
+
+Received: 12 March 2025 / Accepted: 16 July 2026
+© The Author(s) 2026
+
+Abstract
+Balancing technical details and computational complexity is an important trade-
+off in long-term hydropower scheduling (LTHS) models. Rapidly increasing shares
+of variable renewable energy sources (VRES) challenges historical assumptions
+regarding the appropriate level of technical details and the representation of uncer-
+tainties in LTHS models. This work expands on previous research and formulates
+an efficient solution strategy to accommodate short-term variability and uncertainty
+into LTHS models, through gradually approximating the short-term dispatch prob-
+lem per stage and under VRES uncertainty in the context of multi-stage Benders
+decomposition. The proposed solution strategy is embedded in an LTHS model
+based on stochastic dual dynamic programming and applied to a 2050 scenario of
+the Central and Northern European power system. We extract water values from the
+LTHS strategies and analyze their dependency on short-term variability.
+
+Keywords Hydroelectric power generation · Power generation scheduling ·
+Optimization methods · Stochastic processes
+
+List of symbols
+
+Index sets
+c  BtSet of FCF cuts for stage t
+c  CtSet of cost cuts for stage t
+c  FstSet of feasibility cuts for system s and stage t
+g  GSet of thermal units
+
+     Arild Helseth
+     arild.helseth@ntnu.no
+
+1 Department of Electric Energy, Norwegian University of Science and Technology,
+     N-7465 Trondheim, Norway
+
+2 Department of Energy Systems, SINTEF Energy Research, N-7465 Trondheim, Norway
+                                                                           A. Helseth, B. Mo
+
+k  KSet of time steps within decision stage
+n  N Set of nodes in scenario tree
+d  DnSet of nodes immediately descending node n
+s  SSet of hydro subsystems
+t  T Set of decision stages
+w  WSet of VRES scenarios
+
+Parameters
+Right-hand side for FCF cut, in 
+F Right-hand side for feas. cut, in GWh/stage
+CRight-hand side for cost cut, in 
+e/vCoeff. for feasibility cut, fraction
+v/iCoeff. for feasibility cut, fraction
+vVolume coeff. for FCF cut, in /GWh
+zInflow coeff. for FCF cut
+µCoeff. for cost cut, in /GWh
+Convergence tolerance in MSBD, in 
+cgMarginal cost for thermal gen., in /GWh
+cRMarginal cost of rationing, in /GWh
+DDemand, in GWh/step
+Inflow correlation matrix
+Vector of inflow white noise
+MInflow mean value, in GWh/stage
+Inflow standard deviation, in GWh/stage
+IInflow, in GWh/stage
+zP G MVeacxto. rcaopfancoitrymfaolriztehderimnfalol wgesnz.,stin GWh/step
+P H Max. capacity for hydro station, in GWh/step
+P W Max. wind power production, in GWh/step
+V Max. reservoir volume, in GWh
+X, XBoundaries on dispatch problem variables
+PnProbability of node n
+Pd/bConditional probability of node d / branch b
+PwProbability of VRES scenario w
+NSNo. of sampled inflow scenarios in SDDP
+NBNo. of backward openings in SDDP
+
+Decision variables
+Future expected cost, in 
+Dispatch cost, in 
+pGGeneration from thermal unit, in GWh/step
+pH Hydropower production, in GWh/step
+pW Wind power production, in GWh/step
+pRPower rationing, in GWh/step
+vReservoir volume, in GWh
+eSum hydropower production, in GWh/stage
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+sSpillage, in GWh/stage
+xDispatch problem variables
+
+1Introduction
+
+Climate and energy policy targets of the European Commission aim to make Europe
+the first climate-neutral continent by 2050. To achieve this target, emissions from the
+power sector must fall essentially to zero or even turn negative by 2050. This will
+require large-scale deployment of variable renewable energy sources (VRES), such
+as wind and solar power, and a gradual phase-out of dispatchable fossil-fueled gen-
+eration technologies. This pushes forward a need for entrance of new dispatchable
+resources to ensure a reliable and affordable power system. In the Nordic part of the
+system, the existing hydropower facilities will play a crucial role as a dispatchable
+renewable generation technology, balancing the variability in VRES.
+
+   Operational decisions in hydropower systems need to account for both the dynam-
+ics of long-term storages and the short-term variability. Toolchains of decision sup-
+port models have matured over time in countries such as Brazil, Norway and the US
+[1] to account for uncertainties and technical details across time scales. These tool-
+chains involve long-, medium-, and short-term scheduling models suited for different
+planning horizons, ranging from multiple years to weeks, and with varying levels
+of technical detail and uncertainties. The long-term hydropower scheduling (LTHS)
+models typically take an aggregated view on system details and use coarse time dis-
+cretization to accommodate the computation of expected marginal values of water
+(water values) for a multi-annual scheduling horizon within acceptable computation
+times. Water values are treated as the marginal cost of hydropower in both liberal-
+ized [2] and centrally planned [3] systems. While these assumptions were reasonable
+for the historical system, there seems to be increasing awareness in the research com-
+munity that short-term variability and uncertainty will play a central role in future
+energy systems in general [4], and for the particular case of LTHS models [1, 5].
+
+1.1 Literature review
+
+A variety of methodologies have been proposed for solving the LTHS problem, and
+the use of methods based on optimization has matured over the last decades [5]. In
+particular the stochastic dual dynamic programming (SDDP) algorithm introduced
+in [6] has been widely applied in operative scheduling models [7, 8], and is subject
+to improvements and extensions by the research community, e.g., for shorter-term
+dispatch [9] and risk management [10].
+
+   Dynamic programming algorithms applied to the LTHS problem typically assume
+weekly or monthly decision stages, where uncertainties are known within the stage.
+While this assumption is reasonable for inflows, VRES variations are less predictable.
+The concept of multi-horizon stochastic programming, which was first introduced in
+the context of expansion planning [11], provide an efficient and integrated view on
+uncertainties at different time-scales. This concept was later applied for scheduling
+hydropower storages in [12] and fitted in an efficient decomposition scheme in [13].
+
+                                                           13
+                                                                                                           A. Helseth, B. Mo
+
+   From a system perspective, the short-term variability and uncertainty in VRES
+within LTHS models were recently addressed in [14­18]. In [14] costs associated
+with short-term variability were controlled through a risk-measure, formulating the
+short-term power balance as a probabilistic constraint. In [15], a medium-term sched-
+uling model was calibrated through iterations with a short-term unit commitment
+model to capture short-term variability. The work in [16] elegantly addressed the
+combination of scheduling flexible hydropower with long-duration storage capability
+and dispatch decisions made at fine time resolution, by analytically expressing the
+short-term dispatch as a function of the total hydropower production prior to running
+SDDP. The authors in [17] advanced the formulations of the analytical representa-
+tion in [16] and included VRES uncertainty. A further improvement was presented in
+[18] where the short-term dispatch function was constructed iteratively by accommo-
+dating a two-stage Benders decomposition approach within the multi-stage Benders
+decomposition scheme.
+
+1.2 Proposed method and contributions
+
+In this paper we present a solution strategy for LTHS, combining the long-term
+operational planning of hydro storages under inflow uncertainty and the short-term
+dispatch under VRES variability and uncertainty. The solution strategy is based on
+multi-stage Benders decomposition (MSBD), and further exploits the decompos-
+able structure of the short-term dispatch problem per decision stage. Inspired by the
+notion of multi-horizon stochastic programming [11] and the decomposition of intra-
+stage cost functions [18], we demonstrate how the short-term dispatch problem can
+be efficiently approximated within the forward iteration of MSBD.
+
+   We identify two main contributions with respect to the existing literature:
+
+ The development of an efficient solution strategy to include treatment of short-
+    term variability and uncertainty in VRES in the LTHS problem. This strategy
+    consists in gradually approximating the dispatch problem per decision stage in
+    the forward iterations of the MSBD algorithm. The efficiency of the solution
+    strategy is demonstrated both in a didactic numerical example, and within an
+    SDDP model in a large-scale case study. We add to the research in [18] by: (i)
+    gradually approximating the decomposed dispatch problem per forward iteration
+    rather than solving it to convergence; and (ii) demonstrating the solution strategy
+    in the context of stochastic programming.
+
+ Demonstration of the proposed solution strategy within an open-source SDDP-
+    based LTHS model for a large-scale case study. The results convey new knowl-
+    edge on how the variance of water values depends on short-term variability.
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+2 Problem description
+
+In this section we explain the basic scheduling problem formulation, including the
+representation of uncertainties and the underlying assumptions. The fictitious power
+system illustrated in Fig. 1 will be used to support the explanations below, and to
+illustrate the example provided in Sect. 3.3.
+
+   Consider a system where demand is supplied by production from a hydropower
+station, a wind power plant, and a set of thermal generators, as illustrated in Fig. 1.
+The system is to be scheduled over a period of t  T decision stages, for which each
+can be divided into k  K time steps. In the further explanations we assume weekly
+decision stages and hourly time steps. Inflow to the hydro reservoir (per stage) and
+maximum wind power capacities (per hour) are considered uncertain variables and
+are both revealed on a weekly basis.
+
+   The uncertainty in inflow to the reservoir is represented as a scenario tree, com-
+prising 4 decision stages t1-t4 and 15 nodes n  N , as illustrated Fig. 2. Each node
+represents a system state. Except for the root node in t1, each node n has one unique
+ancestor node a(n). For each node n, except for the leaf nodes, two possible realiza-
+tions (branches) of inflow leads to the corresponding immediate descendant nodes
+d  Dn.
+
+   We assume that hourly wind power capacities are revealed as scenarios w  W
+per decision stage, and that the stage decisions related to hydropower utilization are
+taken before knowing the realization of a specific wind scenario. Possible correla-
+tions between inflow and wind power are assumed negligible, justifying the use of the
+same set of wind scenarios for all scenario tree nodes within a stage, as indicated for
+stage t2 in Fig. 2. This assumption is supported by the modest correlations between
+weekly average wind and inflow observed in our data material for the case study in
+Sect. 5.
+
+   The scheduling problem is formulated as a stochastic program on extensive form
+in (1), where the objective in (1a) is to minimize the expected cost of thermal produc-
+tion and rationing. A hydro storage balance is provided per node in (1b), balancing
+the reservoir storage (vn) with energy production (en), inflow (In) and possible spill-
+age (sn). The sum hydropower production decided for the stage can be distributed to
+
+Fig. 1 Illustration of fictitious power system
+
+                                                13
+                                                      A. Helseth, B. Mo
+
+Fig. 2 Illustration of uncertainty representation, where branches between nodes represents the different
+inflow scenarios, while wind scenarios are shown for stage t2
+
+time steps (pH ) according to (1c), to be used together with thermal generation (pG
+) and wind (pW ) to meet demand (D), and with possible rationing (pR), at an hourly
+
+time-scale in (1d). We assume that the reservoir will be operated within its boundar-
+
+ies within the stage and thus do not include reservoir balances per time step. The
+
+link between strategic use of water per decision stage and hydropower production
+
+per time step in (1c) allows for decomposition, as will be elaborated in Sect. 3. Grid
+
+bottlenecks are not considered in this example.
+
+      (          cgpGnwkg + cRpnRwk              )
+
+    min Pn  Pw                                        (1a)
+
+    nN wW kK gG
+
+    vn + en + sn = va(n) + In n                       (1b)
+
+13
+Considering short-term variability in long-term hydropower scheduling...                                (1c)
+                                                                                                        (1d)
+                                 
+                                      pHnwk - en = 0 n, w
+
+                                               kK
+
+              pHnwk +             pnGwkg + pW nwk + pRnwk = Dnk
+
+                              gG                                                          n, w, k
+
+                                  0  pHnwk  P H n, w, k                                                 (1e)
+
+                              0        pGnwkg    P  G                     n, w, k, g                    (1f)
+                                                    g
+
+                                  0    pnWwk     P  W                     n, w, k                       (1g)
+                                                    nwk
+
+                                       0  vn  V n                                                       (1h)
+
+This problem formulation allows the combination of decisions per stage (vn, en, sn
+) and per time step (pH , pG, pW , pR) as well as long-term (inflow) and short-term
+
+(wind power) uncertainties. Hydropower production decisions per stage (en) are non-
+
+anticipative  of  wind        power  scenarios  (P  W                  )  and  are  thus  made  facing  short-term
+                                                    nwk
+
+uncertainty.
+
+Note that both cross correlations between inflow and wind power, as well as inter-
+
+stage auto correlations in wind power are assumed negligible in the formulation
+
+above. If these are found significant, one could allow wind power cross- and auto-
+
+correlations, e.g., by introducing a state variable representing sum of wind power
+
+production per stage, as in [19].
+
+3 Decomposition approach
+
+3.1MSBD
+
+Applying MSBD to problem (1) leads to the stage problem (2) to be solved per node
+
+n in decision stage t. The expected future cost function (FCF) is expressed by the
+
+variable t+1 which is constrained by FCF cuts in (2e). For simplicity we assume
+
+that the realization of inflows is stage-wise independent so that these FCF cuts can
+
+be shared among nodes within the same decision stage. The standard MSBD algo-
+
+rithm traverses the tree in forward and backward iterations, solving the nodal prob-
+
+lem (2) repeatedly [20]. FCF cuts are created in the backward iteration, where a
+
+nasodecvtn=colledctDs ncPutd  coav(edf)ficainedntccton=tr ibudtioDnns  from    its  immediate descending nodes
+                                                                       Pd(d    -    va(d)av(d)). The FCF cuts are
+
+indexed c and shared between all nodes in the same stage t through the set Bt. Note
+
+that (2) is a two-stage stochastic problem, where decisions indexed w are recourse
+
+decisions made after the realization of a specific wind power scenario is known.
+
+                                                                                                        13
+                                                          A. Helseth, B. Mo
+
+                                                    
+
+              
+                       cgpnGwkg + cRpnRwk + t+1 
+    n = min  Pw                                           (2a)
+
+             wW kK gG
+
+             vn + en + sn = va(n) + In : av(n)            (2b)
+
+                      pHnwk - en = 0 w
+
+                 kK                                       (2c)
+
+    pnHwk +      pnGwkg + pnWwk + pRnwk = Dnk
+
+             kG                                     w, k  (2d)
+
+             t+1 + cvtvn  ct c  Bt                        (2e)
+
+                 0  pHnwk  P H w, k                       (2f)
+
+             0        pnGwkg       P  G    w, k, g        (2g)
+                                      g
+
+                 0    pW nwk       P  W    w, k           (2h)
+                                      nwk
+
+                      0  Vn  V                            (2i)
+
+3.2 Stage problem decomposition
+
+For more complex systems with longer scheduling horizons, computation times soon
+becomes prohibitive when solving (2), due to the multiple scenarios in W and hourly
+dispatch decisions {pG, pR, pH , pW } to balance supply and demand in (2d). Building
+on the two-stage Benders decomposition principle, we separate between the LTHS
+simplified node problem (SNP) in (3) and the short-term dispatch problem (DIP) in
+(4).
+
+                 n = min (n + t+1)                        (3a)
+
+             vn + en + sn = va(n) + In : av(n)            (3b)
+
+             t+1 + cvtvn  ct c  Bt                        (3c)
+
+             n + µcten  cCt c  Ct                         (3d)
+
+                      0  Vn  V                            (3e)
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+In the SNP in (3), the cost of dispatching the system is represented by a variable n
+
+in the objective in (3a), constrained by cost cuts in (3d). In the two-stage Benders
+
+decomposition of (2), the SNP becomes the first-stage decision, while the DIP is the
+
+second-stage problem. The DIP recourse decisions are made based on knowledge
+about the wind power scenario w and the sum hydro production en.
+
+                                                                          
+
+                                     
+n(w, en ) = min  cgpnGwkg + cRpRnwk 
+                                                                            (4a)
+
+                                     kK gG
+
+pHnwk +      pnGwkg + pW nwk + pRnwk = Dnk k
+
+         kK                                                                 (4b)
+
+                                   pnHwk = en : µwn s
+
+         kK                                                                 (4c)
+
+                                   0  pnHwk  P H k                          (4d)
+
+             0                       pnGwkg           P  G    k, g          (4e)
+                                                         g
+
+             0                       pW nwk           P  W    k             (4f)
+                                                         nwk
+
+Figure 3 shows the proposed solution algorithm. For each node visited in the forward
+
+iteration, the SNP is solved first in box 1 . The sum hydro production for the week is
+
+then passed to the DIP in box 2 ,  and once the       DcCItP=ha s bweenWsoPlvwe(dfonr(awll,wenin)d-scµewnanreinos),
+                                   Pwµwn and
+
+cut coefficients µct = wW
+
+are computed and added to Ct.
+
+   One could iterate between the SNP in box 1 and DIP in box 2 until the solution is
+identical to what one would get when solving the original stage problem in (2). This
+is done in standard two-stage Benders decomposition, and was done in [18], but is
+not strictly necessary from a mathematical point of view since we are approximating
+both the future cost and cost functions from below. Note that cost cuts of type (3d)
+are state independent, and can therefore be shared by all nodes belonging to a spe-
+cific stage. Consequently, the set of available cost cuts per stage quickly grows with
+
+Fig. 3 Flow chart of the proposed solution algorithm
+
+                                                                            13
+                                         A. Helseth, B. Mo
+
+iterations, gradually improving the cost function approximation n in (3d). For this
+
+reason, we build only one cost cut per node per forward iteration, avoiding iterations
+
+between boxes 1 and 2 .
+
+In the backward iteration, the SNP is solved in box 3 in Fig. 3 for each node. The
+
+short-term dispatch under wind power uncertainty is represented through cost cuts in
+
+Ct that have been built and accumulated throughout the previous forward iterations.
+
+Thus, decisions made in the backward iteration are solely made per decision stage
+
+(week) and not per time step (hour), which significantly reduces computationally
+
+complexity.
+
+   After  cifom1pl-etingna NfoPrwn arnd  iteration, convergence is checked in 4 in Fig. 3 and
+declared                                  , where  is a predefined convergence tolerance.
+
+3.3Example
+
+The proposed MSBD solution algorithm is demonstrated on the power system shown
+in Fig. 1 in the following example. Assume that the hydropower station has produc-
+tion capacity of 15 GWh/week, and that the upstream reservoir has storage capacity
+30 GWh and is initially full. Inflow to the reservoir has two equiprobable outcomes: 5
+or 15 GWh/week, according to the illustration in Fig. 2, with the extension to 6 deci-
+sion stages and 63 nodes. The wind power plant has a maximum output of 20 GWh/
+week, with hourly values drawn from a uniform distribution. 5 wind power scenarios
+were created per stage to represent wind power uncertainty. Thermal generation is
+represented with 100 small generators, each with capacity 0.2 GWh/week and mar-
+ginal costs ranging from 0.5 TO 50 /MWh with 0.5 increment. The demand is
+constant at 30 GWh/week. The resulting stochastic optimization problem was solved
+using four different formulations:
+
+ LP--As a single LP problem formulated in (1).
+ MSBD--Using MSBD where the nodal problems are two-stage stochastic pro-
+
+    grams as in (2).
+ MSBD-1--Using the MSBD algorithm in Fig. 3.
+ MSBD-N--Using the MSBD algorithm in Fig. 3, but iterating between boxes 2
+
+    and 3 until convergence at each node in the forward iteration.
+
+A convergence tolerance  = 10-3 was used. Data and code for this example are pro-
+vided in an open-source repository1 for transparency. The upper and lower boundar-
+ies for MSBD-1 and MSBD-N are shown in Fig. 4, converging in 10 and 8 iterations,
+respectively. The bounds for case MSBD are similar to MSBD-N and thus not shown
+in the figure. Note that the gradually improved approximation of the dispatch cost
+function leads to a lower bound that increases with iterations in case MSBD-1.
+
+   Table 1 shows the number of SNP and DIP problems solved (columns 2 and 3),
+the total time spent in seconds when solving SNP and DIP problems (columns 4 and
+5), and the total time spent by the program (column 6). The dual Simplex algorithm
+
+1https://gitl ab.sintef.n o/energy/res100/example-code/msbd-example.
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+Cost [kEUR]                                                                  MSBD-1
+    500 520 540 560 580 600                                                  MSBD-N
+
+                              2        4         6                        8       10
+
+                                          Iteration
+
+Fig. 4 Upper and lower cost bounds for MSBD-1 (black) and MSBD-N (grey, stapled)
+
+Table 1 Number of problems       Type     # SNP  # DIP  Time SNP             Time DIP  Total time
+solved and computation times                     3150   1.1                  12.6      14.4
+(in seconds)                     MSBD-1 1188     4050   1.2                  19.2      21.3
+
+                                 MSBD-N 1244
+
+in CPLEX 20.1 was used to solve all LP problems, using the hardware specifications
+stated in Sect. 5.1. For comparison, the full LP problem contains 5451k variables and
+106k constraints and was built and solved in 96.0 s. The MSBD case is significantly
+slower than MSBD-1 and MSBD-N, with a total execution time of 76.5 s, solving
+problem (2) 938 times. The advantage of MSBD-1 and MSBD-N over MSBD lies in
+the embedded two-stage decomposition within the nodal problem and the ability to
+share cost cuts among nodes in the same stage. The advantage of MSBD-1 compared
+to MSBD-N lies in the reduced number of DIP problems that need to be solved.
+
+   The SNP, which is solved in both the forward (box 1 ) and backward (box 3 )
+iteration in the decomposition algorithm shown in Fig. 3, seek to minimize the sum
+of dispatch cost and future expected cost in (3a). Figure 5 visualizes the cost cuts
+constraining n in (3d) and the FCF cuts constraining t+1 in (3c) resulting from
+MSBD-1 for stage 4. Both are plotted as functions of hydro storage. To visualize cost
+cuts, we assumed an initial reservoir of 30 GWh and no spillage, so that production
+of one unit reduces stored energy with one unit.
+
+                                                                                       13
+                                                             A. Helseth, B. Mo
+
+    Cost [kEUR]                             FCF cuts
+        0 50 100 150 200 250 300 350        Cost cuts
+
+                                      0  5  10 15 20 25 30
+                                              Storage [GWh]
+
+Fig. 5 FCF and cost cuts for stage 4
+
+4 Solution approach
+
+This section elaborates on how the solution approach presented in the previous sec-
+tion can be used in the context of LTHS for large-scale systems. We first define how
+the multi-reservoir system is modeled in Sect. 4.1, before describing how the decom-
+position algorithm shown in Fig. 3 naturally fits into the SDDP algorithm in Sect. 4.2.
+
+   The SDDP algorithm can be classified as a sampling-based variant of MSBD [20],
+where one simulates along sampled scenarios in the forward iteration rather than vis-
+iting all nodes in a pre-defined scenario tree. Thus, the notion of a node n is replaced
+by stage t in the following.
+
+4.1 Adaption for multi-reservoir systems
+
+We extend our problem formulation in Sect. 3 by allowing multiple hydropower sub-
+systems s  S to be represented by an equivalent reservoir and power station, and
+with a unique inflow.
+
+   In the stage problem in (3), hydropower is modeled as a single reservoir with a
+downstream power station, with storage and production measured in terms of energy.
+If the hydropower system is a cascade, one can adopt an equivalent representation
+(ER) of the reservoirs and plants in the cascaded system. This is a commonly used
+technique to reduce dimensionality and computation time in LTHS models [8, 21].
+One approach is to fit ER parameters so that the simulated results of the equivalent
+system are similar to those obtained from the detailed system [22]. A different tech-
+nique was presented in [23], constraining decisions related to the aggregated hydro-
+power system by feasibility cuts. These linear inequalities can be directly derived
+from optimization of the detailed hydropower system, and takes the following form:
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+         svctvst + sectest + svctvs,t-1 + isctIst  sFct s, c  F                     (5)
+
+The feasibility cuts in (5) constrain both the volume (vst) and production (est) deci-
+sions in the stage problem, and are adjusted according to the observed system state,
+represented by the initial volume (vs,t-1) and inflow (Ist). The derivation of such
+feasibility cuts is described in detail in [23] and involves more detailed representation
+of the relationship between power and discharge per hydropower station. Since the
+derivation relies on convexity, a piecewise-linear and convex relationship between
+production and discharge for the individual hydropower stations is assumed when
+constructing feasibility cuts.
+
+4.2SDDP
+
+Uncertainty is represented by sampling from a statistical model rather than a pri-
+ori establishing a scenario tree. Inflow to the subsystems is represented by a vector
+autoregressive model of first order (VAR-1). Since inflow correlations are important
+to capture in a stochastic hydropower scheduling model, and the SDDP algorithm
+requires a linear (or at least convex) inflow model, the VAR model has been widely
+used in practical models, see e.g. [7, 8]. Thus, inflow correlations in time and space
+are considered in the stochastic model, and inflow becomes a state variable due to its
+correlation in time.
+
+4.2.1 Extending the stage problem
+
+Based on the above extensions, the SNP formulated in (3) can now be formulated as
+
+a stage problem (SP) in (6) representing multiple hydropower subsystems.
+
+         t      (vt-1,       )     =  min  (t  +  t+1)                              (6a)
+                        zt-1
+
+                        zt = zt-1 + t                                               (6b)
+
+                    Ist = stzst + Mst s                                             (6c)
+
+         vst + est + sst = vs,t-1 + Ist s                                           (6d)
+                                                                                    (6e)
+         svctvst + sectest                                                s, c  Ft  (6f)
+                     + svctvs,t-1 + si ctIst  sFct                                  (6g)
+
+                    svctvst +          szctzst  ct
+
+         t+1 +                                                            c  Bt
+
+                sS                 sS
+
+                         µsctest  cCt
+
+                t +                            c  Ct
+
+                     sS
+
+                                                                                    13
+    vs,t-1 = vs,t-1 : sv,t-1 s           A. Helseth, B. Mo
+    zs,t-1 = zs,t-1 : sz,t-1 s
+                                                   (6h)
+                                                    (6i)
+
+        0  vst  V st s                                                           (6j)
+
+        Est  est  Est s                                                          (6k)
+
+A VAR-1 model representing the vector of weekly normalized inflow to subsys-
+tems, zt = {zst : s}, is described in (6b). The correlation matrix  and vector of
+residuals t = {st : s} are fitted to observations, where residuals are adapted to a
+three-parameter lognormal distribution according to [24]. The normalized inflow is
+converted to energy inflow in (6c), and the reservoir balances are shown in (6d). Fea-
+sibility cuts are introduced in (6e). FCF cuts are shown in (6f), where the normalized
+inflow has been introduced as a state variable. Cost cuts are shown in (6g). Copies of
+the reservoir storage (6h) and inflow (6i) state variables are included for the ease of
+computing dual values sv and sz, correspondingly. Finally, boundaries on decision
+variables for reservoir storage (6j) and production (6k) are provided.
+
+   We emphasize the low number of variables in the SP in (6), being independent
+of the intra-stage time resolution. The computational complexity of the SP therefore
+primarily depends on the number of feasibility cuts in Fst, FCF cuts in Bt, and cost
+cuts in Ct.
+
+4.2.2 Extending the dispatch problem
+
+The DIP problem first introduced in (4) is formulated as an LP on compact form
+in (7). For ease of presentation, we focus on the ties to the SP, omitting a detailed
+formulation.
+
+        t (w, est) = min ct xt                                                   (7a)
+
+        Atxt  bt (est)                                                           (7b)
+
+        Xt  xt  Xt(w)                                                            (7c)
+
+The DIP represents technologies on both the supply and demand side, with defined
+
+bidding zones and capacity-limited transmission corridors between them. The objec-
+
+tive in (7a) involves all marginal costs for production and values for price-sensitive
+
+loads, as well as slack variables to ensure feasibility. The constraint set in (7b) rep-
+
+resents all system functionality, and includes constraints of type (8) on the sum of
+
+hydropower production per subsystem for a given stage t and VRES scenario w,
+
+where dual values µstw are collected as contributions to cost cut coefficients.
+
+        pHstwk = est : µstw
+
+    kK                                s                                          (8)
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+The possibility to freely allocate the sum hydro production per stage t to time steps
+k in (8) may overestimate the flexibility of hydropower. In such cases, hydropower
+operation can be further constrained within the DIP, e.g., by adding ramping con-
+straints on psHtwk.
+
+4.2.3 The extended SDDP algorithm
+
+The extended SDDP algorithm is briefly described below, emphasizing the novel
+
+parts. In the forward iteration, a set of NS inflow scenarios is sampled from the
+
+VAR-1 model. For a given stage t, the SP in (6) is first solved. The resulting produc-
+
+tion est per hydropower subsystem is then evaluated by solving DIPin (7) for each
+VRES scenario w      PwW(.S(uwb,seesqtu)e-nt ly,scoSstµcsutwt  coe)fficients µsct =                                                            wW Pwµstw
+                                                               est are computed                                                              to be added as
+and  cCt  =
+                 wW
+
+cost cut c in Ct. The simulated reservoir storages at the end of the week are passed
+forward as an initial state for the next week. The forward simulation gives an updated
+
+set of reservoir trajectories and an expected cost for the sampled scenarios, which
+
+serves as the upper bound. Convergence can formally be declared when the upper
+
+bound is within a predefined confidence interval of the lower bound.
+
+In the backward iteration, a predefined set of FCF cuts at the end of the
+
+planning horizon t = |T | provide valuation to end of horizon storage vol-
+umes. For t = |T | - 1...1 one loops through each state trajectory obtained
+from the forward iteration. Starting from the state at the end of week t - 1
+
+c, ucf,tot-r 1ceo=aecf hficbNrie=eBan1ltiPszba(tiosvnbct,t-b-=1=1s,.S.,(NbN=Bbv1Bs,Pt-bo1fbvvssi,n,tt-f-l1o1,w+  onszce,t-so1l=vestNbh=)eB1  SP in (6). FCF
+                                                                                                                 bzs,t-1zs,t-1)              Pbbzs,t-1, and
+
+                                                                                                                                             are computed to
+
+be added as FCF cut c in Bt.
+
+5 Computational experiments
+
+The proposed solution strategy was implemented in Julia, using the JuMP pack-
+age [25]. The code is available in an open-source repository.2
+
+5.1 Data and setup
+
+The model was tested on a system representing Northern and Central Europe in a
+2050 scenario. A description of the assumptions behind this scenario is provided in
+[26]. Figure 6 shows the 61 modeled price areas (or bidding zones) and the transmis-
+sion corridors between them. A transportation model constrains power flows between
+price areas. The 23 yellow areas represent offshore wind parks, while onshore wind
+and solar power are distributed throughout the system. The 17 light blue areas indi-
+cate that a hydropower system exists and that it is modeled in detail.
+
+2https://gitla b.sintef .no/en ergy/r es100/resddp.
+
+                                                           13
+                                                                    A. Helseth, B. Mo
+
+Fig. 6 Price areas categorization and topology
+
+Table 2 Average annual produc-  Country         Hydro  Wind  Solar  Demand
+tion (hydro, wind, and solar)   Norway          157    51    7      201
+and firm demand for Nordic and  Sweden          69     140   9      215
+nearby countries, in TWh        Finland         16     114   3      144
+                                Denmark         0      105   8      73
+                                Germany         0      573   250    843
+                                Great Br.       5      468   176    651
+
+   A summary of annual expected production from hydro, wind (onshore and off-
+shore), and solar power, as well as firm demand for the Nordic countries and some
+close neighbors is provided in Table 2. In addition, production from and demand for
+hydrogen, production from thermal generators, price-sensitive demand, and trans-
+mission grid capacities and losses impact the power balances.
+
+   A total of 30 weather years were used in the preparation of stochastic models for
+inflow (weekly resolution) and VRES (hourly resolution). A VAR-1 stochastic inflow
+model was fitted to the inflow time series for the 17 price areas with detailed repre-
+sentation of hydropower, while wind and solar power time series were used directly.
+
+   We ran the SDDP model for a 3-year horizon with weekly decision stages. Three
+cases were considered, each with different time discretization within the week: Cases
+T24, T4, and T2, having 24-, 4-, and 2-hour time resolution within the week, respec-
+tively. Input data with finer time resolution than the case allows will be aggregated.
+
+13
+Considering short-term variability in long-term hydropower scheduling...9.0e+07
+
+Cost [kEUR]For example, the hourly VRES input data is aggregated to daily values in case T24,8.8e+07
+losing much of the inherent variability.
+             8.6e+07
+   Inflow uncertainty was represented by 40 sampled scenarios (NS) in each forward
+iteration and 10 points discretizing the residual (NB) in the backward recursion. Wind8.4e+07
+variability and uncertainty was represented by 5 pre-selected scenarios in the forward
+iteration when solving the DIP. To arrive at reasonable computation times, we ran a
+maximum of 300 SDDP main iterations, where cost cuts were created in the 80 first
+iterations. Then, from iteration 81-300 no further cost cuts were made. Consequently,
+for each case a total of 80 × 40 = 3200 cost cuts were computed. Feasibility cuts for
+the hydropower subsystems were computed prior to the SDDP runs.
+
+   The model was run using the dual Simplex algorithm in CPLEX 20.1 on a Intel
+Core i9-13900K processor with 24 cores, maximum turbo frequency of 5.8 GHz and
+32 GB RAM.
+
+5.2 Convergence properties and computational performance
+
+The model was first run for a pre-sampled single scenario for case T2 to test the con-
+vergence properties. Consequently, inflow, wind, and solar are deterministic in the
+forward and backward SDDP iterations. For this particular test cost cuts were com-
+puted in all forward iterations. Figure 7 shows how the cost bounds develop when
+creating different number of cost cuts in the forward iteration.
+
+   Iterating between the SP and DIP per stage in the forward iterations until conver-
+gence is denoted 'Full', with bounds shown as blue lines in Fig. 7, converging to a
+tolerance of 0.1 kin iteration 593. When four such iterations are allowed per stage
+
+                                                                                                                                            Full
+                                                                                                                                            4 cuts
+                                                                                                                                            1 cut
+
+                                  100 200 300 400 500 600 700
+                                                        Iteration no.
+
+Fig. 7 Convergence for a single scenario. Upper and lower bounds for three different cost cut computa-
+tion strategies
+
+                                                           13
+                                                                                                           A. Helseth, B. Mo
+
+in the forward iteration, denoted '4 cuts' with bounds shown as black lines, conver-
+gence requires 695 iterations. Finally, the red lines represent bounds for case '1 cut',
+where only one cost cut is computed per stage in the forward iterations. This case
+required approximately 2000 iterations to converge. Figure 7 shows a clear trend of
+an increasing upper boundary with iterations for case '1 cut'. This trend can also be
+seen for case '4 cuts' and is explained by the underestimated dispatch costs due to a
+low number of cost cuts in the early iterations. The solution strategy proposed in this
+work aligns with the '1 cut' strategy and may-based on this deterministic example-
+seem to have poor convergence properties. However, note that as a part of a MSBD
+or SDDP algorithm, multiple cost cuts are created and shared per stage in the forward
+iterations with the '1 cut' strategy due to the multiple nodes (MSBD) or scenarios
+(SDDP) visited.
+
+   Convergence characteristics for cases T2 and T4, e.g. with stochastic inflow and
+VRES, are shown in Fig. 8. As expected, the total cost of operating the system is
+higher with finer time resolution. Also note that, since cost cuts are only computed in
+the 80 first iterations, the shapes of the upper bounds change from a increasing to a
+decreasing trend around iteration 80.
+
+   Computation times are provided in Table 3, as average values per iteration and as
+total time (last column). Numbers in the second column show that the computation
+of cost cuts in the 80 first iterations heavily impact the total computation time. Cost
+cuts are neither computed in the last 220 forward iterations (third column) nor in any
+of the backward iterations (fourth column), leading to modest computation times for
+those. We emphasize that there is significant potential for improving computational
+speed by considering: (i) cut management techniques, such as relaxation or filtering
+
+                 9.0e+07
+
+    Cost [kEUR]  8.5e+07
+
+                 8.0e+07
+
+                 7.5e+07                                T2
+                                                        T4
+
+                          0  50 100 150 200 250 300
+
+                             Iteration no.
+
+Fig. 8 Convergence characteristics for cases T2 and T4
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+Table 3 Computation times, av-    Case First 80 forward Last 220 forward Backward Total
+erage per iteration (in minutes)
+and total per case (in hours)         Average [min] Average [min] Average [min] [hours]
+
+                                  T2 44.8      5.1                            4.4       100.4
+
+                                  T4 12.6      5.1                            4.4       57.5
+
+                                  T24 1.9      5.1                            4.4       43.2
+
+                 150                                                               T2
+                                                                                   T4
+                                                                                   T24
+
+Price [EUR/MWh]  100
+
+                 50
+
+                 0
+
+                      0           20       40  60                         80       100
+
+                                           Percentage
+
+Fig. 9 Simulated power prices for South-East Norway as duration curves
+
+of non-redundant FCF cuts; (ii) advanced parallel processing schemes such as [27];
+and (iii) the use of compiled languages.
+
+5.3 Water values
+
+A final simulation using 40 pre-defined inflow and VRES scenarios was performed
+for all cases, and simulated power prices for South-East Norway are shown in Fig. 9.
+It was generally observed that the simulated prices for Norwegian areas show little
+variation across the country and are less volatile than for areas in continental Europe.
+Figure 9 shows that the cases with finer time resolution tend to have more frequent
+high (above 50 /MWh) and low (zero) prices.
+
+   The strategy, or more precisely the collections of FCF cuts per stage, is the main
+product from an SDDP run, valuating energy storage in hydropower subsystems.
+To understand how this valuation differs with varying time resolution, we studied
+cut coefficients for non-redundant FCF cuts for selected stages. Redundant cuts
+were removed by applying the elimination procedure outlined in [28] (Sect. 4.3).
+The ranges of possible cut coefficients for all Norwegian and Swedish subsystem for
+weeks 15 and 35 in the second year of the scheduling horizon are shown in Figs. 10
+and 11, respectively. Week 15 represents the end of the winter period, with high
+
+                                                           13
+                                                    A. Helseth, B. Mo
+
+    Cut coefficient [EUR/MWh]  80 100
+
+                               60
+
+                               40
+
+                               20
+
+                               0
+
+                                       T24  T4  T2
+
+Fig. 10 Possible water values in week 15. The boxes hold values between the 75th and 25th percentiles,
+indicating the mean value by a horizontal line
+
+    Cut coefficient [EUR/MWh]  80 100
+
+                               60
+
+                               40
+
+                               20
+
+                               0
+
+                                       T24  T4  T2
+
+Fig. 11 Possible water values in week 35. The boxes hold values between the 75th and 25th percentiles,
+indicating the mean value by a horizontal line
+
+demand and decreasing reservoir volumes, potentially leading to tight power bal-
+ances while waiting for the snow melting season. None of the cases indicate that there
+is a high risk of rationing, since water value ranges shown in Fig. 10 are far from the
+rationing price of 3000 /MWh. Still, few occurrences of rationing in the backward
+iterations explain the outliers in Fig. 10.
+
+13
+Considering short-term variability in long-term hydropower scheduling...Water value [EUR/MWh]
+    20 30 40 50 60 70 80
+                                                                                                                                              T2
+                                                                                                                                              T4
+                                                                                                                                              T24
+
+                          0  20  40  60       80  100
+
+                                 Storage [%]
+
+Fig. 12 Water values for subsystem Hallingdal in week 15, assuming proportional filling of reservoirs
+
+   Week 35 represents the late summer, with lower demand and where snow has
+melted and reservoirs are approaching their peak levels. Due to the increased risk of
+spillage, water values are lower in week 35 than week 15.
+
+   For both weeks the median and the range of possible water values increases with
+finer time resolution, which can be explained by the fact that finer time resolution
+leads to better representation of the time steps with a tight power balance. Similar
+patterns were observed when studying other weeks.
+
+   Another technique for analyzing water values is described below. By fixing reser-
+voir storages to discrete values and assuming average inflow, the FCF cuts in (6f) can
+be transformed into t+1  c, where c is a constant. Consequently, the cut with
+highest c will be binding, and cut coefficients for this cut are interpreted as the water
+values for the considered combination of fixed reservoir storages. As an assumption,
+we let the relative reservoir volumes increase proportionally to find the water values
+for increasing storage volumes. An example for the Hallingdal subsystem in South-
+ern Norway for week 15 is presented in Fig. 12. Most cuts are created in the range
+between 15 and 40 % storage, explaining the smoother curves in this region. Again,
+the range of water values is wider for the cases with finer time resolution.
+
+6Conclusions
+
+This work presents an efficient solution strategy for embedding short-term variabil-
+ity and uncertainty in an LTHS model. The short-term dispatch problem is approxi-
+mated by use of Benders decomposition within each decision stage in a multi-stage
+decomposition approach. Long-term and short-term uncertainties are treated sepa-
+rately, assuming negligible correlation between the two. While long-term uncertainty
+
+                                                           13
+                                                                                                           A. Helseth, B. Mo
+
+(inflow) is seen as a lumped value per stage with inter-stage correlations, short-term
+uncertainties (VRES) are provided as finely resolved scenarios per stage without
+inter-stage correlations.
+
+   It was demonstrated how the proposed strategy naturally fits into the forward itera-
+tion of the MSBD and SDDP schemes, gradually approximating the short-term dis-
+patch problem under VRES uncertainty by cost cuts. Since the computation of cost
+cuts is time consuming, further research could focus on efficient parallelization of
+such computations or even performing them off-line.
+
+   The proposed solution strategy was implemented in an open-source LTHS model
+and applied to a 2050 scenario of the Central and Northern European power system.
+The system was scheduled under inflow and wind power uncertainty. Results show
+that the variance in water values depends on the time resolution, demonstrating the
+need for fine time resolution in LTHS models applied to this type of system.
+
+   This work leaves several pathways for further research, such as further exploring
+the computational aspects related to the multi-layer decomposition scheme, improv-
+ing the joint modeling of long- and short-term uncertainties, and further investigating
+the sensitivity of the results to different representations of uncertainty.
+
+Acknowledgements This work was funded by The Research Council of Norway Project No. 344220.
+
+Author contributions A.H. developed the methodology and computer code, conducted the case studies,
+and wrote the main manuscript text. B.M was involved in developing the methodology, preparing data for
+the case study, discussing case study results and reviewing the manuscript.
+
+Funding Open access funding provided by NTNU Norwegian University of Science and Technology (incl
+St. Olavs Hospital - Trondheim University Hospital)
+
+Data availability No datasets were generated or analysed during the current study.
+
+Declarations
+
+Conflict of interest The authors declare no competing interests.
+
+Ethical approval Not applicable.
+
+Open Access This article is licensed under a Creative Commons Attribution 4.0 International License,
+which permits use, sharing, adaptation, distribution and reproduction in any medium or format, as long
+as you give appropriate credit to the original author(s) and the source, provide a link to the Creative
+Commons licence, and indicate if changes were made. The images or other third party material in this
+article are included in the article's Creative Commons licence, unless indicated otherwise in a credit line
+to the material. If material is not included in the article's Creative Commons licence and your intended use
+is not permitted by statutory regulation or exceeds the permitted use, you will need to obtain permission
+directly from the copyright holder. To view a copy of this licence, visit htt p : //c rea ti v eco m mo n s. o rg/li cen
+se s/ b y /4.0 / .
+
+13
+Considering short-term variability in long-term hydropower scheduling...
+
+References
+
+1. Helseth, A., Melo, A.C.G., Ploussard, Q.M., Mo, B., Maceira, M.E.P., Botterud, A., Voisin, N.:
+      Hydropower scheduling toolchains: comparing experiences in Brazil, Norway, and USA and impli-
+      cations for synergistic research. J. Water Resour. Plan. Manag. 149(7), 1­12 (2023)
+
+2. Riddervold, H.O., Skjelbred, H.I., Kong, J., Elvetun, O.L., Korpås, M.: Optimal pricing of produc-
+      tion changes in cascaded river systems with limited storage. In: Helseth, A. (ed.) Proceedings of
+      the 6th International Workshop on Hydro Scheduling in Competitive Electricity Markets, 52­61.
+      Springer, Cham (2019)
+
+3. da Cruz, C.B., Brandão, L.C., Diniz, A.L.: Water values and marginal costs for power generation
+      planning under more restrictive constraints and a more detailed representation of hydro plants. Electr.
+      Power Syst. Res. 235, 110819 (2024). https://doi.org/10.1016/j.epsr.2024.110819
+
+4. Ringkjøb, H.K., Haugan, P.M., Seljom, P., Lind, A., Wagner, F., Mesfun, S.: Short-term solar and
+      wind variability in long-term energy system models--a European case study. Energy. 209, 1­13
+      (2020)
+
+5. Favereau, M., Babonneau, F., Lorca, A.: Water resources management: a bibliometric analysis and
+      future research directions. Ann. Oper. Res. (2024). https://doi.org/10.1007/s10479-024-06339-0
+
+6. Pereira, M.V.F., Pinto, L.M.V.G.: Multi-stage stochastic optimization applied to energy planning.
+      Math. Program. 52, 359­375 (1991)
+
+7. Gjelsvik, A., Mo, B., Haugstad, A.: Long- and medium-term operations planning and stochastic
+      modelling in hydro-dominated power systems based on stochastic dual dynamic programming. In:
+      Handbook of Power Systems I, 33­55. Springer (2010)
+
+8. Maceira, M.E.P., Penna, D.D.J., Diniz, A.L., Pinto, R.J., Melo, A.C.G., Vasconcellos, C.V., Cruz,
+      C.B.: Twenty years of application of stochastic dual dynamic programming in official and agent stud-
+      ies in Brazil-Main Features and Improvements on the NEWAVE Model. In: Proc. 20th Power System
+      Computation Conference (2018)
+
+9. Papavasiliou, A., Mou, Y., Cambier, L., Scieur, D.: Application of stochastic dual dynamic program-
+      ming to the real-time dispatch of storage under renewable supply uncertainty. IEEE Trans. Sustain.
+      Energy 9(2), 547­558 (2018)
+
+10. Diniz, A.L., Maceira, M.E.P., Vasconcellos, C.L.V., Penna, D.D.J.: A combined SDDP/Benders
+      decomposition approach with a risk-averse surface concept for reservoir operation in long-term
+      power generation planning. Ann. Oper. Res. 292, 649­681 (2020)
+
+11. Kaut, M., Midthun, K.T., Werner, A.S., Tomasgard, A., Hellemo, L., Fodstad, M.: Multi-horizon
+      stochastic programming. CMS 11, 179­193 (2014)
+
+12. Abgottspon, H., Andersson, G.: Medium-term optimization of pumped hydro storage with stochastic
+      intrastage subproblems. In: Proc. 18th Power System Computation Conference,, Wroclaw, Poland
+      (2014)
+
+13. Zhang, H., Grossman, I.E., Tomasgard, A.: Decomposition methods for multi-horizon stochastic pro-
+      gramming. CMS 21(32), 1­24 (2024)
+
+14. Morillo, J.L., Zéphyr, L., Pérez, J.F., Lindsay Anderson, C.: Cadena: Risk-averse stochastic dual
+      dynamic programming approach for the operation of a hydro-dominated power system in the pres-
+      ence of winduncertainty. Int. J. Electr. Power Energy Syst. 115, 105469 (2020)
+
+15. Navarro, A., Favereau, M., Lorca, A., Olivares, D., Negrete-Pincetic, M.: Medium-term stochastic
+      hydrothermal scheduling with short-term operational effects for large-scale power and water net-
+      works. Appl. Energy. 358, 1­16 (2024)
+
+16. Metello, C.N.: Analytical representation of immediatecost functions in SDDP. Mathesis, Pontifical
+      Catholic University of Rio de Janeiro (2016)
+
+17. Fernandes, A., Oliveira, M.T., Marcato, A.L.M., Oliveira, E.J., Junior, I.C.S., Oliveira, E.: Repre-
+      sentation of wind energy scenarios in the mid-termhydrothermal systems operation scheduling. J.
+      Control Autom. Electric. Syst. 30, 413­423 (2019)
+
+18. Junior, C.A., Dias, B., Diniz, A.: Integrated two-stage benders decomposition and dual dynamic
+      programming for hydrothermal-wind planning with intra-stage cost functions. IEEE Trans. Sustain.
+      Energy (2024). https://doi.org/10.1109/TSTE.2024.3411577
+
+19. Maceira, M.E.P., Melo, A.C.G., Pessanha, J.F.M., Cruz, C.B., Almeida, V.A., Justino, T.C.: Combin-
+      ing monthly wind and inflow uncertainties in the stochastic dual dynamic programming--application
+      to the brazilian interconnected system. Energy Syst. (2023). ht tps:/ /do i. org/ 10. 1 007/s1 26 6 7 -0 23-0 05
+      80 - 5
+
+                                                           13
+                                                                                                           A. Helseth, B. Mo
+20. Birge, J.R., Louveaux, F.: Introduction to Stochastic Programming, 2nd edn. Springer, New York
+
+      (2011)
+21. Matos, V.L., Finardi, E.C.: A computational study of a stochastic optimization model for long term
+
+      hydrothermal scheduling. Int. J. Electr. Power Energy Syst. 43(1), 1443­1452 (2012)
+22. Blom, E., Søder, L., Risberg, D.: Performance of multi-scenario equivalent hydropower models.
+
+      Electr. Power Syst. Res. 187, 1­10 (2020)
+23. Helseth, A., Mo, B.: Hydropower aggregation by spatial decomposition--an SDDP approach. IEEE
+
+      Trans. Sustain. Energy 14(1), 381­392 (2023). https://doi.org/10.1109/TSTE.2022.3214497
+24. Maceira, M.E.P., Bezerra, C.V.: Stochastic streamflow model for hydroelectric systems. In: Probabi-
+
+      listic Methods Applied to Power Systems (PMAPS), Vancouver, Canada (1997)
+25. Lubin, M., Dowson, O., Dias Garcia, J., Huchette, J., Legat, B., Vielma, J.P.: JuMP 1.0: recent
+
+      improvements to a modeling language for mathematical optimization. Math. Program. Comput.
+      (2023). https://doi.org/10.1007/s12532-023-00239-3
+26. Arvesen, A., Hansen, O.M., Harby, A., Härtel, P., Korpås, M., Mo, B., Naversen, C.Ø., Schmitz, R.:
+      On the potential role of flexible Norwegian hydropower in managing challenging renewable energy
+      variability events in Europe. IOP Conference Series (Accepted for publication)
+27. Avila, D., Papavasiliou, A., Lohndorf, N.: Batch learning SDDP for long-term hydrothermal plan-
+      ning. IEEE Trans. Power Syst. 39(1), 614­627 (2024)
+28. Shapiro, A., Tekaya, W., Soares, M.P., Paulo da Costa, J.: Worst-case-expectation approach to opti-
+      mization under uncertainty. Oper. Res. 61(6), 1435­1449 (2013)
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+13
+

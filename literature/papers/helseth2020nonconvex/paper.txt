@@ -1,0 +1,520 @@
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+Nonconvex Environmental Constraints in
+          Hydropower Scheduling
+
+                          Arild Helseth, Birger Mo, Hans Olaf Ha°genvik
+                                             SINTEF Energy Research
+                                                Trondheim, Norway
+                                               arild.helseth@sintef.no
+
+   Abstract--Environmental constraints in hydropower systems               programming (LP) and requires a convex model formulation.
+serve to ensure sustainable use of water resources. Through                A recent reformulation of the SDDP algorithm, known as
+accurate treatment in hydropower scheduling, one seeks to                  stochastic dual dynamic integer programming (SDDiP), has
+respect such constraints in the planning phase while optimizing            proven convergence also in the nonconvex case. SDDiP was
+the utilization of hydropower. However, many environmental                 first presented in [6], and has later been applied to hydropower
+constraints introduce state-dependencies and even nonconvexities           scheduling in [7]. This work compares the strategies obtained
+to the scheduling problem, making them challenging to capture.             from the SDDiP algorithm and its linear approximation (akin
+This paper describes how the recently developed stochastic dual            to SDDP) when applied to a scheduling problem with non-
+dynamic integer programming (SDDiP) method can incorporate                 convex environmental constraints.
+nonconvex environmental constraints in the medium- and long-
+term scheduling of a hydropower system in a liberalized market                In symphony with the ongoing power market changes,
+context. A mathematical model is presented and tested in a multi-          the physical and environmental requirements associated with
+reservoir case study, emphasizing on the improvements observed             hydropower operation are changing, e.g. through proposed
+when accurately modelling a particular type of nonconvex envi-             revisions of hydropower concessions conditions and the im-
+ronmental constraint.                                                      plementation of EU Water Framework Directive. The directive
+                                                                           strives to ensure sustainable use of water resources, balancing
+   Index Terms--Hydroelectric power generation, Power gener-               the multiple uses such as hydropower, agriculture and recre-
+ation economics, Linear programming, Integer linear program-               ation [8]. Consequently, hydropower producers need to both
+ming, Stochastic processes.                                                adjust their operational schedules according to the new price
+                                                                           patterns seen in the market and at the same time relate to
+                          I. INTRODUCTION                                  new operational constraints. In this context, the producers need
+                                                                           scheduling models that represent physical and environmental
+   Hydropower is a dominant generation technology in the                   constraints in a precise and consistent manner.
+Nordic power system, e.g., accounting for 143 TWh/year or
+96% of the total power production in Norway in 2017 [1]. In                   Environmental constraints in water resources systems come
+the future, the Nordic power system will have tighter connec-              in many flavors, depending physical and legislative conditions.
+tions with Europe and an increasing proportion of intermittent             The technical literature tend to emphasize on ecologically ac-
+renewable generation from, for example, wind and solar power.              ceptable flows, in terms of magnitude and rate of change [9]­
+Rapid and unpredictable fluctuations in intermittent generation            [12]. The impact of minimum flows and maximum ramping
+will offer new possibilities for controllable generation, such             rates certainly limits the flexibility of the hydro system,
+as regulated hydropower, to be able to respond to these                    but from a modelling point of view these constraints fit
+fluctuations. Flexible and fast-responding power plants able               well into algorithms relying on a convex model formulation,
+to produce at demand peaks will therefore see a higher profit              such as SDDP. Other environmental constraints involve state-
+potential.                                                                 dependencies which are not easily treated in the SDDP al-
+                                                                           gorithm, see e.g. [13]. The main complicating factor is the
+   Operational planning (or scheduling) models have been                   nonconvexities associated with such constraints.
+widely used by Nordic hydropower producers for several
+decades. Although these have been developed along different                   In this paper we focus on constraints on maximum dis-
+methodological tracks, the stochastic dual dynamic program-                charge from hydropower reservoirs and their dependencies
+ming (SDDP) algorithm introduced in [2], is currently the                  on reservoir level. This constraint type is enforced in some
+state-of-the-art method for medium-term hydropower schedul-                Norwegian reservoirs and is believed to have significant impact
+ing in the Nordic market. In particular, the extended algorithm            on the hydropower scheduling for a number of watercourses
+to incorporate uncertainty in power price presented in [3]­                in the future. We elaborate on how to accurately model this
+[5] has become popular. The SDDP algorithm allows for                      type of state-dependent and nonconvex constraint within the
+optimization of hydropower schedules provided a detailed and               SDDiP algorithm, and compare the exact solution with a linear
+complex system description and uncertainties in e.g. inflow                approximation. The different formulations are tested in multi-
+and power price. The SDDP algorithm is based on linear                     reservoir case study, and compared in terms of economic
+
+   This work was funded by The Research Council of Norway through project
+no. 257588
+
+This is the accepted version of an article published in PMAPS 2020
+        http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+indicators and reservoir operation. The novel contributions of         The constraints are indicated in (1b)-(1d), where the initial
+this paper lie in the modelling of the nonconvex environmental      state vector x0 is given and W , H, G, and B, are matrices
+constraints within the SDDiP algorithm and in the assessment        of suitable dimensions, and where Xt is a non-empty mixed-
+of the performance of the proposed model when applied to a          integer polyhedral set. The right-hand-side parameter vector
+realistic case study.                                               h(t) is dependent on the random data vector t whose
+                                                                    distribution is known, and where t are the realizations.
+                   II. PROBLEM FORMULATION
+                                                                       For efficient solution of problems like (1) the use of decom-
+   In a liberalized electricity market a risk-neutral hydropower    position techniques are often crucial [16]. The problem in (1)
+producer's primary objective is to find an operating strategy       can be decomposed into stage-wise nested decision problems
+that maximizes the expected profit for the entire planning          of type:
+period while respecting all relevant constraints. This decision
+problem can be formulated as a multi-stage stochastic opti-         Qt(xt-1) = max ft(xt, yt) + t(xt)             (2a)
+mization problem, and the expectation is to be taken over                        xt ,yt
+the stochastic variables, typically inflow and power price.
+We assume that the probability distributions of the stochastic              s.t. (xt, yt)  Xt(xt-1, t)            (2b)
+variables can be discretized, and that the problem can be
+decomposed into weekly decision stages.                                In Section II-A we elaborate on the stage-wise problem
+                                                                    in (2) and define the environmental constraints. The overall
+   For the Nordic electricity market, we assume that there is a     solution strategy for solving (1) is outlined in Section III.
+sufficient number of players such that a price-taker assumption
+is reasonable. Moreover, we assume that the system is confined      A. Basic Stage Problem
+within a single price zone where potential grid bottlenecks
+can be disregarded. This assumption can be justified in the            In the following we describe the basic scheduling problem
+Nordic market context, where the scheduling mainly provides         of a given decision period t and inflow scenario, with a typical
+decision support for the day-ahead bidding process, and intra-      length of one week. The stage and state variables comprised in
+zone grid bottlenecks are handled through redispatch by the         vectors xt and yt in (1) are now specified. As a simplification,
+transmission system operator after day-ahead market clearing.       but without loss of generality, we only consider the reservoir
+Consequently, the hydropower producer can optimize the op-          volume as a state variable in this work. A thorough treatment
+eration of a single watercourse individually without including      of inflow as a state variable in SDDiP and SDDP, can e.g. be
+other generation or demand obligations that are part of its         found in [7] and [17], respectively.
+portfolio.
+                                                                       The problem in (3) is an LP problem, but will be extended
+   We define a scheduling problem in (1), comprising state          with nonconvex environmental constraints and will be cast
+variables xt and stage variables yt for each decision stage t.      as a mixed integer linear programming (MIP) problem in
+The state variables are typically the reservoir volumes. There      Section II-B. We omit the scenario index for brevity.
+may also be other states in xt, such as inflows, but these
+will not be emphasized here. The stage variables represent          Qt(vt-1) = max ptet + t                       (3a)
+the operational decisions to be made in a given stage, typically
+concerning water releases, overflows and transactions with the       vht + qhDt + qhOt + qhBt-                          (3b)
+electricity market. For the scheduling problem in (1), we want                                                    h
+to find an operating strategy that maximizes the expected profit            qjDt + qjOt + qjBt = vh,t-1 + Iht
+in (1a) and accounts for the end-of-horizon valuation of stored
+water in (xT ). The expectation in (1a) is taken over the           jh
+stochastic parameter t, representing the inflow. For simplicity
+we will treat price as a deterministic exogenous variable in this   qhDt =       qhSkt                         h (3c)
+work, see e.g. [3], [14] or [15] for treatment of stochastic price
+within the SDDP algorithm.                                                  kKh
+
+                                                                    et -                   hkqhSkt = 0            (3d)
+
+                                                                            hH kKh
+
+                                                                    t -     htcvht  tc                         c (3e)
+
+       max E            T                      (1a)                            hH                              h  (3f)
+
+(x1,y1),...,(xT ,yT )      ft(xt, yt) + (xT )                       Vht  vht  V¯ht                             h (3g)
+                                                                    QhDt  qhDt  Q¯hDt
+                       t=1                                          QBht  qhBt  Q¯Bht
+
+s.t. W xt + Hxt-1 + Gyt = h(t)                                          et, qhOt  R+                           h (3h)
+
+                                               (1b)                                                               (3i)
+
+Byt = 0                                        (1c)
+
+(xt, yt)  Xt                                   (1d)                    The objective (3a) is to maximize the profit from selling
+                                                                    energy et to the market in week t at a price pt. This 'here-and-
+t  {1, 2, . . . , T }                                               now' profit is balanced against the future expected profit (FEP)
+
+                       This is the accepted version of an article published in PMAPS 2020
+                               http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+function. The FEP function is represented by the variable t            To incorporate the modelling of state-dependent release
+which is constrained by a set c  C Benders cuts in (3e) with        constraints, we add (5) to (3), and remove (3g). Due to the
+cut coefficients htc and intercepts tc.                             binary variable h the problem is now cast as an MIP problem.
+
+   The state vector vt-1 in (3a) comprises the initial reservoir       Note that in some hydropower systems, the physical de-
+volumes for all reservoirs h  H. The water balance equation         pendency of maximum discharge on the reservoir level is
+for a specific reservoir h is formulated in (3b). The reservoir     significant, but does not have the binary nature of the en-
+volume vht at the end of the week is a function of the reservoir    vironmental constraints presented here. In such cases, linear
+at the beginning of the week vh,t-1, the inflow Iht, the water      approximations can often provide satisfactory results.
+spillage qhOt and release (bypass qhBt and the discharge through
+the station qhDt) to downstream modules, and the spillages and                            III. SOLUTION METHOD
+releases from upstream modules in h.
+                                                                       Although the MIP problem formulated in the previous
+   The generation in (3d) can be seen as a simplified rep-          section could be solved directly using classical stochastic
+resentation of the generally nonconvex hydropower produc-           dynamic programming such as in [18], this type of algorithm
+tion function, which is well suited for many Norwegian              has limits in dealing with the state space in multi-reservoir
+hydropower stations with rather small variations in relative        systems. The recently developed SDDiP algorithm [6] is
+head. Water discharge through the station is modeled using          believed to have a higher potential for handling realistic multi-
+one variable qhSkt per discharge segment in (3d). These seg-        reservoir hydropower systems than SDDP, and is outlined in
+ments will be uploaded in ascending order provided that the         the following.
+efficiency hk decreases with k.
+                                                                    A. The SDDiP algorithm
+B. Environmental Constraints
+                                                                       As the scheduling problem described in the previous section
+   As mentioned in the introduction, environmental constraints      contains binary stage variables, the FEP function (represented
+comes in many flavors. Time-dependent boundaries on reser-          by ) is nonconvex with respect to the state variables. To
+voir (3f), discharge (3g) and bypass (3h) variables is one exam-    solve the nonconvex scheduling problem comprising (3) and
+ple. Constraints on ramping on water releases is another. These     (5) as specified in Sections II-A and II-B, we apply the SDDiP
+constraints have been addressed previously in the literature,       method [6]. The key concept of the method is to represent
+and fits well within the LP formulation in (3) and do not           state variables as binary variables, knowing that any function
+challenge the convexity requirement of the SDDP algorithm.          of binary variables can be represented as a convex polyhedral
+                                                                    function. In our case, the reservoir volumes, which are the
+   In the following we will emphasize on state-dependent max-       continuous variables vht in (3), are the state variables and can
+imum discharge constraints. This type of constraint is often        be represented by a binary approximation in (6).
+enforced to limit release and thereby ensure a secure refilling
+of the reservoirs prior to and during the summer season to          vht =                  2n-1hn = Chnhn  (6a)
+protect the landscape and satisfy recreational interests. If the
+reservoir is below a certain threshold surface level, the operator         nNh
+is not allowed to release water for generation, only to secure
+that more critical constraints downstream are met. Since the
+threshold surface level corresponds to a given reservoir volume
+Vhltim, the constraint can be formulated as:
+
+                                                                    hn  {0, 1}                             (6b)
+
+QhDt  qhDt  Q¯Dht  if         vht + vh,t-1   Vhltim  (4a)           |Nh| = log2            V¯ht  + 1       (6c)
+qhDt = QhDt                         2                                                       
+                              vht + vh,t-1
+                   if               2        Vhltim  (4b)           where   (0, 1) is the approximation precision (which we
+                                                                    will set equal for all reservoirs), and |Nh| is the number of
+   The average reservoir volume for the week is used to             binary variables needed to approximate vht to the precision
+indicate if the constraint (4b) should be activated. The binary     . As an example, the approximation of a reservoir volume
+nature of the constraint (4) causes a significant discontinuity in  variable with V¯ht = 200 Mm3 to a precision of 0.01 Mm3
+the scheduling problem that is not easily approximated in LP        requires 15 binary variables. With this binary approximation,
+formulations. Constraint (4) can be modelled by introducing         we can substitute vht as expressed in (6a) in (3b), (3e), (3f)
+a binary variables h, so that h  H:                                 and (5b).
+
+QDht  qhDt  h Q¯hDt - QhDt + QDht                    (5a)              The second important reformulation used in the SDDiP
+                                                                    method is to generate local copies of the state variables. This
+vht + vh,t-1        hVhltim                          (5b)           reformulation ensures that one is able to generate cuts that
+      2                                                             accurately approximate the FEP function. The DP formulation
+                                                                    of the problem with binary state variables becomes:
+                   h  {0, 1}                         (5c)
+
+                       This is the accepted version of an article published in PMAPS 2020
+                               http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+          Qt(t-1) = max ptet + t                             (7a)     The Benders cuts are constructed by solving the LP relax-
+                                                                   ation of (7), giving an optimal value QLt P . The coefficients
+                  s.t. (3) and (5)                    (7b)         hntc are computed as the dual values of (7c), and the right-
+                                                                   hand side tc = QLt P - hH nNh hnthn,t-1. Note that
+                        zhnt = hn,t-1        h, n            (7c)  this approach will lead to the same solution as one would get
+
+                        zhnt  [0, 1]         h, n     (7d)         solving the MIP in (3) and (5) in the SDDP forward iteration
+
+                        hnt  {0, 1}          h, n            (7e)  and its LP relaxation in the backward iteration.
+
+Where (7c) are the local copies of the state variables, connect-      The Lagrangian cuts are constructed by solving the La-
+ing the previous state solution, hn,t-1, and the copy variables
+zhnt for all reservoirs h  H and binary variables n  Nh.           grangian dual of (7), relaxing the copy constraint (7c). The
+
+   The SDDiP algorithm is outlined in below. In the forward        Lagrangian multiplier is obtained by
+iteration, the MIP problem defined in (7) is solved. In the
+backward iteration different relaxations of (7) are solved,        ¯ti = argmin Lti(¯t) +                      ¯hnthn,t-1 ,     (9)
+depending on the type of cuts to be computed.                      ¯t
+                                                                                                       hH nNh                (10a)
+                                                                                                                             (10b)
+                                                                   where Lti is defined as:
+
+                                                                   Lit(¯t) = max ptet + t -                    ¯hntzhnt
+
+1: Apply binary expansion on reservoir variables                                                       hH nNh
+
+2: Set 0, i  1, UB = + and LB = -,                                 s.t. (3), (5), (7d) and (7e)
+3: while i < imax or some other stopping criteria do
+                                                                      Equation (9) is solved repeatedly, with the aim to gradually
+4: Sample S scenarios                                              improving the vector of Lagrangian multipliers ¯t to provide
+                                                                   tight Lagrangian cuts. The multipliers are updated taking steps
+5: /* Forward Iteration */
+                                                                   with the subgradient method [19]. The coefficients hntc are
+6: for s=1,. . . ,S do                                             found as the Lagrangian multipliers, and the right-hand side
+                                                                   tc as Lit. Interesting related work on Lagrangian relaxation
+7:      for t=1,. . . ,T do                                        within the SDDP algorithm has been published in [20], [21].
+
+8:             Solve Qtis(ti-1,s)                                     The Strengthened Benders cuts are constructed by first solv-
+
+9:             Collect solution                                    ing the LP relaxation of problem (7). Subsequently, problem
+                                                                   (10) is solved with the Lagrangian multiplier vector ¯t equal to
+10:     end for                                                    the optimal LP dual solutions with respect to constraints (7c).
+
+11:     lbs  t=1,...,T Qtis                                        From the optimal objective of the latter problem we obtain
+                                                                   the right-hand side Lti(¯ti), which together with ¯t is used to
+12: end for                                                        construct the Strengthened Benders cut of type (8).
+
+13: /* Compute lower bound */                sS=1(lbs - µ)2
+                   S
+14:  µ    1        s=1  lbs   and  2      1
+15:       S                             S-1
+     LB           + z   
+               µ           S
+
+16: /* Backward Iteration */
+
+17: for t=T,. . . , 2 do                                                                     IV. CASE STUDY
+
+18:     for s=1,. . . , S do                                       A. Case Description
+
+19:            for b=1,. . . , B do                                   A computer model was established implementing the al-
+                                                                   gorithm described in Section III-A using the different cut
+20:               Solve a suitable relaxation of Qitsb(it-1,s)     types described in Section III-B. The model was used to
+                                                                   obtain schedules for a Norwegian watercourse comprising
+21:               Collect cut coefficients and parameters          3 hydropower reservoirs with corresponding power plants,
+                                                                   and with a total capacity of 202 MW. An illustration of the
+22:            end for                                             topology and specification of some technical characteristics is
+                                                                   provided in Fig. 1. For each reservoir shown in the figure
+23:            Create desired cuts as described in Sec. III-B      the average annual inflow and storage capacity are stated,
+                                                                   both in Mm3. Each power plant is identified with a number
+24:     end for                                                    and its installed capacity in MW. An environmental constraint
+                                                                   is attached to reservoir 2, stating that no water should be
+25: end for                                                        discharged from the reservoir in between weeks 18 to 35 if
+                                                                   the reservoir volume is lower than 140 Mm3.
+26: /* Compute upper bound */
+                                                                      A scheduling horizon of 1 year was applied with weekly
+27: UB  Q1i (0, 0)                                                 decision stages. A set of cuts of type (8) was used to ensure
+28: i  i + 1                                                       that state variables at the end of the scheduling horizon were
+                                                                   valuated. These cuts were obtained by model calibration, but
+29: end while                                                      could also be provided as a boundary condition from a long-
+                                                                   term scheduling model.
+B. Cut Types
+
+   Cuts to be constructed in the backward iteration will take
+the form:
+
+          t -                 hntcChnhnt  tc                 (8)
+
+                  hH nNh
+
+   A brief description of the 3 cut types used in the SDDiP
+algorithm in the case study in Section IV is provided below,
+please see [6], [7] for a more thorough description.
+
+                                   This is the accepted version of an article published in PMAPS 2020
+                                           http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+                                                                                             TABLE I
+                                                                   SIMULATED CASES AND EXPECTED PROFITS [Me].
+
+                                                                          Cut Type       High Price  Price Scenario  Low Price
+                                                                                                     Average Price
+                                                                           Benders          65.73                       34.59
+                                                                   Strengthened Benders     65.91          56.74        34.62
+                                                                                            65.96          56.81        34.63
+                                                                         Lagrangian                        56.83
+
+                 Fig. 1. Watercourse topology and technical data.  time. With the use of Benders cuts, the majority of compu-
+                                                                   tation time is spent solving the MIP problems in the forward
+   A relatively coarse representation of uncertainty and time      simulation, resulting in a run time in the range 2-3 hours.
+discretization was applied in order to focus on the modelling      The run-time approximately increased with a factor of 5 when
+of environmental constraints within acceptable computation         using Strengthened Benders cuts compared to using Benders
+times. An inflow model was fitted using a single inflow            cuts, due to the need for solving one MIP problem per problem
+series comprising 80 historical years, and the model error         instance in the backward iteration. The use of Lagrangian cuts
+was sampled from a normal distribution. A total of 50 inflow       further increases computation time, strongly depending on the
+scenarios were re-sampled in each forward iteration, and 6         number of iterations when searching for improved multipliers
+discrete inflow error terms were used at each stage in the         in (9). Note that parallel processing was not applied in this
+backward iterations of the algorithm. We ran the model with        case study for simplicity.
+3 different price scenarios, following the weekly average
+NordPool system prices for 2006 and 2015 as well as the            B. Results
+average system price for the years 2005-2018. The price
+scenarios are referred to as high (2006), average (average for        The convergence characteristic of the algorithm is shown
+2005-2018) and low (2015).                                         in Fig. 2, comparing the upper bounds obtained using the
+                                                                   3 different cut types in the high-price scenario. We used
+   The model was implemented in Julia, using the JuMP              a maximum number of 30 iterations in all presented cases.
+package [22] and CPLEX 12.9 solver [23] for solution of both       The lower bound obtained when using the Lagrangian cuts is
+the MIP and the LP problems. All tests were carried out on an      also included to indicate that the cost gap gradually closes
+Intel Core i7-4940MX processor with 3.30 GHz and 32 GB             as the iteration number increases. From Fig. 2 it can be
+RAM.                                                               observed that the cost gap using Lagrangian cuts is slowly
+                                                                   decreasing, but has not closed after 30 iterations. Further
+   The system in Fig. 1 was optimized using the 3 different        improving the cost gap turned out to be difficult and time-
+cut-types described in Section III-B and with the 3 different      consuming, which we believe is due to the inefficient search
+price scenarios. The resulting 9 cases are listed in Table I.      for improved Lagrangian multipliers (using the subgradient
+The system operation for each case was simulated in a final        method). The significant difference in upper bound when using
+simulation using a fixed and separately sampled set of 1000        the Strengthened Benders cuts compared to the Benders cuts
+inflow scenarios. The resulting expected profits are given         indicate that the former is a substantial improvement compared
+in Table I. The improved economic performance with exact           to the approximation made when linearizing the nonconvex
+modelling is most pronounced in the high-price case. The           constraints in (5). This finding is in-line with the conclusions
+high summer prices in this case provides a clear incentive         in [7], although this case study is clearly different from the
+to keep water available for summer production, rewarding the       one in [7].
+accurate modelling of the environmental constraint in reservoir
+2. Recall that the environmental constraints associated with          Operation of reservoirs 1 and 2 when using the high-
+reservoir 2 are always met in the forward simulation, but          price scenario is presented in Fig. 3, comparing the use of
+may be approximated in the backward iteration, depending           Strengthened Benders and Benders cuts. The threshold volume
+on the type of cuts being used. For the average-price case, the    of 140 Mm3 for reservoir 2 is indicated with the stapled
+0.09 Me (or 0.16 %) increase in expected profit when using         horizontal line in Fig. 3. The figures show that the use
+Lagrangian compared to Benders cuts may seem modest, but           of Strengthened Benders cuts leads to more released water
+one should keep in mind that the producer will often hunt for      from reservoir 1 and less from reservoir 2 prior to the price
+such marginal improvements in a competitive market.                spike in week 34. The difference in operation obtained when
+                                                                   using Strengthened Benders and Lagrangian cuts were less
+   The choice of cut type significantly impacts the computation    pronounced than between Strengthened Benders and Benders
+                                                                   and is therefore not emphasized here.
+
+                                                                                             V. CONCLUSIONS
+
+                                                                      We presented a hydropower scheduling model based on
+                                                                   SDDiP for exact treatment of reservoir-level dependent max-
+                                                                   imum discharge, which can be classified as a nonconvex
+
+This is the accepted version of an article published in PMAPS 2020
+        http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+© 2020 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all other uses, in any current or future media,
+                     including reprinting/republishing this material for advertising or promotional purposes, creating new collective works,
+                       for resale or redistribution to servers or lists, or reuse of any copyrighted component of this work in other works.
+
+                                                                                                                                                              [2] M. V. F. Pereira and L. M. V. G. Pinto, "Multi-stage stochastic
+
+                                                                                                                                                              optimization applied to energy planning," Mathematical Programming,
+
+                                                                                                                  Benders                                     vol. 52, pp. 359­375, 1991.
+
+                                Expected profit [MEUR]                                                            Strengthened Benders                        [3] A. Gjelsvik, M. M. Belsnes, and A. Haugstad, "An algorithm for stochas-
+                                    65.6 65.8 66.0 66.2 66.4                                                      Lagrange                                         tic medium-term hydrothermal scheduling under spot price uncertainty,"
+
+                                                                                                                                                              in Proc. 13th Power System Computation Conference, Trondheim, Nor-
+
+                                                                                                                                                              way, 1999.
+
+                                                                                                                                                              [4] A. Helseth, M. Fodstad, and B. Mo, "Optimal medium-term hydropower
+
+                                                                                                                                                              scheduling considering energy and reserve capacity markets," IEEE
+
+                                                                                                                                                              Transactions on Sustainable Energy, vol. 7, no. 3, pp. 934­942, 2016.
+
+                                                                                                                                                              [5] ----, "Optimal hydropower maintenance scheduling in liberalized mar-
+
+                                                                                                                                                              kets," IEEE Transactions on Power Systems, vol. 33, no. 6, pp. 6989­
+
+                                                                                                                                                              6998, 2018.
+
+                                                                                                                                                              [6] J. Zou, S. Ahmed, and X. A. Sun, "Stochastic dual dynamic integer
+
+                                                                                                                                                              programming," Mathematical Programming, vol. 175, no. 1-2, pp. 461­
+
+                                                                                                                                                              502, 2018.
+
+                                                                                                                                                              [7] M. N. Hjelmeland, J. Zou, A. Helseth, and S. Ahmed, "Nonconvex
+
+                                                              0          5      10      15                   20            25              30                 medium-term hydropower scheduling by stochastic dual dynamic integer
+
+                                                                                    Iteration no.                                                             programming," IEEE Transactions on Sustainable Energy, vol. 10, no. 1,
+
+                                                                                                                                                              pp. 481­490, 2018.
+
+Fig. 2. Convergence characteristics for the high-price cases. Upper bounds                                                                                    [8] European Commission. [Online]. Available: http://ec.europa.eu/
+for all cut types and lower bound for the case with Lagrangian cuts.                                                                                               environment/water/water-framework/index en.html
+
+                                                                                                                                                              [9] J. I. Pe´rez-D´iaz and J. R. Wilhelmi, "Assessment of the economic impact
+
+                                                                                                                                                              of environmental constraints on short-term hydropower plant operation,"
+
+                                                                                                                                                              Energy Policy, vol. 38, no. 12, pp. 7960 ­ 7970, 2010.
+
+                                                                                                                                                              [10] B. B. Chakrabarti, N. Newham, D. Goodwin, and C. Edwards, "Wind-
+
+                            Strengthened Benders                                                                     Strengthened Benders                     hydro firming with environmental constraints in New Zealand," in IEEE
+                            Benders                                                                                  Benders
+
+                 80 100                                                                                      150                                              Power and Energy Society General Meeting, San Diego, USA, 2011.
+
+                                                                                                                                                              [11] M. A. Olivares, J. Haas, R. Palma-Behnke, and C. Benavides, "A frame-
+
+Reservoir [Mm3]                                                                             Reservoir [Mm3]                                                   work to identify pareto-efficient subdaily environmental flow constraints
+
+                 60                                                                                          100                                              on hydropower reservoirs using a grid-wide power dispatch model,"
+
+                                                                                                                                                              Water Resources Research, vol. 51, pp. 3664­3680, 2015.
+
+                 40                                                                                                                                           [12] I. Guisa´ndez, "Long-term optimal hydropower reservoir operation with
+
+                                                                                                             50                                               minimum flows and maximum ramping rates," Ph.D. dissertation, Uni-
+
+                 20                                                                                                                                           versidad Polite´cnica de Madrid, 2016.
+
+                                                                                                                                                              [13] E. Pereira-Bonvallet, S. Pu¨schel-Løvengreen, M. Matus, and R. Moreno,
+
+                 0                                                                                           0                                                "Optimizing hydrothermal scheduling with non-convex irrigation con-
+
+                         0  10                                20  30        40      50                            0        10  20              30     40  50  straints," Energy Procedia, vol. 87, pp. 132­150, 2016.
+
+                                                                  Stage                                                                        Stage          [14] B. Mo, A. Gjelsvik, A. Grundt, and K. Ka°resen, "Optimisation of
+
+Fig. 3. Simulated operation of reservoirs 1 (left) and 2 (right), shown as                                                                                          hydropower operation in a liberalised market with focus on price
+mean (emphasized) and 0 and 100 percentiles. The solid-drawn and stapled                                                                                            modelling," in Proc. IEEE PowerTech, Porto, Portugal, 2001.
+lines are obtained using Strengthened Benders and Benders cuts, respectively.                                                                                 [15] A. Downward, O. Dowson, and R. Baucke, "Stochastic dual
+The reservoir threshold impacting maximum discharge from reservoir 2 is                                                                                             dynamic programming with stagewise dependent objective uncertainty,"
+indicated with the stapled, horizontal line.                                                                                                                        2018. [Online]. Available: http://www.optimization-online.org/DB
+                                                                                                                                                                    HTML/2018/02/6454.html
+
+                                                                                                                                                              [16] J. R. Birge and F. Louveaux, Introduction to Stochastic Programming,
+
+                                                                                                                                                              2nd ed. Springer, 2011.
+
+environmental constraint. The model was tested in a multi- [17] H. Poorsepahy-Samian, V. Espanmanesh, and B. Zahraie, "Improved
+
+reservoir case study, and its performance in terms of economic                                                                                                inflow modeling in stochastic dual dynamic programming," Journal of
+
+                                                                                                                                                              Water Resources Planning and Management, vol. 142, no. 12, 2016.
+indicators and reservoir operation was presented. The model [18] A. Helseth, M. Fodstad, M. Askeland, B. Mo, O. B. Nilsen, J. I. Perez-
+
+relies on several simplifying assumptions, a few of which                                                                                                     Diaz, M. Chazarra, and I. Guisandez, "Assessing hydropower operational
+
+should be challenged to arrive at more robust results. In                                                                                                     profitability considering energy and reserve markets," IET Renewable
+
+                                                                                                                                                              Power Generation, vol. 11, no. 13, pp. 1640­1647, 2017.
+particular we believe that adding uncertainty to the exogenous [19] M. Held, P. Wolfe, and H. P. Crowder, "Validation of subgradient
+
+power price, using finer time resolution, and extending the                                                                                                   optimization," Mathematical programming, vol. 6, no. 1, pp. 62­88,
+
+scheduling horizon would impact the results.                                                                                                                  1974.
+
+                 The case study results show that there is a potential for                                                                                    [20] F. Thome, M. V. F. Pereira, and M. Granville, Sergio Fampa, "Non-
+
+                                                                                                                                                              convexities representation on hydrothermal operation planning using
+
+improving the scheduling by accurately treating this type                                                                                                     SDDP," Working paper, 2013, http://www.psr-inc.com/publicacoes/.
+
+of environmental constraints compared to a traditional lin-                                                                                                   [21] H. Abgottspon, K. Nja´lsson, M. A. Bucher, and G. Andersson, "Risk-
+                                                                                                                                                                    averse medium-term hydro optimization considering provision of spin-
+ear approximation. In particular we found that the use of
+                                                                                                                                                              ning reserves," in International Conference on Probabilistic Methods
+
+Strengthened Benders cuts seems to capture a majority of                                                                                                      Applied to Power Systems (PMAPS), Durham, England, 2014.
+
+the improvement potential. Further work on the algorithm                                                                                                      [22] I. Dunning, J. Huchette, and M. Lubin, "JuMP: A modeling language for
+                                                                                                                                                                    mathematical optimization," SIAM Review, vol. 59, no. 2, pp. 295­320,
+could focus on improving the search for multipliers for the
+                                                                                                                                                              2017.
+
+Lagrangian cuts and combining cut types to improve both the [23] "IBM ILOG CPLEX optimizer," http://www-01.ibm.com/software/.
+
+computational performance and the convergence.
+
+                                             REFERENCES
+
+                 [1] Statistisk Sentralbyra°. [Online]. Available: https://www.ssb.no/en/
+                      energi-og-industri/statistikker/elektrisitet/aar
+
+                                                                                        This is the accepted version of an article published in PMAPS 2020
+                                                                                                http://dx.doi.org/10.1109/PMAPS47429.2020.9183590
+

@@ -1,0 +1,1653 @@
+arXiv:2308.05091v1 [math.OC] 9 Aug 2023                    Impact of environmental constraints
+                                                             in hydrothermal energy planning
+
+                                                                            Luís Felipe Bueno, André Luiz Diniz,
+
+                                                           Rafael Durbano Lobato, Claudia Sagastizábal§, Kenny Vinente¶
+
+                                                                                         August 10, 2023
+
+                                              Studygroup: 9th Brazilian Study Group with Industry, 6-10 March 2023, São Carlos http://www.cemeai.
+                                         icmc.usp.br/WSMPI/
+
+                                              Communicated by: Francisco Louzada Neto and José Alberto Cuminato
+                                              Industrial partners: Center of Research on Electric Energy (CEPEL) and Chamber of Electric Energy Com-
+                                         mercialization (CCEE)
+                                              Presenter: Academic: Luis Felipe Bueno, Kenny Vinente. Industrial: André Diniz, Rafael Lobato
+                                              Team: Gabriel Vinicius Bacci, Zeray Hagos Gebrezabher, Kevin Felipe Oliveira (Universidade de São Paulo ­
+                                         USP, Brazil), Robério da Rocha Barboza, Dr. André Diniz (Centro de Pesquisas de Energia Elétrica ­ CEPEL,
+                                         Brazil), Dr. Felipe Beltran, Gabriel Teixeira, Lucas Dagort (Norus, Brazil), Dr. Luís Felipe Bueno, Humberto
+                                         Gimenes, Lucas Julião, Maria Clara Couto Lorena, Dimary Moreno (Universidade Federal de São Paulo ­ UNIFESP,
+                                         Brazil), Ruan Felipe Sousa (Universidade Federal do Rio de Janeiro ­ UFRJ, Brazil), Dr. Rafael Lobato (Câmara
+                                         de Comercialização de Energia Elétrica ­ CCEE, Brazil), Renata Pedrini (Universidade Federal de Santa Catarina ­
+                                         UFSC, Brazil), Dr. Claudia Sagastizábal, Dr. Williams Yanez (Universidade Estadual de Campinas ­ UNICAMP,
+                                         Brazil), Dr. Kenny Vinente (Universidade Federal do Amazonas ­ UFAM, Brazil).
+                                              Application: Energy/Utilities
+                                              Tools: Mathematical optimization, Julia, JuMP, Gurobi
+                                              Keywords: Energy Optimization, Environamental Constraints, SDDP
+                                              MSC2020: 49M29, 90C90
+
+                                                                                                         Abstract
+
+                                                     As a follow-up of the industrial problems dealt with in 2018, 2019, 2021 and 2022, in part-
+                                                 nership with CCEE and CEPEL, in 2023 the study group "Energy planning and environmental
+                                                 constraints" focused on the impact that prioritizing multiple uses of water has on the the elec-
+                                                 tric energy production systems, specially in predominantly hydro systems, which is the case of
+                                                 Brazil.
+
+                                                     In order to model environmental constraints in the long-term hydrothermal generation plan-
+                                                 ning problem, the resulting large-scale multi-stage linear programming problem was modelled
+                                                 in JuMP and solved by stochastic dual dynamic programming. To assess if the development
+                                                 represented well the behavior of the Brazilian power system, the Julia formulation first was
+                                                 benchmarked with Brazil's official model, Newave. Environmental constraints were introduced
+                                                 in this problem by two different approaches, one that represents the multiple uses of water by
+
+                                             Universidade Federal de São Paulo, Campus São José dos Campos, lfelipebueno@gmail.com
+                                             Centro de Pesquisas de Energia Elétrica
+                                             Câmara de Comercialização de Energia Elétrica
+                                             §Universidade Estadual de Campinas
+                                            ¶Universidade Federal do Amazonas
+
+                                                                                                         1
+means of 0-1 variables, and another one that makes piecewise linear approximations of the rel-
+evant constraints. Numerical results show that penalties of slack variables strongly affect the
+obtained water values.
+
+Nomenclature
+
+Indices      index of periods (months).
+             index of thermal plants.
+       t     index of hydro plants.
+       g     index of scenario.
+       h     index of the scenario that preceded a in the previous time period.
+       a     index of the reference reservoir of plant h.
+       b(a)  index of volume range used for minimum outflow constraints.
+       r(h)  index of volume range used for maximum outflow constraints.
+       z
+       z
+
+Variables
+
+phhta        power output of hydro h in period t under scenario a (MW).
+ptgta        power output of thermal plant g in period t under scenario a (MW).
+qhta         turbine discharge of hydro h in period t under scenario a (m3/s).
+shta         spillage of hydro h in period t under scenario a (m3/s).
+vhta         reservoir volume of hydro h at period t under scenario a (hm3).
+defta        power deficit at period t under scenario a (MW).
+defhmtian    deficit of the minimum outflow constraint for hydro h at period t under
+             scenario a (m3/s).
+defhmtaax    deficit of the maximum outflow constraint for hydro h at period t under
+             scenario a (m3/s).
+defhRteas    deficit of the maximum outflow constraint for hydro h at period t under
+             scenario a if in the restricted operation range in the LTGSPLEC model
+uhtaz        (m3/s).
+             identifier of if the initial volume for hydro h in period t and scenario a is in
+uhtaz        range z or not.
+             identifier of if the initial volume for hydro h in period t and scenario a is in
+uhta         range z or not.
+             identifier of if the initial volume for hydro h in period t and scenario a is in
+             the restricted operation range or not.
+
+Parameters
+
+Cg           unitary variable cost of thermal plant g (R$/MW).
+CD           cost of deficit (R$/MW).
+K            constant that converts water flow (m3/s) to volume (hm3) in a one-month
+             period.
+NG           number of thermal plants.
+NH           number of hydro plants.
+NT           number of months in the planning horizon.
+NAt          number of scenarios in period t.
+NZhmin
+NZhmtax      number of ranges of volume to determine the minimum outflow of hydro h.
+             number of ranges of volume to determine the maximum outflow of hydro h
+             in period t.
+
+              2
+Dt        demand of active power in period t (MW).
+Yhta      incremental inflow of hydro h in period t (m3/s) and scenario a.
+h         productivity constant of hydro h (MWmonth/(m3/s))
+Vh
+phh       maximum storage capacity of the reservoir h
+pgg
+VhRes     maximum generation capacity for hydro plants h
+Vhmzin    maximum generation capacity for thermal plants g.
+Qhmzin    percentage of hydro h volume that defines its restricted operation range.
+Vhmtzax   storage level of hydro h for the z range of the minimum outflow constraints.
+          minimum outflow of hydro h if the initial storage level is in [Vhmzin, Vhmz+in1).
+Qhmtazx   storage level of hydro h at period t for the z range of the maximum outflow
+          constraints.
+Qsup      maximum outflow of hydro h at period t if the initial storage level is in
+T         [Vhmtzax, Vhmtza+x 1).
+ahz       large value compared with possible outflow values.
+          number of seconds per period.
+bhz       angular coefficient of the z-th part of the function that describes the maxi-
+          mum outflow of the hydro h in the piecewise linear model.
+ahtz      linear coefficient of the z-th part of the function that describes the maximum
+          outflow of the hydro h in the piecewise linear model.
+bhtz      angular coefficient of the z-th part of the function that describes the maxi-
+          mum outflow of the hydro h in the period t in the piecewise linear model.
+
+          linear coefficient of the z-th part of the function that describes the maximum
+          outflow of the hydro h in the period t in the piecewise linear model.
+
+Sets      thermal plants, i.e., {1, 2, . . . , NG}.
+
+  G       hydro plants, i.e., {1, 2, . . . , NH}.
+  H
+  T       periods, i.e., {1, 2, . . . , NT}.
+  Mh
+  At      hydro plants upstream of hydro h.
+  E
+  Zhmin   scenarios in period t.
+
+  Zhmtax  hydro plants that must satisfies environmental constraints.
+
+          ranges used to define the minimum outflow constraints of hydro h, i.e.,
+          {1, 2, . . . , NZmh in}.
+          ranges used to define the maximum outflow constraints of hydro h in period
+          t, i.e., {1, 2, . . . , NZhmtax}.
+
+1 Introduction and context
+
+In Brazil, the hydrothermal operation planning is performed for a time-span of five years, using
+the newave computational model [30] developed by Cepel. One of the main results of newave
+are the so-called water "future cost functions", which represent, by means of piecewise linear
+models, the monthly opportunity cost of the water stored in reservoirs. The computation of
+such functions depends on the convexity of the optimization problem solved by newave and
+are a natural output of the application of the well known stochastic dual dynamic programming
+(SDDP) decomposition strategy [32].
+
+    The future cost functions quantify the cost of using water to generate electricity and are
+used by shorter-term models [8], therefore impacting the entire chain of decisions in the energy
+business. Inaccurate estimates, i.e., which indicate lower/higher present values of water than
+the (in practice, unknown) accurate ones leads to an over (under) depletion of reservoirs and, as
+a consequence, in higher costs of energy production (in the case of cost-minimization problems).
+
+          3
+            The presence of large river basins stimulates several economic and human activities that
+        may have conflicting objectives among each other. For example, in Brazil, the São Francisco
+        river, which has an extension of over 2,830km, serves as the basis for the development of an
+        entire region of the country. The federal law 9433/97, known as the "Law of Waters", promotes
+        a rational and integrated use of the Brazilian water resources, taking into account multiple
+        uses, such as energy generation, irrigation, navigation, flood control, leisure and tourism, water
+        quality, preservation of aquatic flora and fauna. By this law, in situations of scarcity, water
+        resources should ensure the continuity of supply for essential human activities. The reservoir
+        volume in this case is primarily reserved for human consumption and for watering livestock.
+
+            Since hydroelectric energy represents one alternative use of water, hydro-generation must
+        be optimized in conjunction with the other purposes mentioned previously. The application of
+        "if-then-else" rules in order to prioritize certain uses of water in the mentioned context may lead
+        to a non-convex and non-connected feasible set for the optimization problem solved by newave,
+        as illustrated by Figure 1.
+
+Figure 1: Relation between stored volume (v) and turbined outflow (q) when "if-then-else"-like
+environmental constraints impose a minimum discharge of water. (source [3, Fig.5.5])
+
+            From the point of view of the optimization problem, this type of constraints can be rep-
+        resented by using some approximations such as piecewise linearizations, or by inserting 0-1
+        variables in the problem formulation. These modeling variants have different impact on the
+        accuracy of representing the original problem and in the solving techniques employed to calcu-
+        late the future cost of water. The proposal of the workshop is to approach the theme in two
+        lines of work, by using sddp.jl ([11], see also [10]) and benchmarking their results with the
+        ones obtained by the Newave model [30]. On one hand, Julia (together with JuMP [12]) is a
+        package that allows easy modeling of large multi-stage stochastic programming problems and
+        to apply either stochastic dual dynamic programming [32] or stochastic integer dual dynamic
+        programming [47] to solve the problem. On the other hand, Newave model has been officially
+        used for over 20 years [27] for the official energy planning and price setting of the very large
+        Brazilian system, through application of the SDDP strategy with several improvements along
+        time [29, 30]. In this sense, during the workshop, comparative studies were carried on, analyzing
+        advantages and disadvantages of different mathematical formulations, particularly with regard
+        to its impact on energy prices and the value of water.
+
+            This work is organized as follows. Section 2 puts the considered problem in context. Sec-
+        tion 3 reviews how different hydro constraints have been modelled in the literature, focusing on
+        their impact in operation cost and water value, particularly for long term planning. This sec-
+        tion also fixes notation as well as the initial mathematical formulation of dynamic programming
+        approaches that are popular for the problem under consideration. The detailed analysis of an
+        instance of the multi-stage stochastic programming problem is the topic of Section 4. By resort-
+        ing to a simple, yet illustrative, example, several features of the problem are given gradually,
+        first considering the impact of minimum/maximum outflow constraints, and then analyzing how
+
+                                                                4
+the state-dependence of those constraints makes the water values nonconvex. Section 5 states
+the mathematical formulation of the planning problem solved by newave. The different mod-
+els for environmental constraints that were created in the workshop are detailed in Section 6.
+The numerical assessment of each considered variant is presented in Section 7 and concluding
+remarks are given in the final Section 7.3. Data for the São Francisco river hydro-bassin can be
+found in the Appendix A.
+
+2 Generation planning and environmental constraints
+
+Generation planning/scheduling problems aim to define an operation policy and generation
+targets for hydro and thermal plants - together with other resources such as wind and solar plants
+- in order to meet the power demand, while satisfying technical characteristics and constraints
+of the system components, including the electrical network, on a cost-minimization or a price-
+maximization framework [45, 40]. Due to the complexity of some of the system constraints, the
+uncertainty related to natural resources (for example, intermittency of new renewable generation
+and uncertainty on hydro inflows) and the large size of real systems, the problem is usually
+decomposed in long, mid and short term problems, specially in predominantly hydro systems
+as in Brazil and Norway [21].
+
+    Among the set of operation constraints that need to be satisfied, we are particularly inter-
+ested in studying what we label in this document as "environmental constraints" (EC), which
+are defined as hydraulic constraints for the operation of hydropower and river courses. Such
+constraints are usually related storage levels of the reservoirs or release (turbined/spilled out-
+flow) of the hydro plants, in order to meet some environmental requirements related to nature,
+human activities (such as fishing and recreation), or other uses of water, as for example priority
+water intakes for human/animal, or minimum levels in the watercoures for navigation purposes.
+The limits established by such constraints may vary along time and may also depend on the
+current system state, as for example the level of the reservoirs and the hydrological condition
+of the system.
+
+    The modelling of ECs in hydropower planning problems has been of growing interest in the
+literature in the last decade, due to increasing environmental concerns, and such constraints have
+become stricter in recent years. In Europe, some revisions have been proposed to hydropower
+concessions conditions and the implementation of EU Water Framework Directive [20]. In the
+case of Brasil, several constraints are enforced by the Water Regulation Agency (ANA) to be
+considered in the operation of the reservoirs [41]. Some works that describe political/ EC to the
+watercourse and that may affect optimization of hydropower are discussed in [20].
+
+    These hydraulic environmental requirements restrict the operation of the hydro plants, spe-
+cially with the growing share of intermittent renewable generation such as wind or solar, which
+requires fast ramping resources - such as hydropower - to back up generation in hours with
+low wind or insollation. More simple EC such as minimum level and maximum ramping of
+outflow are easier to handle, whereas constraints that impose nonconvex rules for application of
+constraints that may depend on state variables of the problem (typically, through tables that
+define minimum/ maximum outflows along intervals for reservoir level) are more involving.
+
+    Usually, short term hydrothermal or unit commitment problems are already solved with non-
+convex formulations, leading to nonlinear, mixed-integer or mixed-integer linear programming
+solving strategies [42, 46]. In such context, the inclusion of EC is just one more piece that fits the
+properties of this already complex puzzle, whose main objective is to define generation targets
+for the day ahead scheduling. On the other hand, in mid/long term planning problem, the main
+objective is to define operation policies (in the form of water values) that will guide short term
+scheduling problems. Such policies are mathematically described as (usually, piecewise linear)
+cost-to-go functions that are obtained as an output of the application of stochastic programming
+strategies, such as stochastic dual dynamic programming (SDDP). In this other context, which
+
+                                                        5
+is the main interest of this study, convex approximations ­ or at least computationally tractable
+nonconvex formulations ­ are desired. We present next a literature review on this subject.
+
+3 Literature Survey on Environmental Constraints (EC)
+
+Several hydraulic constraints for power generation planning and scheduling have been proposed
+in the literature, either properly labeled as EC [13], or in a broader context. A far from
+exhausting list of hydraulic constraints found in the literature is presented below:
+
+    · time-varying constraints on minimum or maximum release of reservoirs, for each time step;
+    · time-varying constraints on minimum or maximum storage levels in the reservoirs, for each
+
+       time step;
+    · constraints on maximum average water release within a given time window (e.g., a month)
+
+       [13];
+    · constraints on maximum variation of turbined outflow [2] or reservoir storages in consec-
+
+       utive time steps [6];
+    · maximum variation in the water level on some river sections downstream to reservoirs [9];
+
+    A more detailed description on those different types of constraints can be seen in [38]. We
+focus our analysis in more recent works whose objective is to assess the modelling challenges as
+well as the impact - in operation cost and water values - of the inclusion of hydraulic constraints,
+with emphasis in mid/long term planning problems and in particular, with the application of
+dynamic programming-like solving strategies.
+
+3.1 Economic Impact
+
+Reports on the economic impacts of the representation of EC in hydropower optimization models
+for different systems have been surveyed in [17]. It addresses minimum outflow and maximum
+ramping environment constraints in a hydro power optimization problem on a profit maximiza-
+tion framework. The paper applies traditional stochastic dynamic programming with 5 scenarios
+for each weekly stage, where the subproblems for each stage consists in a MILP problem with
+hourly discretization. The main objective of the paper is to numerically evaluate the economic
+losses of the plant owner due to such constraints, with the purpose of supporting a possible
+discussion of plant owners with river authorities in order to trade-off the benefits of these con-
+straints with their negative impacts on the profits of the plant owner. However, the paper does
+not evaluate the impact of environment on the water values themselves, but only on the value
+of the objective function. Their results (e.g., Fig. 5 in [17]) suggest that the higher the level
+of these constraints, the higher is the derivative of such cost curves. In another paper [16], the
+same authors derive regression models for the percentage loss in gain of the hydro producer as
+a function of the parameters of such constraints.
+
+3.2 Impact on water values
+
+An interesting assessment on the impact of such constraints on the water values themselves
+is presented in [18], which derives a mathematical analysis based on the multipliers of the
+problem constraints. It shows that the water values of the reservoirs increase as the minimum
+outflow requirement becomes more restrictive (i.e., reaches higher values) and decrease as the
+maximum ramping rate (in (m3/s)/h) becomes more restrictive (i.e., reaches lower values)).
+This has an intuitive understanding, since higher minimum releases tend to decrease reservoir
+levels (because it forces hydro generation or spillage), whereas lower maximum ramping rates
+limits the flexibility of generation, thus reducing the availability of water. The authors claim
+
+                                                        6
+further in [15] the importance of taking into account such environment constraints in the water
+value computations for a mid-term planning model to be used in short term simulations. They
+also show that, for a fixed power capacity of a plant, the impact of these constraints in the water
+value decreases with the number of hydro units, arguing that the impact for each unit becomes
+smaller, yielding more flexibility for the hydro plant to handle with such constraints.
+
+3.3 Modeling of EC in SDP
+
+In this section we briefly describe stochastic dynamic programming method (SDP) [1] and point
+out some successful uses of this technique in power generation planning problems. In order
+to do this, notice that variables can be separated into two types, control and state variables,
+the latter being the result of decisions taken for the former. Specifically in the application of
+interest, the reservoir volumes are state variables, while thermal and hydro generation, turbined
+and spilt outflows, and deficit are control variables. This division is used explicitly in SDP-
+like approaches. In general, consider the abstract formulation presented as follows, where, for
+simplicity of exposition, we omit the indices related to scenarios along the time steps:
+
+             T
+
+       min                  ct, pt
+       x[1:T ],p[1:T ] t=1
+             xt = At-1xt-1 + Btpt + Ct~t + d=t for t = 1, . . . , T,           (1)
+       s.t.
+
+             Etxt + Ftpt  dt                           for t = 1, . . . , T,
+
+where
+
+­ T is the number of time steps, possibly large;
+­ ~t is a particular realization at time step t of an M -dimensional random process. Each
+
+   process component t(m) follows a generalized autoregressive model with time varying
+   order. The realization ~t becomes known at the beginning of time step t;
+­ xt  Xt  RNx is the state of the system at the end of time step t, with dynamics given
+   by the transition equation and known x0;
+­ pt  Pt  RNp is the control variable, applied to the system at time step t; and
+
+­ ct, pt is the immediate (linear) cost at time step t.
+
+The dimensions of matrices At, Bt, Ct, Et, Ft are, respectively, Nx × Nx, Nx × Np, Nx × M ,
+qt × Nx, and Np × M . Vectors d=t and dt are Nx- and qt-dimensional.
+
+    By suitably choosing the involved matrices and right hand side terms, the abstract inequality
+constraint includes the equality expressing demand satisfaction, such as those appearing in
+energy models, as well as all box constraints.
+
+    Since in (1) the objective and the inequality constraints are separable by time steps, a sound
+solving strategy is to apply a stage-wise decomposition, that we briefly recall below. More
+precisely, (1) is formally equivalent to the following dynamic programming recursion: having
+QT +1  0, solve, for t = T, T - 1, . . .:
+
+                                    min     ct, pt + Qt+1(xt, ~[t])
+
+                                    xt ,pt                                     (2)
+                               
+       Qt(xt-1, ~[t-1]) =           xt = At-1xt-1(~[t-1]) + Btpt + Ct~t + d=t
+
+                                    Etxt + Ftpt   dt.
+                            
+
+For these problems, xt-1(~[t-1]) is an optimal value of state xt-1 obtained solving a problem of
+form (2) for time step t - 1 given the trajectory ~[t-1] of process (t) up to stage t - 1. The first
+state x0 is known.
+
+    Because setting QT +1  0 makes the optimization process use all valuable resources (i.e.,
+emptying the reservoirs) at time T , the model is said to suffer from the well-known "end of the
+
+                                            7
+world" effect. For this reason, the planning horizon is usually doubled, considering 2T , and only
+the output obtained with the approach until time T is deemed meaningful.
+
+    The equivalence between (2) and (1) is formal because the cost-to-go functions Qt+1 are
+not known. In the SDP method the state variables are discretized and enumerated so that the
+future cost function can be exhaustively calculated.
+
+    If one applies the SDP to solve the long term planning problem planning, nonconvex con-
+straints can be naturally included in the problem, since such method does not require the
+problem to be convex. However, the subproblems themselves derived from the decomposition
+strategy are more difficult to be solved for being nonconvex, and a discretization of the state
+space is required, which somehow prevents the application of this method for very large problems
+and/or with many state variables.
+
+    Regarding the specific subject of this paper, the works [18], [15] have applied the SDP method
+to consider minimum values and maximum variation of outflow constraints to the reservoirs.
+Even though the considered problem was nonconvex, the EC were convex and did not depend
+on the level of the reservoirs. State-dependent environmental constraints in the context of
+the SDP methodology were included in [37] by considering season-varying volume-dependent
+maximum inflow constraints for the reservoirs for a mid term planning problem. It considers
+quite specific environmental constraints for reservoirs in Norway: during a specific time-window,
+outflow should be null, unless hydro inflows reach a given threshold, when it becomes limited
+to a given value, until the reservoir reaches a minimum desired level, when a minimum level
+constraint takes place. In a different time window, outflow is allowed once the reservoir level
+does not decrease from one stage to another. Therefore, this is the case of state-dependent
+constraints both on inflow and reservoir level, which are dealt using the SDP algorithm as an
+additional state variable that represents the hydrological state of the system. That paper also
+makes an assessment on the impact of such constraints for the water values in the reservoirs,
+showing that, due to the fact that release in the reservoirs are allowed only when the reservoir
+level reaches a given threshold, the water values in the "with environmental constraint" are
+higher than water values for the "without environmental constraint" case, and the cost to go
+function achieves a non-concave shape (for a profit-maximization problem). The study case is
+very small (2 reservoirs) and it is applied also using the JuMP package.
+
+3.4 Modeling of EC in SDDP
+
+In order to avoid the huge computational effort to construct future cost functions, in SDDP [32]
+these functions are iteratively approximated in a cyclic process of backward-forward passes. A
+Benders-like approach is used to replace the (unknown) recourse function Qt+1(xt, ~[t]) with a
+(known) piecewise-linear approximation Qt+1(xt, ~[t]), that is improved along iterations. The
+approximation is the maximum of different cuts, generated by passing from t = 1 to t = T
+different states (xt, ~[t]) at each iteration. Since for linear programs like (1), the cost-to-go
+functions Qt+1 are indeed piecewise linear, the iterative process eventually terminates. The
+final approximation built for the first stage, knowing ~[1] and x0, constitute the FCF that values
+the opportunity cost of reservoir volume x0.
+
+    The described above is the basis of SDDP. To deal with a large number of inflow realizations,
+that yield astronomically large scenario trees, SDDP samples trajectories ~[T ] of the process (t)
+that are randomly visited at each iteration. The termination criterion in this case is statistical,
+based on confidence intervals, see [39] for details. A combination of SDP with SDDP has been
+applied for a long time in Norway [14].
+
+    The two main challenges of including EC in SDDP-like solving strategies are discussed in
+the sequel.
+
+                                                        8
+3.4.1 state dependency
+
+The first one is "state-dependency", which appears when the level of these constraints depend
+on the values of state variables of the problem, such as reservoir volumes at the beginning
+of each stage. In this case, the derivatives of such constraints with respect to the value of
+the state variables should be taken into account when building the Benders cuts of the future
+cost function in the backward passes of the algorithm. Although it adds some complexity in
+solving the problems, this is not a major issue, since state dependency in the right hand side of
+constraints have already been considered for a long time in the SDDP literature [28, 25, 34];
+
+    However, if the constraints define a non-convex feasible region, a convexification procedure
+has to be performed in order to ensure that the resulting future cost function (FCF) remains
+convex (in the case of cost-minimization) or concave (in the case of profit maximization). For
+example, the works [20, 37] address state-dependent maximum discharge limits for the hydro
+plants, discussing which properties should be satisfied in order to allow a convex approximation
+of these constraints to be considered in the SDDP solving strategy. They arrive to the conclusion
+that such constraints should have a concave shape. This finding is in line to what has been
+considered in the newave model to represent nonlinear relationship related to state variables
+in the right hand side of the subproblems [4]: if the parameter r (which defines a physical or
+operational constraint) of the problem is such that an increase in its value provides an increase
+(decrease) in the objective function of the problem, the function r(x) that defines the value of the
+parameter with regard to the state variable (x) (storage in the reservoir) should have a concave
+(convex) shape, otherwise it has to be transformed in a linear expression. This is the case for the
+functions that relate the evaporation and minimum outflow constraints as a function of storage,
+which causes an increase in the objective function and have a concave shape, which, therefore,
+must be approximated by linear constraints. By contrast, concave expressions of maximum
+hydro generation with storage (as for example in the hydro production function) and convex
+expressions of losses due to spillage as a function of water inflows (also used in the modeling
+of equivalent reservoirs [43, 35]) allows the use of inequalities approximated by piecewise linear
+expressions, since the optimal solution will naturally lie in the boundary of these functions.
+
+    Another type of EC studied in [37] consists in inflow-dependent minimum/maximum dis-
+charge constraints, which can also be represented as linear expressions of the inflow, which is an
+input to the model. However, the particularity of this approach is that, under an autorregressive
+modeling of inflows [26], such relation also creates a time dependency, since the inflow (and as a
+consequence, the right hand side of the constraints) depends on the past inflows, which are also
+state variables of the SDDP approach. This is accounted for by considering an additional term
+in the computation of the derivatives of the cost to go function, in the same way as newave
+model addresses the existence of other values in the right hand side that depend on the past
+inflows [7]. Finally, constraints that are dependent on both inflow and storage values are also
+considered in [20], where a three dimensonal linear constraint is proposed to represent this re-
+lation. Additional specific constraints that are modeled as virtual reservoirs are also considered
+in that paper.
+
+3.4.2 Nonconvex constraints
+
+A nonconvex nature of some environnmental constraints naturally arises when "if-then-else"
+relations are required. Unfortunately, this is the case for many real applications, since legal
+requirements tend to express water release constraints as tables instead of mathematical expres-
+sions. This requires the consideration of non-convex versions of SDP, as discussed in Section
+3.4
+
+    The presence of nonconvexities in the SDDP algorithm has been approximately addressed
+in [33] to consider volume-dependent maximum intake of waters in the reservoirs, given by
+tables, and in [44] to linearize startup costs of thermal units. More sophisticated ways to handle
+
+                                                        9
+such nonconvexities are proposed in [5], where a decomposition approach is applied to consider
+non-convex hydro production function, and in [23] with a combined SDP/SDDP procedure to
+consider uncertainty on prices based on a Markov Model.
+
+3.5 Modeling of EC in SDDiP
+
+Instead of applying approximations of the nonconvex EC in order to apply the convex SDDP
+method, one could explicitly represent such constraints with integer variables. In this case, the
+condensed abstract formulation of the problem is as follows:
+
+                           T
+
+min                             ct, pt
+
+x[1:T ], p[1:T ], u[1:T ]  t=1
+
+s.t.                       xt = At-1xt-1 + Btpt + Ct~t + dt- for t = 1, . . . , T,  (3)
+
+                           Etxt + Ftpt + Gtut  dt  for t = 1, . . . , T,
+
+                           ut has 0-1 components.
+
+In addition to the objects in (1), we have now matrix Gt, of suitable dimensions.
+    When compared to (1), the main difficulty in (3) is in the presence of binary variables. The
+
+SDDP approach relies heavily on Benders cuts, generated by means of multipliers of the equality
+constraint. However, the combinatorial optimization problem (3) has no dual variables.
+
+    Currently, the best-established approach to solving the problem is to try to apply the Stochas-
+tic Dual Dynamic Integer programming (SDDiP) method, proposed in [47]. In SDDiP, one first
+reformulates the nodal problem in a particular way that guarantees strong duality for the La-
+grangian dual, and then apply the cuts. In order to provide the convergence theory, the authors
+consider that all the state variables are binary, or make a binary expansion of them and use
+Lagrangian cuts.
+
+    Some variants of the application of this method have been proposed, ranging from: (i) the
+application of the relaxed continuous version of the subproblems when building the Benders cut
+- which yields poor and possibly loose approximations of the nonconvex future cost function;
+(ii) the exact formulation, that assures convergence to the global optimum but requires the
+use of binary expansion over the continuous state variables in order to obtain a state-space
+comprised of only binary variables. Several variants in between that yield stronger (tighter)
+valid approximations of the recourse function have also been proposed, depending on the type
+of cut that is built: traditional Benders cuts, Lagrangian cuts or Strenghtened Benders cuts.
+However, as can be seen in the applications so far [24, 22], this method lacks maturity for
+application in large and real multistage hydrothermal planning problems.
+
+    In particular, [22] assesses the application of the SDDiP method for maximum discharge
+constraints given as a stair-case function of the state variable related to the storage of the
+reservoirs, which is very similar to the ones that have been imposed for the Brazilian system.
+They have implemented in the JuMP environemnt the SDDiP method with the three types
+of cuts presented in [47]. The results show an improvement in the profit results of a final
+simulation with 1000 scenarios when Lagrangian Cuts are used as compared to Strenghtened
+Benders cuts and then traditional Benders cuts, in this strict order. The convergence results
+show that the optimality gap is no longer improved when using Benders cuts after a given
+number of iterations, whereas Strenghtened and Lagrangian cuts are able to keep reducing the
+gap in further iterations, but with the expense of a much larger CPU time. The study presented
+in that paper is very similar to what has been proposed in this research, but our aim is to give
+additional contributions in terms of assessing the impact of the application of EC in the water
+values, and how different solving strategies - including the application of the current convex
+SDDP approach contributes to obtain accurate evaluation of water values.
+
+                                        10
+4 EC impact on water values, an illustration
+
+Prior to more complex analysis taking into account stochastic problems with several reservoirs
+and time steps, we present below an illustrative analysis of the impact of EC in the water values
+in the reservoirs. These water values are the derivatives of the FCF, which relates the future cost
+F C with the storage V in the reservoirs. The FCFs are obtained as an output of the application
+of dual dynamic programming-based optimization strategies to solve the hydrothermal planning
+problem.
+
+    We consider a very simple deterministic two-stage problem, whose second-stage subproblem
+for scenario a depends on the state variable Vi related to the initial storage in the reservoir for
+the second stage, which corresponds to the final storage of the first stage. This second stage
+subproblem, whose solution for several discretized values of Vi defines the FCF for the first
+stage, is defined as follows:
+
+      4
+
+min        cg ptg                    (4a)
+
+      g=1
+
+      4
+
+s.t.       ptg + ph = D,             (4b)
+
+      g=1
+
+      Vt+1 + ph = Vt + Ya,           (4c)
+
+      0  V  V; 0  ph  ph,            (4d)
+
+      0  ptg  ptg, g  {1, 2, 3, 4},  (4e)
+
+where, for simplicity of exposition and without loss of generality, storage V is represented in the
+same unit as hydro generation ph. In this sense, minimum/maximum release constraints are
+equivalent to minimum/maximum generation constraints. The problem data are the following:
+
+· two scenario inflows: Y1 = 100 (wet) and Y2 = 0 (dry), with equal probability;
+· vector of thermal generation unitary costs: c = [100, 200, 300, 400];
+· maximum generation capacity: ptg = 100 for all thermal plants g;
+· maximum storage V = 400 and maximum physical discharge ph = 400 for the reservoir;
+· the demand for the second stage is 400;
+
+    In order to satisfy the relatively complete recourse requirement for the problem (otherwise it
+would not be possible to evaluate the FCF for some values of storage), we included an unitary
+penalty value of $50 for violation of the imposed constraints.
+
+4.1 Minimum outflow constraints
+
+First we imposed a minimum outflow (generation) constraint ph  300, yielding the FCF shown
+in blue in Figure 2. As expected, future costs are higher with such constraints, for any value of
+storage. We note that minimum generation constraints lead to higher water values (derivatives
+in the blue function) as compared to the base case (derivatives of the grey curve). Moreover,
+this impact occurs specially for lower values of storage, where such constraints cause a higher
+impact.
+
+4.2 Maximum outflow constraints
+
+Next we imposed a maximum outflow (generation) constraint ph  250, yielding the FCF shown
+in orange in Figure 2. Although costs are also higher with these constraints, we note that the
+
+                   11
+Figure 2: FCF for the base case without EC (grey) and with constraints on minimum outflow of
+the hydro plant (blue)
+
+        water values are always equal or lower when such constraints is imposed. This effect is more
+        pronounced for higher values of storage, where these constraints are more restrictive, because
+        prevent the reservoir to take advantage, in the future, of higher values of storage at the end of
+        the first stage. In particular, we can see that the water value is null for values of storage greater
+        than 250, which is the maximum amount of water allowed for generation in the second stage,
+        due to this maximum release constraint.
+
+      4.3 State-dependent Maximum generation constraints
+
+        We now imposed a state-dependent maximum generation constraint, given by the function
+        ph  250 + 0.3Vi, yielding the FCF shown in red in Figure 4. Since the maximum outflow
+        increases with storage, such constraints are less restrictive and cause a lower impact in water
+        values as compared to the ones shown in Figure 3. However, these constraints still decrease
+        water values for higher values of storage.
+
+      4.4 Nonconvex Maximum generation constraints
+
+        Finally, we imposed a nonconvex maximum constraint for the second stage, defined as follows:
+
+            · ph  250, for Vi  300;
+            · ph  10 + 0, 8Vi, for Vi > 300;
+            The resulting FCF is presented in green in Figure 5, which shows that those nonconvex
+        constraints cause the FCF to be nonconvex at the region where they have a larger impact, i.e.,
+        for higher values of storage.
+
+                                                               12
+Figure 3: FCF for the base case without EC (grey) and with constraints on maximum outflow of
+the hydro plant (orange)
+
+5 Mathematical Formulation of the planning problem solved
+
+by newave
+
+The long-term generation scheduling (LTGS) problem considered in this work spans a planning
+horizon of NT periods, each with a duration of one month, and takes into account the spatial
+coupling between hydraulic reservoirs. In order to focus on the analysis of this paper, we
+considered a very simplified version of the problem, where the efficiency of the hydro plants is
+considered constant and the demand constraint is modeled as a single bus, i.e., all generations
+are connected and must meet the demand requirement of a single subsystem. In addition, several
+modeling features of the program [30] have been disregarded.
+
+    The problem formulation is as follows.
+
+min   NT 1              NG                                                (5a)
+      t=1 NAt                                                             (5b)
+                          Cgptgta + CDdefta
+                                                                          (5c)
+               aAt g=1                                                    (5d)
+
+      NG       NH
+
+s.t.       ptgta + phhta + defta = Dt, t  T , a  At
+
+      g=1      h=1
+
+      vhta = vh,t-1,b(a) + KYhta - K qhta + shta -       (qita + sita) ,
+
+                                                    iMh
+
+      h  H, t  T , a  At
+
+      phhta = hqhta, h  H, t  T , a  At
+
+                          13
+Figure 4: FCF for the base case without EC (grey) and with constraints on a state-dependent
+maximum outflow of the hydro plant (red)
+
+0  vhta  vh; 0  qhta  qh; 0  shta; 0  phhta  phh,
+
+h  H, t  T , a  At                                 (5e)
+
+0  ptgta  ptg, g  G, t  T , a  At                  (5f )
+
+defta  0, t  T , a  At.                            (5g)
+
+    The objective function (5a) comprises the thermal generation costs over the planning hori-
+zon. Equation (5b) is related to the demand requirement. Equation (5c) is the water balance
+constraint. Equation (5d) represents the hydro production function, and equations (5e)-(5g)
+impose limits on variables, where the notation x, x is the upper and lower limit of variable x,
+respectively
+
+Remark 5.1. The LTGS stated in (5a)-(5g) considers one particular instance of the water
+inflows KY and, for this reason, is a deterministic linear programming problem. When inflows
+are represented by some stochastic process, the objective function is replaced by an expected
+cost, as variables and constraints now depend on the realizations of the stochastic variable. The
+corresponding optimization problem is a multistage stochastic linear program that we wrote in
+the condensed form (1), so that we can apply DP or DDP to solve it (respectively, SDP and
+SDDP if a stochastic problem is considered).
+
+6 Environmental constraints considered in the model
+
+São Francisco is one of the most important rivers in Brazil. The operation of the main reservoirs
+in its basin is currently carried out by the Brazilian Independent System Operator (ONS), in
+
+                         14
+Figure 5: FCF for the base case without EC (grey) and with constraints on a mixed fixed / state-
+dependent maximum generation of the hydro plant (green)
+
+        accordance with regulations established by the National Water and Basic Sanitation Agency
+        (ANA). The schematic diagram in Figure 6 shows the hydro configuration of the river that is
+        considered in this work.
+
+            For some upstream reservoirs, denoted by h  E, ANA specifies three operation modes that
+        control how much water is used to generate power: restriction, attention, and normal. To each
+        mode corresponds an authorized range of operation, depending on the active storage levels. The
+        ranges of Três Marias reservoir are listed below.
+
+            · Normal operation range: if the active storage level is above 60% of the total active storage
+               capacity.
+
+            · Attention operation range: if the active storage level is at least 30% and below 60% of the
+               total active storage capacity.
+
+            · Restricted operation range: if the active storage level is below 30% of the total active
+               storage capacity.
+
+            For each operation range there is a minimum and maximum total outflow constraint. The
+        minimum total outflow is constant over time, and set to the same value in the attention and
+        normal modes. Therefore, the minimum outflow constraint consists of two distinct regions,
+        determined by VhRes, which is the threshold level between the attention and restricted ranges.
+        Três Marias reservoir has a minimum outflow of 100 m3/s if the attention operation range is
+        active, and 150 m3/s otherwise. For each hydro plant h, we will denote by Qmh1in the minimum
+        outflow in the restricted operation range and by Qmh2in otherwise. In particular, for Três Marias
+        reservoir, V Res = 0.3 and Qmin = [100, 150].
+
+                                                               15
+Figure 6: São Francisco basin hydro configuration
+
+6.1 First EC model
+
+In order to model this situation we will use the binary variable uhta, for every hydro plant h,
+
+time t and scenario a, to identify if we are in the restriction zone or not. When the reservoir
+
+level h is between 0 and VhRes, we must have uhta = 1, while for the level greater than VhRes we
+must impose that uhta = 0. To avoid using open intervals, let us assume that either of the two
+possibilities of uhta can be used if the reservoir level is exactly at the VhRes value. Considering
+this we have:
+
+VrR(hes)(1 - uhta)    vr(h),t-1,b(a)    VrR(hes)uhta  + (1 - uhta),  h  E, t  T , a  At,  (6)
+                          Vr(h)
+
+                      uhta  {0, 1}, h  E, t  T , a  At.                                   (7)
+
+Once it is identified whether we are in the restricted operation range or not, we must impose
+that the outflow is greater than the specified limit. This can be written as
+
+Qhm1inuhta + Qmh2in(1 - uhta)  qhta + shta, h  E , t  T , a  At.
+
+Constraint infeasibility is handled by adding a deficit variable (i.e., a slack variable for constraint
+violation), as follows:
+
+Qmh1inuhta + Qmh2in(1 - uhta)  qhta + shta + defhmtian, h  E , t  T , a  At,              (8)
+
+                      defhmtian  0, h  E, t  T , a  At.                                   (9)
+
+    We now turn our attention to ANA's constraints on maximum outflow. For the restricted
+operation range, the total maximum outflow is determined by ONS following ANA recommenda-
+tion and, for the normal operation range, there is no maximum outflow. The maximum outflow
+within the attention operation range, however, depends on values established by ONS for each
+
+                                        16
+01/12/2022   150    200    250    300    350    400    450    500
+01/01/2023  m3/s   m3/s   m3/s   m3/s   m3/s   m3/s   m3/s   m3/s
+01/02/2023         30.0%  33.9%  39.1%  44.2%  49.4%  54.5%  59.7%
+01/03/2023     ­   33.6%  38.7%  43.8%  48.9%  54.1%  59.2%
+01/04/2023  30.0%  37.1%  42.3%  47.4%  52.5%  57.7%            ­
+01/05/2023  32.0%  39.3%  44.5%  49.8%  55.0%            ­      ­
+01/06/2023  34.1%  43.3%  48.5%  53.7%  58.9%     ­      ­      ­
+01/07/2023  38.1%  45.6%  50.8%  56.1%            ­      ­      ­
+01/08/2023  40.4%  45.2%  50.4%  55.6%     ­      ­      ­      ­
+01/09/2023  40.0%  37.7%  42.9%  48.2%     ­      ­      ­      ­
+01/10/2023  32.5%  34.0%  39.2%  44.4%  53.4%  58.6%     ­      ­
+01/11/2023  30.0%  30.0%  31.3%  36.4%  49.7%  54.9%     ­      ­
+                                 30.0%  41.6%  46.8%  51.9%  57.1%
+               ­      ­      ­   30.7%  32.5%  37.7%  42.9%  48.1%
+               ­      ­   30.0%         35.9%  41.0%  46.2%  51.3%
+               ­
+
+Table 1: Maximum outflow for Três Marias reservoir based on its initial active storage level.
+
+month, based on the initial active storage level of the reservoir. Table 1 shows the maximum
+outflow to be considered for the Três Marias reservoir in each month (from December 2022 to
+November 2023), depending on its active storage level at the beginning of that month.
+
+    In this table, two adjacent storage levels (in the same row) define a closed-open interval. If
+the active storage level of the reservoir lies into that interval, then the maximum outflow is to
+be taken as the one associated with the first endpoint of the interval. For instance, for February
+2023, if the active storage level is 45% the total active storage capacity of the reservoir, then it
+lies in the interval [42.3%, 47.4%) and the maximum outflow to be considered must be 250m3/s.
+
+    Maximum outflows are also determined for run-of-the-river power plants based on the active
+storage level of some upstream reservoir. For instance, the maximum outflow of Xingó power
+plant is determined based on the active storage level of Sobradinho reservoir. Furthermore,
+the maximum outflow of Sobradinho reservoir is given by the maximum outflow of Xingó power
+plant plus a constant (which depends on the month). In general, a reservoir h maximum outflow
+is determined based on the active storage level of a reservoir whose index is r(h) (the reference
+reservoir) at the beginning of the month.
+
+    Let Vhmzax, z  Zhmax  {1, . . . , NZmh ax + 1}, be the values that divide the storage levels of
+reservoir h. If the active storage level of the reference reservoir of hydro h lies in the interval
+[Vrm(ha)xz, Vrm(ha)xz+1), then the maximum outflow to be considered for reservoir h must be Qmhzax. In
+order not to deal with open intervals, we simplify and consider only closed intervals, so that
+the interval [Vhmzax, Vhmz+ax1) is replaced by [Vhmzax, Vhmz+ax1]. Thus, notice that, if the initial active
+storage level lies in the frontier of an interval, there could be two possible ranges for that initial
+volume.
+
+    Consider once more the Três Marias reservoir. It is its own reference reservoir (so we would
+have r(h) = h). In the restricted operation range, when the active volume of the reservoir
+is below 30%, the maximum outflow should be determined by ANA. Since this value is not
+available, we chose to consider it as 100m3/s, the minimum outflow enforced by the regulations.
+For the normal operation range, where the outflow is unlimited, we just chose a sufficiently large
+value Qsup. Thus, for May 2023, we would have for this reservoir that
+
+                                V max = [0, 0.3, 0.404, 0.456, 0.508, 0.561, 0.6, 1]
+
+and the outflow limit would be
+
+                                   Qmax = [100, 150, 150, 200, 250, 300, Qsup].
+
+                                                       17
+    Now, let us define the binary variable uhtaz to identify if the initial volume of the reference
+
+reservoir of hydro h, in period t and under scenario a, is in the z-th interval [Vhmtzax, Vhmtza+x 1]. So
+the constraints that determine the maximum outflow are:
+
+Vrm(ha)xtz uhtaz    vr(h),t-1,b(a)   Vrm(ha)xtz+1uhtaz + (1 - uhtaz),  h  E, t  T , a  At,    (10)
+                        Vr(h)
+
+                    uhtaz  {0, 1}, h  E, t  T , a  At, z  Zhmax.                              (11)
+
+To enforce that the initial storage level be associated with only one interval, we must have
+
+                             uhtaz = 1, h  E, t  T , a  At.                                   (12)
+
+                    zZhmax
+
+Thus, the maximum outflow for reservoir h, in period t and under scenario a is given by
+
+                                    qhta + shta           uhtaz Qmr(ahx)tz .
+
+                                                  zZhmax
+
+In order to ensure the feasibility of maximum outflow, a slack variable is introduced, resulting
+in the constraints
+
+qhta + shta                         uhtazQmr(ahx)tz + defhmtaax, h  E , t  T , a  At,         (13)
+
+                    zZhmax
+
+                             defhmtaax  0, h  E, t  T , a  At.                                (14)
+
+    Therefore, we define the LTGSEC model as the LTGS model plus EC . To define its objective
+function we denote by CDmin and CDmax the cost of the deficit of the minimum and maximum
+
+outflow constraints, respectively. So the aim in the LTGSEC model is
+
+     NT 1           NG
+min
+                             Cgptgta + CDdefta +          CDmindefhmtian + CDmaxdefhmtaax     (15)
+     t=1 NAt
+                    aAt g=1                           hE
+
+subject to the constraints (5b) - (5f) and (6) - (14).
+
+Remark 6.1. When compared to the LTGS model, we now have to deal with the binary vari-
+ables that discriminate the different operational modes (denoted by u). Once again, we are
+interested in the stochastic version of the problem. In this way, the model can be seen as a par-
+ticular case of the abstract form (3), and so, using a binary expansion of the state variables, we
+can apply SDDiP to solve it. However, the discretization of state variables leads to a substantial
+increase in binary variables, impairing computational performance. More than that, in [47] the
+cuts that proved to be most efficient in practice are not the ones that support the convergence
+theory. In this way, an approach without guaranteed convergence, but which demonstrates good
+computational performance, may be interesting. This is the case of a heuristic implemented in
+the package sddp.jl, where integers variables are relaxed and handled as the continuous ones,
+and there are some ways to compute subgradients in the backward pass. We denote the use of
+this strategy by iSDDP, which is similar to pricing approaches in unit-commitment problems,
+see [31], [36].
+
+6.2 Alternative model - piecewise linear approximations
+
+In this second proposal we make an extension of the previous formulation, allowing the maximum
+and minimum flow restrictions to be piecewise linear but not necessarily constant in each interval.
+In this way, we can adjust the slope of each range so that the constraints of the model become
+
+                                                  18
+continuous. Furthermore, in regions where the maximum outflow constraint is concave, it is
+possible to eliminate the integer variables that determine the partition of this region, since it
+can be replaced by the requirement that the outflow be smaller than all the lines that describe
+the maximum outflow of that region.
+
+    To build a piecewise linear model, we linearly interpolate the outflow values indicated for
+the beginning of each interval of the attention range. When analyzing the lines that interpolate
+these data, we observe that the data are almost linear, except for the first interval. In addition,
+we verified that the angular coefficient of the lines had an increase of at most 2%, which confirms
+that a concave approximation is satisfactory. With this information in hand, we adjusted the
+angular coefficients, extending the straight line of the previous interval when we obtained an
+increase in the slope, so that the model becomes in fact concave.
+
+    For the normal operation range, we have no outflow limitation by ANA regulations. However,
+we believe that the impact would be quite limited if we included the constraints resulting from
+the last division of the attention operation range for the normal range as well. This is because
+the constraint is not very tight for this zone and maximum outflow increases proportionally to
+the volume of the reservoir, so we would have reasonably high limits. On the other hand, in the
+restriction range the maximum flow is constant. In this way, we would only have the concavity
+of the constraints if the maximum outflow is non-increasing in the attention operation range,
+which is unreasonable. Another possibility of trying to make a concave approximation of the
+restriction would be to propose an affine function to describe the maximum flow also in the
+restricted operation range. This alternative is not successful too, as any slope that is greater
+than those consistent with growth in the attention range results in negative maximum outflows
+for some volume values in the restriction range. Thus, there seems to be no way to avoid using
+an integer variable to identify whether or not the volume level of a certain reservoir h is less
+than the value VhRes, which determines the restriction range.
+
+    This way, as we did with the minimum outflow constraints in the LTGS model, for every
+hydro plant h, time t and scenario a, we have a single binary variable uhta to decide if we are
+in the restriction zone (uhta = 1) or not (uhta = 0). So the constraints that identify if we are in
+restricted operation range or not become
+
+     VrR(hes)(1 - uhta)   vr(h),t-1,b(a)   VrR(hes)uhta + (1 - uhta),  h  E, t  T , a  At,  (16)
+                              Vr(h)
+
+                          uhta  {0, 1}, h  E, t  T , a  At.                                 (17)
+
+    If we are not in the restricted operation range, we limit the outflow by the previously dis-
+
+cussed affine functions, whose coefficients we will denote by ahtz and bhtz. Using a sufficiently
+large Qsup value, we guarantee that if we are in the restriction range, these constraints are
+
+trivially satisfied. On the other hand, in the restriction zone, we limit the outflow by a fixed
+constant value Qmhta1x. Adding slack variables defhmtaax and defhRteas, these sets of constraints are
+described, respectively, as follows
+
+qhta + shta  ahtzvr(h),t-1,b(a) + bhtz + Qsupuhta + defhmtaax, h  E , t  T , a  At, (18)
+
+                          defhmtaax  0, h  E, t  T , a  At                                  (19)
+
+and
+
+     qhta + shta  Qmhta1x + Qsup(1 - uhta) + defhRteas, h  E , t  T , a  At,                (20)
+
+                          defhRteas  0, h  E, t  T , a  At.                                 (21)
+
+    Let us consider now the minimum outflow constraints. Once again, our first intention would
+be to make a formulation that avoids the use of integer variables. For this, it would be necessary
+that the function that describes the minimum flow of the reservoir as a function of its volume
+be convex. However, we must have a non-decreasing function, which is incompatible with the
+
+                                          19
+fact that the function is constant for volume values above a certain threshold. In this way,
+
+we decided to keep the integer variables that determine the intervals in the definition of the
+
+minimum flow constraint.
+
+However, due to natural physical reasons, this constraint cannot be always satisfied. When
+
+the volume of the reservoir is too low, and the inflow is not large enough, there is not enough
+
+water to satisfy the minimum outflow requirement. For instance, consider the case in which
+
+the reservoir is empty and the inflow is 60m3/s. If the minimum outflow is 100m3/s, the best
+
+one can do is to discharge the total inflow, i.e., 60m3/s. The 100m3/s minimum outflow is
+
+therefore a requirement that may not be physically possible to fulfill and may not be part of
+
+the mathematical model. What can be enforced though is to discharge the maximum possible
+
+amount of water when the discharge cannot reach its minimum requirement. Since the inflow is
+
+stochastic, we decided to enforce the minimum outflow to be at least the initial volume of the
+
+reservoir. The advantage of such modeling choice is that it eliminates slack variables. This is
+
+attractive because penalizing slack variables in the objective function is somehow artificial. On
+
+the other hand, this relaxation may favor situations where the level of the reservoirs is below
+
+the restriction level. We show in our numerical experiments the impact of those penalties in the
+
+final output of the model.
+
+In order to model this situation, we again make a partition of the reservoir levels into NZhmin
+intervals, now denoted by [Vhmzin, Vhmz+in1], and define a piecewise linear function on each of them.
+
+Similar to what we done before, we use binary variables uhtaz to define if the reservoir h level
+
+volume in time t and under scenario a is in the z-th interval. Moreover, we denote by ahz and
+
+bhz the slopes and the linear coefficients of the affine functions in each part.
+
+Let T be the number of seconds per period. Then, the amount of water associated with a
+                                                                                               . vh,t-1,b(a)
+volume  vh,t-1,b(a)    that  can  be  discharged    per  second  in   a  given  period  t  is                 Thus,  the
+                                                                                                     T
+minimum outflow constraint should be replaced by the minimum between this value and the one
+
+established in ANA's technical regulations. So, for vh,t-1,b(a) < Qhm1inT we have an adjustment
+of the constraint imposed by the ANA. Therefore, we have that Vhm1in = 0, Vhm1in = Qhm1inT ,
+Vhm2in is the threshold level that defines the restricted operation range and Vhm3in = 1. Moreover,
+        1                                           Qmh1in               Qhm2in.
+ah1 =   Tt  ,  ah2  =  ah3   =  bh1  =  0,  bh2  =          and  bh3  =           Although we fixed both the
+
+number of intervals and the way of choosing affine functions in our model, we decided to present
+
+it in general form because we believe that other choices of piecewise linear functions would also
+
+be interesting to be studied in the future.
+
+The following constraints identify which range the initial volume level is located:
+
+Vhmtzinuhtaz           vh,t-1,b(a)     Vhmtzin+1uhtaz  + (1 - uhtaz),    h  E, t  T , a  At,                  (22)
+                           Vh
+
+                       uhtaz  {0, 1}, h  E, t  T , a  At, z  Zhmin.                                           (23)
+
+Next we enforce that the initial storage level is associated with only one interval
+
+                                        uhtaz = 1, h  E, t  T , a  At.                                        (24)
+
+                                z Z min
+
+Finally, the minimum outflow is defined by
+
+           Qsup(uhtaz - 1) + ahzvh,t-1,b(a) + bhz  qhta + shta, h  E , t  T , a  At, (25)
+
+where the term Qsup(uhtaz - 1) makes the constraint trivially satisfied when uhtaz = 0. So, the
+alternative model of LTGSEC, which includes EC using piecewise linear functions, is defined by
+
+                    NT 1                    NG
+               min
+                                                 Cgptgta + CDdefta + CDmaxdefhmtaax                           (26)
+                    t=1 NAt
+                                     aAt g=1                             hE
+
+subject to the constraints (5b) - (5f) and (16) - (25).
+
+                                                         20
+Remark 6.2. The stochastic version of this variant still fits the abstract formulation (3), and
+can be solved by SDDiP and by iSDDP.
+
+    In the numerical assessment that follows, the LTGSEC formulations described in Sections
+6.1 and 6.2 are referred to as Variant A and Variant B, respectively.
+
+7 Numerical tests
+
+To evaluate the different proposals presented in this report, the experiments were conducted
+on a test system containing a subset of hydrothermal plants from the northeastern Brazilian
+subsystem. The data from this system can be found in Section A.
+
+    The experiments were performed in a computer with a Intel i7 12700H CPU, 16 GB of
+RAM running Windows operational system. This problem was written in Julia using the JuMP
+package [12] and solved using the sddp.jl package [11] in Julia with the Gurobi [19] solver.
+
+    This section is organized as follows. In Section 7.1, we present a comparison of results
+obtained by of our implementation of the model and solution procedure in Julia with that
+obtained by newave. In Section 7.2, we analyse the impacts of the environmental constraints
+considered in this report. The remaining results concerning the Zinf of all cases are presented
+in Appendix.
+
+7.1 System model consistency w.r.t. newave
+
+To ensure the validity of our proposed optimization model and the efficacy of the SDDP problem-
+solving approach, we implemented the optimization problem without incorporating EC. Our
+initial implementation considered the following attributes:
+
+    · Study period: January 2021 to December 2021 (12 months).
+    · Duration of each period: 730 hours.
+    · Number of openings used in the backward pass:
+
+          ­ First month: 1
+          ­ Other months: 4
+    · Number of series used in the final simulation: 100.
+
+    The number of series applied during the forward pass of SDDP varied between the newave
+and our Julia implementation. For newave, we considered 10 simulations during the forward
+pass. In contrast, our Julia implementation only involved a single simulation in the forward
+pass.
+
+    We compared the results from our Julia model with those obtained from the newave model,
+as presented in Figures 7-9. Figure 7, shows the progression of the SDDP lower bound (Zinf)
+by iteration for both cases. This figure indicates that both SDDP Julia and newave converged
+to the same result, validating the consistency between our model and the newave model.
+
+    Figure 8 presents the mean value and box plots with the Marginal Operation Cost (MOC,
+in R$/MWmonth) and the System Stored Energy (SSE, in MWmonth) for each month and
+both cases. Again, the results from Julia and newave are statistically equivalent, further
+strengthening the validation of our implementation. Finally, Figure 9 displays the average
+hydrothermal generation obtained in Julia over all the simulations. This figure illustrates that
+the average generation from our model across all 100 simulations meets the demand, which
+demonstrates the robustness of our approach.
+
+    Finally, Figure 10 shows the total average generation for both sources (hydro and thermal),
+and type of simulations newave and SDDP.jl. For these graphics, we can ensure that both
+simulations are consistent.
+
+                                                       21
+          Figure 7: Evolution of the lower bound with both computational tools
+
+    It should be noted, that the academic version of newave used for our benchmark has much
+less functionalities than the official computational tool. Also, the number of iterations (# of
+ite) required by SDDP Julia to reach a bound similar to that of newave is higher due to the
+fact that ten simulations were considered in each forward pass performed by newave while a
+single one was considered in our Julia implementation.
+
+7.2 Impact of EC
+
+Following the initial model validation, we simulated the problem incorporating the EC presented
+in this report, employing the two proposed formulations. To construct the operation policy, we
+let SDDP run for 400 iterations.
+
+    The simulations encompassed different levels of demand and varied values for the penalties
+of the slack variables added to the outflow limit constraints. These slack variables are a neces-
+sary inclusion since the sddp.jl package requires the generated subproblems to offer complete
+recourse. To circumvent the "end-of-world effect", as noted in Remark 5.1, the optimization
+horizon extended to 2T = 24 months, but the analysis horizon remained at T = 12 months.
+The simulations performed are listed as follows.
+
+    · Case 1: three different levels of demand, no EC.
+    · Case 2: three different levels of demand, penalty cost of slack variables equal to 100, EC
+
+       modeled by formulation A.
+    · Case 3: three different levels of demand, penalty cost of slack variables equal to 5000, EC
+
+       modeled by formulation A.
+    · Case 4: three different levels of demand, penalty cost of slack variables equal to 10000,
+
+       EC modeled by formulation A.
+    · Case 5: one level of demand, three penalty cost of slack variables, EC modeled by formu-
+
+       lation B.
+    · Case 6: one level of demand, no penalty cost for slack variables, no EC; state variables
+
+       discretized (SDDiP approach) in three different number of samples (10, 50 and 100 sam-
+       ples).
+
+                                                       22
+    The results for Case 2 are depicted in Figures 11-13.
+    In Figure 11, we see that sddp.jl converges with just over 100 iterations. However, when
+compared to the results of Section 7.1 (without EC), we observe that the lower bound (Zinf) is
+fifty times larger. This increase results from the penalty applied in the objective function to the
+slack variables since the sddp.jl package requires complete recourse in each subproblem. For
+this experiment, the penalty value is relatively low, set at 100.
+    Figure 12, shows an increase in the stored energy in the system's latter months when com-
+pared to case without EC. This rise can be attributed to the imposed EC, which tend to increase
+water storage in reservoirs.
+    Figure 13, presents the hydrothermal generation over 12 months. The chart illustrates an
+increase in thermal generation in the final months and, consequently, a decrease in hydroelectric
+generation. This shift supports the observed trend of higher reservoir storage and underlines
+the influence of EC on the system's operation.
+    These results reveal the substantial impact of Environmental Constraints on the system's
+operation and resource allocation, particularly evident in the increased System Stored Energy
+(SSE) and shift in hydrothermal generation balance. These observations reinforce the impor-
+tance of accounting for these factors in long-term hydrothermal planning models.
+    We continue our exploration of the impact of environmental constraints by discussing Case
+5, which utilizes formulation B to model EC, with a penalty cost of 100 for the slack variables.
+The results from this case are illustrated in Figures 14-16.
+    In Figure 11, we observe that the sddp.jl algorithm still converges after approximately 100
+iterations. However, the lower bound (Zinf) is approximately 11 times higher than Case 2. This
+disparity can be ascribed to the different EC formulations, which further underscores the critical
+impact of modeling choices on system operation and cost.
+    Figure 15 indicates a similar trend to Case 2, with increased water storage, especially in the
+latter months. Nevertheless, there is a smaller standard deviation compared to Case 2 across
+the 100 simulations analyzed. This suggests that, for Case 5, there is an even stronger tendency
+for water to be stored in the reservoirs.
+    Figure 13 presents an increase in thermal generation and, consequently, a decrease in hy-
+droelectric generation compared to Case 2. More notably, in the final months, we observe that
+hydrothermal generation fails to meet demand, resulting in a generation deficit.
+    The analysis of Case 5 underscores the significant influence of the EC modeling approach
+on system operation. Compared to the results from Section 7.1 (without EC) and Case 2 (with
+EC modeled by formulation A), we observe larger shifts in system operation, most notably
+the generation deficit in the final months. This stresses the importance of carefully selecting
+and calibrating the EC modeling approach, given its substantial influence on system costs and
+feasibility.
+
+7.3 SDDiP approach
+
+Finally, we implemented the Stochastic Dual Dynamic Integer Programming (SDDiP) approach,
+discretizing the state variable of volume into a predefined number of sections. The case explored
+here corresponds to a model without Environmental Constraints (EC), similar to the one dis-
+cussed in Section 7.1. We sought to evaluate the potential of this recent approach and its
+viability for our hydrothermal planning model.
+
+    In this experiment, we discretized the volume into ten parts, a relatively low level of dis-
+cretization. The results obtained from this case are as follows:
+
+    Figure 17 shows that the lower bound (Zinf) stabilizes after about 350 iterations. Interest-
+ingly, Zinf is slightly higher than the result obtained in Section 7.1. This can be attributed
+to the approximation error introduced by the low-precision discretization, where the volume is
+divided into only ten parts.
+
+                                                       23
+    In Figure 18, we observe higher SSE values compared to Case 7.1. This behavior is also a
+result of the low-precision discretization strategy implemented in this case.
+
+    In Figure 19, we notice a similar behavior to the results of Section 7.1 in terms of hydrother-
+mal generation. However, there is a notable generation deficit in the final month.
+
+    The results obtained from the SDDiP approach give us important insights into the trade-
+offs between computational efficiency and solution accuracy in hydrothermal planning models.
+While the SDDiP approach converges faster, the low-precision discretization leads to higher
+lower bounds and system stored energy. Moreover, the approximation error introduced by the
+low-precision discretization could potentially compromise the model's ability to meet demand,
+as evidenced by the generation deficit observed in the final month.
+
+    Following the investigation into the Stochastic Dual Dynamic Integer Programming (SDDiP)
+approach, a further simulation was carried out to investigate the impact of higher levels of
+discretization on the model's results. In this case, the state variable volume was discretized into
+100 parts, a significant increase from the previous simulation where we used only 10 parts.
+
+    The results of this simulation presented a certain level of consistency with the findings from
+Section 5, particularly in terms of the lower bound (Zinf), as can be seen in Figure 20 . This
+similarity suggests that the increased discretization brought the SDDiP model's lower bound
+closer to the result from the SDDP model, reinforcing the notion that more precise discretization
+can improve the model's performance.
+
+    However, this was not the case for the other key metrics evaluated. Both the hydrothermal
+generation (Figure 22) and system stored energy (Figure 21) metrics demonstrated similar be-
+havior to those obtained with the SDDiP approach at a lower discretization level (10 intervals).
+This finding suggests that these metrics may not linearly improve with increased discretization,
+or that a higher level of discretization may be required to attain results comparable to the SDDP
+approach.
+
+    In addition to the effect on the metrics, it is crucial to highlight the computational cost asso-
+ciated with the increased discretization. A larger number of discretization intervals inherently
+requires higher computational resources, leading to an increase in the model's execution time.
+This factor should be taken into account when deciding on the level of discretization to use,
+especially in practical applications where computational resources and execution times are often
+significant constraints.
+
+    These results emphasize the importance of carefully choosing the level of discretization in
+the SDDiP approach. While a higher level of discretization seems to improve the performance
+in terms of the lower bound, it may not lead to improvements across all metrics and comes at
+the cost of increased computational demand.
+
+Conclusions
+
+This report delved into the long-term generation scheduling (LTGS) problem within the context
+of the Brazilian energy system, specifically focusing on the impact of environmental constraints
+that change the use of hydroelectric reservoirs. By introducing two distinct formulations, A and
+B, to model these environmental constraints, we demonstrated how the complexity of constraints
+can affect the final solution of the optimization problem.
+
+    Each formulation brought along its own set of advantages and disadvantages regarding the
+representation of mathematical functions, usage of binary variables, and the quantity of con-
+straints. These factors directly impacted the number of slack variables employed due to the
+complete recourse requirement of the SDDP.jl toolbox, and also influenced the overall cost of
+the problem due to penalties associated with the slack variables.
+
+    Through the experiments conducted, we observed that the inclusion of environmental con-
+straints affects the lower bounds, system stored energy, and the hydrothermal generation. Our
+
+                                                       24
+study showed that the choice of formulation and penalty parameter for slack variables signifi-
+cantly influences the LTGS problem's solution.
+
+    We found that an increase in the penalty parameter strengthens the environmental con-
+straints, leading to a reduction in outflows, an increase in reservoir volumes, and subsequently,
+an increase in system stored energy. As the penalty parameter escalates, violating the outflow
+constraints becomes economically infeasible, leading to a decrease in hydroelectric generation.
+To counterbalance the drop in hydroelectric generation, thermal generation increases to meet
+the energy demand.
+
+    Furthermore, our investigation into the Stochastic Dual Dynamic Integer Programming (SD-
+DiP) approach highlighted the need for careful consideration of the level of discretization. While
+the SDDiP strategy shows promise for hydrothermal planning models, its effectiveness is influ-
+enced by the precision of discretization.
+
+    Several avenues for future research emerged from our study:
+
+    · Exploring the impact of the discrepancy in the number of forward pass simulations between
+       NEWAVE and our Julia implementation could provide valuable insights into computa-
+       tional efficiency, solution quality, and overall model performance.
+
+    · Further exploration into the impact of the penalties used for the slack variables, and the
+       development of additional modeling strategies to handle the complexities introduced by
+       environmental constraints could improve model accuracy and robustness.
+
+    · The differences between Formulation A and Formulation B under environmental con-
+       straints warrant further investigation to fully understand their implications for hydrother-
+       mal planning models. In particular, it is interesting to check more carefully the impact of
+       the minimum inflow relaxation when the reservoir level is very low.
+
+    · Studying the impact of higher precision discretization on the accuracy, robustness, and
+       computational efficiency of the SDDiP approach could yield significant benefits.
+
+    · The performance of the SDDiP approach under different case conditions, such as mod-
+       els incorporating Environmental Constraints, could give a broader understanding of its
+       potential benefits and limitations.
+
+    In conclusion, this report underscored the criticality of adequately modeling environmental
+constraints in long-term hydrothermal planning. As our understanding of these constraints
+deepens, more nuanced modeling strategies will need to be developed to better accommodate
+these complexities, ensuring that our models remain robust, accurate, and capable of guiding
+energy system planning effectively.
+
+References
+
+ [1] R. E. Belmann and S. E. Dreyfys. Applied Dynamic Programming. PrincetonUni-
+       versity Press, 1962.
+
+ [2] A. Borghetti, C. D'Ambrosio, A. Lodi, and S. Martello. "An MILP Approach
+       for Short-Term Hydro Scheduling and Unit Commitment With Head-Dependent
+       Reservoir". In: IEEE Transactions on Power Systems 23.3 (2008), pp. 1115­1124.
+
+ [3] F. G. Cabral. "The Role of Extreme Points for Convex Hull Operations". MA
+       thesis. Rio de Janeiro, Brazil: UFRJ, Instituto de Matemática. Advisor: Bernardo
+       Freitas Paulo da Costa, 2018.
+
+ [4] C. d. P. d. E. E. CEPEL. Análise do Uso das Parábolas de Correção no Modelo
+       NEWAVE. Apresentação ONS, Setembro/2011. 2011.
+
+                                                       25
+ [5] s. Cerisola, J. M. Latorre, and A. Ramos. "Stochastic dual dynamic programming
+       applied to nonconvex hydrothermal models". In: European Journal of Operational
+       Research 218.3 (2012), pp. 687­697.
+
+ [6] G. Chang et al. "Experiences with mixed integer linear programming based ap-
+       proaches on short-term hydro scheduling". In: IEEE Transactions on Power Sys-
+       tems 16.4 (2001), pp. 743­749.
+
+ [7] A. L. Diniz and C. B. Cruz. Revisão da construção dos cortes de Benders ao
+       considerar o Modelo Autorregressivo Periódico Anual (PAR(p)-A) no Algoritmo
+       de Programação Dinâmica Dual Estocástica. Relatório Técnico 941/2021. CEPEL
+       - Centro de Pesquisas de Energia Elétrica, 2021.
+
+ [8] A. L. Diniz, M. E. P. Costa F. S. an Maceira, T. N. Santos, L. C. Brandão,
+       and R. N. Cabral. "Short/Mid-Term Hydrothermal Dispatch and Spot Pricing
+       for Large-Scale Systems - the Case of Brazil". In: 20th PSCC - Power Systems
+       Computation Conference. Dublin, Ireland, June 2018.
+
+ [9] A. L. Diniz and T. M. Souza. "Short-Term Hydrothermal Dispatch With River-
+       Level and Routing Constraints". In: IEEE Transactions on Power Systems 29.5
+       (2014), pp. 2427­2435.
+
+[10] O. Dowson. "The policy graph decomposition of multistage stochastic optimization
+       problems". In: Networks 76 (1 2020), pp. 3­23.
+
+[11] O. Dowson and L. Kapelevich. "SDDP.jl: a Julia package for stochastic dual dy-
+       namic programming". In: INFORMS Journal on Computing 33 (1 2021), pp. 27­
+       33.
+
+[12] I. Dunning, J. Huchette, and M. Lubin. "JuMP: A modeling language for mathe-
+       matical optimization". In: SIAM Review 59.2 (2017), pp. 295­320.
+
+[13] B. K. Edwards, S. J. Flaim, and R. E. Howitt. "Optimal provision of hydroelectric
+       power under environmental and regulatory constraints". In: Land Economics 75.2
+       (1999), pp. 267­283.
+
+[14] A. Gjelsvik, M. Belsnes, and A. Haugstad. "An algorithm for stochastic medium-
+       term hydrothermal scheduling under spot price uncertainty". In: 13th power sys-
+       tems computation conference - PSCC. 1999.
+
+[15] I. Guisandez, J. I. Perez-Diaz, W. Nowak, and J. Haas. "Should environmental
+       constraints be considered in linear programming based water value calculators?"
+       In: International Journal of Electrical Power and Energy Systems 117 (2000).
+
+[16] I. Guisandez, J. I. Perez-Diaz, and J. R. Wilhelmi. "Approximate formulae for
+       the assessment of the long-term economic impact of environmental constraints on
+       hydropeaking". In: Energy 112 (2016).
+
+[17] I. Guisandez, J. I. Perez-Diaz, and J. R. Wilhelmi. "Assessment of the economic
+       impact of environmental constraints on annual hydropower plant operation". In:
+       Energy Policy (2013), pp. 1332­1343.
+
+[18] I. Guisandez, J. I. Perez-Diaz, and J. R. Wilhelmi. "The Influence of Environmental
+       Constraints on the Water Value". In: Energies 9 (2016).
+
+[19] Gurobi Optimization, LLC. Gurobi Optimizer Reference Manual. 2023.
+
+                                                       26
+[20] A. Helseth. Environmental Constraints in Seasonal Hydropower Scheduling -Survey
+       and Feasibility. Technical Report. HydroCen, 2019.
+
+[21] A. Helseth and A. C. G. Melo. Scheduling Toolchains in Hydro-Dominated Systems
+       : evolution, Current Status and Future Challenges for Norway and Brazil. Technical
+       Report 2020:00757. SINTEF Energy Research, 2020.
+
+[22] A. Helseth, B. Mo, and H. O. Hågenvik. "Nonconvex Environmental Constraints
+       in Hydropower Scheduling". In: 2020 International Conference on Probabilistic
+       Methods Applied to Power Systems (PMAPS). 2020.
+
+[23] A. Helseth, M. Fodstad, and B. Mo. "Optimal Medium-Term Hydropower Schedul-
+       ing Considering Energy and Reserve Capacity Markets". In: IEEE Transactions
+       on Sustainable Energy 7.3 (2016), pp. 934­942.
+
+[24] M. N. Hjelmeland, J. Zou, A. Helseth, and S. Ahmed. "Nonconvex Medium-Term
+       Hydropower Scheduling by Stochastic Dual Dynamic Integer Programming". In:
+       IEEE Transactions on Sustainable Energy 10.1 (2019), pp. 481­490.
+
+[25] G. Infanger and D. P. Morton. "Cut sharing for multistage stochastic linear pro-
+       grams with interstage dependency". In: Mathematical Programming 75.2 (1996),
+       pp. 241­256.
+
+[26] M. E. Maceira and C. V. Bezerra. "Stochastic Streamflow model for Hydroelectric
+       Systems". In: 5th Int. Conf. on Probabilistic Methods Applied to Power Systems
+       -PMAPS. 1997.
+
+[27] M. E. Maceira, L. A. Terry, F. S. Costa, J. M. Damazio, and A. C. G. Melo.
+       "Chain of optimization models for setting the energy dispatch and spot price in
+       the Brazilian system". In: Proceedings of the 14th Power System Computation
+       Conference - PSCC. 2002, pp. 1­7.
+
+[28] M. E. P. Maceira. Programação Dinâmica Dual Estocástica Aplicada ao Plane-
+       jamento da Operação Energética de Sistemas Hidrotérmicos com Representação
+       do Processo Estocástico de Afluências por Modelos Auto-Regressivos Periódicos.
+       Relatório. Técnico 237/93. CEPEL - Centro de Pesquisas de Energia Elétrica,
+       1993.
+
+[29] M. E. P. Maceira, V. S. Duarte, D. D. J. Penna, A. C. Moraes, and A. C. G. Melo.
+       "Ten years of application of stochastic dual dynamic Programming in official and
+       agent studies in Brazil­Description of the NEWAVE program". In: 16th PSCC -
+       Power Systems Computation Conference. Glasgow,Scotland, Jujy 2008.
+
+[30] M. E. P. Maceira et al. "Twenty Years of Application of Stochastic Dual Dynamic
+       Programming in Official and Agent Studies in Brazil - Main Features and Improve-
+       ments on the NEWAVE Model". In: 20th PSCC - Power Systems Computation
+       Conference. Dublin, Ireland, June 2018.
+
+[31] R. P. O'Neill, P. M. Sotkiewicz, B. F. Hobbs, and M. Rothkopf. "Efficient Market-
+       Clearing Prices in Markets with Nonconvexities". In: European Journal of Opera-
+       tional Research 164.1 (July 2005), pp. 269­285.
+
+[32] M. V. F. Pereira and L. M. V. G. Pinto. "Multi-stage stochastic optimization
+       applied to energy planning". In: Math. Program. 52.2 (B) (1991), pp. 359­375.
+
+                                                       27
+[33] E. Pereira-Bonvallet, S. Puschel-Lovengreen, M. Matus, and R. Moreno. "Opti-
+       mizing Hydrothermal Scheduling with Non-Convex Irrigation Constraints: Case
+       on the Chilean Electricity System". In: Energy Procedia (Special isue of the 5th
+       International Workshop in Hydro Scheduling in Competitive Electricity Markets.
+       2016.
+
+[34] S. Rebennack, B. Flach, M. V. F. Pereira, and P. M. Pardalos. "Stochastic Hydro-
+       Thermal Scheduling Under CO2 Emissions Constraints". In: IEEE Transactions
+       on Power Systems 27.1 (2012), pp. 58­68.
+
+[35] C. A. Sagastizábal and V. Guigues. "The value of rolling horizon policies for risk-
+       averse hydro-thermal planning". In: European journal of operational research 217.1
+       (2012), pp. 129­140.
+
+[36] T. Santos, A. Diniz, C. Saboia, R. Cabral, and L. Cerqueira. "Hourly pricing
+       and day-ahead dispatch setting in Brazil: The dessem model". In: Electric Power
+       Systems Research 189 (2020), p. 106709.
+
+[37] L. E. Schaffer, A. Helseth, and M. Korpas. "A Stochastic Dynamic Programming
+       Model for Hydropower Scheduling with State-dependent Maximum Discharge Con-
+       straints". In: Renewable Energy 194 (2022), pp. 571­581.
+
+[38] L. E. Schäffer, A. Adeva-Bustos, T. H. Bakken, A. Helseth, and M. Korpås.
+       "Modelling of Environmental Constraints for Hydropower Optimization Problems
+       ­ a Review". In: 17th International Conference on the European Energy Market
+       (EEM). 2020, pp. 1­7.
+
+[39] A. Shapiro. "Analysis of stochastic dual dynamic programming method". In: Eu-
+       ropean Journal of Operational Research 209.1 (2011), pp. 63­72.
+
+[40] E. L. da Silva. Formação de preços em mercados de energia elétrica. Ed. Sagra
+       Luzatto., 2001.
+
+[41] O. N. do Sistema Elétrico. Manual de Procedimentos de Operação - Conceitos e
+       Metodologias para a Operação Hidráulica dos Sistemas de Reservatórios. Relatório
+       Técnico RT-OR.BR.01. 2016.
+
+[42] R. Taktak and C. D'Ambrosio. "An overview on mathematical programming ap-
+       proaches for the deterministic unit commitment problem in hydro valleys". In:
+       Energy Systems 8.1 (2017), pp. 57­79.
+
+[43] M. P. Tcheou, R. N. Cabral, D. Penna, V. S. Duarte, and M. Maceira. "Modelagem
+       da função de perdas a fio d'água através do MARS (Multivariate Adaptive Regres-
+       sion Splines". In: XII SEPOPE -­Symposium of Specialists in Electric Operational
+       and Expansion Planning. 2012.
+
+[44] G. Warland, A. Haugstad, and E. S. Huse. "Including thermal unit start-up costs
+       in a long-term hydro-thermal scheduling model". In: Proc. 16th Power System
+       Computation Conference - PSCC. 2008.
+
+[45] A. Wood and B. Wollemberg. Power Generation Operation and Control. 2nd.
+       NewYork,NY,USA: John Wiley and Sons, 1996.
+
+                                                       28
+        Plant   Maximum          Useful      Productivity         Maximum               Initial
+                generation  volume (hm3)  (MWmonth/hm3)       turbined outflow          volume
+RETIRO BAIXO   (MWmonth)                                                                (hm3)
+ TRES MARIAS     82.74256        40.87          0.12723              (hm3)               27.38
+                362.88700      15278.00         0.16576           662.20071            7654.28
+   QUEIMADO     100.65465       461.75          0.62372          2112.89078             258.12
+ SOBRADINHO     1008.87562     28669.00         0.09312           166.44477            14821.87
+                1422.38577      3548.00         0.16826         10690.01959            2117.09
+   ITAPARICA    3883.02034                      0.38833          8263.97182
+COMP PAF-MOX    3079.08318        0.00          0.40992          9999.35762               0.00
+                                  0.00                           7511.35249               0.00
+       XINGO
+
+               Table 2: Data from hydros of the test system.
+
+                       Plant  Maximum               cg
+                              generation  (constant in time)
+                  GOIANIA II
+               JUIZ DE FORA     (MW)          (R$/MWh)
+               PALMEIRAS GO       136             1927
+               TERMOMACAE          87              523
+                                  140             1493
+                     VIANA        929              880
+                  XAVANTES        437             1257
+               CAMPINA GDE         54             2632
+                 PETROLINA        169             1257
+                                  594             2014
+
+               Table 3: Data from thermal plants of the test system.
+
+[46] Q. P. Zheng, J. Wang, and A. L. Liu. "Stochastic Optimization for Unit Commit-
+       ment--A Review". In: IEEE Transactions on Power Systems 30.4 (2015), pp. 1913­
+       1924.
+
+[47] J. Zou, S. Ahmed, and A. Sun. "Stochastic dual dynamic integer programming".
+       In: Math. Program. 175.1-2 (A) (2019), pp. 461­502.
+
+A Data of test system
+
+The hydro configuration of the test system in Figure 6 has data given in Table 2.
+    The thermal data of the test system is presented in Table 3.
+    All hydrothermal plants are connected, resulting in a single bus system with:
+    · 1 deficit level, with associated cost equal to 7643.82 $/MWh
+    · 1 load level
+    · The load, in MWmonth, is given in Table 4
+
+B Simulation Results
+
+                              29
+                                                                             30
+
+            Month         Load level (mean)
+                        8,000 9,000 10,000
+               1        8,211 9,237 10,263
+               2        8,182 9,205 10,227
+               3        7,961 8,956 9,951
+               4        7,811 8,787 9,763
+               5        7,615 8,567 9,519
+               6        7,626 8,580 9,533
+               7        7,633 8,587 9,541
+               8        7,772 8,743 9,715
+               9        8,281 9,316 10,351
+              10        8,429 9,482 10,536
+              11        8,324 9,365 10,405
+              12        8,157 9,177 10,196
+
+            Table 4: Data of demand of the test system.
+
+Simulation  Load level  Penalty   Planning horizon        Zinf     Runtime
+    case      (mean)    cost ($)       (months)                       (s)
+      1        9,000                       24              ($)
+      1        8,000        0              24         6.01 × 109     32.89
+      1       10,000        0              24         1.25 × 108     37.38
+      2        9,000        0              24         2.39 × 1010    32.38
+      2        8,000      100              24         2.55 × 1010    90.61
+      2       10,000      100              24         1.69 × 1010    98.77
+      3        9,000      100              24         4.41 × 1010    97.90
+      3        8,000     5,000             24         7.45 × 1011    84.54
+      3       10,000     5,000             24         6.93 × 1011   100.95
+      4        9,000     5,000             24         8.11 × 1011    77.59
+      4        8,000    10,000             24         1.38 × 1012    73.89
+      4       10,000    10,000             24         1.32 × 1012    71.36
+      5        9,000    10,000             24         1.44 × 1012    87.46
+      5        9,000        0              24         1.02 × 1010    43.08
+      5        9,000      100              24         2.71 × 1011    40.56
+      6        9,000    10,000             24         5.0 × 1011     42.95
+      6        9,000        0              24         6.07 × 108    150.17
+      6        9,000        0              24         5.33 × 108    813.43
+                            0                         5.33 × 108   1,141.38
+
+                        Table 5: SDDP running times.
+                                                                                                                              31
+
+Figure 8: Monthly marginal operation cost and system stored energy, mean and boxplots over the
+same 100 simulations for sddp.jl and newave.
+                                                                                                         32
+Figure 9: Average total generation over 100 simulations for case 1
+                                                                                                                              33
+
+Figure 10: Average hydro and thermal total generation over 100 simulations for sddp.jl and
+newave.
+                                                                                                                           34
+Figure 11: Evolution of the lower bound for case 2 with reference demand equal to 9000MW
+
+     Figure 12: System stored energy, mean and boxplots over 100 simulations for case 2.
+                                                                                                                              35
+
+                    Figure 13: Average total generation over 100 simulations for case 2
+
+Figure 14: Evolution of the lower bound for case 5 with reference demand equal to 9000MW and
+penalty cost of slack variables equal to 100
+                                                                                                                              36
+
+Figure 15: System stored energy, mean and boxplots over 100 simulations for case 5 with reference
+demand equal to 9000MW and penalty cost of slack variables equal to 100
+
+Figure 16: Average total generation over 100 simulations for case 5 with reference demand equal to
+9000MW and penalty cost of slack variables equal to 100
+                                                                                                                              37
+
+       Figure 17: Evolution of the lower bound for case 6 with discretization equal to 10 steps
+
+Figure 18: System stored energy, mean and boxplots over 100 simulations for case 6 with discretiza-
+tion equal to 10 steps
+                                                                                                                              38
+
+Figure 19: Average total generation over 100 simulations for case 6 with discretization equal to 10
+steps
+
+      Figure 20: Evolution of the lower bound for case 6 with discretization equal to 100 steps
+                                                                                                                              39
+
+Figure 21: System stored energy, mean and boxplots over 100 simulations for case 6 with discretiza-
+tion equal to 100 steps
+
+Figure 22: Average total generation over 100 simulations for case 6 with discretization equal to 100
+steps
+

@@ -1,0 +1,692 @@
+Stochastic dual dynamic programming with stagewise
+              dependent objective uncertainty
+
+         Anthony Downwarda,, Oscar Dowsona, Regan Bauckea
+
+    aDepartment of Engineering Science, University of Auckland, New Zealand
+
+Abstract
+
+We present a new algorithm for solving linear multistage stochastic programming
+problems with objective function coefficients modeled as a stochastic process.
+This algorithm overcomes the difficulties of existing methods which require dis-
+cretization. Using an argument based on the finiteness of the set of possible cuts,
+we prove that the algorithm converges almost surely. Finally, we demonstrate
+the practical application of the algorithm on a hydro-bidding example with the
+spot-price modeled as an auto-regressive process.
+
+Keywords: dynamic programming, decomposition, multistage, SDDP,
+stochastic programming
+
+1. Introduction
+
+In this paper we consider a multistage stochastic programming problem with
+stagewise dependent stochastic processes in both the right-hand sides and the
+objective function coefficients of the stage problem. Multistage convex stochastic
+programming problems are typically solved using a variant of the SDDP algo-
+rithm (stochastic dual dynamic programming) (Pereira and Pinto, 1991). The
+simplest implementation of this has stagewise independent stochastic processes.
+The algorithm employs a forward pass, where a sample path is generated from
+the stochastic process, and a backward pass which refines the approximations of
+the future cost functions along the sample path from the forward pass.
+
+Stagewise dependent noise is typically modelled by creating additional state vari-
+ables to keep track of previous noise outcomes. If the noise is on the right-hand
+
+    Corresponding author                                          July 11, 2018
+     Email address: a.downward@auckland.ac.nz (Anthony Downward)
+Preprint submitted to Operations Research Letters
+sides of constraints, this still results in a value function that is convex (with
+respect to the state variables). However, if the noise is in the objective, then
+additional state variables that keep track of this noise will show up in the ob-
+jective function of the next stage; this leads to a concave value function with
+respect to these state variables. As a result, the value function is a saddle func-
+tion. For this reason, standard cutting plane algorithms cannot give valid lower
+bounds, precluding the modelling of stagewise dependence within the objective
+coefficients.
+
+Typically, this is partially overcome by modelling the dependent process as a
+Markov chain with a set of discrete states (Gjelsvik et al., 1999; Philpott and De
+Matos, 2012; Rebennack, 2016). However, this method can become computation-
+ally expensive since cuts must be added for all of the discretized Markov states.
+Moreover, if the process is multi-dimensional, the number of Markov states re-
+quired to give a sufficient level of accuracy becomes prohibitive. In stochastic
+dynamic programming (SDP), a common approach to overcome this restriction
+is to use an interpolation scheme to evaluate the value function at points in the
+state space that are not in the discretized lattice. In the SDDP setting, this cor-
+responds to interpolating between the value functions of different Markov states
+(Gjelsvik et al., 2010; Wahid, 2017).
+
+The work of Baucke et al. (2018) presents a new method for solving multistage
+minimax stochastic programming problems. This work details a procedure for
+the generation of valid lower (and upper) bound functions for a saddle function.
+Our method incorporates these bounding functions and is presented in a style of
+a standard SDDP implementation, enabling the solution of multistage stochastic
+programming problems with stagewise-dependent noise modelled in the objective
+function.
+
+This paper is laid out as follows. In Section 2 we provide a formulation for our
+multistage stochastic program, and show that the cost-to-go is a saddle function.
+Then in Section 3 we present the method for generating valid lower representa-
+tions for saddle functions. In Section 4 we propose an algorithm to solve such
+problems and provide a convergence proof. Next, in Section 5 we present an
+example with a discussion on the computational performance of the algorithm.
+Finally in Section 6 we provide concluding remarks.
+
+2. Formulation
+
+We follow the terminology of Philpott and Guan (2008), restricting our attention
+to multistage stochastic programs with the following properties:
+
+                                                    2
+(1) The set of random noise outcomes t in each stage t = 2, 3, . . . , T is discrete
+     and finite: t = {1, . . . , Nt}, with probabilities pt,   t.
+
+(2) The random noise realizations in each stage are independent of any previous
+     realizations.
+
+(3) The optimization problem in each stage has at least one optimal solution
+     for all reachable states.
+
+Note that we also follow their convention of including the control variables in the
+state space for notational convenience.
+
+The reader should note that we relax the assumption (A1) in Philpott and Guan
+(2008) so that the random quantities can appear in any part of the optimization
+problem. Under these assumptions, the multistage stochastic linear program SP
+can be decomposed into a series of stages, each written in the following form:
+
+SPt : Vt (xt-1, yt-1, t) = min                         yt Qtxt + Et+1t+1 [Vt+1 (xt, yt, t+1)]
+                                                       At t xt + at  xt-1
+                                                xt,yt  yt = Btt yt-1 + bt
+
+                          subject to
+
+where Att and Btt are square matrices, Qt is an appropriately dimensioned
+matrix, and at and bt are vectors. Note that xt and yt are both state vectors
+for stage t. Moreover, SPt is not a convex optimization problem due to the
+bilinear term in the objective. However, observe that, given yt-1 and t, yt is
+uniquely determined.
+
+In the final time period we solve a variant of this problem where the cost-to-go
+is set to 0:
+
+SPT  :  VT  (xT -1,  yT -1,  T )                       =  min      yT QT xT
+                                                                   ATT xT + aT  xT -1
+                                                          xT ,yT   yT = BTT yT -1 + bT
+
+                                                       subject to
+
+We define the expected cost-to-go function at the end of time period t (prior to
+observing the noise in period t + 1) as:
+
+        Vt+1(xt, yt) = Et+1t+1 [Vt+1 (xt, yt, t+1)] .                                          (1)
+
+The following two lemmas are presented in order to show that Vt+1(xt, yt) is a
+saddle function that is convex in xt and concave in yt, for all t  {1, . . . , T - 1}.
+
+Lemma 1. Vt+1 (xt, yt) is a convex function of xt for all t  {1, . . . , T - 1}.
+
+Proof. We will prove this by induction. First observe in SPT that yT is uniquely
+
+determined for a fixed yT -1 and T and thus SPT can be cast as a linear program
+                                                    3
+by fixing yT . Since xT -1 appears only as a right-hand side vector, it follows that
+VT (xT -1, , ) is a convex function. Moreover, following (1), VT (xT -1, yT -1) is a
+convex function in xT -1 given a fixed value for yT -1.
+
+Now suppose that Vt+1(xt, yt) is a convex function for a fixed yt. Given this, SPt
+can be cast as a convex optimization problem (with yt fixed). Since xt-1 appears
+only in the right-hand side of a set of constraints, we know that Vt(xt-1, , ) is
+a convex function of xt-1. This implies that Vt(xt-1, yt-1) is convex with respect
+to xt-1 for a fixed value of yt-1. Since Vt+1(xt, yt) is convex in xt for t = T - 1,
+it is convex for all t  {1, . . . , T - 1}, as required.
+
+Lemma 2. Vt+1 (xt, yt), is a concave function of yt for all t  {1, . . . , T - 1}.
+
+Proof. We will also prove this by induction. Since SPT can be cast as a linear
+program by fixing yT = BTT yT -1 + bT as a cost coefficient, it follows that
+VT (, yT -1, ) is a concave function of yT -1. Thus VT (xT -1, yT -1) is a concave
+
+function in yT -1, for a fixed xT -1.
+
+Now suppose that Vt+1(xt, yt) is a concave function with respect to yt. We will
+
+show that Vt(xt-1, yt-1) is also concave (with respect to yt-1). Consider two
+arbitrary vectors of yt-1: yt1-1 and yt2-1, given t, the corresponding values for
+yt in SPt are yt1 and yt2, respectively. Moreover, suppose for a fixed xt-1 the
+optimal values of xt are xt1 and x2t , respectively. Therefore:
+
+Vt xt-1, yt1-1, t = yt1 Qtxt1 + Vt+1 x1t , yt1 ,       (2)
+
+Vt xt-1, yt2-1, t = yt2 Qtxt2 + Vt+1 xt2, yt2 .        (3)
+
+Let us define yt3-1 = (1 - )yt1-1 + yt2-1, where   [0, 1]. Now suppose that the
+corresponding optimal solution to SPt with yt-1 = yt3-1 is xt = x3t . Therefore:
+
+Vt xt-1, yt3-1, t = yt3 Qtxt3 + Vt+1 x3t , yt3 .
+
+Since the cost-to-go function is concave with respect to its second argument, we
+have the following inequality:
+
+Vt xt-1, yt3-1, t  (1-) yt1 Qtx3t + Vt+1 x3t , yt1 + yt2 Qtxt3 + Vt+1 x3t , yt2
+
+                                                                                                      (4)
+Note that the right-hand side of (4) gives a convex combination of the objective
+function values of SPt for xt = x3t with yt-1 equal to yt1-1 and yt2-1. Next observe
+that although xt3 is feasible for both problems, it is not necessarily optimal.
+Replacing xt3 in (4) with the corresponding optimal solutions xt1 and xt2 gives:
+
+Vt xt-1, yt3-1, t  (1-) yt1 Qtx1t + Vt+1 xt1, yt1      + yt2 Qtxt2 + Vt+1 xt2, yt2
+                                                    4                                  (5)
+Now we substitute equations (2) and (3) into inequality (5):
+
+        Vt xt-1, yt3-1, t  (1 - )Vt xt-1, yt1-1, t + Vt xt-1, yt2-1, t .
+
+This gives the result that, if Vt+1(xt, yt) is concave w.r.t. yt then Vt(, yt-1, )
+is concave w.r.t. yt-1. Thus from equation (1), Vt(xt-1, yt-1) is also concave
+w.r.t. yt-1. Since we know that VT (xT -1, yT -1) is concave w.r.t. yT -1, we have
+concavity for Vt+1(xt, yt) w.r.t. yt for all t  {1, . . . , T - 1}, as required.
+
+Lemmas 1 and 2 ensure that our cost-to-go function Vt+1(xt, yt) is a saddle func-
+tion. This is different from standard implementations of multistage stochastic
+programs, where the cost-to-go is convex, allowing a lower-bound function to be
+approximated by linear cutting planes. We note, however, that since we have no
+action that influences the value of yt, we can introduce a new minimax form of
+the stage problem SPt, named SPt, which we will minimize with respect to xt
+and maximize with respect to yt.
+
+SPt :  Vt  (xt-1,  yt-1,  t)  =  min  max   yt Qtxt + Vt+1 (xt, yt)
+                                            Att xt + at  xt-1
+                                  xt    yt  yt = Btt yt-1 + bt .
+
+                              subject to
+
+It is in this form that it is apparent that the class of problems considered in
+this paper is a special case of those studied in Baucke et al. (2018). Note that
+SPt and SPt yield the same optimal solution, since the feasible region for yt is
+a singleton. In the next section we outline the method to derive saddle function
+cuts that provide lower bound approximations for the cost-to-go saddle function.
+
+3. Saddle function lower bounds
+
+Consider a saddle function S(x, y) with bounded subgradients, and suppose we
+have sampled it at points (xp, yp) = p  P. At each sampled point p, we
+acquire the true value of the function, p, and a local subgradient vector of the
+function w.r.t. x, p.
+
+The remainder of this section provides a restatement of the derivation of saddle
+function lower bounds in Baucke et al. (2018) for our context. Let us define the
+following optimization problem:
+
+RP (x,  y)  =  min  y µ+
+
+               µ,
+
+       subject to yp µ +   p + p (x - xp), p  P                      (6)
+
+                    || µt ||  .
+
+                                 5
+Lemma 3. There exists a finite positive  such that RP (xq, yq) = S(xq, yq), for
+all q  P, for any set of sample points P.
+
+Proof. By substituting any sample point q  P into (6), we know from the first
+constraint that RP (xq, yq)  q = S(xq, yq). We will proceed to prove that
+there exists a µ yielding a candidate solution (µ, ) = (µ, q - yq µ), with an
+objective function value of q, which is feasible, and is therefore optimal.
+
+Suppose we set µ to be a subgradient of S(x, y) with respect to y at (xq, yq). We
+know that S(x, y) has bounded subgradients, therefore there exists some finite 
+that will ensure that the second constraint of (6) is satisfied. Now since S(x, y)
+is concave with respect to y we know that:
+
+(yp - yq) µ + q  S(xq, yp), p  P.                         (7)
+
+Moreover, since S(x, y) is convex w.r.t. x we know that:
+
+S(xq, yp)  p + p (xq - xp), p  P.                         (8)
+
+Equations (7) and (8) give
+
+(yp - yq) µ + q  p + p (xq - xp), p  P,
+
+which means that our candidate solution is feasible, and therefore RP (xq, yq) =
+S(xq, yq).
+
+Theorem 1. There exists a finite positive  such that RP (x, y)  S(x, y), for
+any set of sample points P and all (x, y).
+
+Proof. For the sake of contradiction, suppose there exists a (x~, y~) for which
+RP (x~, y~) > S(x~, y~). By defining P = P  (x~, y~), by Lemma 3, for some fi-
+nite , we have RP(x~, y~) = S(x~, y~). So, for the same , RP(x~, y~) < RP (x~, y~),
+which is a contradiction since the feasible region of RP is contained within RP
+which can only increase the objective function value of RP.
+
+We note here that value functions V(x, y) defined in SPt, do indeed exhibit the
+property of bounded subgradients required for the bounding function RP (x, y)
+to be valid. This property arises from the following: SPt is always feasible
+(admitting finitely bounded duals), cost coefficient matrices are bounded and
+
+finite, and finally that there are a finite number of stages.
+
+                            6
+4. Proposed algorithm and convergence
+
+Baucke et al. (2018), provide an -convergence result for their algorithm which
+solves a more general class of problems, with minimax saddle function stage prob-
+lems. This requires the definition of an upper bound function as well as a lower
+bound. In our setting, since yt is exogenously determined we can forgo the com-
+putation of an upper bound function (and hence forgo deterministic convergence).
+Instead we prove the almost sure convergence of a different algorithm. Moreover,
+the formulation that we present here is more readily implementable in existing
+SDDP libraries (e.g. SDDP.jl (Dowson and Kapelevich, 2017)).
+
+By Lemmas 1 and 2, the cost-to-go function Vt+1 (xt, yt), defined in equation
+(1), is convex with respect to xt, and concave with respect to yt. Therefore, we
+can form an outer approximation using the saddle function representation from
+Section 3. In each iteration of the algorithm k = 1, 2, . . . , we compute a set of
+feasible solutions {(xkt , ytk) : t = 1, . . . , T - 1}, and a set of cuts, one for each
+stage t = 1, . . . , T - 1. This gives rise to a sequence of approximate problems
+APtk, k = 1, 2, . . . for each stage, as defined below.
+
+In each iteration k, for each stage t = 1, . . . , T , we observe some random noise
+  t and solve the problem:
+
+APkt (xkt-1, ytk-1, ):
+Set ytk = Btytk-1 + b, and ctk = ytk Qt, then solve:
+
+tk (xtk-1 ,  ytk-1,  )  =   min     ckt xt + ytk µt + t
+
+                           xt,ut,t
+
+                     subject to     Atxt + a  xkt-1      [tk ]
+
+                                    ytj µt + t  tj + tj xt [jtk],  j = 1, 2, . . . , k - 1
+
+                                    || µt ||  .
+
+ Note that for problem AP1k the inputs are fixed in advance (and invariant with
+respect to k) and recall that in the final stage T the cost-to-go is 0 so we can
+remove the µt and t variables. Moreover, for a fixed , tk(xtk-1, ytk-1, ) is a
+saddle function.
+
+Following Philpott and Guan (2008), we refer to a sequence of noise observations
+for stages t = 1, . . . , T -1 as a scenario. The set of all possible scenarios is denoted
+by S. Moreover, for a given scenario s  S we denote the noise observation at
+the start of period t by ts. Algorithm 1, below, details the specific procedure to
+solve SP, by solving SP1(x0, y0, 1).
+
+In what follows, we show that this algorithm converges to an optimal solution
+in a finite number of iterations. First note that the key distinction between our
+
+                                                    7
+Algorithm 1: Scenario Enumeration
+
+set k = 1
+
+while not converged do
+    set y0k = y0, x0k = x0, 1k = 1
+    for s  S do
+
+     /* Forward Pass                                                   */
+
+     for t = 1 : T - 1 do
+         solve APkt (xkt-1, ytk-1, ts)
+         set xtk to the value of xt in the optimal solution
+
+     end
+
+     /* Backward Pass                                                  */
+
+     for t = T - 1 : 1 do
+
+           for   t+1 do
+               solve APtk+1(xtk, ytk, )
+               set tk+,1 to the optimal objective value tk+1
+               set tk+,1 to the value of tk+1 in the optimal solution
+
+           end
+
+           set tk = Et+1 tk+,1
+
+         set tk = Et+1 tk+,1 - tk xkt
+
+         add the cut ytk µt + t  tk + tk xt to the linear program for
+           APkt
+
+     end
+
+    increment k to k + 1
+end
+
+end
+
+problem and ones that can be solved using DOASA-type algorithms, as defined by
+Philpott and Guan (2008), is that due to the random noise affecting the objective
+function, the dual of APtk (tk, kt ) is not guaranteed to be feasible for all the
+outcomes of the random noise. Therefore, in order to construct valid (expected)
+cuts, every realization of the next stage's random noise must be sampled at each
+stage.
+
+In order to prove that there is a finite number of possible cuts in each stage, we
+cannot directly invoke Lemma 1 from Philpott and Guan (2008), since we have a
+different stage problem. We present Lemma 4 below to show that the collection
+of distinct values of (ytk, tk, tk) is nevertheless provably finite.
+
+                                    8
+Lemma 4. For each t = 2, 3, . . . , T , define the set
+
+                          Gtk = ytj, tj, tj : j = 1, 2, . . . , k - 1 .
+
+Then for any sequence Gtk, k = 1, 2, . . . generated by Algorithm 1, there exists mt
+such that for all k: Gtk  mt. Furthermore, there exists kt, so that if k  kt
+then Gtk = Gtkt .
+
+Proof. This lemma arises from the finiteness of the yt vector, and given a fixed yt,
+the finite number of extreme points of the feasible region in each stage problem.
+First, observe that by Assumption 1, there is a finite number of values that
+yt = yti : i = 1, 2, . . . , I can take. Then, for a fixed value of yti, we define the
+set
+
+                         Htk,i = yti, tj, tj : j = 1, 2, . . . , k - 1 .
+
+Since yti is a constant, there exists an mit such that for all k, |Htk,i|  mit. Fur-
+thermore, there is some kti, so that if k > kti, then Htk,i = Htkti,i. Given that Gtk
+can be expressed as
+
+                                 Gtk = Htk,i : i = 1, 2, . . . , I ,
+
+the remainder of the lemma can be proved using the same inductive technique as
+presented in Lemma 1 of Philpott and Guan (2008).
+
+Using the result of Lemma 4 (that there are a finite number of cuts possible at
+each stage) we will now show that Algorithm 1 is convergent.
+
+Lemma 5. Algorithm 1 converges after a finite number of iterations to an optimal
+solution, which is an optimal policy for SP.
+
+Proof. By Lemma 4, for each t  {2, . . . , T }, there exists kt, such that if k > kt
+then Gtk = Gtkt. This means that there will be no further change in the cuts
+defining Vt (xt-1, yt-1). We define k¯ = maxt{kt}, to be the minimum number of
+iterations before all stages of the model no longer change.
+
+Observe that since the stochastic process for yt is discrete, there are a finite
+number of possible values for yt for each t  {2, . . . , T }. Moreover, since Gkt t is
+no longer changing for k > kt, we arrive at a fixed sequence of controls xt(s)
+for each scenario1. Note that we also define the values of yt(s) in a similar way
+
+    1Since this is a dual dynamic programming problem the non-anticipatory requirements are
+met; that is, for two scenarios s1 and s2 with the same noise outcomes in stages t  {1, . . . , t}
+we have xt(s1) = xt(s2) for t  {1, . . . , t}.
+
+                                                    9
+(however, these are explicitly determined from the random noise outcomes for
+scenario s). We will now show that the controls are optimal for the problem SPt
+for all stages and for each scenario.
+First note that the optimal value function for APTk¯ is the same as that for SPT ,
+that is:
+
+     ET T Tk¯ (xT -1(s), yT -1(s), T ) = VT (xT -1(s), yT -1(s)) , s  S. (9)
+
+We now use induction to prove that at iteration k¯ this is true for all t  {1, . . . , T }.
+Suppose the analogous result to (9) is true for stage t + 1, we will show that is it
+also true for stage t; that is:
+
+          Ett tk¯ (xt-1(s), yt-1(s), t) = Vt (xt-1(s), yt-1(s)) , s  S. (10)
+
+We will prove this by contradiction; suppose for some scenario s^ we have
+
+                 tk¯ xt-1(s^), yt-1(s^), ts^ < Vt xt-1(s^), yt-1(s^), ts^ .2
+
+However from Algorithm 1, we have
+
+tk¯  (xt-1(s^),  yt-1(s^),  ^ )  =   min     ct xt + yt µt + t
+
+                                    xt,ut,t  At^ xt + a^  xt-1(s^)
+                                             ytj µt + t  tj + tj xt
+                            subject to       || µt ||  ,
+
+                                                                     j = 1, 2, . . . , k¯ - 1
+
+ where yt = Bt^ yt-1(s^) + b^ , ct = yt Qt, and for notational convenience we set
+^ = ts^. This has optimal solution (xt, ut, t), where xt = xt(s^).
+
+If yt µt + t < Vt+1(xt , yt), from Lemma 3 we know that this means that there
+exists some random noise outcome, which we have not sampled in the backwards
+pass, since if we had sampled it we would have added a cut that would force yt µt+
+t = Vt+1(xt , yt). However, this contradicts the backward pass of Algorithm
+1, which requires us to sample all random noise outcomes for the next stage to
+generate the expected cut. Given this contradiction and due to the enumeration of
+scenarios in the forward pass of Algorithm 1, equation (10) must hold. Therefore,
+after a finite number of iterations k¯, Algorithm 1 converges to the optimal solution
+for SP.
+
+    2By Theorem 1 we are adding cuts that are guaranteed to not exceed the cost-to-go, so tk¯
+cannot exceed Vt.
+
+                                                   10
+Although we have shown that Algorithm 1 converges, it is computationally in-
+tractable, since it enumerates the scenarios. We therefore construct a sampling-
+based algorithm (Algorithm 2). Instead of sampling all scenarios s  S in an
+iteration before checking for convergence, Algorithm 2 randomly and indepen-
+dently samples a single scenario. In Theorem 2 we prove almost sure convergence
+of Algorithm 2 in a finite number of iterations, but first we present a short corol-
+lary.
+
+Corollary 1. Suppose, in each stage t  {1, . . . , T -1}, there exists in APt1 some
+initial set of cuts that form a valid lower bound for the true cost-to-go function
+Vt+1(xt, yt). Then Lemma 5 still holds if we begin Algorithm 1 from this point.
+
+Proof. Introducing additional valid cuts to AP1t has no bearing on the application
+of Theorem 1 and Lemma 4 in the convergence proof of Lemma 5. Although the
+set of cuts produced will be different, there are still a finite number.
+
+Theorem 2. Algorithm 2 converges with probability 1 to an optimal solution to
+SP in a finite number of iterations.
+
+Proof. Due to the forward pass sampling method given in Algorithm 2, without
+the stopping criteria, we know, by the second Borel-Cantelli lemma (Grimmett
+and Stirzaker, 1992), that after some iterations we would almost surely realize a
+sequence of iterations that is identical to those traversed using Algorithm 1. This
+gives us an initial set of cuts before the iterations of Algorithm 1, and thus from
+Corollary 1, we know that Algorithm 2 will converge to the optimal solution to
+SP with probability 1.
+
+5. Results
+
+We implement the hydro-bidding problem with price uncertainty example from
+Chapter 6.1 of Wahid (2017). The example has two reservoirs in a cascade over
+a planning horizon of 12 periods (i.e. T = 12). On the outflow of each reservoir
+is a turbine followed by a river that leads to the next reservoir in the cascade.
+The last reservoir discharges into the sea. The goal of the agent is to choose the
+quantity of water to flow through each turbine (and thereby, produce electricity),
+as well as the quantity of water to spill over the top of each reservoir, in order to
+maximize the revenue gathered from selling the electricity generated on the spot
+market. In each stage t, we denote the combination of spills and flows as ut. We
+denote the feasibility constraints on the action of the agent (i.e. maximum and
+minimum flow limits) as ut  U. Based on the action ut chosen by the agent, the
+state of the system xt (the quantity of water in each of the reservoirs at the start
+
+                                                   11
+of stage t) will transition according to the linear function xt = F (xt-1, ut). In
+addition, the agent earns an immediate reward by selling G(ut) units of power at
+the current spot-price yt. They may also incur a penalty of C(ut) if they exceed
+some operating limits of the reservoir (i.e. a cost of spillage). Unless explicitly
+stated, all parameters are identical to the description given in Wahid (2017).
+
+The spot-price process yt was modelled as the auto-regressive lag 1 process: yt =
+0.5yt-1 + 0.5b(t) + t, where t = {-1.65, -1.03, -0.67, -0.38, -0.12, 0.12,
+0.38, 0.67, 1.03, 1.65}. Each of the realizations t in t is sampled with uniform
+probability. This hydro-bidding model can be described by the stage problem:
+
+SPt :  Vt  (xt-1,  yt-1,            t)     =  min    C(ut) - ytkG(ut) + Et+1t+1 [Vt+1 (xt, yt, t+1)]
+
+                                              xt,yt  xt = F (xt-1, ut)
+                                                     ut  U
+                                    subject to       ytk = 0.5ytk-1 + 0.5b(t) + t.
+
+This model was implemented in the SDDP.jl package (Dowson and Kapelevich,
+2017) in the Julia language (Bezanson et al., 2017). The model was solved using
+Algorithm 2 for 2000 iterations. In addition, we solved the same model using the
+stochastic dynamic programming (SDP) algorithm (implemented in the Dynam-
+icProgramming.jl package (Dowson, 2017)). The lower bound for the problem
+using Algorithm 2 converges to the first-stage objective value (calculated using
+the SDP algorithm) of -$24,855 (see Figure 1).
+
+                                 -2.48 ·104
+
+                   Lower Bound ($)  -2.5
+
+                                    -2.52                 Algorithm 2 lower bound
+                                                          SDP solution
+
+                                                     500  1,000 1,500  2,000
+
+                                                          Iteration
+
+       Figure 1: Convergence of the lower bound against the number of iterations.
+
+In this simple model, the SDP approach is faster than Algorithm 2 (although it
+depends on the level of discretization of the state and action spaces). However, it
+is well known that SDP algorithm is limited by the "curse of dimensionality". To
+demonstrate the ability of Algorithm 2 to escape the curse, we extend the model
+to a cascade of five reservoirs, and the price process to an auto-regressive process
+with lag 2: yt = 0.5yt-1 + 0.5(yt-1 - yt-2) + 0.5b(t) + t.
+
+                                                   12
+There are now seven state-dimensions in the model (the five reservoir levels, plus
+the two prices yt-1 and yt-2), and five action-dimensions (the quantity of water
+to release from each reservoir). This problem is too large to solve in a reasonable
+time using the SDP algorithm. However, the enlarged problem was solved using
+Algorithm 2 for 5000 iterations to form an approximately optimal policy. Then,
+a Monte-Carlo simulation was conducted with 1000 replications using the policy.
+This took approximately 2000 seconds using a single core of a Windows 7 machine
+with an Intel i7-4770 CPU and 16GB of memory. In Figure 2, we visualize the
+Monte-Carlo simulation. In each of the subplots, we plot as shaded bands in order
+of increasing darkness, the 0­100, 10­90, and 25­75 percentiles of the distribution
+of the plotted variable. The solid line corresponds to the 50th percentile. There
+are also two individual replications plotted: a high-price realization (thick dashed
+line) and low-price realization (thick dotted line).
+
+                                  (a) Spot Price            1500  (b) Total Stored Energy
+             90
+Spot Price   80                                     Volume  1000
+  ($/MWh)    70                                       (m³)
+             60                                             500
+             50
+                                                            0
+                1 2 3 4 5 6 7 8 9 10 11 12                    1 2 3 4 5 6 7 8 9 10 11 12
+                                       Stage                                        Stage
+
+                              (c) Total Generation                      (d) Distribution of Profit
+            300
+Energy
+  (MWh)     200
+
+            100                                                   110 115 120 125 130 135
+                                                                                 Profit ($'000s)
+              0
+                1 2 3 4 5 6 7 8 9 10 11 12
+                                       Stage
+
+            Figure 2: Monte-Carlo simulation using the optimal policy.
+
+Over the stages 1­7, the spot-price increases (Figure 2a). Therefore, optimal
+policy is to conserve water in anticipation of a future higher profit. In Figure 2b,
+we plot the total stored energy in the system. (1m3 in Reservoir 1 is worth five
+units as it can be used by each of the five turbines in the cascade. In contrast,
+1m3 in Reservoir 5 is only worth one unit as it can only be used once before
+it flows out of the cascade.) In the low-price scenario (thick dotted line), more
+energy is stored in the system at a given point in time in the expectation that
+the spot-price will revert upwards to the mean, whereas in the high-price scenario
+(thick dashed line), more energy is generated (Figure 2c) in the early stages (i.e.
+stages 1-5) in anticipation that the futures prices will revert downwards to the
+mean. This leads to the distribution in profit shown in Figure 2d.
+
+                                                   13
+6. Conclusions
+
+In this paper we have presented an algorithm which converges almost surely in a
+finite number of iteration when solving linear multistage stochastic programming
+problems with stagewise dependent noise in the objective function. Moreover,
+this algorithm has been implemented within the SDDP.jl Julia library (Dowson
+and Kapelevich, 2017).
+
+This method enables the modelling of stochastic price processes, such as pure
+auto-regressive (AR) models or ones incorporating a moving average (ARMA),
+within the SDDP framework. These types of problems could previously only be
+approximated using Markov chains (Gjelsvik et al., 1999), or binary expansion
+techniques (Zou et al., 2016).
+
+Furthermore, note that the algorithm is not limited to price processes, and is
+general to any objective function state variable, so there are many applications
+for this method. The key requirement is that these state variables evolves exoge-
+nously to the control decisions and the values of the other state variables.
+
+Finally, in this paper we have elected to avoid a detailed discussion of the practical
+implementation of the algorithm. For example, in the initial iterations, it is
+necessary to bound the value of ytkµt + t by choosing  and introducing a
+lower bound on the t variables. The choice of an appropriate bounds can affect
+the speed of convergence. We provide Julia code to implement Algorithm 2 as
+supplementary materials at https://github.com/odow/SDDP.jl.
+
+Acknowledgements
+
+We would like to acknowledge Andy Philpott and Andrew Mason for useful dis-
+cussions on this work.
+
+References
+
+Baucke, R., Downward, A., Zakeri, G., 2018. A deterministic algorithm for solving multistage
+   stochastic minimax dynamic programmes. Optimization Online.
+   URL http://www.optimization-online.org/DB_HTML/2018/02/6449.html
+
+Bezanson, J., Edelman, A., Karpinski, S., Shah, V. B., 2017. Julia: A Fresh Approach to
+   Numerical Computing. SIAM Review 59 (1), 65­98.
+
+Dowson, O., 2017. DynamicProgramming.jl: a Julia package for Stochastic Dynamic Program-
+   ming. [Online; accessed 2017-10-26].
+   URL https://github.com/odow/DynamicProgramming.jl
+
+Dowson, O., Kapelevich, L., 2017. SDDP.jl: a Julia package for Stochastic Dual Dynamic
+   Programming. Optimization Online.
+   URL http://www.optimization-online.org/DB_HTML/2017/12/6388.html
+
+                                                   14
+Gjelsvik, A., Belsnes, M., Haugstad, A., 1999. An algorithm for stochastic medium term hydro
+   thermal scheduling under spot price uncertainty. In: PSCC: 13th Power Systems Compu-
+   tation Conference : Proceedings. Executive Board of the 13th Power Systems Computation
+   Conference, 1999, Trondheim, p. 1328.
+
+Gjelsvik, A., Mo, B., Haugstad, A., 2010. Long- and Medium-term Operations Planning and
+   Stochastic Modelling. In: Pardalos, P. M., Rebennack, S., Pereira, M. V. F., Iliadis, N. A.
+   (Eds.), Handbook of Power Systems I. Energy Systems. Springer Berlin Heidelberg, Berlin,
+   Heidelberg, pp. 33­55, dOI: 10.1007/978-3-642-02493-1.
+
+Grimmett, G., Stirzaker, D., 1992. Probability and Random Processes. Oxford University Press,
+   Oxford.
+
+Pereira, M. V. F., Pinto, L. M. V. G., 1991. Multi-stage stochastic optimization applied to
+   energy planning. Mathematical Programming 52 (1-3), 359­375.
+
+Philpott, A. B., De Matos, V. L., 2012. Dynamic sampling algorithms for multi-stage stochastic
+   programs with risk aversion. European Journal of Operational Research 218 (2), 470­483.
+   URL http://dx.doi.org/10.1016/j.ejor.2011.10.056
+
+Philpott, A. B., Guan, Z., 2008. On the convergence of stochastic dual dynamic programming
+   and related methods. Operations Research Letters 36 (4), 450­455.
+
+Rebennack, S., Mar. 2016. Combining sampling-based and scenario-based nested Benders de-
+   composition methods: application to stochastic dual dynamic programming. Mathematical
+   Programming 156 (1-2), 343­389.
+
+Wahid, F., 2017. River optimization: short-term hydro-bidding under uncertainty. PhD thesis,
+   University of Auckland, Auckland, New Zealand.
+
+Zou, J., Ahmed, S., Sun, X. A., 2016. Stochastic Dual Dynamic Integer Programming. Opti-
+   mization Online.
+   URL http://www.optimization-online.org/DB_HTML/2016/05/5436.pdf
+
+                                                   15
+

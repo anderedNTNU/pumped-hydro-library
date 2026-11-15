@@ -1,0 +1,1424 @@
+EURO Journal on Computational Optimization (2020) 8:173­199
+https://doi.org/10.1007/s13675-020-00123-y
+
+ORIGINAL PAPER
+
+On conditional cuts for stochastic dual dynamic
+programming
+
+W. van Ackooij1 · X. Warin1
+
+Received: 23 March 2018 / Accepted: 29 February 2020 / Published online: 30 March 2020
+© The Association of European Operational Research Societies and Springer-Verlag GmbH Berlin Heidelberg
+2020
+
+Abstract
+Multistage stochastic programs arise in many applications from engineering whenever
+a set of inventories or stocks has to be valued. Such is the case in seasonal storage
+valuation of a set of cascaded reservoir chains in hydro management. A popular method
+is stochastic dual dynamic programming (SDDP), especially when the dimensionality
+of the problem is large and dynamic programming is no longer an option. The usual
+assumption of SDDP is that uncertainty is stage-wise independent, which is highly
+restrictive from a practical viewpoint. When possible, the usual remedy is to increase
+the state-space to account for some degree of dependency. In applications, this may
+not be possible or it may increase the state-space by too much. In this paper, we present
+an alternative based on keeping a functional dependency in the SDDP--cuts related
+to the conditional expectations in the dynamic programming equations. Our method
+is based on popular methodology in mathematical finance, where it has progressively
+replaced scenario trees due to superior numerical performance. We demonstrate the
+interest of combining this way of handling dependency in uncertainty and SDDP on a
+set of numerical examples. Our method is readily available in the open-source software
+package StOpt.
+
+Keywords Stochastic programming · SDDP algorithm · Nonsmooth optimization ·
+Conditional expectations
+
+Mathematics Subject Classification 90C15 · 65C35
+
+B W. van Ackooij
+
+     wim.van-ackooij@edf.fr
+
+     X. Warin
+     xavier.warin@edf.fr
+
+1 EDF R&D, OSIRIS, 7 Boulevard Gaspard Monge, 91120 Palaiseau, France
+
+                                                                       123
+174             W. van Ackooij, X. Warin
+
+1 Introduction
+
+Dealing with uncertainty is vital in many real-life applications. An interesting way to
+formalize such a setting is a multistage stochastic program wherein one also accounts
+for the possibility of acting on past observed uncertainty. These models are quite pop-
+ular in areas such energy (Goel and Grossmann 2004; Pereira et al. 2005; Shapiro
+et al. 2013; Rebennack 2016; de Matos et al. 2017), transportation (Fhoula et al. 2013;
+Herer et al. 2006) and finance (Pflug and Römisch 2007; Dupacová 2009; Dupacová
+and Polívka 2009). The usual underlying assumption is that uncertainty can some-
+how be presented or approximated using a scenario tree. The resulting mathematical
+programming problem is generally large-scale and non-trivial or impossible to solve
+using a monolithic method. The use of specialized algorithms that employ decompo-
+sition techniques (and very often sampling) appear crucial for an efficient numerical
+resolution. In this family two popular approaches are Nested Decomposition--ND--
+of Birge (1985) and Stochastic Dual Dynamic Programming--SDDP--of Pereira and
+Pinto (1991). Mathematically speaking, both methods are close cousins, in that they
+approximate the cost-to-go functions (resulting from dynamic programming) using
+piecewise linear approximations, defined by cutting-planes computed by solving lin-
+ear programs in a so-called backward step.
+
+   The difference between the ND and SDDP algorithm resides in how uncertainty
+is handled when trying to establish an upper bound on the optimal value. The ND
+algorithm will use the entire scenario tree, whereas the SDDP algorithm will employ
+sampling procedures in order to achieve this. The ND algorithm therefore does not
+require any particular assumption on the scenario tree, but as a consequence is typically
+only applied to multistage stochastic problems of moderate size (with some hundred
+or a few thousand scenarios). In order to mitigate the effect that only "smaller" trees
+can be handled, methods for constructing representative but small scenario trees have
+therefore received significant attention. Let us mention the pioneering work Dupacová
+et al. (2003) on two-stage programs and some subsequent extensions to the multistage
+case, e.g., de Oliveira et al. (2010), Pflug (2010), Heitsch and Römisch (2011), Pflug
+and Pichler (2012), Kovacevic and Pichler (2015). Other ideas to reduce the computa-
+tional burden rely on combining adaptive partitioning of scenarios with regularization
+techniques from convex optimization, e.g., Song and Luedtke (2015), van Ackooij et al.
+(2018). These ideas can also be extended to the multistage setting as done recently in
+van Ackooij et al. (2019).
+
+   It is therefore generally acknowledged that SDDP can handle larger scenario trees
+by combining decomposition and sampling, Pereira and Pinto (1991). This method is
+highly popular as illustrated by the numerous applied papers, e.g., de Oliveira et al.
+(2010), Shapiro et al. (2013), Herer et al. (2006), Philpott and de Matos (2012), Goel
+and Grossmann (2004), Rodríguez et al. (2017). The method, however, requires the
+assumption that the underlying stochastic process is stage-wise independent (see also
+Chen and Powell 1999; Hindsberger and Philpott 2001; Donohue and Birge 2006 for
+other methods employing sampling). Combined with a possibility to share cuts among
+different nodes of the scenario tree, the optimization strategies proposed in these ref-
+erences mitigate the curse of dimensionality further. However, the assumption that
+uncertainty is stage-wise independent is quite a strong assumption when familiar with
+
+123
+On conditional cuts for stochastic dual dynamic programming  175
+
+the actual observation of data. Whenever the underlying stochastic process is Marko-
+vian, it is generally suggested to increase the dimension of the state vector in order to
+revert back to a stage-wise independence assumption [c.f., the discussion in Shapiro
+(2011)]. As observed in de Queiroz and Morton (2013), such an increase may be
+detrimental to computational efficiency especially if the increase in the dimension of
+the state vector is significant. The authors de Queiroz and Morton (2013) suggest a
+way to partially mitigate this effect. In this paper, we suggest another approach for
+efficiently estimating the conditional expectations appearing in the dynamic program-
+ming equations. The suggested method does not require increasing the size of the state
+vector whenever the underlying stochastic process is not stage-wise independent. Our
+approach of estimating the conditional expectation is based on the observation that
+such expectations are orthogonal projections onto an appropriate functional space. The
+method suggested here is very popular in mathematical finance since the first work
+of Tsilikis and Van Roy (1999) and the closely related Longstaff Schwarz method
+Longstaff and Schwartz (2001). The latter has become the most used method to deal
+with optimal stopping problem, i.e., the optimization problem related to computing
+the optimal stopping time. The optimal stopping time is the best moment to exercise a
+given option. In the banking system, this method has become the reference method due
+to its easy implementation, its efficiency in moderate dimensions, and the easiness to
+calculate the sensibility of the optimal value (the "greeks"). In energy market, quants
+use this method to valuate and hedge their portfolio [see Warin (2012) for an example
+of a gas storage hedging simulation].
+
+   In a recent paper, Bouchard and Warin (2012) developed a variant of this method
+based on linear regression on adaptive meshes: They showed that this method was supe-
+rior to the original Longstaff­Schwarz method based on global polynomial regression
+by avoiding oscillations of the regressor (the Runge effect). Indeed, the method was
+compared to different methods to price American options and to estimate the sensitiv-
+ity of the options to the initial prices (the delta of the option) in dimension 1 to 6. In
+dimension 3 or above, the proposed regression method appeared to be clearly superior
+to optimal quantization (Pagès and Printems 2003, 2005, 2009; Pagès et al. 2004) and
+the Malliavin approach (Fournié et al. 1999, 2001). Finally, let us mention that the here
+suggested regression methods are also used to approximate conditional expectations
+in numerical schemes Bouchard and Touzi (2004) used to solve Backward Stochastic
+Differential Equations (BSDE). The latter BSDEs provide a way to solve quasi-linear
+equations: The first papers Gobet et al. (2005), Lemor et al. (2006) have given birth to
+many follow-up papers on the topic [see, for example, the references in the recent work
+of Gobet and Turkedjiev (2016)]. One can also use these building blocks to design
+schemes to solve full nonlinear equations (Fahim et al. 2011).
+
+   To conclude the introduction, let us briefly mention that the mathematical properties
+of the SDDP algorithm have been extensively investigated. A first formal proof of
+almost-sure convergence of multistage sampling algorithms akin to SDDP is due to
+Chen and Powell (1999). This proof was extended by Linowsky and Philpott to cover
+the SDDP algorithm and other sampling-based methods in Linowsky and Philpott
+(2005). In fact, both papers rely on a tacit assumption, formally worked out in Philpott
+and Guan (2008). Convergence in the general convex risk-neutral case is worked out
+in Girardeau et al. (2015) and also studied in the risk-averse situation in Guigues
+
+                                                            123
+176                                                                               W. van Ackooij, X. Warin
+
+(2016). Recent publications have addressed the issue of incorporating risk-averse
+measures into the SDDP algorithm: Guigues and Römisch (2012), Shapiro (2011),
+Philpott and de Matos (2012), Guigues and Sagastizábal (2012), Shapiro et al. (2013),
+Dupacová and Kozmík (2015), Homem de Mello and Pagnoncelli (2016). Polyhedral
+risk measures were studied in Eichhorn and Römisch (2005) and Guigues and Römisch
+(2012). As mentioned in Shapiro et al. (2013), theoretical foundations for a risk-
+averse approach based on conditional risk mappings were developed in Ruszczyn´ski
+and Shapiro (2006). Extended polyhedral risk measures, also allowing for dynamic
+programming equations, can also be employed and where developed in Guigues and
+Römisch (2012). It is shown is Shapiro (2011) how to incorporate convex combinations
+of the expectation and Average Value-at-Risk into the SDDP algorithm. Numerical
+experiments on this idea have been reported in many publications; see, for instance,
+(Philpott and de Matos 2012; Shapiro et al. 2013).
+
+   This paper is organized as follows. Section 2 presents the general structure of multi-
+stage stochastic linear programs and show how the key difficulty resides in computing
+conditional expectations. We present the general idea of approximating conditional
+expectations in Sect. 3 and our algorithm in Sect. 3.2. Finally, Sect. 4 contains a series
+of numerical experiments showing numerical consistency of the suggested method.
+We also compare the method with other variants, wherein it appears that the sug-
+gested approach is preferable. The paper ends with concluding remarks and research
+perspectives.
+
+2 Preliminaries on multistage stochastic linear programs and
+  decomposition
+
+Multistage stochastic programs explicitly model a series of decisions interspaced with
+the partial observation of uncertainty. If the given set of possible realizations of the
+underlying stochastic process is discrete, uncertainty can be represented by a scenario
+tree. Multistage stochastic linear programs (MSLPs) are a special case of this class
+wherein the underlying modeling structure is linear/affine. Hence, on a scenario tree,
+the resulting model is a very large linear program. In this section, we will provide
+an overview of two popular decomposition approaches for MSLPs, namely nested
+decomposition and stochastic dual dynamic programming. From an abstract viewpoint
+coming from nonlinear nonsmooth optimization, both methods are variants of Kelley's
+cutting-plane method Kelley (1960).
+
+   Consider the following multistage stochastic linear program:
+
+                                                                                                
+
+min       c1 x1 + E|1   min              c2 x2 + E|[2] · · · + E|[T -1] [  min                  cT xT ] , (1)
+
+x1X1                    x2  X 2                                            xT XT
+A1 x1=b1                B2 x1+ A2 x2=b2                                    BT xT -1+ AT xT =bT
+
+   where some of (or all) data  = (ct , Bt , At , bt ) can be subject to uncertainty
+for t = 2, . . . , T . The conditional expectation E|[t] [ · ] is taken with respect to the
+filtration generated by the history, up to time t, of the random vector t  t  Rmt ,
+defining the stochastic process {t }tT=1. This history, up to time t, will be denoted with
+
+123
+On conditional cuts for stochastic dual dynamic programming                    177
+
+[t] = (1, . . . , t ). Furthermore, Xt = , t = 1, . . . , T , are polyhedral convex sets
+that do not depend on the random parameters, which we denote by Xt := {xt  Rn+t |
+Dt xt = dt }, for an appropriate matrix Dt and vector dt .
+
+For numerical tractability, it is typically assumed that the number N of realizations
+
+(scenarios) of the data process is finite, i.e., support sets t (t = 1, . . . , T ) have finite
+
+cardinality. This is, for instance, the case in which (1) is a SAA approximation of
+
+a more general MSLP problem (having continuous probability distribution). For a
+
+discussion of the relation of such a problem with the underlying true problem relying
+
+on a continuous distribution, we refer to Shapiro (2011). In our numerical experiments,
+
+we will also make this assumption.
+
+Under these assumptions, the dynamic programming equations for problem (1) take
+
+the form
+
+                                                      ct xt + Qt+1(xt )([t])
+                                               min
+          Qt  (xt -1 ,  [t -1] ,  t  )  :=            At xt = bt - Bt xt-1     (2)
+                                              xt Rnt  xt  Xt,
+
+                                              s.t.
+
+where
+
+       Qt+1(xt )([t]) := E|[t] [Qt+1(xt , [t], t+1)], for t = T - 1, . . . 1,  (3)
+
+and QT +1(x)  0 by definition. The first-stage problem becomes
+
+                                                + Q2(x1)([1])
+                           min          c1  x1
+
+                          x1 Rn 1                                              (4)
+
+                         s.t.           A1x1 = b1
+                                        x1  X1.
+
+An implementable policy for (1) is a collection of functions x¯t = x¯t ([t]), t =
+1, . . . , T . Such a policy gives a decision rule at every stage t of the problem based on
+a realization of the data process up to time t. A policy is feasible for problem (1) if it
+satisfies all the constraints for every stage t.
+
+   As in Shapiro (2011), we assume that the cost-to-go functions Qt are finite valued,
+in particular, we assume relatively complete recourse. Since the number of scenarios
+is finite, the cost-to-go functions are convex piecewise linear functions (Shapiro et al.
+2009, Chap. 3).
+
+   We note that the stage-wise independence assumption (e.g., as in Pereira and Pinto
+(1991)) simplifies (3) to Qt+1(xt )([t]) = Qt+1(xt ) = E[Qt+1(xt , [t], t+1)] since
+the random vector t+1 is independent of its history [t] = (1, . . . , t ). As pointed
+out in Shapiro (2011), in some cases, stage-wise dependence can be dealt with by
+adding state variables to the model. We will provide an alternative to that general
+methodology. We also care to note, and this will be a subsequent assumption, that
+whenever the data process is Markovian, than then Qt+1(xt )([t]) depends on t alone,
+i.e., Qt+1(xt )([t])  Qt+1(xt )(t ).
+
+   First, let us briefly mention the main steps of ND and SDDP.
+
+                                                            123
+178                                                               W. van Ackooij, X. Warin
+
+2.1 Decomposition
+
+As already mentioned, two very important decomposition techniques for solving mul-
+tistage stochastic linear programs are nested decomposition (see Ruszczyn´ski and
+Swietanowski 1997) and the SDDP algorithm (see Pereira and Pinto (1991)). Both
+methods have two main steps:
+
+ ­ Forward step, that goes from stage t = 1 up to t = T solving subproblems to
+    define feasible policies x¯t ([t]). In this step, an (estimated) upper bound z for the
+    optimal value is determined.
+
+ ­ Backward step, that comes from stage t = T up to t = 1 solving subproblems
+    to compute linearizations that improve the cutting-plane approximations for the
+    cost-to-go functions Qt . In this step, a lower bound z is obtained.
+
+Below we discuss these steps, starting with the backward one.
+
+Backward step Let x¯t = x¯t ([t]) be a trial decision at stage t = 1, . . . , T - 1, and
+Q t be a current approximation of the cost-to-go function Qt , t = 2, . . . , T , given by
+
+the maximum of a collection of cutting-planes. At stage t = T , the following problem
+
+is solved
+
+                                            
+                                               min    cT xT
+            QT  (x¯T -1,  [T -1],  T  )  =                        - BT x¯T -1  (5)
+                                              xT RnT  AT xT = bT
+                                                      xT  XT
+                                              s.t.
+
+for all T = (cT , BT , AT , bT )  T . Let ¯ T = ¯ T (T ) be an optimal dual solution of
+problem (5). Then T (T -1) := E|T-1 [bT ¯ T ] and T (T -1) := -E|T -1 [BT ¯ T ] 
+QT (x¯T -1)(T -1) define the linearization
+
+     qT (xT -1)(T -1) := T (T -1)xT -1 + T (T -1)
+                          = QT (x¯T -1)(T -1) + T (T -1), xT -1 - x¯T -1 ,
+
+satisfying
+
+                          QT (xT -1)  qT (xT -1)  xT -1,
+
+and QT (x¯T -1)(T -1) = qT (x¯T -1)(T -1), i.e., qT is a supporting plane for QT (both
+functions of T -1). This linearization is added to the collection of supporting planes
+of QT : Q T is replaced by Q T (xT -1)(T -1) := max{Q T (xT -1)(T -1), qT (xT -1)
+(T -1)}. In other words, the cutting-plane approximation Q T is constructed from a
+collection JT of linearizations:
+
+               Q T (xT -1)(T -1) = mjaJxT {Tj (T -1)xT -1 + Tj (T -1)}.
+
+   By starting with a model approximating the cost-to-go function from below (e.g.,
+Qt  - for all stages), the cutting-plane updating strategy will ensure that Q T 
+
+123
+On conditional cuts for stochastic dual dynamic programming                179
+
+QT . The updated model Q T is then used at stage T - 1, and the following problem
+needs to be solved for all t = T - 1, . . . , 2:
+
+                                             + Q t+1(xt )(t )
+                          
+Qt (x¯t-1, [t-1], t )  =     min    ct xt    = bt - Bt x¯t-1
+                                             Xt
+                            xt Rnt  At xt
+                                    xt 
+                            s.t.
+
+                                 min         ct  xt  + rt+1
+                          
+                            xt ,rt+1Rnt  ×R
+
+                         s.t.                At xt = bt - Bt x¯t-1         j  Jt+1
+                                             tj+1(t )xt + tj+1(t )  rt+1,           (6)
+                                             xt  Xt.
+
+Let ¯t = ¯t (t ) and ¯tj = ¯tj (t ) be optimal Lagrange multipliers associated with the
+constraints At xt = bt - Bt x¯t-1 and tj+1(t-1)xt + tj+1(t-1)  rt+1, respectively.
+Then the linearization
+
+qt (xt-1)(t-1) := t (t-1)xt-1 + t (t-1) = E|t-1 [Qt (x¯t-1, [t-1], t )]
+                      + t (t-1), xt-1 - x¯t-1
+
+of Qt is constructed with
+
+                                                     
+
+t (t-1) := E|t-1 bt ¯t +                 tj+1(t )¯tj  and t (t-1) := -E|t-1 [Bt ¯t ] (7)
+
+                                j  Jt+1
+
+Qt (xt-1)(t-1)  qt (xt-1)(t-1)  xt-1.
+
+   Once the above linearization is computed, the cutting-plane model at stage t is
+updated: Q t (xt-1)(t-1) = max{Q t (xt-1)(t-1), qt (xt-1)(t-1)}. Since Q t+1 can
+be a rough approximation (at early iterations) of Qt+1, the linearization qt is not
+necessarily a supporting plane (but a cutting-plane) for Qt+1: The inequality qt  Qt
+
+might be strict for all xt-1 feasible (at the first iterations).
+
+   At the first stage, the following LP is solved
+
+                                c1 x1 + Q 2(x1)(1)
+      
+                        min     A1x1 = b1
+z  =                            x1  X1
+                       x1 Rn 1
+
+       s.t.
+
+                           min      c1   x1  +  r2
+      
+                       x1,r2Rn1 ×R
+
+     s.t.                           A1x1 = b1                              (8)
+                                    2j (1)x1 + 2j (1)  r2,
+                                    x1  X1.                    j  J2
+
+                                                                           123
+180                                                                     W. van Ackooij, X. Warin
+
+The value z is a lower bound for the optimal value of (1). The computed cutting-plane
+models Q t , t = 2, . . . , T , and a solution x¯1 of problem (8) can be used for constructing
+an implementable policy as follows.
+
+Forward step Given a scenario  = (1, . . . , T )  1 ×. . .× T (realization of the
+stochastic process), decisions x¯t = x¯t ([t]), t = 1, . . . , T , are computed recursively
+going forward with x¯1 being a solution of (8), and x¯t being an optimal solution of
+
+                                           min       ct xt + rt+1
+                                        
+      min    ct xt + Q t+1(xt )(t )        xt ,rt+1  At xt =bt -Bt x¯t-1
+                                                     tj+1(t )xt +tj+1(t )  rt+1,
+     xt Rnt                            s.t.          xt  Xt  Rnt , rt+1  R.
+
+ s.t.        At xt = bt - Bt x¯t-1                                                   j    Jt +1
+             xt  Xt
+
+                                                                                                 (9)
+
+for all t = 2, . . . , T , with Q T +1  0. Notice that x¯t is a function of x¯t-1 and
+t = (ct , At , Bt , bt ), i.e., x¯([t]) is a feasible and implementable policy for problem (1)
+
+(up to stage t). As a result, the value
+
+                                              T
+
+                           z=E                      ct x¯t ([t])                          (10)
+
+                                              t =1
+
+is an upper bound for the optimal value of (1) as long as all the scenarios  
+
+are considered for computing the policy. This is the case of nested decomposition.
+
+However, the forward step of the SDDP algorithm consists in taking a sample J with
+
+M < N scenarios  j of the data process and computing x¯t ([jt]) and the respective
+
+values z( j ) =  T     ct  x¯t ([jt]),  j  =  1, . . . , M. The sample  average  z~  =  E|J [z( )]
+                 t =1
+
+and the sample variance ~ 2 = E|J [(z( j ) - z~)2 are easily computed. The sample
+
+average is an unbiased estimator of the expectation (10) [that is an upper bound for
+the optimal value of (1)]. In the case of subsampling, z~ + 1.96~ / M gives an upper
+
+bound for the optimal value of (1) with confidence of about 95%. As a result, a possible
+stopping test for the SDDP algorithm is z~ + 1.96~ / M - z  , for a given tolerance
+
+> 0. We refer to Shapiro (2011, Sec.3) for a discussion on this subject.
+
+3 On conditional cuts in SDDP
+
+The assumption that the random data process is stage-wise independent is useful in
+order to simplify the expressions given in Sect. 2 such as (7). Essentially, it deletes
+the additional dependency on the stochastic process of the cuts. This has a clear
+advantage in terms of storage, but the stage-wise independence is also unrealistic
+in many situations. We will present here an alternative method for dealing with the
+conditional expectations that has the following advantages:
+
+123
+On conditional cuts for stochastic dual dynamic programming  181
+
+ ­ There is no need to explicitly set up a scenario tree when initial data are available
+    in the form of a set of scenarios (1s, . . . , Ts ) sS .
+
+ ­ There is no need to increase the dimension of the state vector in order to account
+    for stage-wise dependency. Ways of handling dependency within SDDP are given
+    in Guigues (2014), Infanger and Morton (1996), wherein the specific structure is
+    exploited so as to efficiently "share" cuts. Similar ideas were successively exploited
+    in van Ackooij and Malick (2016) but not for SDDP. The methodology laid out in
+    this work does not require making explicit such specific structure.
+
+However our underlying assumption is that the random process is Markovian, i.e.,
+the conditional distribution of t+1 knowing [t] is the same as the conditional t+1
+knowing t . We translate this here in the following form:
+
+t+1 = ft (t , t ),                                           (11)
+
+where the random data or innovation process t  Rpt is independent of [t] and
+ft is a given map defined on (Rmt × Rpt ) with values in Rmt+1 . This form (11) fits
+general time series models, such as AR, etc... (see, e.g., Shumway and Stoffer 2005).
+Of course, exploiting explicitly this structure to compute the conditional expectations,
+even if the distributions of t are known is not easy.
+
+   A final approach to represent uncertainty, that we have not explicitly mentioned so
+far is the use of Markov Chains. We refer to Mo et al. (2001), Philpott and de Matos
+(2012), Vallad ao et al. (2019) for some references incorporating SDDP and Markov
+Chains. Finite state Markov chains can of course explicitly be expanded into trees
+whenever necessary. Therefore, in principle, similar methodology can be employed.
+However, much like our "criticism" of scenario trees, it is necessary to "create" a
+Markov chain if the initial data is available in the form of a set of scenarios. Since the
+Markov setting does not fit well the numerical experiments in the paper, we do not
+provide any comparison with it.
+
+3.1 Dealing with conditional expectations: linear regression
+
+One of the difficulties in solving problem (1) is closely tied in with evaluating con-
+ditional expectations. Indeed, e.g., Eq. (7) makes it apparent how this introduces an
+additional dependency with respect to the situation wherein only expectations are
+evaluated. The easiest way of computing conditional expectations is by setting up a
+tree or Markov chain to describe the evolution of t and employ the transition proba-
+bilities to simply evaluate the conditional expectation. However, this approach, when
+only historical data are available, may lead to modelization errors by introducing an
+artificial representation of the underlying process in the form of a tree when only a
+set of samples of this process was available. Although the statistical quality of such a
+representation can be studied, we rather suggest to circumvent it altogether by directly
+employing a Monte Carlo approach both in the forward and backward steps.
+
+   We suppose that in the backward step the process is sampled through the Markovian
+dynamic of Eq. (11) once and for all with S samples tk with k = 1, . . . , S. This could
+be the result of having been able to fit a certain model to some original data, or having
+
+                                                            123
+182                                                                W. van Ackooij, X. Warin
+
+been given a model [e.g., electrical load could follow the dynamics of the model
+
+exhibited in Bruhns et al. (2005)]. Alternatively, these samples could simply be the
+
+historical data supposed to be Markovian. In the latter case, the data set could just be
+
+observed historical information (e.g., yearly electrical load over the past 30 years or
+
+so). At the end of this preprocessing step, a set of S paths is available to work with.
+
+   It is well known that for any given t the conditional expectation E|t (.) is an orthog-
+onal projection in the space of square integrable function, so we will suppose in the
+
+sequel that all functions g of  = { }t>0 of which we want estimate the conditional
+expectation satisfy E[g(t )2] <  for t  T : Such functions g are said to be bounded
+in L2. As a consequence, for any map g : t+1  R, the conditional expectation
+satisfies E|t (g(t+1)) = F(t ) for a certain function F : t  R. In order to keep
+the computational burden manageable as well as to limit storage requirements, we
+
+will assume that F can be represented as a linear combination of a given set of base
+
+functions. For instance, one could take Chebyshev or Legendre polynomials known
+
+to be an orthonormal basis for L2 bounded functions as was originally proposed by
+
+Longstaff and Schwartz (2001).
+
+Now for a fixed t and given set t,1, . . . , t,Pt of base functions the map F can be
+                                                                                            S
+approximated with the help of S drawn samples by (linearly) regressing   g(ts+1)            s=1
+
+on (t,1(ts ), . . . , t,Pt (ts )) sS=1. This gives the following approximation:
+
+                                Pt
+
+     E^ S(g(t+1) | t ) = t,i t,i (t ),                                                      (12)
+
+                                i =1
+
+where t,1, . . . , t,Pt is the optimal solution to the problem
+
+                   S            Pt                              2
+
+       min                      g(ts+1) - i t,i (ts ) .
+
+     1,...,Pt s=1               i =1
+
+Since the choice of an appropriate well-performing basis (uniformly in t) and for
+
+a given set of instances of (1) may be tricky, we will consider instead the adaptive
+
+method developed in Bouchard and Warin (2012). It relies on setting up a class of local
+
+base functions. In order to present the idea, let us denote with ts,i the ith coordinate
+of sample s of t  Rmt , where i = 1, . . . , mt . Now taking coordinate-wise extrema
+over the set of scenarios, we define for each i = 1, . . . , mt , ¯t,i = maxs=1,...,S ts,i ,
+                                                                         mt                 ¯t
+ t,i = mins=1,...,S ts,i . As shown in Fig. 1, we now partition the set  i =1  [  t  ,i  ,      ,i  ]
+
+in a set of hypercubes Dt, , = 1, . . . , Lt . For each given = 1, . . . , Lt , i.e., on
+
+each hypercube, we pick a family of mappings q q0 having support on Dt, .
+
+Typically, the family q q0 will be that of all monomials in Rmt , implying that
+mt + 1 coefficients need to be stored for each element = 1, . . . , Lt of the partition.
+
+We emphasize that the approximation is nonconforming in the sense that we do not
+
+assure the continuity of the approximation. However, it has the advantage to be able to
+
+fit any, even discontinuous, function. The total number of degrees of freedom is equal
+
+to (1 + mt )Lt which quality-wise should be related to the sample size S. Hence, in
+
+123
+On conditional cuts for stochastic dual dynamic programming  183
+
+Fig. 1 Example of the support of the local basis functions in dimension 2. Here 4 intervals are chosen for
+each direction giving a total of L = 16 hypercubes
+
+order to avoid oscillations, the partition is set up so that each element roughly contains
+the same number of samples. Using this approximation, the normal equation is always
+well conditioned leading to the possibility to use the Choleski method, which, as shown
+in Bouchard and Warin (2012), is most efficient for solving the regression problem.
+We even note that the problem can be decomposed in Lt regressions with mt × mt
+regression matrices. Using a partial sort algorithm in each direction, it is then possible
+to get roughly the same number of samples in each cell as explained in Bouchard and
+Warin (2012). The use of this partitioning procedure is illustrated on Fig. 1.
+
+   As explained in the Introduction, the numerical results presented in Bouchard and
+Warin (2012) demonstrate the superiority of this local method with respect to various
+competing ways of estimating conditional expectations such as quantization or Malli-
+avin regression. We note that a constant per mesh approximation can be used instead
+of a linear one, giving a far less efficient method if the functions to approximate are
+regular or piecewise regular.
+
+3.2 The SDDP algorithm with conditional cuts and local base functions
+
+In this section, we provide the description of our variant of the SDDP algorithm relying
+on conditional cuts and using local base functions. A variant using only global base
+functions is readily extracted. In the algorithm below, we add the index s to emphasize
+the dependency of the data on the scenario. Let us also note that for a given current trial
+decision x¯t = x¯t ([t]) at stage t, that this can be associated with a given mesh Dt,h(t),
+for h(t)  {1, . . . , Lt }. The value h(t) is such that t  Dt,h(t). We will emphasize
+this by speaking of the trial decision (x¯t , h(t)).
+
+                                                            123
+184                                                                         W. van Ackooij, X. Warin
+
+Backward step Let (x¯t , h(t)) be a trial decision at stage t = 1, . . . , T - 1 and Q t
+
+be a current approximation of the cost-to-go function Qt , t = 2, . . . , T , given by the
+
+maximum of a collection of (functional) cutting-planes. At stage t = T , the following
+problem is solved for all s such that T(s-) 1  DT -1,h(T -1)
+
+                                                    (cT(s)) xT
+                                         min        A(Ts)xT = bT(s) - BT(s)x¯T -1
+         QT  (x¯T   -1,    T(s))  =                                                          (13)
+                                        xT RnT
+
+                                        s.t.
+
+                                                    xT  XT
+
+Let ¯ T(s) be an optimal dual solution of problem (13). Now let T (y), T (y) be
+the numerically approximated conditional expectations of bT ¯ T and BT ¯ T , respec-
+tively, while employing the estimates of (12). We will denote this as T (y) :=
+E^ S[bT ¯ T |T -1 = y] and T (y) := -E^ S[BT ¯ T |T -1 = y].
+
+   Now define the linearization
+
+     qT (xT -1)(T -1) := T (T -1)xT -1 + T (T -1)
+                          = E^ S QT (x¯T -1, T )|T -1 + T (T -1), xT -1 - x¯T -1 .
+
+This linearization is used to update the current cutting-plane model as follows:
+
+     Q T (xT -1)(T -1) := max{Q T (xT -1)(T -1), qT (xT -1)(T -1)}.
+
+We note that for  / DT -1,h(T -1), qT (xT -1)( ) = 0 so that the model is only
+locally updated. We will emphasize this by letting Jt+1(Dt,h(t)) be the index set of
+
+linearization added while exploring mesh Dt,h(t).
+   The updated model Q T is then used at stage T - 1, and the following problem
+
+needs to be solved for all t = T - 1, . . . , 2 and every s such that t(-s)1  Dt-1,h(t-1):
+
+                                        (ct(s))         + Q t+1(xt )(t(s))
+                                 min    A(t s ) xt  xt  bt(s) - Bt(s)x¯t-1
+     Qt  (x¯t -1 ,  t(s))  =                        =                                        (14)
+                                xt Rnt
+
+                                s.t.
+
+                                        xt  Xt
+
+                                     min     ×R     (ct(s)) xt +rt(+s)1
+                              
+                                xt ,rt+1Rnt         At(s)xt =bt(s)-Bt(s)x¯t-1                (15)
+                                                    tj+1(t(s))xt +tj+1(t(s))
+                                s.t.                j  Jt+1(Dt,h(t))
+                                                    xt  Xt.
+                                                                                   rt(+s)1,
+
+Let ¯t(s) and ¯tj (s) be optimal Lagrange multipliers associated with the constraints
+A(ts)xt = bt(s) - Bt(s)x¯t-1 and tj+1(t(s))xt + tj+1(t(s))  rt(+s)1, respectively. Then
+
+123
+On conditional cuts for stochastic dual dynamic programming                               185
+
+the linearization defined for t-1  Dt-1,h(t-1):
+
+  qt (xt-1)(t-1) := t (t-1)xt-1 + t (t-1)
+
+                       =    E^ S[Q      (x¯t -1 ,  t  )|t -1 ]  +  t (t-1), xt-1 - x¯t-1
+
+                                     t
+
+is constructed with
+
+t (t-1) := E^ S[bt ¯t +              tj+1¯tj |t-1] and t (t-1) := -E^ S[Bt ¯t |t-1]. (16)
+
+                            j  Jt+1
+
+   Once the above linearization is computed, the cutting-plane model at stage t is
+updated
+
+   At the first stage, the following problem is solved :
+
+                                (c1) x1 + Q 2(x1)(1)
+                     
+                        min     A1x1 = b1
+       z  =                     x1  X1
+                       x1 Rn 1
+
+                      s.t.
+
+                                        (c1)  x1 + r2(m)
+                           min
+
+                       x1,r2Rn1 ×R
+
+            s.t.                        A1x1 = b1                                         (17)
+                                        2j (1)x1 + 2j (1)  r2, j  J2
+                                        x1  X1.
+
+In particular, since 1 is deterministic, D1,1 is the (only) degenerate mesh consisting
+of 1.
+
+Forward step The forward step is essentially unaltered. For a given scenario  =
+
+(1, . . . , T )  1 × . . . × T , first calculate for each t, h(t)  {1, . . . , LT } such
+that t  Dt,h(t). The decisions x¯t = x¯t ([t]), t = 1, . . . , T , are computed recursively
+going forward with x¯1 being a solution of (17), and x¯t being an optimal solution of
+
+                                               min      ct xt + rt+1
+                                        
+              + Q t+1(xt )(t )                xt ,rt+1  At xt = bt - Bt x¯t-1
+                                                        tj+1(t )xt + tj+1(t )  rt+1,
+  min  ct xt  = bt - Bt x¯t-1                 s.t.      j  Jt+1(Dt,h(t)),
+              Xt  Rnt                                   xt  Xt  Rnt , rt+1  R.
+   xt  At xt                                                                              (18)
+       xt 
+ s.t.                                   
+
+for all t = 2, . . . , T , with Q T +1  0. The trial for the next backward recursion is
+defined as (x¯t , h(t)) so that in the next backward step cuts at x¯t will only be generated
+for the visited meshes Dt,h(t). We choose to pick the same stopping criteria as in any
+usual implementation of SDDP (see Shapiro 2011, Remark 1) for a discussion on this
+matter). The advantage of only adding cuts for visited meshes is that this mitigates the
+additional burden of storing additional coefficients. Moreover, this cut may be only
+relevant locally for a given level of t .
+
+                                                            123
+186                                                                             W. van Ackooij, X. Warin
+
+Using the classical SDDP method when the random data process is stage-wise
+
+independent, the number of samples used in the forward path is generally chosen
+
+equal to one. However, due to accumulated errors during the backward resolution,
+the Q t estimation based on cutting-planes can be far from the corresponding true
+
+supporting planes. In the case of SDDP with conditional cuts, we want to add one cut
+
+for each mesh Dt,h(t). Because at each date t, the probability for t to be in a given
+          1
+mesh  is  Lt  ,  it  is  numerically  better  to  take  a  number  of  samples  equal  to  Lt.
+
+Remark 1 For a given accuracy, in the case where a constant per mesh approximation
+is used to estimate the conditional expectations, the number of Monte Carlo trajecto-
+ries S and the number of meshes Lt taken are found to be higher than in the linear
+approximation. So both the backward resolution and the forward resolution are more
+costly with the constant per mesh approximation than with the linear approximation.
+We therefore suggest to use linear per mesh approximation. We refer the reader to
+Chapter 3 (Friedman et al. 2001) for more information on linear methods for regres-
+sion and to Gobet et al. (2005), Lemor et al. (2006) for a cases wherein Monte Carlo
+error estimates can be given while assuming constant mesh size;
+
+4 Numerical experiments
+
+The SDDP method with or without conditional cuts have been implemented in StOpt
+Gevret et al. (2016) an open-source library containing tools to solve optimization prob-
+lems both in continuous or discrete time. In particular, inventory/stock problems [such
+as cascaded reservoir management problems, e.g., de Matos et al. (2017), Guigues and
+Sagastizábal (2012), van Ackooij et al. (2014) or gas storage, e.g., Henaff et al. (2013),
+Carmona and Ludkovski (2010)] can be optimized using either the dynamic program-
+ming method or the stochastic dual dynamic programming method. The subsequent
+experiments were carried out using this library. All computations are achieved on a
+cluster composed of Intel Xeon CPU E5-2680 v4 processors whereas all linear pro-
+grams (14), (17) and (18) are solved using COIN CLP version 1.15.10.
+
+4.1 Valuing storage facing the market
+
+We begin with a test case involving gas storage in one dimension, and we will extend
+it artificially in higher dimensions. All experiments are achieved with two processors
+and 14 cores each.
+
+4.1.1 The initial test case in one dimension
+
+We suppose that we want to value a storage facility where the owner has the possibility
+to inject gas from the market or withdraw it to the market in order to maximize his
+expected earnings. The price model is a classical HJM model used for example in
+
+123
+On conditional cuts for stochastic dual dynamic programming                                           187
+
+Warin (2012):
+
+                                 dF(T , t)  =    e-(T -t)dWt                                          (19)
+                                 F(T , t)
+
+where  is the volatility of the model,  the mean reverting, W a Brownian motion
+
+on a probability space ( , F, P) endowed with the natural (completed and right-
+
+continuous) filtration F = {Ft }tT generated by W up to some fixed time horizon
+
+T > 0. The spot price is naturally defined as St := F(t, t).
+                                                                  T
+We suppose that each date, ti = i           T with      T    =    N  ,  i  =  0, . . . , N , the gas volume
+
+Ci has to satisfy the constraint 0  Ci  Cmax. Noting ain > 0 the maximal injection
+
+during T , aout > 0 the maximal withdrawal from the storage that we suppose to
+
+be constant for simplification purposes, the gain function associated with a command
+
+xi  [-aout, ain] at date i t is then
+
+                                     i (xi ) = -Si T xi ,
+
+where the price Si T is supposed to be constant between ti and ti+1. Besides, the
+associated flow equation is given by
+
+                                        Ci+1 = Ci + x.
+
+The gain function associated with a strategy x = {xi }i=0,N is a function depending
+on the initial storage value C0, the initial spot price S0:
+
+                                                                        N
+
+                                  J (C0, x, S0) = i (xi ),
+
+                                                                      i =0
+
+and the optimization problem can be written as
+
+                               J (C0, S0) = sup J (C0, x, S0),
+
+                                                               x U
+
+where U is the set of non anticipative feasible strategies.
+   In this test case, we suppose that we want to optimize the assets on a 1 year (T = 1)
+
+time horizon with annual values  = 0.5,  = 0.5. The decision is taken every week
+so N = 52 and we pick the following initial forward curve:
+
+                           F(0, i T ) = 50 + sin 4 i .                                                (20)
+                                                                  N
+
+The maximal storage capacity is Cmax = 200,000 energy units and the injection
+
+and   withdrawal   rates   are  ain  =    aout  =  40,000,        energy      units  .  The   ratios  Cmax  ,
+                                                                                                       ain
+
+Cmax  indicate  a  rather  slow  storage  [see  Gevret  et   al.  (2016)      for  different  examples  of
+aout
+storages]. At date 0 the storage facility is empty. This case has a very stochastic effect.
+
+                                                                                              123
+188                                                           W. van Ackooij, X. Warin
+
+Table 1 Gas storage valuation in  Optim value  Deterministic  DP     DPC
+millions of numeraire:            Simul value
+deterministic and Monte Carlo                  1.280          1.436  1.400
+solution                                       1.280          1.432  1.456
+
+Table 2 Gas storage valuation in  Optim value  DP                    DPC
+millions of numeraire by tree     Simul value
+methods                                        1.478                 1.478
+                                               1.486                 1.486
+
+The forward curve being very flat, most of the gain is linked to the volatility of the
+process. So the resolution is rather difficult.
+
+   In Table 1, we give:
+
+ ­ the storage valuation when no uncertainty is present (volatility equal to 0),
+ ­ the solution obtained using the dynamic programming method employing the adap-
+
+    tive mesh of Bouchard and Warin (2012) (DP) and using the assumption that the
+    control is bang-bang (i.e., either equal to ain or aout) (Barrera-Esteve et al. 2006),
+ ­ the solution obtained using dynamic programming and cuts to estimate the Bellman
+    value (DPC). Regressions using cuts are achieved as exposed in Sect. 3.1 and
+    transition problems are solved using the COIN CLP solver distributing the LPs on
+    the 28 cores.
+
+The number of grid points is taken equal to 200. For DP and DPC results, we use 5
+meshes and 20,000 trajectories giving optimization results in row "Optim Value."
+
+   Results obtained using the optimal control in a simulation part, we obtained the
+results in row " Simul Value" using 40,000 trajectories.
+
+   We notice that the deterministic value and the stochastic value are very different,
+and because prices are martingale, it shows that the problem is a really stochastic one:
+Optimal trajectories in simulation and spot prices associated are given on Fig. 2. We
+notice the strong volatility, the mean reversion of the prices, and the diffusion of the
+stock trajectories.
+
+   The DCP column permits to show the accuracy of the calculation of the conditional
+cuts.
+Another popular way to value storage consist in using scenario trees. We use a trinomial
+tree (Hull and White 1990) to estimate the solution,with a time step equal to 1/52.
+In Table 2, we give the result obtained by dynamic programming methods using the
+bang-bang assumption (DP) and solving a LP problem so using cuts associated with
+tree to estimate the Bellman value (DPC).
+
+   Results obtained by the DP and DPC methods are the same. With the tree method,
+the solution appears to be a little bit higher than with the regression methods. Notice
+that in the simulation part, uncertainties are sampled on the tree so an error due to the
+discretization of the tree is present, while in the Monte Carlo method with conditional
+cuts, no discretization error is present. Moreover, the approach with a tree is only
+accurate in very low dimension, as shown in Bouchard and Warin (2012).
+
+123
+On conditional cuts for stochastic dual dynamic programming                       189
+
+                       (a) Price                                       (b) Stock
+
+Fig. 2 200 Spot prices trajectories and stock trajectories associated
+
+(a) All iterations                                                     (b) Zoom
+
+Fig. 3 Backward value with trees during iterations depending on the number of samples in forward mode
+
+   Next we use the SDDP method with both uncertainties discretized with a trinomial
+tree and the Monte Carlo method with conditional cuts described in Sect. 3.2. The
+parameters taken are the following:
+
+ ­ For the SDDP with a tree, the time step is still 1/52 and we take a number of
+    samples in the forward part equal to 200 to 4000.
+
+ ­ For the SDDP with conditional cuts, we take 20,000 trajectories in backward
+    resolution and let the number of mesh vary from 4 to 6. The number of samples
+    used in the forward part is taken equal to 28.
+
+While checking the accuracy of the solution we take 40,000 trajectories in a forward
+part. For both methods, when a sample gives a new point to explore in the next backward
+resolution, the cut is only added to the corresponding node in the tree or corresponding
+cell in the regression method. Moreover, no pruning method is used. Results with the
+tree method are given on Fig. 3.
+
+   Using many samples, the backward estimation with trees converges far more
+quickly. From Fig. 3, as the number of samples in forward increases, we limit the
+number of iterations as the cost for the resolution explodes. As the number of samples
+used in forward mode decreases, the convergence rate diminishes dramatically.
+
+                                                            123
+190                      W. van Ackooij, X. Warin
+
+     (a) All iterations  (b) Zoom
+
+Fig. 4 Backward value using regressions during iterations depending on the number of meshes
+
+   It is interesting to note that even if the backward resolution is not very accurate,
+the forward mode gives good results with not too many iterations. For example, using
+1000 samples in the forward mode, we get a forward value of 1.456e06 at iteration
+50. Using regressions, we obtain the results illustrated on Fig. 4.
+
+   Using too few meshes, the conditional cuts are not very well estimated : with four
+meshes the interval given by the forward values and the backward value is roughly
+[1.36e6, 1.54e6]. Using 5 meshes, we get an interval [1.42e6, 1.524e6], and using 6
+meshes, we get a tighter estimation [1.43e6, 1.45e6].
+
+   It is to be noticed that when we use to many meshes for a given number of trajectories
+used in the backward resolution, the backward value can be below the forward one
+: In this case, either we decrease the number of meshes or increase the number of
+trajectories used in backward for regressions. Comparing the cost between an SDDP
+using trees and an SDDP using regression is not very easy. Tighter bounds between
+forward and backward values are easier to get with regression when the problem is
+strongly stochastic. In order to have very good values with trees, we have to use
+many samples in forward mode to explore rarely reached nodes. This drawback is
+compensated by the fact that each new node explored only leads to three more LP to
+solve in backward mode (number of branches of the trinomial tree) at each date.
+
+4.1.2 An artificial test case in higher dimension
+
+In order to test how the method scales as a function of the dimension, we take the same
+data supposing that we dispose of n similar gas storages that we want to value jointly.
+Each transition problem is then written as a n-dimensional linear program solved with
+COIN CLP. Of course, in this case, the value of n storages is simply n times the value
+of a single storage.
+
+   On Figs. 5 and 6, we plot the convergence of the SDDP scheme for n = 5 and n = 10
+by giving the value of a single storage estimated as the value of n storages with the
+SDDP algorithm divided by n. A forward estimation of the solution is estimated with
+40,000 trajectories every 10 SDDP iterations for the regression method and every 20
+SDDP iterations for the tree method. The number of sample used in forward mode is
+
+123
+On conditional cuts for stochastic dual dynamic programming            191
+
+(a) All iterations                                           (b) Zoom
+
+Fig. 5 Backward and forward values using regressions (6 meshes) and trees during iterations in five dimen-
+sions
+
+(a) All iterations                                           (b) Zoom
+
+Fig. 6 Backward and forward values using regressions (6 meshes) and trees during iterations in 10 dimen-
+sions
+
+taken equal to 28 for regressions and 4000 with trees. As shown in the zoom on the
+figures, the standard estimation of the solution with Monte Carlo both for tree and
+regression methods remains rather high with respect to the solution value: oscillations
+in forward mode are present although the number of trajectories is quite high.
+
+   We note that a direct application of dynamic programming in this situation is simply
+no longer possible, whereas (our variant of) SDDP scales up very well.
+
+   As in the one-dimensional case, the value obtained by trees is a little bit higher with
+the tree method. In dimension 10, the value obtained with regression is slightly below
+its one-dimensional reference (a value around 1.40e6 compared to a value of 1.43e6
+obtained in dimension 1).
+
+4.2 A simple storage facility problem facing a consumption constraint
+
+In this section we compare our conditional cut approach with the classical SDDP
+method (i.e., increasing the state-space) for dealing with uncertainty following an
+
+                                                            123
+192                                                                       W. van Ackooij, X. Warin
+
+AR(1) model. All experiments are once again achieved with two processors with 14
+cores each.
+
+4.2.1 A case in one dimension
+
+In this test case, we suppose that the price gas is deterministic so is given by the future
+
+price (20). The characteristics of the storage facility are the same as in Sect. 4.1, but
+
+we suppose that we have an injection cost per unit of injected gas equal to 0.1.
+
+The owner of the storage facility is allowed to buy gas on the market and to inject it
+
+into the storage (paying the injection cost) but is not allowed to sell it on the market. The
+
+gas withdrawn can only be used to satisfy the consumption D following an AR(1) (e.g.,
+
+Shumway  and  Stoffer  2005)  process  between  two  dates  ti  =   i  T  and  ti +1  =  (i  +  1)  T  :
+                                                                       N                            N
+
+                       Di+1 - D~ i+1 = d (Di - D~ i ) + d i ,
+
+where i is independent white noise with zero mean and variance 1, d is set equal to
+0.9, d = 1000 and D~ is an average consumption rate satisfying:
+
+                       D~ i = 22,000 + 7000 sin        4 i       .
+                                                           N
+
+We denote with xib the quantity of gas bought at date ti , xiin  [0, ain] the quantity
+of gas injected and xiout  [-aout, 0] the quantity of gas withdrawn. We thus have
+the following constraint to satisfy at each date ti :
+
+                                    xib = Di + xiin + xiout .
+
+   The following objective function characterizes the cost of a strategy xb =
+ xib i=0,N by the value :
+
+                                                    N
+
+                       J (C0, xb, D0) = -i (xbb),
+
+                                                   i =0
+
+where D0 is the initial consumption value that we suppose to be equal to D~ 0 and the
+optimization problem can be written as
+
+                       J (C0,  D0)     =  inf  J (C0,  x,  D0).
+
+                                          x U
+
+   Due to the AR(1) structure of the demand, it is possible to add Di to the state vector
+xi in the algorithm 3.2 as proposed by Pereira and Pinto (1991). We can then test two
+approaches:
+
+ ­ Approach A: SDDP with conditional cuts as suggested in Sect. 3.2. Here xi is only
+    the stock level and i = (Di ) is a dimensional Markov process. All cuts coeffi-
+    cients are one-dimensional functions and have to be estimated by one-dimensional
+
+123
+On conditional cuts for stochastic dual dynamic programming  193
+
+Fig. 7 Comparison of optimal values in the backward and forward pass for two variants of SDDP for a load
+constraint
+
+    regressions. In the test case, we use NcA = 2000 trajectories in optimization and
+    conditional cuts coefficients are estimated with an I1 = 8 grid. At each step of the
+    SDDP algorithm, we use 8 forward simulations to discover the new states used in
+    the next backward step.
+ ­ Approach B: SDDP without conditional cuts but with an augmented state vector.
+    Here xi = (xib, Di ), and at each date ti all cuts coefficients are constant. This
+    method is related to nested Monte Carlo: a set of Ni simulations is chosen to
+    simulate t . So at a given date in the backward pass, we are left with Ni LPs to
+    solve for each visited state in the previous forward simulation. It turns out that in
+    order to be able to be able to reach the 0.1% criterium for difference between the
+    forward and the backward iteration, we have to take Ni = 2000. At each step of
+    the SDDP algorithm, we use 1 forward simulation to discover the new states used
+    in the next backward step.
+
+   On Fig. 7, we give the results obtained by the two approaches until convergence of
+the backward and forward values to within a given (relative) accuracy of 0.1%.
+
+   Approach A takes 109 s to converge, while Approach B takes 66 s to converge. On
+this simple case, Approach B is superior to Approach A, especially because of a better
+convergence rate in the backward step.
+
+4.2.2 Artificial case in dimension 10
+
+In order to test how these methods scale up, we pick the test case of Sect. 4.2.1 but
+this time with 10 similar storage facilities. We also multiply average load as well as
+d by 10. Consequently, the expected value of the optimal cost is 10 times the value
+of the case with one storage facility.
+
+   On Fig. 8, we give the convergence results obtained by the two approaches.
+
+                                                            123
+194                                          W. van Ackooij, X. Warin
+
+Fig. 8 Comparison of optimal values in the backward and forward pass for two variants of SDDP for ten
+gas storage facilities with a coupling load constraint
+
+   In order to be able to get a relative given accuracy of 0.1%, it is necessary to increase
+Ni to 4000. Both approaches allow us to obtain the same value, showing consistency
+of the suggested method. Although approach B, obtains a better estimation of the
+optimal value earlier on in the algorithm, approach A turns out to be faster. Indeed, for
+reaching a 0.1% asserted gap, Approach A takes 660 s to converge while Approach B
+takes 775 (+17%) s.
+
+4.3 Valuing a more complex storage facility when facing a consumption constraint
+
+In this section, we take the test case 4.2 and allow the prices to vary following the
+dynamic given in Sect. 4.1. As in the case described in Sect. 4.1, the classical SDDP
+method cannot deal with this kind of uncertainty. Note that this is so since price
+uncertainty affects the cost coefficients of the transition problems (e.g., (14)), so that
+increasing the state-space would make these problems bi-linear (i.e., no longer convex).
+In the two following subsections, we show that our method can deal efficiently with
+multidimensional uncertainty. All calculation are achieved on a cluster of 8 processors
+with 14 cores each.
+
+4.3.1 A case in one dimension
+
+Similarly to Sects. 4.1 and 4.2, the following objective function characterizes the cost
+of a strategy xb = xib i=0,N :
+
+                                        N
+
+     J (C0, xb, S0, D0) = -i (xbb).
+
+                                       i =0
+
+123
+On conditional cuts for stochastic dual dynamic programming                 195
+
+Fig. 9 SDDP backward and forward iterations for a gas storage facility with a coupling load constraint
+
+The optimization problem can be written as
+
+J (C0,  S0,  D0)  =  inf                    J (C0,           x,  S0,  D0).
+
+                     x U
+
+   We use the SDDP method with conditional cuts as suggested in Sect. 3.2. Here
+xi is only the stock level and i = (Si T , Di ) is a two-dimensional Markov pro-
+cess. All cut coefficients are two-dimensional functions and have to be estimated by
+two-dimensional regressions. In the test case, we use NcA = 32000 trajectories in
+optimization and conditional cuts coefficients are estimated with an (I1, I2) = (8, 4)
+grid (see Fig. 1). At each step of the SDDP algorithm, we use 32 forward simulations
+
+to discover the new states used in the next backward step.
+
+   On Fig. 9, we give the results until convergence of the backward and forward values
+with a given (relative) accuracy of 0.1%. The convergence is achieved in 845 s.
+
+4.3.2 An artificial test case in dimension 10
+
+In order to test how the method scales up, we pick the test case of Sect. 4.3.1 but this
+time with 10 similar storage facilities. We also multiply average load as well as d by
+10. Consequently, the expected value of the optimal cost is 10 times the value of the
+case with one storage facility.
+
+   On Fig. 10, we give the convergence results obtained by the conditional cuts method.
+   Once again our method converges very efficiently even for a high-dimensional
+problem with convergence reached in 2400 s.
+
+                                                            123
+196  W. van Ackooij, X. Warin
+
+Fig. 10 SDDP backward and forward iterations for ten gas storage facilities with a coupling load constraint
+
+5 Conclusion
+
+Using conditional cuts, we have developed an effective methodology to value easily
+high-dimensional storages problems. Getting rid of building trees for the backward
+part, the method is easy to use even on a set of initial scenarios, perhaps resulting from
+historical data, or any other set of scenarios assumed to be Markovian. The method
+can also be employed whatever the elements of the transition problems impacted by
+uncertainty. This is not the case for the classic approach, consisting of increasing the
+state-space dimension, the use of which is restricted to right hand side uncertainty.
+
+   Moreover, when the dimension of the uncertainties is low and in the special case
+of autoregressive models, we have shown that the use of conditional cuts is compet-
+itive with the classical approach developed in Pereira and Pinto (1991) consisting of
+augmenting the state-space to account for past dependency.
+
+   At last, because our method is a pure Monte Carlo one, risk optimization such as
+CVaR or VaR optimization should be much more accurate than classical approaches.
+
+References
+
+Barrera-Esteve C, Bergeret F, Dossal C, Gobet E, Meziou A, Munos R, Reboul-Salze D (2006) Numerical
+      methods for the pricing of swing options: a stochastic control approach. Methodol Comput Appl
+      Probab 8(4):517­540
+
+Birge JR (1985) Decomposition and partitioning methods for multistage stochastic linear programs. Oper
+      Res 33(5):989­1007
+
+Bouchard B, Touzi N (2004) Discrete-time approximation and Monte-Carlo simulation of backward stochas-
+      tic differential equations. Stoch Process Appl 111(2):175­206
+
+123
+On conditional cuts for stochastic dual dynamic programming  197
+
+Bouchard B, Warin X (2012) Monte-Carlo valuation of American options: facts and new algorithms to
+      improve existing methods. In: Carmona RA, del Moral P, Hu P, Oudjane N (eds) Numerical methods
+      in finance. Volume 12 of Springer proceedings in mathematics. Springer, Berlin, pp 215­255
+
+Bruhns A, Deurveilher G, Roy JS (2005) A non-linear regression model for mid-term load forecasting and
+      improvements in seasonality. In: PSCC 2005 Luik
+
+Carmona R, Ludkovski M (2010) Valuation of energy storage: an optimal switching approach. Quant
+      Finance 10(4):359­374
+
+Chen ZL, Powell WB (1999) Convergent cutting-plane and partial-sampling algorithm for multistage
+      stochastic linear programs with recourse. J Optim Theory Appl 102(3):497­524
+
+de Matos VL, Morton DP, Finardi EC (2017) Assessing policy quality in a multistage stochastic program
+      for long-term hydrothermal scheduling. Ann Oper Res 253(2):713­731
+
+de Oliveira W, Sagastizábal C, Jardim Penna DD, Maceira MEP, Damázio JM (2010) Optimal scenario tree
+      reduction for stochastic streamflows in power generation planning problems. Optim Methods Softw
+      25(6):917­936
+
+de Queiroz AR, Morton DP (2013) Sharing cuts under aggregated forecasts when decomposing multi-stage
+      stochastic programs. Oper Res Lett 41:311­316
+
+Donohue C, Birge JR (2006) The abridged nested decomposition method for multistage stochastic linear
+      programs with relatively complete recourse. Algorithmic Oper Res 1(1):20­30
+
+Dupacová J (2009) Portfolio optimization and risk management via stochastic programming. Osaka Uni-
+      versity Press, Suita
+
+Dupacová J, Kozmík V (2015) Structure of risk-averse multistage stochastic programs. OR Spectr
+      37(3):559­582
+
+Dupacová J, Polívka J (2009) Asset-liability management for Czech pension funds using stochastic pro-
+      gramming. Ann Oper Res 165(1):5­28
+
+Dupacová J, Gröwe-Kuska N, Römisch W (2003) Scenario reduction in stochastic programming: an
+      approach using probability metrics. Math Program 95(3):493­511
+
+Eichhorn A, Römisch W (2005) Polyhedral risk measures in stochastic programming. SIAM J Optim
+      16(1):69­95
+
+Fahim A, Touzi N, Warin X (2011) A probabilistic numerical method for fully nonlinear parabolic pdes.
+      Ann Appl Probab 21(4):1322­1364
+
+Fhoula B, Hajji A, Rekik M (2013) Stochastic dual dynamic programming for transportation planning under
+      demand uncertainty. In: 2013 international conference on advanced logistics and transport, May, pp
+      550­555
+
+Fournié E, Lasry J-M, Lebuchoux J, Lions P-L, Touzi N (1999) Applications of Malliavin calculus to Monte
+      Carlo methods in finance. Finance Stoch 3(4):391­412
+
+Fournié E, Lasry J-M, Lebuchoux J, Lions P-L (2001) Applications of Malliavin calculus to Monte-Carlo
+      methods in finance. II. Finance Stoch 5(2):201­236
+
+Friedman J, Hastie T, Tibshirani R (2001) The elements of statistical learning, vol 10. Springer series in
+      statistics. Springer, New York
+
+Gevret H, Lelong J, Warin X (2016) Stochastic optimization library in C++
+Girardeau P, Leclere V, Philpott AB (2015) On the convergence of decomposition methods for multistage
+
+      stochastic convex programs. Math Oper Res 40(1):130­145
+Gobet E, Turkedjiev P (2016) Approximation of backward stochastic differential equations using Malliavin
+
+      weights and least-squares regression. Bernoulli 22(1):530­562
+Gobet E, Lemor J-P, Warin X (2005) A regression-based Monte Carlo method to solve backward stochastic
+
+      differential equations. Ann Appl Probab 15(3):2172­2202
+Goel V, Grossmann IE (2004) A stochastic programming approach to planning of offshore gas field devel-
+
+      opments under uncertainty in reserves. Comput Chem Eng 28(8):1409­1429
+Guigues V (2014) SDDP for some interstage dependent risk-averse problems and application to hydro-
+
+      thermal planning. Comput Optim Appl 57(1):167­203
+Guigues V (2016) Convergence analysis of sampling-based decomposition for risk-averse multistage
+
+      stochastic convex programs. SIAM J Optim 26(4):2468­2494
+Guigues V, Römisch W (2012) Sampling-based decomposition methods for multistage stochastic programs
+
+      based on extended polyhedral risk measures. SIAM J Optim 22(2):286­312
+Guigues V, Sagastizábal C (2012) The value of rolling horizon policies for risk-averse hydro-thermal
+
+      planning. Eur J Oper Res 217:219­240
+
+                                                             123
+198  W. van Ackooij, X. Warin
+
+Heitsch H, Römisch W (2011) Scenario tree generation for multi-stage stochastic programs. In: Bertocchi
+      M, Consigli G, Dempster MAH (eds) Stochastic optimization methods in finance and energy: new
+      financial products and energy market strategies. Volume 163 of international series in operations
+      research & management science. Springer, Berlin, pp 313­341
+
+Henaff P, Laachir I, Russo F (2013) Gas storage valuation and hedging. A quantification of the model risk.
+      Arxiv
+
+Herer YT, Tzur M, Yücesan E (2006) The multilocation transshipment problem. IIE Trans 38(3):185­200
+Hindsberger M, Philpott AB (2001) Resa: a method for solving multi-stage stochastic linear programs. In:
+
+      SPIX stochastic programming symposium, Berlin
+Homem de Mello T, Pagnoncelli B (2016) Risk aversion in multistage stochastic programming: a modeling
+
+      and algorithmic perspective. Eur J Oper Res 249:188­199
+Hull J, White A (1990) Pricing interest-rate-derivative securities. Rev Financ Stud 3(4):573­592
+Infanger G, Morton D (1996) Cut sharing for multistage stochastic linear programs with interstage depen-
+
+      dency. Math Program 75(1):241­256
+Kelley JE (1960) The cutting-plane method for solving convex programs. J Soc Ind Appl Math 8(4):703­712
+Kovacevic RM, Pichler A (2015) Tree approximation for discrete time stochastic processes: a process
+
+      distance approach. Ann Oper Res 235(1):395­421
+Lemor J-P, Gobet E, Warin X (2006) Rate of convergence of an empirical regression method for solving
+
+      generalized backward stochastic differential equations. Bernoulli 12(5):889­916
+Linowsky K, Philpott AB (2005) On the convergence of sampling-based decomposition algorithms for
+
+      multistage stochastic programs. J Optim Theory Appl 125(2):349­366
+Longstaff FA, Schwartz ES (2001) Valuing American options by simulation: a simple least-squares
+
+      approach. Rev Financ Stud 14(1):113­147
+Mo B, Gjelsvik A, Grundt A (2001) Integrated risk management of hydro power scheduling and contract
+
+      management. IEEE Trans Power Syst 16(2):216­221
+Pagès G, Printems J (2003) Optimal quadratic quantization for numerics: the Gaussian case. Monte Carlo
+
+      Methods Appl 9(2):135­166
+Pagès G, Printems J (2005) Functional quantization for numerics with an application to option pricing.
+
+      Monte Carlo Methods Appl 11(4):407­446
+Pagès G, Printems J (2009) Optimal quantization for finance: from random vectors to stochastic processes.
+
+      In: Bensoussan A, Zhang Q (eds) Handbook of numerical analysis, vol 15. North Holland, Amsterdam,
+      pp 595­648
+Pagès G, Pham H, Printems J (2004) Optimal quantization methods and applications to numerical problems
+      in finance. In: Rachev ST (ed) Handbook of computational and numerical methods in finance. Springer,
+      Berlin, pp 253­297
+Pereira MVF, Pinto LMVG (1991) Multi-stage stochastic optimization applied to energy planning. Math
+      Program 52(2):359­375
+Pereira MV, Granville S, Fampa MHC, Dix R, Barroso LA (2005) Strategic bidding under uncertainty: a
+      binary expansion approach. IEEE Trans Power Syst 11(1):180­188
+Pflug GCh (2010) Version-independence and nested distributions in multistage stochastic optimization.
+      SIAM J Optim 20(3):1406­1420
+Pflug GCh, Pichler A (2012) A distance for multistage stochastic optimization models. SIAM J Optim
+      22(1):1­23
+Pflug G Ch, Römisch W (2007) Modeling, measuring and managing risk. World Scientific Publishing
+      Company, Singapore
+Philpott AB, Guan Z (2008) On the convergence of stochastic dual dynamic programming and related
+      methods. Oper Res Lett 36(4):450­455
+Philpott AB, de Matos VL (2012) Dynamic sampling algorithms for multi-stage stochastic programs with
+      risk aversion. Eur J Oper Res 218(2):470­483
+Rebennack S (2016) Combining sampling-based and scenario-based nested benders decomposition meth-
+      ods: application to stochastic dual dynamic programming. Math Program 156(1):343­389
+Rodríguez FB, de Oliveria W, Finardi E (2017) Application of scenario tree reduction via quadratic process
+      to medium-term hydrothermal scheduling problem. IEEE Trans Power Syst (to appear)
+Ruszczyn´ski A, Shapiro A (2006) Conditional risk mappings. Math Oper Res 31(3):544­561
+Ruszczyn´ski A, Swietanowski A (1997) Accelerating the regularized decomposition method for two stage
+      stochastic linear problems. Eur J Oper Res 101(2):328­342
+Shapiro A (2011) Analysis of stochastic dual dynamic programming method. Eur J Oper Res 209:63­72
+
+123
+On conditional cuts for stochastic dual dynamic programming  199
+
+Shapiro A, Dentcheva D, Ruszczyn´ski A (2009) Lectures on stochastic programming. Modeling and theory.
+      Volume 9 of MPS-SIAM series on optimization. SIAM, Philadelphia
+
+Shapiro A, Tekaya W, da Costa JP, Soares MP (2013) Risk neutral and risk averse stochastic dual dynamic
+      programming method. Eur J Oper Res 224(2):375­391
+
+Shumway RH, Stoffer DS (2005) Time series analysis and its applications, 5th edn. Springer texts in
+      statistics. Springer, Berlin
+
+Song Y, Luedtke J (2015) An adaptive partition-based approach for solving two-stage stochastic programs
+      with fixed recourse. SIAM J Optim 25(3):1344­1367
+
+Tsilikis J, Van Roy B (1999) Optimal stopping of Markov processes: Hilbert space theory, approximation
+      algorithms, and application to pricing high dimensional financial derivatives. IEEE Trans Autom
+      Control 44:1840­1851
+
+Valladão D, Silva T, Poggi M (2019) Time-consistent risk-constrained dynamic portfolio optimization with
+      transactional costs and time-dependent returns. Ann Oper Res 282(1­2):379­405
+
+van Ackooij W, Malick J (2016) Decomposition algorithm for large-scale two-stage unit-commitment. Ann
+      Oper Res 238(1):587­613
+
+van Ackooij W, Henrion R, Möller A, Zorgati R (2014) Joint chance constrained programming for hydro
+      reservoir management. Optim Eng 15:509­531
+
+van Ackooij W, de Oliveira W, Song Y (2018) An adaptive partition-based level decomposition for solving
+      two-stage stochastic programs with fixed recourse. Informs J Comput 30(1):57­70
+
+van Ackooij W, de Oliveira W, Song Y (2019) On regularization with normal solutions in decomposition
+      methods for multistage stochastic programs. Comput Optim Appl 74(1):1­42
+
+Warin X (2012) Gas storage hedging. In: Carmona RA, del Moral P, Hu P, Oudjane N (eds) Numerical
+      methods in finance. Volume 12 of Springer proceedings in mathematics. Springer, Berlin, pp 421­445
+
+Publisher's Note Springer Nature remains neutral with regard to jurisdictional claims in published maps
+and institutional affiliations.
+
+                                                             123
+
