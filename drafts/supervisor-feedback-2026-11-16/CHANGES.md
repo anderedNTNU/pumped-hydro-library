@@ -55,6 +55,13 @@ Not added: the size of the profit increase in `helseth2016` (Table II is an imag
 - Stagewise independence, state expansion, bounds: `shapiro2011` pp. 63, 66, 67.
 - Water value as the multiplier of the mass balance and as the derivative of the benefit-to-go function: `tilmant2008` pp. 2–3. Shadow price of the stock and separate marginal values of the capacities: `horsleyWrobel2002` (abstract, Sections 1 and 3; the text copy is letter-shifted and was decoded).
 
+## 4b. Correction after Anders' check of the opening paragraph of 3.2 (2026-11-16)
+Anders asked whether the sentence on the Nordic medium-term model stands in the SINTEF report. Read again in `helseth2020scheduling` Section 2.7 (pp. 31–32):
+- **In the report:** ProdRisk is the most widely applied medium-term scheduling model in the Nordics; it is based on a combination of SDP and SDDP; the subproblems are solved as LP problems (p. 31); the decision stages are one week and the market price is represented in a discrete Markov chain (p. 32).
+- **Not stated outright in the report:** that the SDP part is the one that handles the price. The report says the combined method was developed to treat the market price inside SDDP. The explicit statement is in `helseth2016` p. 935, which describes the same method (both cite Gjelsvik & Wallace 1996 and Gjelsvik, Belsnes & Haugstad 1999).
+- **Wrong citation in the sentence before:** "one to three years" is from `helseth2016` p. 936. The report gives 2–5 years as the normal set-up of ProdRisk (p. 32), so it was removed from that claim. The report is kept for the hand-over of water values to the short-term model (pp. 31, 33).
+- **Changed:** the two sentences now name ProdRisk, say "weekly decision stages and linear subproblems", and cite `helseth2016` for the division of work between SDP and SDDP.
+
 ## 5. Left for the group
 1. `\ref{sec:Scheduling_Hierarchy}` needs a `\label` in the background chapter.
 2. Helseth et al. (2018): the group's bib entry prints 2017. `references.bib` has 2018 (IET GTD 12(2), 441–447).
