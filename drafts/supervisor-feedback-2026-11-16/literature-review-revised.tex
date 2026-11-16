@@ -1,0 +1,159 @@
+% DRAFT (Claude, 2026-11-16, Anders): the group's first draft revised after the supervisor's feedback.
+% The group's wording is kept where the feedback or a source check did not require a change.
+% Every cited claim was checked in the source text on 2026-11-16; see CHANGES.md in this folder.
+% Citation keys: the group's own keys are kept where the group used them (ak2019, naval2025, helseth2017,
+% abgottspon2013, alic2023, abgottspon2014, helseth2016, hjelmeland2019energies, helseth2013,
+% zhang2026seasonal, helseth2017iet, chazarra2016). New citations use the keys of references.bib:
+% helseth2020scheduling, helseth2023hydropowera, fullnerRebennack2025, sauhats2016optimal, zisos2023mixing.
+
+\section{Literature Review - Et førsteutkast}
+
+\subsection{Literature Search and Scope}
+Avgrensninger, søkestrategi og hvordan artiklene vurderes.
+
+\subsection{Valuation Perspective}
+
+Hydropower scheduling must account for both the long-term consequences of reservoir use and the technical details of immediate operation. No single model handles both, and \textcite{helseth2020scheduling} describe how these requirements are addressed through a hierarchy of interconnected long-, medium- and short-term scheduling models, as explained in Section~\ref{sec:Scheduling_Hierarchy}. The purpose of the separation is to retain the consequences of storing water over time while making detailed operational planning computationally manageable. The medium-term model links the two levels: its horizon is typically one to three years, and its water values are passed on to the short-term model \parencite{helseth2016, helseth2020scheduling}. In the Nordic countries this model is commonly built on stochastic dual dynamic programming (SDDP), combined with stochastic dynamic programming (SDP) for the price, with a linear programme for each week \parencite{helseth2020scheduling}. The combination keeps the reservoirs as continuous state variables without discretising them, while the price is described by a set of discrete states \parencite{helseth2016}. SDDP is therefore a suitable framework for combining long-term consequences with operational detail, and it is the thread followed through this review.
+
+Studies that schedule a whole power system at least cost illustrate why the surrounding power system matters for storage valuation. \textcite{helseth2013} show, with a case study of the Icelandic power system using an SDDP-based model in which inflow, wind power and exogenous prices are stochastic, that detailed modelling of the system can be important for estimated nodal prices. The case shows that neglecting transmission constraints overestimates export potential: the planned cable runs at full export 67\% of the time without these constraints and 62\% with them. Including pump start-up costs reduces pumping and increases nodal price variability, with a standard deviation of the nodal price that is 11\% higher. \textcite{helseth2017} evaluate how increased transmission and pumped-storage capacity affect expected socio-economic surplus in the Nordic power system, using a two-stage stochastic linear programme for each week, solved in a rolling-horizon simulator. Together, these studies show how changes in different parts of the power system affect system operation, nodal prices and economic value. Price forecasts from such models of the whole market can serve as inputs to the scheduling models of a single producer, making the representation of market opportunities important for the producer’s resource allocation \parencite{helseth2020scheduling}.
+
+Within an owner-oriented framework, medium-term scheduling models are often used to evaluate how the producer can allocate its resources to maximise expected operating profit under uncertain market and inflow conditions. \textcite{alic2023} do this with an SDP model with weekly stages, in which inflow and price follow a joint Markov chain, and evaluate the operational value of adding pumping capability to a Norwegian hydropower cascade from the perspective of a price-taking producer. They find that pumping increases the median annual revenue by 2.35\%, but that restrictions on reservoir water-level fluctuations reduce the economic benefit to 0.47\%. \textcite{ak2019} instead use a deterministic nonlinear programme, solved separately for five historical electricity-price years, and find that introducing pumping into a three-plant hydropower cascade in Turkey increases annual net operating revenue by 2.9--10.4\%. Both studies illustrate how owner-oriented models can assess the revenue implications of changes in plant configuration and operating constraints. However, the estimated gains depend on the price conditions and physical characteristics represented in each case and cannot be transferred directly to other assets or market conditions.
+
+Medium-term models also compute water values that can guide short-term operational decisions \parencite{helseth2016, helseth2020scheduling}. \textcite{helseth2016}, who combine SDP and SDDP, explicitly identify improved end-value information for short-term scheduling as an application of their model. \textcite{helseth2020scheduling} illustrate how an inadequate representation of short-term price variability can distort water values and thereby the signals passed to short-term scheduling models: a price forecast with too little variation gives water values that are too low when the reservoir is nearly empty and too high when it is nearly full. The literature thus presents price forecasting, resource valuation and operational scheduling as connected tasks. The present study focuses on medium-term, owner-oriented scheduling, evaluating the operational value of pumped storage and the water values that can be obtained.
+
+
+\subsection{Uncertainty}
+
+
+
+\subsection{Modelling of pumped hydropower plants}
+
+Medium-term scheduling of pumped-storage hydropower requires a balance between the representation of uncertainty, operational detail, and computational complexity. This is particularly challenging for systems with large reservoirs and natural inflows, where decisions may affect future water availability over long periods. Previous studies have applied different optimisation approaches to address these challenges. They are reviewed here in order of how explicitly they represent uncertainty: programmes with known inputs, stochastic programmes with scenarios, SDP and SDDP.
+
+One approach is to formulate the operational problem using linear, nonlinear, or mixed-integer programming. \textcite{ak2019} %https://www.sciencedirect.com/science/article/pii/S0960148119302836
+develop a nonlinear programming model to derive monthly reservoir operating rules over a one-year horizon. To capture short-term price variations, hourly electricity prices are aggregated into representative price functions for each month. The paper states that although optimal solutions were obtained for the case study, dimensionality might become a problem as the number of consecutive reservoirs increases. Additionally, the model relies on simplified assumptions about the timing of generation and pumping. Similarly, \textcite{naval2025} %https://www.sciencedirect.com/science/article/pii/S2352467725002711
+formulate a mixed-integer optimisation model with hourly resolution and monthly optimisation periods, over one year, for a pumped-storage plant operated together with wind and solar power. Wind uncertainty is represented through chance constraints, which reduces the need for handling a large number of future scenarios. However, it does not model how future operational decisions adapt sequentially as uncertainty is revealed.
+
+Other studies represent uncertainty more explicitly through two-stage or multistage stochastic programming (Section~\ref{subsec:theory_det_stoch}). \textcite{helseth2017} %https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2017.0903
+schedule the Nordic power system week by week without aggregating the hydropower plants. This is done with a two-stage stochastic linear programme, with scenarios 52 weeks ahead, in a rolling-horizon simulator. This method is chosen because it keeps every reservoir in the model and uses historical weather series directly, whereas SDDP, according to the authors, needs stochastic models for inflow and price that are designed with care to avoid non-convexity. The results are more consistent than those of the aggregated model they are compared with, but several simplifications related to the number of scenarios, the scenario horizon, the time resolution and the constraints were needed in order to reduce the computation time. \textcite{abgottspon2013} %https://ieeexplore.ieee.org/document/6652304
+use a multistage stochastic programme for a pumped-storage plant, solved using a dynamic programming approach over a discretised reservoir filling.
+
+%SDP...
+SDP (Section~\ref{subsec:stochastic_dynamic_programming}) is a well-established approach for solving sequential reservoir scheduling problems. %artikkel 4 - stochastic dynamic programming algorithm
+\textcite{alic2023} %https://link.springer.com/article/10.1007/s12667-023-00614-y
+use an SDP model with stochastic water inflow and energy prices over a one-year planning horizon to maximise the total revenue. The model includes several environmental and technical constraints, among them limits on how fast the reservoir level may change. The paper finds that these constraints change the optimal production strategy and reduce the revenue, and that a model with weekly stages may overestimate production and revenue when the constraints depend on the reservoir level.
+
+%artikkel 13 - SDP/multi-stage stochastic program
+\textcite{abgottspon2014} %https://ieeexplore.ieee.org/document/7038352
+also apply SDP to one-year scheduling of pumped-storage hydropower, but combine it with detailed multistage stochastic intrastage subproblems. They choose SDP because the sale of spinning reserves makes the profit-to-go function non-concave, which makes SDDP difficult to apply. The weekly interstage model manages the seasonal reservoirs and their future value, while the intrastage problems represent hourly operation and market participation. The results show that stochastic intrastage modelling provides additional value only when secondary reserve markets are included, where it raises the expected profit by around 10\% compared with the simpler methods. The paper concludes that stochastic intrastage subproblems make sense only if the market structure is sufficiently complex.
+
+A limitation of SDP is the increasing computational effort as the number of state variables grows, commonly referred to as the curse of dimensionality. SDDP deals with this challenge by approximating the future value function with cuts instead of discretising the state (Section~\ref{subsec:stochastic_dual_dynamic_programming}). In return, the weekly problems must be linear, so detailed operational characteristics of hydropower plants, such as start-up costs, minimum output and head-dependent efficiency, require additional approximations. Although, to the best of the authors' knowledge, SDDP is not widely used when modelling long-duration PHS, it is a well-known solution method for solving scheduling problems for hydropower plants \parencite{fullnerRebennack2025, helseth2016, hjelmeland2019energies}. %https://ieeexplore.ieee.org/document/7370822,
+%https://www.mdpi.com/1996-1073/12/1/189.
+
+\textcite{helseth2013} %https://ietresearch.onlinelibrary.wiley.com/doi/10.1049/iet-gtd.2012.0639
+use SDDP with inflow, wind power and electricity prices as stochastic variables to find an optimal scheduling strategy for a hydro-thermal power system with several reservoirs and a pumped-storage plant. The model is extended with a linearised representation of transmission constraints and approximated start-up costs, since binary variables would conflict with the convexity that SDDP requires. In addition, each week is divided into 24 sequential time steps instead of 7 aggregated ones. With the transmission constraints and the finer time resolution, the planned cable to the exogenous market is used less for both export and import than in the simpler cases. This also comes with a computational burden: the run time rises from about 5 hours in the simplest case to about 31 hours in the most detailed one.
+
+\textcite{helseth2016} %https://ieeexplore.ieee.org/document/7370822
+combine SDP and SDDP to model medium-term hydropower scheduling under uncertainty in water inflows, energy prices, and reserve capacity prices. The approach enables the inclusion of multiple stochastic variables and sequential market decisions. However, the formulation relies on linear approximations, and the authors point out that the linearisation error may affect expected profits and operation, more so when spinning reserve capacity is sold.
+
+\textcite{helseth2023hydropowera} investigate how feasibility cuts, derived from a detailed description of the hydropower system, can improve an aggregated representation of that system in SDDP models. The authors show that generating feasibility cuts before running SDDP provides similar results to generating them during optimisation, but with significantly lower computational time. % NOT VERIFIED (Claude, 2026-11-16): the paper is not in the library; only its abstract and the account of it in Helseth (2024) were checked. Check this sentence against the paper.
+However, both approaches require more computation than a conventional aggregated SDDP model.
+
+%https://ieeexplore.ieee.org/document/9919382 tries to mitigate this aggregated representation by computing feasibility cuts outside or prior to an SDDP run instead of within the SDDP. The paper shows that this significantly improves the results and increases the computational time. Therefore, this should be further investigated.
+
+The reviewed literature highlights the importance of considering uncertainty and intertemporal reservoir dynamics in medium-term hydropower scheduling. SDDP provides a suitable framework for large-scale multistage stochastic optimisation, although representing detailed pumped-storage operations remains challenging. Therefore, this study builds on previous applications of SDDP to investigate the medium-term scheduling of pumped-storage hydropower with long-duration storage under uncertain inflows and electricity prices.
+%artikkel 11 - linear/nonlinear programming model
+
+%artikkel 14 - annealing-simplex algorithm
+
+\subsection{Electricity Market Participation}
+
+Several studies investigating the optimal operation of pumped-storage hydropower primarily consider revenues from the energy market. For example, the nonlinear programme of \textcite{ak2019} %https://www.sciencedirect.com/science/article/pii/S0960148119302836
+uses hourly day-ahead electricity prices to optimise the operation of an existing hydropower system with and without pumping capabilities. Similarly, the SDP model of \textcite{alic2023} %https://link.springer.com/article/10.1007/s12667-023-00614-y
+gives the optimal operation of a pumped-storage hydropower system under uncertain electricity prices and water inflows. Both studies demonstrate the economic benefits that pumping can provide under their respective assumptions. However, additional revenue opportunities from reserve capacity markets are not included in these models.
+
+In addition to energy trading, pumped-storage hydropower may provide reserve capacity to support power system balancing. For a horizon of one year, \textcite{abgottspon2014} %https://ieeexplore.ieee.org/document/7038352
+investigate scheduling of pumped-storage hydropower plants while considering revenues from ancillary services. Their SDP model includes day-ahead bidding and secondary spinning reserves within stochastic intrastage subproblems, where the reserve is offered by the turbines that are qualified for it. The authors find that including secondary frequency control reserves increases the expected profit for all four methods they compare. %KANSKJE LEGGE TIL NOE LIMITATIONS
+
+\textcite{alic2023} and \textcite{zhang2026seasonal} state that future work should include other potential revenue streams, such as frequency response and ancillary services. \textcite{zhang2026seasonal}, who use a mixed-integer linear programme for a regional power system with seasonal pumped storage, write that such a plant is technically able to provide these services, although they expect seasonal arbitrage to give the larger return. They therefore call for more attention to the combination of long-term arbitrage and short-term ancillary services.
+
+Other studies have expanded the market representation to consider additional trading opportunities. \textcite{abgottspon2013} %https://ieeexplore.ieee.org/document/6652304
+investigate a price-making pumped-storage producer participating in both day-ahead and forward markets. The authors develop a multistage stochastic optimisation framework in which the forward position is decided at the start of each stage and the hourly production and day-ahead trades are recourse decisions, allowing the producer to optimise forward positions while accounting for future operational opportunities. In their simulation, allowing trading in the forward market raises the total profit by about 20\%. %HER ER MAN PRICE MAKER SÅ + FORWARD MARKEDER. KAN FLYTTE FORWARD SENERE. SKRIVE NOE MER OM LIMITATIONS RUNDT PRICE MAKER. KNYTTE DET TIL PRICE TAKER
+
+To the best of the authors' knowledge, including several markets in long-duration modelling of pumped hydropower is not widely investigated. However, it is more common to include this when modelling hydropower plants without pumping capacity. The interaction between energy and reserve capacity markets is for example investigated by \textcite{helseth2016}. %https://doi.org/10.1109/TSTE.2015.2509447
+The authors develop a combined SDP/SDDP framework for a price-taking hydropower producer participating in energy and reserve capacity markets. The model treats inflows, energy prices, and reserve capacity prices as stochastic variables and has a modelling horizon of two years. The results show that including reserve markets increases the expected profit. \textcite{helseth2017iet}, using SDP with a mixed-integer weekly problem, and \textcite{chazarra2016}, %https://www.sciencedirect.com/science/article/pii/S0378779615002515
+using a weekly stochastic mixed-integer linear programme, also show that the profitability increases when allowing hydropower plants to sell reserve capacity; in the former the expected profit rises by 7--11\%. The participation of PHS in secondary reserve markets is not included in \textcite{chazarra2016}, and the article points to this as an interesting topic for future work.   %https://www.mdpi.com/1996-1073/12/1/189 further investigates the representation of energy and reserve capacity price uncertainty in medium-term hydropower scheduling, while incorporating variable head in an SDDP-based model.primary and secondary
+
+These studies demonstrate that the representation of electricity markets can be important when evaluating optimal pumped hydropower operation. In particular, reserve capacity commitments introduce an additional economic trade-off, as capacity allocated to reserve provision may affect the plant's ability to generate or store electricity. While previous studies have examined the interaction between energy and reserve markets, the reviewed literature provides a less complete understanding of how participation in these markets influences the operational value of different pumped-storage configurations with long-duration storage.
+
+% The subsection "Reservoir sizes and pumping/discharging capacities" (commented out in the first draft) is
+% replaced by the column "Pumping and storage" in Table~\ref{tab:literature_review}, as the supervisor suggested.
+
+\subsection{Research Gap and Positioning of This Study}
+
+%Syntese av litteraturen, sammenligningstabell og begrunnelse for deres problemstilling
+
+Table~\ref{tab:literature_review} summarises the reviewed studies and whether they include pumping. \textcite{sauhats2016optimal} and \textcite{zisos2023mixing} are included for their treatment of plant size: the former values a pumped-storage plant with given capacities for price arbitrage in the day-ahead market, while the latter chooses the reservoir size of a pumped-storage plant in an island system as part of the optimisation.
+
+\begin{table}[htbp]
+\centering
+\caption{Overview of the reviewed optimisation models}
+\label{tab:literature_review}
+
+\footnotesize
+\renewcommand{\arraystretch}{1.3}
+\setlength{\tabcolsep}{3pt}
+
+\begin{tabularx}{\textwidth}{ @{} p{2.1cm} p{1.8cm} X X p{1.6cm} p{2.5cm} @{}}
+\toprule
+
+\textbf{Source} & \textbf{Perspective} & \textbf{Model} & \textbf{Uncertainty} & \textbf{Markets} & \textbf{Pumping and storage} \\
+
+\midrule
+
+\textcite{alic2023}
+& Owner & SDP & Water inflow and electricity prices & Energy & 38 MW pump; reservoirs of 684 and 104 Mm$^3$ \\
+
+\textcite{helseth2013}
+& System & SDDP & Inflow, wind power and prices & -- & 100 MW; two reservoirs of 20 Mm$^3$ \\
+
+\textcite{helseth2017}
+& System & Two-stage stochastic linear programming with rolling horizon & Weather and power prices & -- & 200 MW, increased by up to 2000 MW \\
+
+\textcite{ak2019}
+& Owner & Nonlinear programming & None in the model; five price years solved separately & Day-ahead & Pumps added between three existing reservoirs \\
+
+\textcite{naval2025}
+& Owner & Mixed-integer programming with chance constraints & Wind resources & Day-ahead & Four units of 113.5 MW pumping; 5750 MWh \\
+
+\textcite{zhang2026seasonal}
+& System & Mixed-integer linear programming & Wind and solar, as typical years solved separately & -- & 4200 MW seasonal plant \\
+
+\textcite{sauhats2016optimal}
+& Owner & Linear/nonlinear programming & Day-ahead prices & Day-ahead & 25 MW; 150 MWh \\
+
+\textcite{abgottspon2013}
+& Owner & Multistage stochastic programming & Water inflow and prices & Day-ahead, forward & 46 MW pump, 240 MW generation; about 200 GWh \\
+
+\textcite{abgottspon2014}
+& Owner & SDP with multistage stochastic intrastage subproblems & Prices and inflow & Day-ahead, spinning reserves & Yes; reserves from the turbines \\
+
+\textcite{zisos2023mixing}
+& System & Simulation with annealing-simplex optimisation & Wind, energy demand and wind-to-power conversion & -- & 6 MW; reservoir of about 315{,}000 m$^3$, chosen by the optimisation \\
+
+% The three rows below are new (Claude, 2026-11-16): the studies with reserve markets from the section on market
+% participation, so that the pumping column separates studies with and without a pump. Delete them if not wanted.
+\textcite{chazarra2016}
+& Owner & Stochastic mixed-integer linear programming with a scenario tree & Inflow, day-ahead and reserve prices & Day-ahead, secondary reserve & Yes; the pumped-storage units do not offer reserve \\
+
+\textcite{helseth2016}
+& Owner & SDP combined with SDDP & Inflow, energy and reserve capacity prices & Day-ahead, reserve capacity & No \\
+
+\textcite{helseth2017iet}
+& Owner & SDP with a mixed-integer weekly problem & Inflow, energy and reserve capacity prices & Day-ahead, primary reserve & No \\
+
+\midrule
+\textbf{Our paper} & \textbf{Owner} & \textbf{SDDP} & \textbf{Water inflow and prices} & \textbf{DA, mFRR, aFRR} & \textbf{Yes} \\
+\bottomrule
+\end{tabularx}
+\end{table}

@@ -1,0 +1,593 @@
+% DRAFT (Claude, 2026-11-16, Anders): the group's theory chapter revised after the supervisor's feedback.
+% The group's wording is kept where the feedback or a source check did not require a change.
+% New or changed passages are marked with "% NEW" or "% CHANGED". Every cited claim was checked in the source text
+% on 2026-11-16, except where a comment says otherwise; see CHANGES.md in this folder.
+% The two SDDP figures (fig:sddp_original and fig:sddp) keep their TikZ code; only the changes listed at each
+% placeholder are needed.
+
+\section{Theory}
+
+% CHANGED: the unnumbered heading "Optimization Theory" is removed, and the last sentence now describes what the chapter contains.
+This chapter presents the theoretical background for the optimisation methods used in this thesis. The case study schedules a pumped-storage plant week by week: the operation within a week is a linear programme, and the weeks are linked by stochastic dual dynamic programming with Markov states for price and inflow. The chapter introduces the theory needed for that model. First, deterministic and stochastic optimisation are introduced. This is followed by multistage decision-making, dynamic programming, stochastic dynamic programming, Benders decomposition, stochastic dual dynamic programming, and the representation of uncertainty through Markov states. Lastly, the operation and valuation of pumped storage are presented.
+
+\subsection{Introduction to Optimisation}
+\label{subsec:optimisation_intro}
+
+Optimisation uses mathematical models to find the best decision in a
+given situation \parencite{lundgren2010}. An optimisation model consists
+of:
+\begin{itemize}
+\item \emph{Decision variables}: the quantities that can be decided
+\item \emph{Parameters}: known input values
+\item An \emph{objective function}: a function of the decision variables
+  that is maximised or minimised
+\item \emph{Constraints}: restrictions on the decision variables
+\end{itemize}
+A solution that satisfies all constraints is called feasible. A feasible
+solution with the best objective value is called optimal
+\parencite{lundgren2010}.
+
+\subsection{Deterministic and Stochastic Optimisation}
+\label{subsec:theory_det_stoch}
+
+% NEW: the textbooks are cited once here, and their in-text citations are removed from this section.
+The theory presented in this section is based on \textcite{lundgren2010} for linear programming and duality, \textcite{boydVandenberghe2004} for nonlinear optimisation and \textcite{birgeLouveaux2011} for stochastic programming.
+
+\subsubsection{Deterministic Optimisation}
+\label{subsec:deterministic_optimisation}
+
+Deterministic optimisation is a mathematical approach in which all model parameters are represented by fixed, known values. The objective is to find the best possible solution by maximising or minimising an objective function, subject to a set of constraints. The model determines the optimal values of the decision variables for the specified parameters. Since uncertainty is not explicitly represented, the resulting solution is optimal for the assumed input values.
+
+\paragraph{Linear programming}
+
+If the objective function and all constraints are linear, and all
+variables are continuous, the problem is a linear programming (LP)
+problem. An LP problem can be written in the following
+general form:
+\begin{equation}
+\begin{array}{@{}l@{\hspace{3.2em}}l@{\;\;}l@{\quad}l@{}}
+\min & \llap{$z={}$}{\displaystyle\sum_{j=1}^{n}}\, c_j x_j & & \\[4ex]
+\text{s.t.} & {\displaystyle\sum_{j=1}^{n}}\, a_{ij} x_j & \le b_i, & i = 1,\ldots,m\\[3ex]
+ & \multicolumn{1}{r@{\;\;}}{x_j} & \ge 0, & j = 1,\ldots,n
+\end{array}
+\label{eq:lp_general}
+\end{equation}
+Here, $x_j$ are the decision variables and $z$ is the value of the
+objective function. The parameter $c_j$ is the objective function
+coefficient for variable $x_j$, $a_{ij}$ is the constraint coefficient
+for variable $x_j$ in constraint $i$, and $b_i$ is the right-hand side
+of constraint $i$. The last line states that the variables cannot be
+negative. A maximisation problem can be written in the same form, since
+maximising $z$ is the same as minimising $-z$.
+
+Since the feasible region is convex and the objective function is linear, every local optimum of an LP problem is also a global optimum. % NEW (link to the case):
+The weekly operating problem of the case study is an LP problem.
+
+% CHANGED: the two paragraphs on NLP and IP are shortened to one and tied to the convexity requirement of SDDP.
+\paragraph{Nonlinear and integer problems}
+
+Nonlinear programming (NLP) allows the objective function
+or constraints to be nonlinear, and mixed-integer programming (MIP)
+restricts some of the decision variables to integer values. Such
+problems are in general not convex, so a local optimum need not be the
+global optimum, and they are more demanding to solve. They are not used
+in the model of this thesis, because the solution method requires
+convex problems
+(Section~\ref{subsec:stochastic_dual_dynamic_programming}). They appear
+in the literature review, where several studies use them to describe
+plant details that a linear model can only approximate.
+
+\paragraph{Dual problem}
+
+Every linear programming problem has an associated dual
+problem, constructed from the coefficients of the original,
+or primal, problem. Each constraint in the primal problem
+corresponds to a variable in the dual problem. These
+dual variables can be interpreted as shadow prices,
+representing the marginal value of changes in the
+right-hand sides of the primal constraints. If the primal or dual problem has a bounded optimal solution, the two problems must have the same objective value
+at optimum. This property
+is known as strong duality.
+
+% NEW: notation for dual values and the link to water values and Benders cuts.
+The dual value of constraint $i$ is denoted $\lambda_i$ in this thesis. It gives the change in the optimal objective value per unit increase of the right-hand side $b_i$, as long as the change is small. Dual values have two uses in this thesis. First, the dual value of the reservoir balance in a hydropower scheduling problem is the water value: the change in optimal profit from one more unit of water in the reservoir (Section~\ref{subsec:water_value}). Second, the same dual values are the slopes of the Benders cuts, which carry information about the value of water in later stages back to earlier stages (Sections~\ref{subsec:benders_decomposition} and~\ref{subsec:stochastic_dual_dynamic_programming}).
+
+\subsubsection{Stochastic Optimisation}
+\label{subsec:stochastic_optimisation}
+
+In many decision problems, some parameters are not known when decisions must be made. Stochastic optimisation incorporates this uncertainty into the mathematical model by representing uncertain parameters as random variables with probability distributions.
+
+% CHANGED: the symbols for a scenario and its probability are introduced.
+In practice, uncertainty is often represented by a finite set of scenarios $\Xi$, where each scenario $\xi\in\Xi$ represents a possible realisation of the uncertain parameters that is associated with a probability $p_\xi$. Rather than optimising for a single forecast, stochastic optimisation considers multiple possible outcomes. A common objective is to maximise expected profit, calculated as the probability-weighted average profit across scenarios. This is referred to as risk-neutral optimisation, since variability in outcomes is not explicitly penalised. The model in this thesis is risk-neutral.
+
+
+% ----------------------------------------------------------------------
+\subsubsection{Two-Stage Stochastic Optimisation}
+\label{subsec:two_stage_stochastic_optimisation}
+
+A two-stage stochastic optimisation problem with recourse
+consists of two stages of decision-making. First-stage
+decisions are made before the uncertain parameters are
+known. These are called \textit{here-and-now} decisions
+and must be the same across all scenarios. Once the
+uncertainty is realised, second-stage decisions can be
+made to adapt to the observed outcome. These are called
+recourse decisions and may differ between scenarios. First-stage decisions must account for the costs or benefits
+associated with subsequent decisions.
+
+% NEW: the two-stage problem and the recourse function in mathematical form.
+Let $x$ denote the first-stage decisions and $y$ the second-stage decisions. In the maximisation form used in this thesis, a two-stage linear problem with recourse can be written as
+\begin{equation}
+\max_{x\in X}\;\; c^{\top}x+\mathcal{Q}(x),
+\label{eq:two_stage}
+\end{equation}
+where $X$ is the set of feasible first-stage decisions and $c$ contains their objective coefficients. The recourse function
+\begin{equation}
+\mathcal{Q}(x)=\sum_{\xi\in\Xi}p_\xi\,Q(x,\xi),
+\qquad
+Q(x,\xi)=\max_{y\ge 0}\bigl\{\,q_\xi^{\top}y \;:\; W y\le h_\xi-T_\xi x\,\bigr\},
+\label{eq:recourse}
+\end{equation}
+captures the consequences of the first-stage decision by expressing the expected optimal
+second-stage objective value for a given first-stage decision. Here $q_\xi$ contains the objective coefficients of the second stage, and $W$, $T_\xi$ and $h_\xi$ describe how the first-stage decision and the realised scenario limit the second-stage decisions.
+The objective in Eq.~\eqref{eq:two_stage} therefore combines the first-stage value
+with the expected second-stage value. A major
+computational challenge is evaluating the recourse
+function for different first-stage decisions.
+
+% NEW: the recourse problem value, the wait-and-see value and EVPI as expressions.
+Let $z(x,\xi)=c^{\top}x+Q(x,\xi)$ be the objective value of the first-stage decision $x$ in scenario $\xi$. The optimal value of the recourse problem in Eq.~\eqref{eq:two_stage} is then
+\begin{equation}
+RP=\max_{x\in X}\;\sum_{\xi\in\Xi}p_\xi\,z(x,\xi).
+\label{eq:rp}
+\end{equation}
+The \textit{wait-and-see} problem differs from the
+recourse problem by assuming that the uncertain
+parameters are known before any decisions are made.
+Each scenario can therefore be optimised separately,
+including its first-stage decisions. Each of these scenario problems is a deterministic optimisation problem of the kind introduced in Section~\ref{subsec:deterministic_optimisation}, and the wait-and-see value is the expected value of their optimal objective values:
+\begin{equation}
+WS=\sum_{\xi\in\Xi}p_\xi\,\max_{x\in X}\;z(x,\xi).
+\label{eq:ws}
+\end{equation}
+Since the wait-and-see solution assumes perfect information about future outcomes, it provides an optimistic bound on the optimal expected objective value of the recourse problem, so that $WS\ge RP$ in a maximisation problem. The difference between these two values
+is called the expected value of perfect information
+(EVPI),
+\begin{equation}
+EVPI=WS-RP\;\ge\;0,
+\label{eq:evpi}
+\end{equation}
+which measures the maximum expected benefit
+of knowing the uncertain parameters in advance. % NEW (link to the case):
+The perfect-foresight benchmark of the case study is the multistage counterpart of the wait-and-see value: every evaluation path is solved as one deterministic problem. Its distance to the profit of the stochastic policy is an estimate of the EVPI, provided that the policy is close to optimal.
+
+% ----------------------------------------------------------------------
+\subsubsection{Multistage Stochastic Optimisation}
+\label{subsec:multistage_stochastic_optimisation}
+
+A multistage stochastic optimisation problem extends the two-stage
+framework to several stages. Information is revealed gradually
+between stages, and decisions at each stage are based on the
+information available at that time and the probability
+distributions of future uncertain outcomes.
+Decisions in one stage may affect decisions in later stages.
+
+A scenario describes one possible development of the uncertain parameters over the full planning horizon. The scenarios can be represented
+in a scenario tree, as illustrated in Figure~\ref{fig:MSSP}.
+Each node represents the information available at a
+particular stage, while the branches describe possible
+subsequent outcomes. Except for the root node, every node
+is connected to exactly one node in the preceding stage.
+The solution therefore consists of decisions that depend on the
+observed history, rather than one fixed sequence of decisions.
+As the planning horizon grows, the number of possible scenario paths may increase rapidly, leading to substantial computational requirements.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/MSSP.png}
+    \caption{Illustration of two-stage and multistage stochastic optimisation using scenario trees.}
+    \label{fig:MSSP}
+\end{figure}
+
+A decision stage is defined by the information available
+when decisions are made, whereas a time period represents
+an interval in the planning horizon. These two concepts
+do not necessarily coincide, since several time periods
+may be included within the same decision stage. % NEW (link to the case):
+In the case study a stage is one week, and the time periods are the hours within the week.
+
+
+\subsection{Dynamic Programming}
+\label{subsec:dynamic_programming}
+
+Dynamic programming (DP) is an optimisation method used to solve sequential decision problems by decomposing them into smaller, interconnected subproblems. The method is based on Bellman's principle of optimality, which states that the remaining decisions of an optimal policy must also be optimal for the state resulting from previous decisions. This allows the overall optimisation problem to be solved recursively rather than evaluating all possible decision sequences simultaneously \parencites{bellman1957}[p.~99]{labadie2004}.
+
+A dynamic programming problem is typically divided into stages, where each stage is characterised by a system state and a set of feasible decisions. Decisions influence both the immediate objective value and the state of the system in subsequent stages. The relationship between current decisions and future consequences is represented through a value function, which describes the optimal objective value obtainable from a given state onwards. By using these functions, the optimisation problem can be solved recursively, starting from the final stage and proceeding backwards towards the initial stage \parencite[pp.~360--361, 365]{pereiraPinto1991}.
+
+% NEW: the Bellman equation in the text, with general notation and the discount factor explained.
+Let $x_{t-1}$ denote the system state at the start of stage $t$ and $x_t$ the system state at the end of the stage, which follows from the decisions made in the stage. With $f_t(x_{t-1},x_t)$ as the profit of stage $t$ and $X_t(x_{t-1})$ as the set of end states that can be reached from $x_{t-1}$, the value function $F_t$ satisfies the Bellman equation
+\begin{equation}
+F_t(x_{t-1})=\max_{x_t\in X_t(x_{t-1})}\Bigl\{f_t(x_{t-1},x_t)+\beta\,F_{t+1}(x_t)\Bigr\},
+\qquad t=T,T-1,\ldots,1,
+\label{eq:bellman_dp}
+\end{equation}
+where $T$ is the number of stages and the terminal value function $F_{T+1}$ is given. The first term is the immediate profit. The second term is the value of all following stages, as a function of the system state at the end of the stage. The discount factor $\beta\in(0,1]$ expresses that one unit of profit received one stage later is worth $\beta$ units in the current stage, and $\beta=1$ means that future profit is not discounted. In the case study the stage is a week, the system state is the reservoir volume and $\beta$ is the weekly discount factor.
+
+% NEW: how a stage in dynamic programming differs from a stage in stochastic programming.
+The term stage is used in both dynamic programming and stochastic programming, with a different emphasis. In dynamic programming a stage is a step of the recursion, usually a time period, and it is described by the state that is passed from one stage to the next \parencite[p.~99]{labadie2004}. In stochastic programming a stage is defined by information: a new stage begins when uncertainty is revealed and the decisions can be adjusted to it, and one stage may contain several time periods (Section~\ref{subsec:multistage_stochastic_optimisation}). The two meanings coincide when new information arrives once per step of the recursion. This is the case in this thesis, where the prices and the inflow of a week are revealed at the start of the week and the reservoir volume is passed on to the next week.
+
+% NEW: Figure 2 explained in the text.
+Figure~\ref{fig:dp_basic} presents how a value function is determined by discretising over system states. The state is represented by a finite number of grid points. Starting from the given terminal value, Eq.~\eqref{eq:bellman_dp} is solved for every grid point of the last stage, which gives the value function of that stage at the grid points. The recursion then moves one stage back and uses these values as the value of the following stages, until the first stage is reached (panel a). Since the value function is known only at the grid points, its value for other states is found by interpolation (panel b) \parencite[p.~360]{pereiraPinto1991}.
+
+A major limitation of traditional discretisation-based
+dynamic programming is the computational effort required
+to evaluate and store value functions. As the number of
+state variables increases, the number of possible state
+combinations can grow exponentially. This phenomenon,
+known as the \textit{curse of dimensionality}, can make
+large-scale problems computationally impractical
+\parencite[p.~100]{labadie2004}.
+
+% CHANGED: Figure 2 in a general version (stages and system states instead of weeks and reservoir volume).
+% Deterministic dynamic programming illustration. Requires in the preamble
+%   \usepackage{amsmath,amssymb}
+%   \usepackage{tikz}
+%   \usetikzlibrary{arrows.meta,calc,backgrounds}
+\begin{figure}[H]
+\centering
+\definecolor{fwc}{RGB}{24,95,165}
+\definecolor{bwc}{RGB}{216,90,48}
+\definecolor{ubc}{RGB}{15,110,86}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  ftitle/.style={font=\fontsize{10}{12}\selectfont\bfseries},
+  fs/.style={font=\fontsize{9}{11}\selectfont},
+  ffs/.style={font=\fontsize{8}{9.6}\selectfont},
+  head/.style={font=\fontsize{9}{11}\selectfont\bfseries},
+  gp/.style={circle,inner sep=0pt,minimum size=2.6mm,draw=gray!55,fill=white,thick},
+  known/.style={gp,draw=gray!70,fill=gray!35},
+  done/.style={gp,draw=bwc,fill=bwc!55},
+  todo/.style={gp,draw=bwc,fill=bwc!10},
+  focus/.style={gp,minimum size=3.6mm,draw=bwc,fill=bwc,very thick},
+  stepc/.style={circle,draw,thick,inner sep=0pt,minimum size=4.2mm,font=\fontsize{7}{8.4}\selectfont\bfseries},
+  leg/.style={anchor=west,font=\fontsize{8}{9.6}\selectfont},
+]
+
+%================ (a) Backward recursion ================
+\node[ftitle] at (4.5,2.3) {(a) Backward recursion on a discretised state grid};
+\draw[-{Stealth[length=2mm]},bwc,thick] (8.2,1.85) -- (0.8,1.85);
+
+\node[head] at (1.2,0.85) {Stage 1};
+\node[head] at (3.4,0.85) {Stage 2};
+\node[head] at (5.6,0.85) {Stage 3};
+\node[head] at (7.8,0.85) {End};
+\node[stepc,draw=bwc,text=bwc] at (1.2,1.4) {3};
+\node[stepc,draw=bwc,text=bwc] at (3.4,1.4) {2};
+\node[stepc,draw=bwc,text=bwc] at (5.6,1.4) {1};
+
+\node[fs,anchor=east] at (0.75,0)    {$x^{\max}$};
+\node[fs,anchor=east] at (0.75,-3.2) {$x^{\min}$};
+\node[fs,rotate=90] at (-0.25,-1.6) {System state};
+
+\foreach \l/\y in {5/0,4/-0.8,3/-1.6,2/-2.4,1/-3.2}{
+  \node[gp]    (w1\l) at (1.2,\y) {};
+  \node[done]  (w2\l) at (3.4,\y) {};
+  \node[done]  (w3\l) at (5.6,\y) {};
+  \node[known] (we\l) at (7.8,\y) {};
+}
+
+\begin{pgfonlayer}{background}
+  \foreach \l in {1,2,3,4,5}{ \foreach \m in {1,2,3,4,5}{
+    \draw[gray!18] (w3\l) -- (we\m);
+    \draw[gray!45] (w2\l) -- (w3\m);
+  } }
+\end{pgfonlayer}
+\foreach \a/\b in {5/4,4/4,3/4,2/3,1/3}{
+  \draw[-{Stealth[length=2.2mm]},bwc,very thick] (w2\a) -- (w3\b);
+}
+
+\node[ffs,gray!70!black] at (7.8,-3.75) {Terminal value $F_{4}$};
+
+%================ (b) Value function on the grid ================
+\node[ftitle] at (12.6,2.3) {(b) Value function on the grid};
+\begin{scope}[shift={(10.0,-3.4)},yscale=1.35]
+  \draw[-{Stealth[length=2mm]}] (0,0) -- (5.6,0);
+  \draw[-{Stealth[length=2mm]}] (0,0) -- (0,3.4);
+  \node[fs,rotate=90] at (-0.4,1.7) {$F_{t+1}(x_t)$};
+  \draw[gray!70,densely dashed,thick,domain=0.2:5.2,samples=60] plot (\x,{3.0-2.8*exp(-0.8*\x)});
+  \draw[bwc,thick] (0.5,1.123) -- (1.5,2.157) -- (2.5,2.621) -- (3.5,2.830) -- (4.5,2.924);
+  \foreach \x/\y in {0.5/1.123,1.5/2.157,2.5/2.621,3.5/2.830,4.5/2.924}{
+    \draw[thick] (\x,0) -- (\x,0.08);
+    \node[done] at (\x,\y) {};
+  }
+  \node[ffs,below] at (0.5,-0.02) {$x^{\min}$};
+  \node[ffs,below] at (4.5,-0.02) {$x^{\max}$};
+
+  \node[done] at (2.75,1.0) {};
+  \node[leg] at (2.95,1.0) {Value at a grid point};
+  \draw[bwc,thick] (2.5,0.7) -- (3.0,0.7);
+  \node[leg] at (3.05,0.7) {Interpolation};
+  \draw[gray!70,densely dashed,thick] (2.5,0.4) -- (3.0,0.4);
+  \node[leg] at (3.05,0.4) {True value, unknown};
+\end{scope}
+\node[fs] at (12.8,-4.1) {System state at the end of stage $t$, $x_t$};
+
+%================ Bellman equation and steps ================
+\node[fs] at (7.6,-5.2) {$\displaystyle
+F_{t}(x_{t-1}) \;=\; \max_{x_t} \Big\{ \underbrace{f_t(x_{t-1},x_t)}_{\makebox[0pt]{\fontsize{7}{8.4}\selectfont immediate profit}}
+\;+\; \beta \underbrace{F_{t+1}(x_t)}_{\makebox[0pt]{\fontsize{7}{8.4}\selectfont value of the following stages}} \Big\}$};
+
+\node[stepc,draw=bwc,text=bwc] at (0.3,-6.55) {1};
+\node[leg] at (0.6,-6.55) {Compute $F_{3}$ at every grid point, using the given terminal value $F_{4}$};
+\node[stepc,draw=bwc,text=bwc] at (0.3,-7.15) {2};
+\node[leg] at (0.6,-7.15) {In stage 2, try every end state $x_2$ on the grid from each grid point and keep the best (thick arrows)};
+\node[stepc,draw=bwc,text=bwc] at (0.3,-7.75) {3};
+\node[leg] at (0.6,-7.75) {Repeat for stage 1. The optimal value from the initial state $x_0$ is $F_{1}(x_0)$};
+
+\end{tikzpicture}%
+}
+\caption{Illustration of dynamic programming. (a) The system state is discretised into grid points, and the value function is computed backwards through the stages, starting from a given terminal value. For each grid point, every end state on the grid is tried, and the best combination of immediate profit and value of the following stages is kept. (b) The value of the following stages, as a function of the system state at the end of the stage, is only known at the grid points and is interpolated between them.}
+\label{fig:dp_basic}
+\end{figure}
+
+
+
+\subsection{Stochastic Dynamic Programming}
+\label{subsec:stochastic_dynamic_programming}
+
+Stochastic dynamic programming (SDP) extends conventional dynamic programming to sequential decision problems where future outcomes are uncertain. While deterministic dynamic programming assumes known state transitions, SDP incorporates uncertainty by representing possible future outcomes through probability distributions. Decisions are therefore made by considering both the immediate objective value and the expected value of future operation, rather than assuming a single predetermined outcome \parencite[p.~674]{yakowitz1982}.
+
+Similar to deterministic dynamic programming, SDP decomposes the optimisation problem into stages connected through state variables and value functions. However, the future state depends not only on the current state and decisions, but also on the realisation of uncertain parameters. The value functions therefore represent the optimal expected future value, accounting for the possible outcomes and their associated probabilities. By solving the problem recursively, SDP determines an operating policy that specifies optimal decisions based on the information available at each stage \parencite{castelletti2010}. % NOT VERIFIED IN FULL (Claude, 2026-11-16): only the abstract of Castelletti et al. (2010) was available. The same content is confirmed in Yakowitz (1982, p. 674) and Tilmant et al. (2008, p. 3).
+
+% NEW: the Bellman equation with uncertainty, with the notation used for SDDP below.
+If the uncertain parameters of stage $t$ take the realisation $\xi_t$ with probability $p_{\xi}$, independently of earlier stages, the Bellman equation~\eqref{eq:bellman_dp} becomes
+\begin{equation}
+F_t(x_{t-1},\xi_t)=\max_{x_t\in X_t(x_{t-1},\xi_t)}\Bigl\{f_t(x_{t-1},x_t,\xi_t)+\beta\,Q_{t+1}(x_t)\Bigr\},
+\qquad
+Q_{t+1}(x_t)=\sum_{\xi}p_{\xi}\,F_{t+1}(x_t,\xi),
+\label{eq:bellman_sdp}
+\end{equation}
+where $Q_{t+1}$ is the expected future value function \parencite[p.~66]{shapiro2011}. It plays the same role between stages as the recourse function in Eq.~\eqref{eq:recourse} plays between the first and the second stage.
+
+The choice of state variables is important in stochastic dynamic programming, as they must contain sufficient information to describe the current system and determine the probability distribution of future states, given the current decision. Increasing the number of state variables allows more
+information to be represented, but also expands the state
+space and can substantially increase computational
+requirements, particularly when the state space is discretised
+\parencite[p.~674]{yakowitz1982}.
+
+Although SDP provides a suitable framework for sequential optimisation under uncertainty, its application to large-scale problems can be computationally demanding. The need to evaluate expected future values across combinations of state variables and uncertain outcomes can result in rapidly increasing computational requirements. \textcite{cervellera2006} discuss these challenges in multireservoir optimisation and investigate approximation techniques to reduce the computational burden. % NOT VERIFIED (Claude, 2026-11-16): Cervellera et al. (2006) is not in the library and no abstract could be opened; only the title supports this sentence.
+These limitations motivate decomposition-based approaches, which approximate future value functions rather than explicitly evaluating them across the entire state space \parencite{pereiraPinto1991}.
+
+
+\subsection{Benders Decomposition}
+\label{subsec:benders_decomposition}
+
+Benders decomposition is an optimisation technique that
+divides a large optimisation problem into a master problem
+and one or more subproblems. The master problem determines
+a subset of decision variables, while the subproblems
+evaluate the consequences of these decisions. Information
+from the subproblems is returned to the master problem
+through additional linear constraints, known as
+\textit{Benders cuts}, which progressively improve its
+representation of the original problem
+\parencite{benders1962}.
+
+For linear problems, optimality cuts
+can be generated from the dual solutions of the
+subproblems. Under the relevant LP assumptions,
+these cuts form supporting hyperplanes that provide
+lower approximations of convex future cost functions.
+The approximations are refined by iteratively solving
+the master problem and subproblems until the upper
+and lower bounds on the optimal objective value are
+sufficiently close
+\parencite[pp.~361--364]{pereiraPinto1991}.
+
+% NEW: the cut written out, with the dual value as its slope.
+In a maximisation problem the roles are mirrored: the future value function is concave, and the cuts bound it from above. Let the subproblem be solved for a trial decision $\widehat{x}$ of the master problem, with optimal value $\widehat{z}$, and let $\lambda$ contain the dual values of the constraints through which $\widehat{x}$ enters the subproblem. The cut added to the master problem is then
+\begin{equation}
+\alpha\le\widehat{z}+\lambda^{\top}\bigl(x-\widehat{x}\bigr),
+\label{eq:benders_cut}
+\end{equation}
+where the variable $\alpha$ represents the value of the subproblem in the master problem. The cut is exact at $x=\widehat{x}$, and its slope is the dual value from the paragraph on duality in Section~\ref{subsec:deterministic_optimisation}. When $x$ is the water left in a reservoir, this slope is a water value.
+
+
+\subsection{Stochastic Dual Dynamic Programming}
+\label{subsec:stochastic_dual_dynamic_programming}
+
+Stochastic dual dynamic programming (SDDP) is a
+decomposition-based optimisation method for solving
+large-scale multistage stochastic programming problems.
+The method builds on stochastic dynamic programming
+and Benders decomposition. Instead of explicitly
+evaluating future cost functions for every possible state,
+SDDP uses approximations that are improved iteratively.
+This avoids the need for explicit state discretisation,
+which is a major computational limitation of conventional
+dynamic programming
+\parencite[p.~359]{pereiraPinto1991}.
+
+The following description considers the classical
+cost-minimisation formulation of SDDP. In this setting,
+expected future cost functions are approximated using
+piecewise-linear functions constructed from Benders cuts.
+The cuts are generated using dual information from linear
+programming subproblems and provide lower approximations
+of the future cost functions. As additional cuts are
+generated, these approximations are progressively tightened
+\parencite[pp.~361--363]{pereiraPinto1991}.
+For profit-maximisation problems, the corresponding
+approximations provide upper bounds on future profits,
+and the directions of the optimality bounds are reversed.
+
+% NEW: the stage problem of SDDP with the notation of Eqs. (bellman_sdp) and (benders_cut).
+In the maximisation form of Eq.~\eqref{eq:bellman_sdp}, the problem solved for stage $t$, incoming state $\widehat{x}_{t-1}$ and realisation $\xi_t$ is
+\begin{subequations}\label{eq:sddp_stage}
+\begin{align}
+\max_{x_t,\;\alpha_{t+1}}\quad & f_t(\widehat{x}_{t-1},x_t,\xi_t)+\beta\,\alpha_{t+1}\\
+\text{s.t.}\quad & x_t\in X_t(\widehat{x}_{t-1},\xi_t),\\
+& \alpha_{t+1}\le\widehat{z}_\ell+\lambda_\ell^{\top}\bigl(x_t-\widehat{x}_\ell\bigr),
+\qquad \ell\in\mathcal{L}_{t+1},
+\end{align}
+\end{subequations}
+where the variable $\alpha_{t+1}$ takes the place of the expected future value $Q_{t+1}(x_t)$ and $\mathcal{L}_{t+1}$ is the set of cuts built so far. Each cut $\ell$ has the form of Eq.~\eqref{eq:benders_cut}: it was built at a trial state $\widehat{x}_\ell$, and its level $\widehat{z}_\ell$ and slope $\lambda_\ell$ are the probability-weighted averages of the optimal values and dual values of the stage $t+1$ problems solved at that state.
+
+The SDDP algorithm operates iteratively through forward
+and backward passes. During the forward pass, the
+optimisation problem is solved sequentially using the
+current approximations of future cost functions.
+Uncertain outcomes are sampled to generate trajectories
+of state variables and corresponding decisions.
+During the backward pass, the optimisation proceeds from
+the final stage towards the initial stage. The stage
+problems are solved using states obtained during the
+forward pass, and dual solutions are used to construct
+additional cuts that improve the approximations of
+future cost functions. These two procedures are repeated
+to progressively refine the decision policy
+\parencite[pp.~365--368]{pereiraPinto1991}.
+
+The solution quality can be evaluated by comparing
+bounds on the optimal objective value. For a
+cost-minimisation problem, the approximated future cost
+functions provide a lower bound on the optimal objective
+value. The expected cost of a feasible decision policy
+provides an upper bound, which can be estimated through
+simulation. Since the simulated estimate is subject to
+statistical uncertainty, this must be considered when
+assessing the remaining optimality gap
+\parencite[p.~67]{shapiro2011}.
+
+The classical SDDP formulation assumes linear stage
+problems and stagewise-independent uncertainty.
+However, certain forms of temporal dependence can be
+handled by introducing additional state variables.
+The validity of the approximations and the convergence
+properties therefore depend on the mathematical structure
+of the optimisation problem and the assumptions underlying
+the algorithm
+\parencite[pp.~63--66]{shapiro2011}.
+
+% NEW: why SDDP needs convex stage problems.
+The requirement of linear, or at least convex, stage problems follows from how the cuts are used. A cut is built at one trial state, but the algorithm uses it as a bound for all states. This is valid only if the future value function lies on one side of all its tangents, that is, if it is concave in a maximisation problem and convex in a minimisation problem. When every stage problem is an LP in which the incoming state enters the right-hand side of the constraints, the future value function has this shape and is piecewise linear \parencite[pp.~361--363]{pereiraPinto1991}. With integer variables or nonconvex constraints in the stage problems, the shape is lost: a cut built at one state may then exclude values that can be reached from another state, linear cuts are no longer sufficient to describe the function, and convergence to the optimal solution is not ensured \parencites[p.~369]{pereiraPinto1991}[p.~506]{fullnerRebennack2025}. This is why SDDP models of hydropower keep linear stage problems and approximate start-up costs, minimum output and head-dependent efficiency by linear relations, a limitation that recurs in the literature review \parencite{helseth2013, helseth2016, hjelmeland2019energies}. The same requirement decides how uncertainty can be represented, as discussed in Section~\ref{subsec:representation_of_uncertainty}.
+
+% CHANGED: the sentence now says which variant the figure shows.
+The overall structure of the SDDP algorithm is illustrated
+in Figure~\ref{fig:sddp_original} for a profit-maximisation problem with stagewise-independent uncertainty, showing the iterative
+interaction between the forward and backward passes.
+
+\begin{figure}[H]
+\centering
+% >>> FIGURE fig:sddp_original: paste the existing TikZ code of this figure here, unchanged
+% >>> (from \definecolor{fwc} to the closing brace of \resizebox), with two changes in the legends:
+% >>>   1. step 4 of panel (a): "Sample $\omega_4$" -> "Sample $\xi_4$"
+% >>>   2. "realization" -> "realisation" (four places)
+% >>> The caption below replaces the old one, which described the Markov-chain figure.
+\caption{Illustration of the SDDP algorithm with stagewise-independent
+uncertainty for four weeks and three realisations per week.
+(a) The forward pass samples one realisation per week
+and stores the trial volumes.
+(b) The backward pass solves every realisation at the trial volumes
+and averages the resulting cuts with the probabilities $p_\xi$,
+which gives one cut per week.
+(c) The cuts form a piecewise-linear upper approximation
+of the expected future value.}
+\label{fig:sddp_original}
+\end{figure}
+
+\subsection{Representation of Uncertainty in SDDP}
+\label{subsec:representation_of_uncertainty}
+
+Classical stochastic dual dynamic programming (SDDP)
+commonly assumes that uncertain parameters are independent
+across decision stages. However, many stochastic processes
+exhibit temporal dependence, meaning that the distribution
+of future outcomes may depend on previously observed
+conditions. The Markov property allows this dependence
+to be represented through the current state, provided
+that the state contains sufficient information to
+describe the future evolution of the process
+\parencite{lohndorfShapiro2019}. % NEW (link to the case):
+The case study uses a Markov representation for the main results and stagewise-independent uncertainty as a benchmark.
+
+\subsubsection{Markov Representation}
+
+Markov-chain SDDP (MC-SDDP) represents temporally
+dependent uncertainty using a finite number of discrete
+Markov states. For example, electricity prices can be
+divided into low, medium, and high price states.
+Transition probabilities describe the likelihood of
+moving from one state to another.
+
+At each decision stage, a separate approximation of
+the future value function is maintained for each Markov
+state. During the backward pass, transition probabilities
+are used to weight the contributions from possible
+successor states when constructing Benders cuts for
+the expected future value functions
+\parencite[pp.~495--497]{fullnerRebennack2025}.
+
+% NEW: why the price calls for Markov states (convexity).
+A Markov chain is needed in this thesis because the price is uncertain. The price multiplies the decisions in the objective function, and the future value is then convex rather than concave in the price. The price can therefore not be treated as a continuous state variable without destroying the concavity that the cuts rely on \parencites[p.~31]{helseth2020scheduling}[p.~495]{fullnerRebennack2025}. With a finite number of Markov states and a separate cut approximation for each of them, every approximated function remains concave in the reservoir volume \parencite[p.~496]{fullnerRebennack2025}. In the case study a Markov state describes the prices and the inflow of a week. % NEW: the figure was not referred to in the text.
+The algorithm is illustrated in Figure~\ref{fig:sddp}.
+
+\begin{figure}[H]
+\centering
+% >>> FIGURE fig:sddp: paste the existing TikZ code of this figure here, unchanged
+% >>> (from \definecolor{fwc} to the closing brace of \resizebox). Caption and label are unchanged.
+\caption{Illustration of the Markov-chain SDDP algorithm for four weeks and three Markov states. (a) The forward pass follows one sampled path and stores the trial volumes. (b) The backward pass solves every Markov state at the trial volumes, starting in the last week, and adds one cut to each cut set. (c) The cuts form a piecewise linear upper approximation of the expected profit-to-go for one Markov state.}
+\label{fig:sddp}
+\end{figure}
+
+\subsubsection{Time-series Representation}
+
+Time-series SDDP (TS-SDDP) uses time-series models to
+describe how uncertain variables change over time.
+For example, reservoir inflow next week may depend
+on the inflow observed this week. An autoregressive
+model describes this relationship and includes a
+random component to account for unpredictable changes.
+
+% CHANGED: the last sentence states the condition instead of referring to "the structure" of the problem.
+Relevant information from previous periods can be
+included in an extended system state. This allows
+temporal dependence to be represented through state
+variables and stochastic innovations, without requiring
+a finite set of discrete Markov states. The approach is restricted to linear models in which the uncertain quantity enters the right-hand side of the constraints, as inflow does
+\parencite{lohndorfShapiro2019}.
+
+Both approaches allow SDDP to account for uncertainty
+that is correlated over time. However, they increase
+computational complexity in different ways. MC-SDDP
+requires separate future value function approximations
+for different Markov states, while TS-SDDP introduces
+additional state variables to represent the time-series
+process. The choice between these approaches therefore
+depends on the representation of uncertainty and the
+computational requirements of the optimisation problem
+\parencite[secs.~14.1 and 14.4]{fullnerRebennack2025}.
+
+% CHANGED: \section -> \subsection (and \subsection -> \subsubsection below), so that the chapter has no loose
+% part and the pumped-storage theory is the last section of the chapter, as the chapter introduction says.
+\subsection{Pumped-Storage Operation and Valuation}
+\label{subsec:pumped_storage_valuation}
+
+\subsubsection{Intertemporal Operation}
+
+Pumped-storage hydropower allows energy to be stored through pumping and recovered through electricity generation. Pumping consumes electricity to transfer water to an upper reservoir, while generation releases stored water to produce electricity. Since both operations affect the amount of water available in subsequent periods, operating decisions are linked through the reservoir balance. The system is also subject to conversion losses and physical limits on storage, pumping and generation capacities \parencite{blakers2021,chazarra2017}.
+
+For a profit-maximising, price-taking operator, the operating decision involves choosing when to pump, generate or preserve the stored water. Pumping incurs an immediate electricity cost but increases future generation opportunities, whereas generation provides current revenue while reducing stored energy. Optimal operation therefore involves balancing current market prices against the value of future operating opportunities \parencite{horsleyWrobel2002,tilmant2008}.
+
+\subsubsection{Water Value and Opportunity Cost}
+\label{subsec:water_value}
+
+Water value represents the marginal economic value of water held in storage. It describes how the optimal operating value changes following a small increase in available stored water, with the other system characteristics held constant. Under suitable mathematical conditions, this marginal value can be represented by the derivative of the future value function or a shadow price associated with the reservoir water balance \parencite{tilmant2008,horsleyWrobel2002}. % NEW (link to duality and the cuts):
+In the notation of this chapter, the water value is the dual value $\lambda$ of the reservoir balance, and in SDDP it is read from the slope $\lambda_\ell$ of the cut that is binding in Eq.~\eqref{eq:sddp_stage} \parencite{helseth2016}.
+
+Water value reflects the opportunity cost of using stored water for current generation rather than preserving it for future operation. For pumped-storage systems, it is also relevant when evaluating whether the cost of pumping is justified by the additional stored energy. These decisions depend on electricity prices, conversion efficiencies and operating constraints. The marginal value of stored water should be distinguished from the marginal value of physical storage, pumping and generation capacities, which reflects the benefit of expanding the corresponding operational limits \parencite{horsleyWrobel2002}.
+
+\subsubsection{Terminal Value Functions}
+% CHANGED: the citations are placed at the statements they support; kleiven2023 and helseth2016 are added, because
+% tilmant2008 and chazarra2017 do not cover the distorted end of the horizon or the extension of the horizon.
+In finite-horizon pumped-storage optimisation, water remaining in storage at the final stage may retain economic value beyond the modelled period. A terminal value function represents this remaining value and can be included in the objective function to account for future operating opportunities \parencite{tilmant2008}. Without an appropriate treatment of terminal storage, operating decisions near the end of the horizon may be distorted, since a model that gives the remaining water no value empties the reservoir towards the end \parencite{kleiven2023}. Alternatives include imposing a final storage constraint \parencite{chazarra2017} or extending the planning horizon beyond the period of interest \parencite{helseth2016}. In the case study the horizon is extended beyond the period for which results are reported.
