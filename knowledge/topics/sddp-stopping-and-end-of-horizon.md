@@ -112,3 +112,26 @@ Anders asked what we can do so that the report can say "as in A, B, C and D". Th
 - **Choosing between A and B.** Run A with the present extension and with a longer one. If the water values and the schedule of weeks 1–104 do not move, A is enough. If they move, the end still reaches the reported weeks, and B is the better choice.
 - **Not in `references.bib`:** `larsen2015evaluation`, `dematos2015improving`, `gjelsvik2005considering`. `bueno2023impact` is an arXiv report and `seifert2025` a preprint.
 - **Chapter 6:** the stopping section follows the confidence-interval rule of `helseth2016` with K paths (D-024). The training row above would replace it, which is a decision for the group.
+
+## 8. Recommended end value after week 260 (Anders' question, 2026-11-26)
+Question: how should the value of water after five years be set when two years are reported? Recommendation to the group, not a decision (Q-007).
+
+**Take the end value from the model itself: the cuts of the same week one year earlier.**
+1. Run 1 with no value on water after week 260 (chapter 6 as it stands).
+2. Run 2 with the cuts of week 208 from run 1 as end-value cuts after week 260, state by state.
+3. Compare the water values and the schedule of weeks 1–104 in the two runs. If they agree, the end value does not reach the reported weeks, and that is the documentation. If they differ, repeat step 2 with the cuts of the latest run until weeks 1–104 stop changing.
+
+**Sources.**
+- The same procedure in the two owner SDP studies of our review: the water values at the end of the horizon start at zero, are replaced by the water values of the start of the year, and the model is solved again until they stabilise (`helseth2017iet` p. 1643; `alic2023optimal` PDF pp. 12–13, for a pumped-storage cascade). Both assume that the system and the expected prices and inflow do not change after the year.
+- End-value cuts taken from a few initial runs of the SDDP model itself: `helseth2016` (p. 940), `helseth2018optimal` (p. 6995, initial runs with a four-year horizon). Which week the cuts are taken from is not stated there; taking them one year before the end is our reading.
+- The same idea inside one training run, as an infinite horizon where the last week is linked to the first: `philpott2023using` (PDF p. 4), `hole2025capacity` (PDF p. 6), `dowson2020`.
+
+**Why this and not the alternatives.**
+- It needs no number without a source: no target volume and no penalty rate.
+- Step 1 is the zero-value variant of `kleiven2023` and `shapiro2020`, so the procedure contains the test that `shapiro2020` (PDF p. 14) shows is needed when the discount factor is close to one.
+- Zero value alone lets the model sell the start stock during the five years (868 Mm³ on top of 2445 Mm³ of inflow, `implementation-parameters.md` Section 3), which lowers the water values.
+- A penalised end target at the start volume (`lohndorf2013`, `seifert2025`, `bore2026`) is the fallback if a second run is not possible: one changed number, but the penalty rate stays a choice of ours.
+
+**Assumption to state:** the year after the horizon is like the last year of the horizon.
+**In the code:** week 260 gets a future-value variable limited by the fixed end cuts, and the starting bound on future profit must include an upper bound on the end value (the end cuts evaluated at the full reservoir).
+**Reporting two years:** the profit of weeks 1–104 plus the value of the water left after week 104, read from the cuts of week 104 (ch. 6, `eq:oos_tail`); `helseth2016` (p. 940) adjusts for the difference between final and initial reservoir levels in the same spirit.
