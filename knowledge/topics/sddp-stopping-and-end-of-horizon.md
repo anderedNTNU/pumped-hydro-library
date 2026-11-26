@@ -135,3 +135,19 @@ Question: how should the value of water after five years be set when two years a
 **Assumption to state:** the year after the horizon is like the last year of the horizon.
 **In the code:** week 260 gets a future-value variable limited by the fixed end cuts, and the starting bound on future profit must include an upper bound on the end value (the end cuts evaluated at the full reservoir).
 **Reporting two years:** the profit of weeks 1–104 plus the value of the water left after week 104, read from the cuts of week 104 (ch. 6, `eq:oos_tail`); `helseth2016` (p. 940) adjusts for the difference between final and initial reservoir levels in the same spirit.
+
+## 9. How the others use artificial water (Anders' question, 2026-11-26; extends Section 4)
+- **What it is.** An extra variable in every weekly problem: water the model can add, or a limit it may break, at a cost far above any market price. It guarantees that every weekly problem has a solution, which SDDP needs (`fullnerRebennack2025` pp. 510–512).
+- **Why they need it.** Something in their models can become impossible to satisfy:
+  | Source | What can become impossible | The slack | Cost |
+  |---|---|---|---|
+  | `hjelmeland2016combined` (PDF p. 2), `gjelsvik2010` (p. 51) | the inflow model can give negative inflow when the reservoir is empty | "tank water" that fills the reservoir; penalty variables | "very costly" |
+  | `helseth2016` (pp. 934, 939), `helseth2015cooptimizing` (PDF p. 4) | the water balance | artificial water supply to each reservoir | 10^6 EUR/Mm³ |
+  | `helseth2022hydropower` (PDF pp. 3, 6) | an environmental lower limit on the reservoir | slack on the lower reservoir bound | tuned to the highest price, so that it is not used in order to produce |
+  | `dimoski2018hydropower` (PDF p. 8), `larsen2015evaluation` (PDF p. 5) | a minimum summer level; the reservoir bounds | slack on the limit | "sufficiently large" |
+  | `bueno2023impact` (PDF p. 22), `philpott2012` (PDF p. 25) | outflow limits; minimum storage zones | slack with a penalty | varied in the tests |
+  | `bore2026` (PDF p. 4) and Bore's master thesis | the reservoir limits, and the requirement that the end volume equals the start volume | emergency water | 10 mEUR/GWh in the thesis |
+  | `seifert2025` (PDF pp. 12–13) | the stored energy needed to cover the reserved FCR power | slack on the storage constraints | penalty term in the objective |
+- **It is meant not to be used in the finished policy.** `bore2026` counts only penalty-free iterations as valid lower bounds (PDF p. 3). In `seifert2025` the storage violations disappear after about 12,000 iterations (PDF p. 15). `hjelmeland2019tste` reports that a few extreme scenarios of the final simulation use it (p. 489). `helseth2022hydropower` counts the weekly problems with a violation in each backward pass (PDF p. 10).
+- **Side effects.** The penalty enters the cuts and raises the water values (`helseth2022hydropower` PDF p. 10; `bueno2023impact` PDF p. 2), and it can slow convergence (`gjelsvik2010` p. 51).
+- **For us.** None of these causes exists in our weekly model: inflow is never negative, there is no minimum level above V^min and no minimum flow, and standing still with no reserves is always feasible. Artificial water would only be needed if we add a requirement that can be impossible, such as a hard end volume. With end-value cuts (Section 8) it is not needed at all.
