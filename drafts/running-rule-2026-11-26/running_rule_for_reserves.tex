@@ -42,34 +42,51 @@ $R^{G,\max}$, $R^{P,\max}$ & maximum reserve from each unit in each direction [M
 
 \section{What to change}
 
-\subsection{Two new parameters}
+\subsection{New parameters}
+The same parameters as in Helseth et al.\ (2016): a minimum power and a
+factor $\gamma$ per unit.
+
 \begin{tabular}{@{}lll@{}}
 \toprule
 Symbol & Meaning & Unit\\
 \midrule
 $P^{G,\min}$ & minimum output of the generating unit & MW\\
 $P^{P,\min}$ & minimum pumping power of the pumping unit & MW\\
+$\gamma^G$ & factor limiting the use of reserves from the generating unit & --\\
+$\gamma^P$ & factor limiting the use of reserves from the pumping unit & --\\
 \bottomrule
 \end{tabular}
 
-Read both from \texttt{duge.yaml}, next to the existing unit data and with
-the existing naming style. Do not hard-code values and do not guess them:
-if a key is missing, stop with a clear error message. The values are
-supplied by the user.
+The factors are defined as in equation (13) of the paper:
+\begin{equation}
+\gamma^G=\max\left\{\frac{P^{G,\min}}{R^{G,\max}},\,1\right\},\qquad
+\gamma^P=\max\left\{\frac{P^{P,\min}}{R^{P,\max}},\,1\right\}.
+\tag{A0}
+\end{equation}
 
-No other parameters, no new variables, no new sets.
+Read $P^{G,\min}$ and $P^{P,\min}$ from \texttt{duge.yaml}, next to the
+existing unit data and with the existing naming style. Do not hard-code
+values and do not guess them: if a key is missing, stop with a clear error
+message. The values are supplied by the user. Compute $\gamma^G$ and
+$\gamma^P$ from (A0) when the data are loaded; they are not entries in the
+data file.
+
+No new variables, no new sets.
 
 \subsection{Four constraints}
-For every hour $t\in\mathcal T$, in every weekly subproblem (every stage and
-every Markov state, forward and backward pass):
+The constraints have the form of equation (6) of the paper,
+$\gamma_h r_{kh}-\tfrac{1}{\tau_k}e_{kh}\le 0$, where
+$\tfrac{1}{\tau_k}e_{kh}$ is the power of the unit, which is $p^G_t$ or
+$p^P_t$ here. For every hour $t\in\mathcal T$, in every weekly subproblem
+(every stage and every Markov state, forward and backward pass):
 \begin{align}
-\frac{P^{G,\min}}{R^{G,\max}}\sum_{f\in\mathcal F^C} r^{G+}_{f,t} &\le p^G_t
+\gamma^G\sum_{f\in\mathcal F^C} r^{G+}_{f,t}-p^G_t &\le 0
   \tag{A1}\\
-\frac{P^{G,\min}}{R^{G,\max}}\sum_{f\in\mathcal F^C} r^{G-}_{f,t} &\le p^G_t
+\gamma^G\sum_{f\in\mathcal F^C} r^{G-}_{f,t}-p^G_t &\le 0
   \tag{A2}\\
-\frac{P^{P,\min}}{R^{P,\max}}\sum_{f\in\mathcal F^C} r^{P+}_{f,t} &\le p^P_t
+\gamma^P\sum_{f\in\mathcal F^C} r^{P+}_{f,t}-p^P_t &\le 0
   \tag{A3}\\
-\frac{P^{P,\min}}{R^{P,\max}}\sum_{f\in\mathcal F^C} r^{P-}_{f,t} &\le p^P_t
+\gamma^P\sum_{f\in\mathcal F^C} r^{P-}_{f,t}-p^P_t &\le 0
   \tag{A4}
 \end{align}
 
@@ -81,18 +98,9 @@ every Markov state, forward and backward pass):
 \item (A1) and (A3) are \textbf{new} and are added.
 \end{itemize}
 
-\subsection{The coefficient must not be below one}
-The constraints above are written for $P^{G,\min}\ge R^{G,\max}$ and
-$P^{P,\min}\ge R^{P,\max}$. In the code, compute the coefficient of each
-unit as
-\[
-\max\!\left\{\frac{P^{\min}}{R^{\max}},\,1\right\},
-\]
-so that a unit with a minimum power below its reserve limit still cannot
-offer more reserve than it is running. This is a local value computed where
-the constraints are built, not a new entry in the data file. If
-$R^{\max}=0$ for a unit, its reserves are already zero; skip its two
-constraints.
+\subsection{Special case}
+If $R^{G,\max}=0$ or $R^{P,\max}=0$, the reserves of that unit are already
+zero and (A0) is undefined; set its factor to 1.
 
 \section{What must not change}
 \begin{itemize}
@@ -115,8 +123,8 @@ The subproblem remains a linear programme. No binary variables.
       $\sum_f r^{G+}_{f,t}=\sum_f r^{G-}_{f,t}=0$, and the same for the
       pumping unit.
 \item In every solved hour: the generating unit supplies $R^{G,\max}$ in a
-      direction only if $p^G_t\ge P^{G,\min}$ (when
-      $P^{G,\min}\ge R^{G,\max}$), and the same for the pumping unit.
+      direction only if $p^G_t\ge\gamma^G R^{G,\max}$, and the same for the
+      pumping unit.
 \item With the same data and seeds, the upper bound after training is not
       higher than before the change, because the feasible set has only
       become smaller. Report both values.

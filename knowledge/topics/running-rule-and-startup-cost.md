@@ -37,7 +37,9 @@ Constraints, for all t:
 
 Unchanged: the upper limits in `eq:unit` (Helseth's (7)), `eq:unit_reserve_limits` (Helseth's (12); ours are already summed over products, so γ keeps its meaning with several products), the water margin in `eq:reservoir` (Helseth's (8)). No new variables, no change to the objective, no new state.
 
-**Without γ as a parameter (Anders, 2026-11-26: no unnecessary parameters).** Write the ratio directly in the constraints, so the only new parameters are P^{G,min} and P^{P,min}:
+**Chosen form (Anders, 2026-11-26, later the same day):** keep γ^G and γ^P as parameters defined by (13) and write the constraints in the form of (6), γ^G Σ_f r^{G+}_{f,t} − p^G_t ≤ 0 and so on, so the reference to the paper can be checked line by line. This is the form in the change request for the implementation, `drafts/running-rule-2026-11-26/running_rule_for_reserves.pdf`. The variant below was considered first and dropped because it equals the paper's rule only when P^min ≥ R^max.
+
+**Dropped variant, without γ as a parameter.** Write the ratio directly in the constraints, so the only new parameters are P^{G,min} and P^{P,min}:
 
 - (P^{G,min}/R^{G,max}) Σ_f r^{G+}_{f,t} ≤ p^G_t and (P^{G,min}/R^{G,max}) Σ_f r^{G−}_{f,t} ≤ p^G_t
 - (P^{P,min}/R^{P,max}) Σ_f r^{P+}_{f,t} ≤ p^P_t and (P^{P,min}/R^{P,max}) Σ_f r^{P−}_{f,t} ≤ p^P_t
