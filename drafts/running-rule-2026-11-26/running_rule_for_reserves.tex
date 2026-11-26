@@ -1,0 +1,128 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,booktabs}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt}
+
+\title{Change request for MarkovSDDP4:\\ running rule for reserves}
+\author{}
+\date{26 November 2026}
+
+\begin{document}
+\maketitle
+
+\section{Purpose}
+Add one modelling feature to the existing weekly model in MarkovSDDP4
+(\texttt{markov\_sddp.ipynb}, data in \texttt{duge.yaml}): a unit may only
+supply reserve capacity when it is running, and it can only supply its full
+reserve when it runs at or above its minimum power. The rule follows
+Helseth, Fodstad and Mo (2016), \emph{IEEE Transactions on Sustainable
+Energy} 7(3), equations (6) and (13), applied to each reserve direction and
+to both the generating unit and the pumping unit.
+
+Everything not listed in Section~3 stays exactly as it is.
+
+\section{Existing notation used here}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Symbol & Meaning\\
+\midrule
+$t\in\mathcal T$ & hour within the week\\
+$f\in\mathcal F^C$ & reserve product (currently only FCR-N)\\
+$p^G_t$, $p^P_t$ & scheduled generation and pumping [MW]\\
+$r^{G+}_{f,t}$ & reserve from increasing generation (up) [MW]\\
+$r^{G-}_{f,t}$ & reserve from decreasing generation (down) [MW]\\
+$r^{P+}_{f,t}$ & reserve from increasing pumping (down) [MW]\\
+$r^{P-}_{f,t}$ & reserve from decreasing pumping (up) [MW]\\
+$R^{G,\max}$, $R^{P,\max}$ & maximum reserve from each unit in each direction [MW]\\
+\bottomrule
+\end{tabular}
+
+\section{What to change}
+
+\subsection{Two new parameters}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Symbol & Meaning & Unit\\
+\midrule
+$P^{G,\min}$ & minimum output of the generating unit & MW\\
+$P^{P,\min}$ & minimum pumping power of the pumping unit & MW\\
+\bottomrule
+\end{tabular}
+
+Read both from \texttt{duge.yaml}, next to the existing unit data and with
+the existing naming style. Do not hard-code values and do not guess them:
+if a key is missing, stop with a clear error message. The values are
+supplied by the user.
+
+No other parameters, no new variables, no new sets.
+
+\subsection{Four constraints}
+For every hour $t\in\mathcal T$, in every weekly subproblem (every stage and
+every Markov state, forward and backward pass):
+\begin{align}
+\frac{P^{G,\min}}{R^{G,\max}}\sum_{f\in\mathcal F^C} r^{G+}_{f,t} &\le p^G_t
+  \tag{A1}\\
+\frac{P^{G,\min}}{R^{G,\max}}\sum_{f\in\mathcal F^C} r^{G-}_{f,t} &\le p^G_t
+  \tag{A2}\\
+\frac{P^{P,\min}}{R^{P,\max}}\sum_{f\in\mathcal F^C} r^{P+}_{f,t} &\le p^P_t
+  \tag{A3}\\
+\frac{P^{P,\min}}{R^{P,\max}}\sum_{f\in\mathcal F^C} r^{P-}_{f,t} &\le p^P_t
+  \tag{A4}
+\end{align}
+
+\begin{itemize}
+\item (A2) \textbf{replaces} the existing constraint
+      $p^G_t-\sum_f r^{G-}_{f,t}\ge 0$.
+\item (A4) \textbf{replaces} the existing constraint
+      $p^P_t-\sum_f r^{P-}_{f,t}\ge 0$.
+\item (A1) and (A3) are \textbf{new} and are added.
+\end{itemize}
+
+\subsection{The coefficient must not be below one}
+The constraints above are written for $P^{G,\min}\ge R^{G,\max}$ and
+$P^{P,\min}\ge R^{P,\max}$. In the code, compute the coefficient of each
+unit as
+\[
+\max\!\left\{\frac{P^{\min}}{R^{\max}},\,1\right\},
+\]
+so that a unit with a minimum power below its reserve limit still cannot
+offer more reserve than it is running. This is a local value computed where
+the constraints are built, not a new entry in the data file. If
+$R^{\max}=0$ for a unit, its reserves are already zero; skip its two
+constraints.
+
+\section{What must not change}
+\begin{itemize}
+\item The objective function.
+\item The upper unit limits $p^G_t+\sum_f r^{G+}_{f,t}\le P^{G,\max}$ and
+      $p^P_t+\sum_f r^{P+}_{f,t}\le P^{P,\max}$.
+\item The unit reserve limits ($\le R^{G,\max}$, $\le R^{P,\max}$), the
+      commitment balances, the product limits and the symmetry requirement.
+\item The water balance, the reservoir limits and the water margin for
+      reserves.
+\item The state variable (reservoir volume only), the cuts, the Markov
+      chain, the end-of-horizon treatment, the training loop and the
+      stopping rule.
+\end{itemize}
+The subproblem remains a linear programme. No binary variables.
+
+\section{Checks after the change}
+\begin{enumerate}
+\item In every solved hour: if $p^G_t=0$ then
+      $\sum_f r^{G+}_{f,t}=\sum_f r^{G-}_{f,t}=0$, and the same for the
+      pumping unit.
+\item In every solved hour: the generating unit supplies $R^{G,\max}$ in a
+      direction only if $p^G_t\ge P^{G,\min}$ (when
+      $P^{G,\min}\ge R^{G,\max}$), and the same for the pumping unit.
+\item With the same data and seeds, the upper bound after training is not
+      higher than before the change, because the feasible set has only
+      become smaller. Report both values.
+\item Report, before and after, the expected income from energy and from
+      reserve capacity and the number of hours each unit runs, so the
+      effect of the rule is visible.
+\end{enumerate}
+
+\end{document}

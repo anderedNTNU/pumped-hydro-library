@@ -37,6 +37,13 @@ Constraints, for all t:
 
 Unchanged: the upper limits in `eq:unit` (Helseth's (7)), `eq:unit_reserve_limits` (Helseth's (12); ours are already summed over products, so γ keeps its meaning with several products), the water margin in `eq:reservoir` (Helseth's (8)). No new variables, no change to the objective, no new state.
 
+**Without γ as a parameter (Anders, 2026-11-26: no unnecessary parameters).** Write the ratio directly in the constraints, so the only new parameters are P^{G,min} and P^{P,min}:
+
+- (P^{G,min}/R^{G,max}) Σ_f r^{G+}_{f,t} ≤ p^G_t and (P^{G,min}/R^{G,max}) Σ_f r^{G−}_{f,t} ≤ p^G_t
+- (P^{P,min}/R^{P,max}) Σ_f r^{P+}_{f,t} ≤ p^P_t and (P^{P,min}/R^{P,max}) Σ_f r^{P−}_{f,t} ≤ p^P_t
+
+This equals Helseth's (6) with (13) when P^min ≥ R^max for each unit (the max in (13) then picks the ratio). It holds in the implementation if the minimum power is above 20 MW. The text must state this condition; if it fails for a unit, the factor is 1.
+
 ### What is Helseth's and what is ours
 
 - Helseth's: the form of (6) and the definition (13), for a generating unit.
