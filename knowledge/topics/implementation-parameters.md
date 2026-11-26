@@ -51,3 +51,22 @@ Read in the text copies on 2026-11-15. They add precedents; the recommendations 
 
 ## 7. Reserve from a fixed-speed pump (added 2026-11-15)
 Section 4 recommends `R_P_max_MW` = 0 for the existing plant. One nuance from the sources in `sddp-model-comparison.md` Section 9: a fixed-speed pump can give **upward** reserve by being switched off, up to its pumping power (`deane2013derivation` p. 2148; `drury2011value` p. 4961), but it cannot regulate continuously (`chazarra2017` p. 345). The file sells FCR-N as a symmetric product, which needs regulation in both directions, so 0 MW stands for FCR-N. If an upward-only product is added later, the pump could contribute to it while it is pumping.
+
+## Pumping range of variable-speed units in operation (added 2026-11-26, web search, Anders' question)
+
+Plant figures found on the web, not from papers in the library. None of these sources is in `references.bib`; add them through Zotero before citing. Percentages are our own division.
+
+| Plant | Machine | Pumping range | Share of maximum pumping power | Source |
+|---|---|---|---|---|
+| Frades 2 (Portugal), 2 x 395 MW | doubly-fed | 300 to 390 MW; turbine 186.4 to 372.8 MW; speed 350 to 381 rpm | 77 to 100 % | Nicolet et al., XFLEX HYDRO, arXiv:2404.06275, Table 2 and text; arXiv:2404.06299 |
+| Goldisthal (Germany), 2 variable-speed units of 265 MW | doubly-fed | 190 to 290 MW | 66 to 100 % | Renewable Energy World article on Goldisthal |
+| Goldisthal, other figure | | 170 to 300 MW (attributed to Voith) | 57 to 100 % | Water Power Magazine |
+| Linth-Limmern (Switzerland), 4 x 250 MW | doubly-fed | pumping power adjustable "by 30 %" (general statement by GE, not a plant band) | about 70 to 100 % | GE Vernova project page |
+| Okawachi (Japan), 400 MW class | doubly-fed | steps of at least 80 MW in pump mode | band of about 20 % or more | OSTI record 276823 |
+| Grimsel 2 (Switzerland), 1 of 4 units | full-size converter | 600 to 765 rpm, up to 94 MW; lower power limit not found (unverified) | not found | ABB reference note |
+
+What limits the range (XFLEX paper): with fixed speed the pump input is set by speed and head; with variable speed the range is bounded by stability at low discharge and by cavitation and power limits at the other end, and by the converter rating (speed 350 to 381 rpm at Frades 2).
+
+Reading: built doubly-fed units pump between roughly 60-77 % and 100 % of maximum pumping power. P^{P,min} = 0.7 P^{P,max} and R^{P,max} = 0.3 P^{P,max} sit inside what the plants report, consistent with `entsoe2019psh` slide 5.
+
+Caveat for the running rule: with a linear model the rule lets the pump sell upward reserve (reduced pumping) also when it runs at its minimum, where it physically has none. `chazarra2018` p. 106 has the exact form (upward reserve = current minus minimum consumption), which needs an on/off variable.
