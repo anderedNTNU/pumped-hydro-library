@@ -41,3 +41,10 @@ Received by Anders on 2026-11-27 and pasted into the session. The draft is `Proj
 - "Helseth et al. (2018)" is `helseth2017` in `references.bib` (IET GTD 12(2), DOI 10.1049/iet-gtd.2017.0903): online 2017, printed in a 2018 issue. One year must be chosen and used in text and table.
 - Sauhats and Zisos are in `references.bib` as `sauhats2016optimal` and `zisos2023mixing`; the table uses `\href` links instead of citations, which is why they are missing from the reference list.
 - The IEEE link (document 9919382, feasibility cuts in SDDP) is not in `references.bib` or the library.
+
+## Status (updated 2026-11-27)
+
+- Points 2, 4 (for this section), 6, 9 and the convexity part of 10: addressed in the section "Deterministic and Stochastic Optimisation", in Overleaf since thesis commit 655e03d. Source of the text: `theory-det-stoch-proposal.tex` in this folder.
+- Decided with Anders: no sentences about the group's own work and no references to chapter 6 in that section (five of six reference theses have none in their theory chapters); the link between EVPI and the perfect-foresight benchmark goes in chapter 6; the tangent inequality and "the maximum of linear functions is convex" go in the SDDP section.
+- Not yet checked against a source in that section: the dual problem as written, the sentence on shadow prices, "this property makes it possible to approximate the recourse function by linear cuts", and the page range for Pereira and Pinto. The earlier review note that strong duality is stated loosely still applies.
+- Still open in the theory chapter: point 21 (loose heading) and the roadmap paragraph, point 7 (stage in DP), point 8 (Figure 2 and beta), the Bellman equation in the text, and the SDP section.
