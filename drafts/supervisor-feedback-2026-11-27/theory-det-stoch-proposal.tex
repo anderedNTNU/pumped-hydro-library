@@ -1,0 +1,138 @@
+% DRAFT (Claude, 2026-11-27, Anders): proposal for the whole section "Deterministic and Stochastic
+% Optimisation" after the supervisor's feedback of 27 November. The group's sentences are kept; lines
+% marked NEW are added, lines marked CHANGED are reworded. To be reworked by the group.
+% Pages in birgeLouveaux2011 (2nd ed.) behind each part are kept as "% src:" comments, since the
+% in-text citations are removed as the supervisor asked.
+
+\subsection{Deterministic and Stochastic Optimisation}
+\label{subsec:theory_det_stoch}
+
+% NEW (supervisor: cite the textbooks once)
+The theory presented in this section is based on \textcite{lundgren2010} for linear programming and duality, \textcite{boydVandenberghe2004} for convexity, and \textcite{birgeLouveaux2011} for stochastic optimisation.
+
+\subsubsection{Deterministic Optimisation}
+\label{subsec:deterministic_optimisation}
+
+Deterministic optimisation is a mathematical approach in which all model parameters are represented by fixed, known values. The objective is to find the best possible solution by maximising or minimising an objective function, subject to a set of constraints. The model determines the optimal values of the decision variables for the specified parameters. Since uncertainty is not explicitly represented, the resulting solution is optimal for the assumed input values.
+
+\paragraph{Linear programming}
+% CHANGED: "Lundgren et al. (2010) write an LP problem in ..." -> no in-text citation
+If the objective function and all constraints are linear, and all variables are continuous, the problem is a linear programming (LP) problem. An LP problem can be written in the following general form:
+\begin{equation}
+\begin{array}{@{}l@{\hspace{3.2em}}l@{\;\;}l@{\quad}l@{}}
+\min & \llap{$z={}$}{\displaystyle\sum_{j=1}^{n}}\, c_j x_j & & \\[4ex]
+\text{s.t.} & {\displaystyle\sum_{j=1}^{n}}\, a_{ij} x_j & \le b_i, & i = 1,\ldots,m\\[3ex]
+ & \multicolumn{1}{r@{\;\;}}{x_j} & \ge 0, & j = 1,\ldots,n
+\end{array}
+\label{eq:lp_general}
+\end{equation}
+Here, $x_j$ are the decision variables and $z$ is the value of the objective function. The parameter $c_j$ is the objective function coefficient for variable $x_j$, $a_{ij}$ is the constraint coefficient for variable $x_j$ in constraint $i$, and $b_i$ is the right-hand side of constraint $i$. The last line states that the variables cannot be negative. A maximisation problem can be written in the same form, since maximising $z$ is the same as minimising $-z$.
+
+Since the feasible region is convex and the objective function is linear, every local optimum of an LP problem is also a global optimum.
+
+\paragraph{Nonlinear and integer problems}
+% CHANGED: shortened to what the thesis uses (supervisor: the NLP/MIP part can be cut down)
+Nonlinear programming (NLP) allows the objective function or constraints to be nonlinear, and integer programming (IP) restricts decision variables to integer values. Problems containing both continuous and integer variables are referred to as mixed-integer programming (MIP). Such problems are in general not convex, and a local optimum is then not necessarily a global optimum. % src: boydVandenberghe2004 pp. 9--10
+% NEW (supervisor: explain why convexity matters)
+The distinction matters in this thesis because the solution method presented in Section~\ref{subsec:stochastic_dual_dynamic_programming} requires convex subproblems. The model in Section~\ref{sec:model_description} is therefore formulated as an LP problem.
+
+\paragraph{Dual problem}
+Every linear programming problem has an associated dual problem, constructed from the coefficients of the original, or primal, problem. Each constraint in the primal problem corresponds to a variable in the dual problem.
+% NEW: the dual written out
+For the LP problem in \eqref{eq:lp_general}, with one dual variable $v_i$ for each constraint $i$, the dual problem is
+\begin{equation}
+\begin{array}{@{}l@{\hspace{3.2em}}l@{\;\;}l@{\quad}l@{}}
+\max & \llap{$w={}$}{\displaystyle\sum_{i=1}^{m}}\, b_i v_i & & \\[4ex]
+\text{s.t.} & {\displaystyle\sum_{i=1}^{m}}\, a_{ij} v_i & \le c_j, & j = 1,\ldots,n\\[3ex]
+ & \multicolumn{1}{r@{\;\;}}{v_i} & \le 0, & i = 1,\ldots,m
+\end{array}
+\label{eq:lp_dual}
+\end{equation}
+% CHANGED: "These dual variables can be interpreted as shadow prices ..." made specific
+The dual variables can be interpreted as shadow prices: $v_i$ is the change in the optimal objective value $z$ when the right-hand side $b_i$ increases by one unit. If the primal or dual problem has a bounded optimal solution, the two problems must have the same objective value at optimum. This property is known as strong duality. % src: boydVandenberghe2004 pp. 224--227
+
+% NEW (supervisor: connect duality to water values and Benders cuts)
+Dual variables are used in two ways in this thesis. First, the dual variable of the reservoir balance gives the marginal value of stored water, known as the water value. Second, the dual variables of the constraints that link two decision stages give the slopes of the cuts in Benders decomposition (Section~\ref{subsec:benders_decomposition}) and in stochastic dual dynamic programming (Section~\ref{subsec:stochastic_dual_dynamic_programming}).
+
+\subsubsection{Stochastic Optimisation}
+\label{subsec:stochastic_optimisation}
+
+In many decision problems, some parameters are not known when decisions must be made. Stochastic optimisation incorporates this uncertainty into the mathematical model by representing uncertain parameters as random variables with probability distributions. % src: birgeLouveaux2011 pp. 55--58
+
+In practice, uncertainty is often represented by a finite set of scenarios, where each scenario represents a possible realisation of the uncertain parameters that is associated with a probability. Rather than optimising for a single forecast, stochastic optimisation considers multiple possible outcomes. A common objective is to maximise expected profit, calculated as the probability-weighted average profit across scenarios. This is referred to as risk-neutral optimisation, since variability in outcomes is not explicitly penalised. % src: birgeLouveaux2011 p. 56; pp. 7--8, 66--67
+
+\subsubsection{Two-Stage Stochastic Optimisation}
+\label{subsec:two_stage_stochastic_optimisation}
+
+A two-stage stochastic optimisation problem with recourse consists of two stages of decision-making. First-stage decisions are made before the uncertain parameters are known. These are called \textit{here-and-now} decisions and must be the same across all scenarios. Once the uncertainty is realised, second-stage decisions can be made to adapt to the observed outcome. These are called recourse decisions and may differ between scenarios. % src: birgeLouveaux2011 pp. 57--59, 164
+First-stage decisions must account for the costs or benefits associated with subsequent decisions. The recourse function captures these consequences by expressing the expected optimal second-stage objective value for a given first-stage decision.
+
+% NEW (supervisor: the two-stage problem and the recourse function as expressions)
+Let $x$ denote the first-stage decisions, $y$ the second-stage decisions and $\xi$ the uncertain parameters. The two-stage stochastic linear program is
+\begin{equation}
+\begin{array}{@{}l@{\quad}l@{}}
+\min & c^{\top}x + \mathcal{Q}(x)\\[1ex]
+\text{s.t.} & Ax = b,\quad x \ge 0,
+\end{array}
+\label{eq:two_stage}
+\end{equation}
+where $c$, $A$ and $b$ are known first-stage data and $\mathcal{Q}(x)=\mathbb{E}_{\xi}\left[Q(x,\xi)\right]$ is the recourse function. For a given first-stage decision $x$ and realisation $\xi$, the second-stage value is
+\begin{equation}
+Q(x,\xi)=\min_{y}\left\{\,q(\xi)^{\top}y \;\middle|\; Wy = h(\xi)-T(\xi)x,\; y\ge 0\right\},
+\label{eq:second_stage}
+\end{equation}
+where $q(\xi)$, $h(\xi)$ and $T(\xi)$ are second-stage data that become known with $\xi$, and $W$ is the same in all scenarios. % src: birgeLouveaux2011 eqs. (4.1)-(4.4), pp. 59-60
+% CHANGED: "The objective therefore combines ..." now refers to the expression
+The objective in \eqref{eq:two_stage} therefore combines the first-stage value with the expected second-stage value. A major computational challenge is evaluating the recourse function for different first-stage decisions. % src: birgeLouveaux2011 pp. 103--105
+% NEW: the property the cuts rely on
+With a finite number of scenarios, $\mathcal{Q}(x)$ is a piecewise linear and convex function of $x$; in a maximisation problem it is concave. % src: birgeLouveaux2011 Theorem 2 and the sentence after it, Sec. 3.1, p. 107
+This property makes it possible to approximate the recourse function by linear cuts, which is the idea behind the decomposition methods in Sections~\ref{subsec:benders_decomposition} and~\ref{subsec:stochastic_dual_dynamic_programming}.
+
+% CHANGED: wait-and-see and EVPI with expressions; link to the deterministic problem
+The \textit{wait-and-see} problem differs from the recourse problem by assuming that the uncertain parameters are known before any decisions are made. Each scenario can therefore be optimised separately, including its first-stage decisions. For each scenario, this is a deterministic problem of the type described in Section~\ref{subsec:deterministic_optimisation}. Let $z(x,\xi)=c^{\top}x+Q(x,\xi)$ denote the objective value of the first-stage decision $x$ in scenario $\xi$. The optimal values of the recourse problem (RP) and the wait-and-see problem (WS) are
+\begin{equation}
+\mathrm{RP}=\min_{x}\,\mathbb{E}_{\xi}\left[z(x,\xi)\right],
+\qquad
+\mathrm{WS}=\mathbb{E}_{\xi}\left[\min_{x}\, z(x,\xi)\right].
+\label{eq:rp_ws}
+\end{equation}
+Since the wait-and-see solution assumes perfect information about future outcomes, it provides an optimistic bound on the optimal expected objective value of the recourse problem. The difference between these two values is called the expected value of perfect information (EVPI),
+\begin{equation}
+\mathrm{EVPI}=\mathrm{RP}-\mathrm{WS},
+\label{eq:evpi}
+\end{equation}
+which measures the maximum expected benefit of knowing the uncertain parameters in advance. % src: birgeLouveaux2011 eqs. (1.1)-(1.4), pp. 163--165
+% NEW: sign for maximisation, and the link to the case study
+In a maximisation problem, as in this thesis, the wait-and-see value is the larger of the two and $\mathrm{EVPI}=\mathrm{WS}-\mathrm{RP}$. The perfect-foresight benchmark in Section~\ref{sec:model_description} corresponds to the wait-and-see value.
+
+\subsubsection{Multistage Stochastic Optimisation}
+\label{subsec:multistage_stochastic_optimisation}
+
+A multistage stochastic optimisation problem extends the two-stage framework to several stages. Information is revealed gradually between stages, and decisions at each stage are based on the information available at that time and the probability distributions of future uncertain outcomes. % src: birgeLouveaux2011 pp. 149--151
+Decisions in one stage may affect decisions in later stages.
+
+% NEW (supervisor: introduce notation that the DP and SDDP parts can build on)
+With decisions $x_t$ in stage $t=1,\ldots,N$, the problem can be written as a recursion. For $t=2,\ldots,N$, the value of stage $t$ for a given previous decision $x_{t-1}$ and realisation $\xi_t$ is
+\begin{equation}
+\begin{array}{@{}l@{\quad}l@{}}
+Q_t(x_{t-1},\xi_t)=\;\min & c_t(\xi_t)^{\top}x_t+\mathcal{Q}_{t+1}(x_t)\\[1ex]
+\phantom{Q_t(x_{t-1},\xi_t)=\;}\text{s.t.} & W_t x_t = h_t(\xi_t)-T_{t-1}(\xi_t)x_{t-1},\quad x_t\ge 0,
+\end{array}
+\label{eq:multistage_recursion}
+\end{equation}
+where $\mathcal{Q}_{t+1}(x_t)=\mathbb{E}_{\xi_{t+1}}\left[Q_{t+1}(x_t,\xi_{t+1})\right]$ is the expected value of all later stages and $\mathcal{Q}_{N+1}=0$. The first stage minimises $c_1^{\top}x_1+\mathcal{Q}_2(x_1)$ subject to the first-stage constraints. % src: birgeLouveaux2011 eqs. (4.1)-(4.4), pp. 150--151
+The previous decision $x_{t-1}$ is the only link between two stages and acts as the state of the system. If the distribution of $\xi_{t+1}$ depends on earlier outcomes, this information must also be part of the state. % src: birgeLouveaux2011 p. 151
+The recursion has the same structure as the dynamic programming recursion in Section~\ref{subsec:dynamic_programming}.
+
+A scenario describes one possible development of the uncertain parameters over the full planning horizon. The scenarios can be represented in a scenario tree, as illustrated in Figure~\ref{fig:MSSP}. Each node represents the information available at a particular stage, while the branches describe possible subsequent outcomes. Except for the root node, every node is connected to exactly one node in the preceding stage. % src: birgeLouveaux2011 pp. 22, 152
+The solution therefore consists of decisions that depend on the observed history, rather than one fixed sequence of decisions. % src: birgeLouveaux2011 pp. 21--22
+As the planning horizon grows, the number of possible scenario paths may increase rapidly, leading to substantial computational requirements. % src: birgeLouveaux2011 p. 152
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{Images/MSSP.png}
+    \caption{Illustration of two-stage and multistage stochastic optimisation using scenario trees.}
+    \label{fig:MSSP}
+\end{figure}
+
+A decision stage is defined by the information available when decisions are made, whereas a time period represents an interval in the planning horizon. These two concepts do not necessarily coincide, since several time periods may be included within the same decision stage. % src: birgeLouveaux2011 pp. 58, 65
